@@ -21,3 +21,5 @@ Phase 0 and Task 1.1: not complete. Provider permissions, private founder invent
 - Confirmed `pnpm dev` starts web, API and worker together.
 - Main protection verified: strict Foundation checks, required PR, resolved conversations, admin enforcement, no force pushes/deletion. No inherited rules were returned.
 - Automatic publication review flagged residual personal-pilot wording. Corrected and re-inspected before approved publication.
+
+- Initial CI passed code/build/database checks, then failed browser installation because ubuntu-latest resolved to unsupported Ubuntu 26.04. Pinned Ubuntu 24.04 for the tested Playwright release; current-revision rerun required.
