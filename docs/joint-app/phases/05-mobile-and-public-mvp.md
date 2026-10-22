@@ -1,5 +1,7 @@
 # Phase 5 — Mobile and Public MVP Implementation Plan
 
+> **Scope revision, 23 October 2026:** Child profiles and child-specific UI/projections are post-MVP, per the [canonical product revision](../01-product-specification.md). Treat child-specific tasks below as deferred; retain the safeguards against double counting and including verified child-earmarked funds in adult spendable totals. All MVP UI is mobile first.
+
 > **For coding agents:** Follow [the handoff](../12-coding-agent-handoff.md) and implement one reviewable task at a time. Use the available repository workflow; no additional plugin installation is required. Checkboxes track future work.
 
 **Goal:** Release native iOS/Android household finance clients with trustworthy subscription lifecycle handling, privacy controls and commercially viable approved connectivity.

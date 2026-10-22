@@ -1,5 +1,7 @@
 # Phase 3 — Wealth and goal projections
 
+> **Scope revision, 23 October 2026:** Child profiles and child-specific UI/projections are post-MVP, per the [canonical product revision](../01-product-specification.md). Treat child-specific tasks below as deferred; retain the safeguards against double counting and including verified child-earmarked funds in adult spendable totals. All MVP UI is mobile first.
+
 **Goal:** Produce permission-aware wealth totals and reproducible goal dates, including a useful free contribution-only baseline.
 
 **Effort:** 8–12 engineer-days, excluding provider approval waits.

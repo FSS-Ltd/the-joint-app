@@ -10,6 +10,12 @@
 
 This is a technical product plan. It does not recommend securities, tax treatments, borrowing products, or a particular personal investment strategy. All example balances and rates are synthetic.
 
+## Scope revision — 23 October 2026
+
+The founder explicitly deferred child profiles until post-MVP. Child-specific profiles, screens, wealth views and projections below describe future work and are not founder/public MVP acceptance requirements. R10 and child-specific portions of R07/R08/R14 are deferred. Adult MVP source handling must still prevent double counting spaces and counting verified child-earmarked funds as adult spendable money. No child login is introduced.
+
+Investing scope excludes crypto. Other investment coverage is verified per source/product and remains read-only; no blanket provider or asset-method support is promised. All product UI is mobile first and follows [the design direction](../decisions/design-direction.md).
+
 ## 1. Executive summary
 
 The Joint App brings spending, debts, savings, investments and children's assets into one permission-aware household view. It answers: Where did our money go? What do we own and owe? What have we put aside? When could we reach a goal if these assumptions hold? What spending changes would alter that date?

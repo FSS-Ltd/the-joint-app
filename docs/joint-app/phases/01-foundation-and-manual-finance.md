@@ -1,5 +1,7 @@
 # Phase 1 — Foundation and Manual Finance Implementation Plan
 
+> **Scope revision, 23 October 2026:** Child profiles and child-specific UI/projections are post-MVP, per the [canonical product revision](../01-product-specification.md). Treat child-specific tasks below as deferred; retain the safeguards against double counting and including verified child-earmarked funds in adult spendable totals. All MVP UI is mobile first.
+
 **Goal:** Give both adults a useful, secure manual household finance application and establish the contracts later phases will reuse.
 
 **Architecture:** Next.js web, Nest API/worker, Postgres/Prisma and Supabase Auth; explicit grants and central entitlements.
