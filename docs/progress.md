@@ -23,3 +23,13 @@ Phase 0 and Task 1.1: not complete. Provider permissions, private founder invent
 - Automatic publication review flagged residual personal-pilot wording. Corrected and re-inspected before approved publication.
 
 - Initial CI passed code/build/database checks, then failed browser installation because ubuntu-latest resolved to unsupported Ubuntu 26.04. Pinned Ubuntu 24.04 for the tested Playwright release; current-revision rerun required.
+
+### GitHub CI evidence
+
+- Checked implementation head: `75d151540825ad102ec0ddcc6010a2417684933f`.
+- Checked test-merge revision: `bdfbb7e95e2031534dc3d3960d363dfe8902a4c4`.
+- Required check: **Foundation checks — success** (1m12s).
+- Run: https://github.com/FSS-Ltd/the-joint-app/actions/runs/39861765639.
+- All frozen-install, formatting, lint, build, type, unit, database/subprocess integration and browser steps succeeded on a fresh GitHub runner.
+- This evidence-only update triggers CI again; confirm the latest PR revision's check before merging. Final current-revision evidence is also attached to the PR.
+- Gate: PR open, implementation CI green, merge not authorised/performed. Next permissible action is review and authorised merge, then verify host merge evidence before any next step.
