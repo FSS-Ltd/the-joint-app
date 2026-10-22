@@ -10,6 +10,9 @@ jobs:
   verify:
     name: Foundation checks
     runs-on: ubuntu-24.04
+    container: mcr.microsoft.com/playwright:v1.58.2-noble
+    env:
+      DATABASE_URL: postgresql://joint:local-development-only@postgres:5432/joint
     services:
       postgres:
         image: postgres:17.6
@@ -35,5 +38,4 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm test:integration
-      - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
