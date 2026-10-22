@@ -11,3 +11,7 @@ test-results/
 .DS_Store
 the-joint-app-plan/
 *.tsbuildinfo
+
+# Local household discovery and third-party visual references
+docs/private/
+Design/
