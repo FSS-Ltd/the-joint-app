@@ -1,0 +1,19 @@
+import { expect, test } from "@playwright/test";
+for (const width of [390, 1280])
+  test(`introduction at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "A clearer view of your money, together.",
+    );
+    await expect(
+      page.getByText("In development", { exact: true }),
+    ).toBeVisible();
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("link")).toBeFocused();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  });
