@@ -1,5 +1,7 @@
 # The Joint App — Complete Build Plan
 
+> **Scope revision, 23 October 2026:** Child profiles and child-specific UI/projections are post-MVP, per the [canonical product revision](01-product-specification.md). Treat child-specific tasks below as deferred; retain the safeguards against double counting and including verified child-earmarked funds in adult spendable totals. All MVP UI is mobile first.
+
 **Prepared for FSS engineering · 22 October 2026 · UK-first product**
 
 **Current phase:** Product definition, researched architecture and implementation planning. No app, live connection, provider approval or hardware benchmark is claimed complete.
