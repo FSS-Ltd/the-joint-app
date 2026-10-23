@@ -49,7 +49,7 @@ Files: modify global tokens, identity layout/controls, account/finance/spending 
 
 - [x] Inspect every changed file; run formatting, lint, strict package/test-source types, unit tests and all package builds.
 - [x] Run full browser acceptance with disposable synthetic data; preserve private environment files, journal and development database. Run database integration only if backend behavior changes or failures justify it; CI runs the full required suite regardless.
-- [ ] Obtain one independent whole-branch review, remediate material findings, rerun affected checks, and raise UI1 PR after local verification.
+- [x] Obtain one independent whole-branch review, remediate material findings, rerun affected checks, and raise UI1 PR after local verification.
 - [ ] Verify latest-head/test-merge CI, repository reviews/conversations and authorized merge. Record exact revisions/results in progress and PR. Do not begin UI2 before host-verified merge.
 
 ## Execution record
