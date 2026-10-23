@@ -53,3 +53,17 @@ it("rejects unsafe server endpoints without exposing configuration values", asyn
     API_BASE_URL: "http://127.0.0.1:3001",
   });
 });
+
+it("rejects partial identity settings and malformed encryption keys without their values", async () => {
+  const { authServerEnvironmentSchema } =
+    await import("../packages/contracts/src/index.js");
+  expect(() =>
+    readEnvironment(authServerEnvironmentSchema, {
+      AUTH_ISSUER: "http://127.0.0.1:15421/auth/v1",
+      SUPABASE_AUTH_URL: "http://127.0.0.1:15421/auth/v1",
+      SUPABASE_PUBLISHABLE_KEY: "synthetic-public-provider-key",
+      AUTH_TOKEN_KEY: "synthetic-secret-do-not-log",
+      AUTH_EMAIL_HASH_KEY: "synthetic-second-secret",
+    }),
+  ).toThrow("Invalid environment fields: AUTH_TOKEN_KEY, AUTH_EMAIL_HASH_KEY");
+});

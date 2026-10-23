@@ -75,3 +75,14 @@ export const identityEnvironmentSchema = z.object({
 export const migrationEnvironmentSchema = z.object({
   MIGRATION_DATABASE_URL: postgresUrlSchema.optional(),
 });
+export * from "./identity.js";
+
+const identityKeySchema = z.string().regex(/^[A-Za-z0-9+/]{43}=$/);
+export const authServerEnvironmentSchema = z.object({
+  AUTH_ISSUER: serverUrlSchema,
+  SUPABASE_AUTH_URL: serverUrlSchema,
+  SUPABASE_PUBLISHABLE_KEY: z.string().min(20).max(4096),
+  AUTH_TOKEN_KEY: identityKeySchema,
+  AUTH_EMAIL_HASH_KEY: identityKeySchema,
+});
+export type AuthServerEnvironment = z.infer<typeof authServerEnvironmentSchema>;

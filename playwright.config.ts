@@ -1,7 +1,12 @@
 import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/browser",
-  use: { baseURL: "http://127.0.0.1:3000" },
+  use: {
+    baseURL: "http://127.0.0.1:3000",
+    connectOptions: process.env.PLAYWRIGHT_WS_ENDPOINT
+      ? { wsEndpoint: process.env.PLAYWRIGHT_WS_ENDPOINT }
+      : undefined,
+  },
   webServer: {
     command: "pnpm --filter @joint/web start",
     url: "http://127.0.0.1:3000",

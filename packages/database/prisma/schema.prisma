@@ -23,9 +23,14 @@ enum JobState {
 model Household {
   id String @id @default(uuid()) @db.Uuid
   revision Int @default(0)
+  name String @default("Our household") @db.VarChar(80)
+  baseCurrency String @default("GBP") @db.Char(3)
+  timezone String @default("Europe/London")
   jobs Job[]
   events OutboxEvent[]
   memberships Membership[]
+  invitations Invitation[]
+  auditEvents AuditEvent[]
   @@schema("app")
 }
 
@@ -66,22 +71,107 @@ model OutboxEvent {
   @@schema("app")
 }
 
-model Membership {
-  userId String @db.Uuid
-  householdId String @db.Uuid
-  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  sessions SessionRegistry[]
-  @@id([userId, householdId])
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+  DELETED
   @@schema("app")
 }
-
+enum MembershipStatus {
+  ACTIVE
+  LEFT
+  @@schema("app")
+}
+enum MembershipRole {
+  ADMIN
+  MEMBER
+  @@schema("app")
+}
+enum SessionKind {
+  BEARER
+  WEB
+  @@schema("app")
+}
+model User {
+  id String @id @db.Uuid
+  status UserStatus @default(ACTIVE)
+  emailHash String? @unique @db.Char(64)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  memberships Membership[]
+  sessions SessionRegistry[]
+  invitations Invitation[]
+  requestKeys RequestKey[]
+  auditEvents AuditEvent[]
+  @@schema("app")
+}
+model Membership {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id])
+  householdId String @db.Uuid
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  role MembershipRole @default(MEMBER)
+  status MembershipStatus @default(ACTIVE)
+  slot Int?
+  grantVersion Int @default(0)
+  acceptedAt DateTime @default(now()) @db.Timestamptz(3)
+  sessions SessionRegistry[]
+  @@unique([userId, householdId])
+  @@unique([householdId, slot])
+  @@schema("app")
+}
 model SessionRegistry {
   id String @id @db.Uuid
   userId String @db.Uuid
-  householdId String @db.Uuid
-  membership Membership @relation(fields: [userId, householdId], references: [userId, householdId], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+  householdId String? @db.Uuid
+  membership Membership? @relation(fields: [userId, householdId], references: [userId, householdId], onDelete: Cascade)
+  kind SessionKind @default(BEARER)
+  browserTokenHash String? @unique @db.Char(64)
+  providerTokens String? @db.Text
+  providerExpiresAt DateTime? @db.Timestamptz(3)
+  purpose String @default("NORMAL")
   expiresAt DateTime @db.Timestamptz(3)
   revokedAt DateTime? @db.Timestamptz(3)
+  lastSeenAt DateTime @default(now()) @db.Timestamptz(3)
   @@index([userId])
+  @@schema("app")
+}
+model Invitation {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  issuedByUserId String @db.Uuid
+  issuedBy User @relation(fields: [issuedByUserId], references: [id])
+  emailHash String @db.Char(64)
+  tokenHash String @unique @db.Char(64)
+  expiresAt DateTime @db.Timestamptz(3)
+  consumedAt DateTime? @db.Timestamptz(3)
+  revokedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([householdId, expiresAt])
+  @@schema("app")
+}
+model RequestKey {
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id])
+  route String @db.VarChar(100)
+  key String @db.Uuid
+  payloadHash String @db.Char(64)
+  resultCiphertext String @db.Text
+  expiresAt DateTime @db.Timestamptz(3)
+  @@id([userId, route, key])
+  @@schema("app")
+}
+model AuditEvent {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id])
+  householdId String? @db.Uuid
+  household Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  action String @db.VarChar(80)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([householdId, createdAt])
   @@schema("app")
 }
