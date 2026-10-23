@@ -228,6 +228,27 @@ test("real local identity, two-tab refresh, MFA and invitations preserve session
   if (!householdMe.membership)
     throw new Error("Expected the created household membership");
   households.push(householdMe.membership.householdId);
+  const inviteLater = page.getByRole("link", {
+    name: "Invite later",
+    exact: true,
+  });
+  await expect(inviteLater).toHaveAttribute("href", "/accounts");
+  await inviteLater.focus();
+  await expect(inviteLater).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(`${origin}/accounts`);
+  await page.reload();
+  await expect(page).toHaveURL(`${origin}/accounts`);
+  await expect(
+    page.getByRole("heading", { name: "Your accounts", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Invite your person" }),
+  ).toHaveCount(0);
+  await page.goto("/household");
+  await expect(
+    page.getByRole("heading", { name: "Invite your person" }),
+  ).toBeVisible();
   const secondTab = await context.newPage();
   await secondTab.goto("/");
   const sessionCookieBefore = (await context.cookies()).find(
