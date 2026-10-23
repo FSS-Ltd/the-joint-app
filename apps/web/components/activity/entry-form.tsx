@@ -3,6 +3,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import type { TransactionResponse, Money } from "@joint/contracts";
 import { parseMoneyInput, formatMoney } from "@joint/domain";
 import { request, errorMessage } from "../identity/client";
+import { isAccessError } from "../finance/access-error";
 import { Feedback } from "../identity/frame";
 import { financePath } from "../finance/http";
 import { todayInLondon } from "../accounts/presentation";
@@ -12,11 +13,13 @@ export function EntryForm({
   accountId,
   transaction,
   saved,
+  unavailable,
 }: {
   householdId: string;
   accountId: string;
   transaction?: TransactionResponse;
   saved: (transaction: TransactionResponse) => void;
+  unavailable?: () => void;
 }): ReactNode {
   const [key, setKey] = useState("");
   const [pending, setPending] = useState(false);
@@ -60,6 +63,7 @@ export function EntryForm({
       setKey("");
       if (!transaction) element.reset();
     } catch (cause) {
+      if (isAccessError(cause)) unavailable?.();
       setError(errorMessage(cause));
     } finally {
       setPending(false);

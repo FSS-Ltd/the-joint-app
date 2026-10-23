@@ -32,6 +32,7 @@ model Household {
   invitations Invitation[]
   auditEvents AuditEvent[]
   accounts Account[]
+  budgetScopes BudgetScope[]
   @@schema("app")
 }
 
@@ -46,7 +47,7 @@ model Job {
   state JobState @default(QUEUED)
   attempt Int @default(0)
   maxAttempts Int @default(5)
-  runAfter DateTime @default(now()) @db.Timestamptz(3)
+  runAfter DateTime @default(dbgenerated("date_trunc('milliseconds', clock_timestamp())")) @db.Timestamptz(3)
   leaseOwner String?
   leaseToken String? @db.Uuid
   leaseUntil DateTime? @db.Timestamptz(3)
@@ -126,6 +127,11 @@ model Membership {
   transactionRevisions TransactionRevision[]
   transactionOverrides TransactionOverride[]
   transactionNotes TransactionNote[]
+  coverage AccountMonthCoverage[]
+  coverageRevisions CoverageRevision[]
+  createdBudgetScopes BudgetScope[]
+  createdBudgets Budget[]
+  budgetRevisions BudgetRevision[]
   @@unique([householdId, id])
   @@unique([householdId, id, userId])
   @@unique([userId, householdId])
@@ -242,6 +248,8 @@ model Account {
   balances BalanceSnapshot[]
   imports ImportBatch[]
   transactions Transaction[]
+  coverage AccountMonthCoverage[]
+  budgetScopeAccounts BudgetScopeAccount[]
   @@unique([householdId, id])
   @@unique([householdId, id, currency])
   @@index([householdId, createdAt, id])
@@ -314,6 +322,9 @@ enum TransactionRevisionKind {
   CREATED
   MANUAL_CORRECTION
   CLASSIFICATION
+  SPLIT
+  TRANSFER_CONFIRM
+  TRANSFER_REMOVE
   @@schema("app")
 }
 model ImportBatch {
@@ -389,6 +400,9 @@ model Transaction {
   revisions TransactionRevision[]
   override TransactionOverride?
   notes TransactionNote[]
+  splits TransactionSplit[]
+  transfersFrom TransferLink[] @relation("TransferFrom")
+  transfersTo TransferLink[] @relation("TransferTo")
   @@unique([accountId, sourceNamespace, sourceId])
   @@unique([householdId, accountId, id])
   @@index([householdId, accountId, bookedDate(sort: Desc), id])
@@ -418,6 +432,7 @@ model TransactionOverride {
   transaction Transaction @relation(fields: [householdId, accountId, transactionId], references: [householdId, accountId, id], onDelete: Cascade)
   authorMembershipId String @db.Uuid
   author Membership @relation(fields: [householdId, authorMembershipId], references: [householdId, id])
+  classificationKind ClassificationKind?
   category String? @db.VarChar(80)
   merchant String? @db.VarChar(120)
   version Int @default(1)
@@ -439,5 +454,145 @@ model TransactionNote {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   @@id([transactionId, authorUserId])
+  @@schema("app")
+}
+
+
+enum ClassificationKind {
+  EXPENSE
+  INCOME
+  REFUND
+  TRANSFER
+  DEBT_PAYMENT
+  PRINCIPAL
+  CONTRIBUTION
+  UNCLASSIFIED
+  @@schema("app")
+}
+model TransactionSplit {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  accountId String @db.Uuid
+  transactionId String @db.Uuid
+  transaction Transaction @relation(fields: [householdId, accountId, transactionId], references: [householdId, accountId, id], onDelete: Cascade)
+  position Int
+  category String? @db.VarChar(80)
+  amountMinor BigInt
+  classificationKind ClassificationKind
+  @@unique([transactionId, position])
+  @@index([householdId, accountId, transactionId])
+  @@schema("app")
+}
+model TransferLink {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  fromAccountId String @db.Uuid
+  fromTransactionId String @db.Uuid
+  from Transaction @relation("TransferFrom", fields: [householdId, fromAccountId, fromTransactionId], references: [householdId, accountId, id], onDelete: Cascade)
+  toAccountId String @db.Uuid
+  toTransactionId String @db.Uuid
+  to Transaction @relation("TransferTo", fields: [householdId, toAccountId, toTransactionId], references: [householdId, accountId, id], onDelete: Cascade)
+  beforeFromKind ClassificationKind?
+  beforeToKind ClassificationKind?
+  active Boolean @default(true)
+  version Int @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([fromTransactionId, active])
+  @@index([toTransactionId, active])
+  @@schema("app")
+}
+model AccountMonthCoverage {
+  householdId String @db.Uuid
+  accountId String @db.Uuid
+  account Account @relation(fields: [householdId, accountId], references: [householdId, id], onDelete: Cascade)
+  month DateTime @db.Date
+  complete Boolean
+  version Int @default(1)
+  authorMembershipId String @db.Uuid
+  author Membership @relation(fields: [householdId, authorMembershipId], references: [householdId, id])
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  revisions CoverageRevision[]
+  @@id([accountId, month])
+  @@unique([householdId, accountId, month])
+  @@schema("app")
+}
+model CoverageRevision {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  accountId String @db.Uuid
+  month DateTime @db.Date
+  coverage AccountMonthCoverage @relation(fields: [householdId, accountId, month], references: [householdId, accountId, month], onDelete: Cascade)
+  actorMembershipId String @db.Uuid
+  actor Membership @relation(fields: [householdId, actorMembershipId], references: [householdId, id])
+  version Int
+  complete Boolean
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([accountId, month, version])
+  @@schema("app")
+}
+model BudgetScope {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  scopeHash String @db.Char(64)
+  creatorMembershipId String @db.Uuid
+  creator Membership @relation(fields: [householdId, creatorMembershipId], references: [householdId, id])
+  ready Boolean @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  accounts BudgetScopeAccount[]
+  budgets Budget[]
+  @@unique([householdId, scopeHash])
+  @@unique([householdId, id])
+  @@schema("app")
+}
+model BudgetScopeAccount {
+  householdId String @db.Uuid
+  scopeId String @db.Uuid
+  scope BudgetScope @relation(fields: [householdId, scopeId], references: [householdId, id], onDelete: Cascade)
+  accountId String @db.Uuid
+  account Account @relation(fields: [householdId, accountId], references: [householdId, id], onDelete: Cascade)
+  @@id([scopeId, accountId])
+  @@schema("app")
+}
+model Budget {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  scopeId String @db.Uuid
+  scope BudgetScope @relation(fields: [householdId, scopeId], references: [householdId, id], onDelete: Cascade)
+  month DateTime @db.Date
+  currency String @default("GBP") @db.Char(3)
+  version Int @default(1)
+  creatorMembershipId String @db.Uuid
+  creator Membership @relation(fields: [householdId, creatorMembershipId], references: [householdId, id])
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  lines BudgetLine[]
+  revisions BudgetRevision[]
+  @@unique([scopeId, month])
+  @@unique([householdId, id])
+  @@schema("app")
+}
+model BudgetLine {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  budgetId String @db.Uuid
+  budget Budget @relation(fields: [householdId, budgetId], references: [householdId, id], onDelete: Cascade)
+  category String @db.VarChar(80)
+  amountMinor BigInt
+  @@unique([budgetId, category])
+  @@schema("app")
+}
+model BudgetRevision {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  budgetId String @db.Uuid
+  budget Budget @relation(fields: [householdId, budgetId], references: [householdId, id], onDelete: Cascade)
+  actorMembershipId String @db.Uuid
+  actor Membership @relation(fields: [householdId, actorMembershipId], references: [householdId, id])
+  version Int
+  data Json
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([budgetId, version])
   @@schema("app")
 }

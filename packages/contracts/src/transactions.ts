@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { financialTextSchema, bookedDateSchema } from "./financial-input.js";
 import { moneySchema } from "./accounts.js";
+import {
+  classificationKindSchema,
+  splitSchema,
+  transactionTransferSchema,
+} from "./classifications.js";
+import { monthSchema } from "./reporting-primitives.js";
 
 const descriptionSchema = financialTextSchema.trim().min(1).max(500);
 export const transactionCreateSchema = z
@@ -17,6 +23,7 @@ export const transactionPatchSchema = transactionCreateSchema.omit({
 export const transactionAnnotationSchema = z
   .object({
     category: financialTextSchema.trim().min(1).max(80).nullable().optional(),
+    classificationKind: classificationKindSchema.nullable().optional(),
     merchant: financialTextSchema.trim().min(1).max(120).nullable().optional(),
     note: financialTextSchema.trim().min(1).max(2000).nullable().optional(),
     noteVersion: z.number().int().nonnegative().optional(),
@@ -24,6 +31,7 @@ export const transactionAnnotationSchema = z
   .strict()
   .refine(
     (value) =>
+      value.classificationKind !== undefined ||
       value.category !== undefined ||
       value.merchant !== undefined ||
       value.note !== undefined,
@@ -42,6 +50,11 @@ export const transactionSchema = z
     version: z.number().int().positive(),
     createdAt: z.iso.datetime(),
     category: z.string().nullable(),
+    classificationKind: classificationKindSchema.nullable(),
+    effectiveKind: classificationKindSchema.nullable(),
+    classificationConfirmed: z.boolean(),
+    splits: z.array(splitSchema).max(20),
+    transfer: transactionTransferSchema.nullable(),
     merchant: z.string().nullable(),
     note: z
       .object({
@@ -70,5 +83,16 @@ export const transactionListQuerySchema = z
     accountId: z.uuid(),
     limit: z.coerce.number().int().min(1).max(200).default(50),
     cursor: z.string().min(1).max(2048).optional(),
+    month: monthSchema.optional(),
+    search: financialTextSchema.trim().min(1).max(120).optional(),
+    category: financialTextSchema.trim().min(1).max(80).optional(),
+    uncategorized: z
+      .enum(["true", "false"])
+      .transform((value) => value === "true")
+      .optional(),
+    classificationKind: classificationKindSchema.optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (value) => !(value.category !== undefined && value.uncategorized === true),
+  );

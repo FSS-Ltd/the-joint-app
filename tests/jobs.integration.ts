@@ -1,7 +1,7 @@
 import { createFixtureOwner } from "./fixtures/database.js";
 import { randomUUID } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
-import { afterAll, beforeAll, expect, it } from "vitest";
+import { afterAll, beforeAll, expect, it, vi } from "vitest";
 import { createOrm } from "../packages/database/dist/client.js";
 import { JobsRepository } from "../packages/database/dist/jobs.repository.js";
 
@@ -281,4 +281,34 @@ it("rejects a handler deadline promptly and fences delayed writes after rollback
     (await database.household.findUniqueOrThrow({ where: { id: householdId } }))
       .revision,
   ).toBe(0);
+});
+
+it("uses the database clock for immediate enqueue despite an ahead-of-server host clock", async () => {
+  const server = await database.$queryRaw<{ milliseconds: number }[]>`
+    SELECT extract(epoch FROM clock_timestamp())::double precision*1000 AS milliseconds`;
+  const milliseconds = server[0]?.milliseconds;
+  if (milliseconds === undefined) throw new Error("Expected database clock");
+  let id: string;
+  vi.useFakeTimers({ toFake: ["Date"] });
+  try {
+    vi.setSystemTime(milliseconds + 60000);
+    // Timer callbacks stay real: only the host Date authority is skewed.
+    await delay(1);
+    id = (await enqueue()).id;
+  } finally {
+    vi.useRealTimers();
+  }
+  const lease = await jobs.claim(
+    "synthetic-clock-skew",
+    ["synthetic.import"],
+    2000,
+    id,
+  );
+  expect(lease).not.toBeNull();
+  if (!lease) throw new Error("Expected immediate database-clock eligibility");
+  // Explicit retry schedules still use their future database deadline.
+  expect(await jobs.fail(lease, 60)).toBe(true);
+  expect(
+    await jobs.claim("synthetic-early-retry", [lease.type], 2000, id),
+  ).toBeNull();
 });

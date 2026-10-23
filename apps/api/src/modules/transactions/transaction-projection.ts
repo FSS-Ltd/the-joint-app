@@ -4,10 +4,18 @@ import {
   type AuthContext,
   type TransactionResponse,
 } from "@joint/contracts";
+import { effectiveClassification } from "@joint/domain/cash-flow";
 import type { Prisma } from "@joint/database/client";
 
 type TransactionRow = Prisma.TransactionGetPayload<{
-  include: { override: true; notes: true };
+  include: {
+    override: true;
+    notes: true;
+    account: { select: { kind: true } };
+    splits: true;
+    transfersFrom: true;
+    transfersTo: true;
+  };
 }>;
 export async function ownsAccount(
   tx: Prisma.TransactionClient,
@@ -29,14 +37,26 @@ export async function ownsAccount(
 export function transactionInclude(context: AuthContext) {
   return {
     override: true,
+    account: { select: { kind: true } },
+    splits: { orderBy: { position: "asc" } },
+    transfersFrom: { where: { active: true } },
+    transfersTo: { where: { active: true } },
     notes: { where: { authorUserId: context.userId } },
   } satisfies Prisma.TransactionInclude;
 }
 export function projectTransaction(
   row: TransactionRow,
   owned: boolean,
+  paired = false,
 ): TransactionResponse {
   const note = row.notes[0];
+  const pair = row.transfersFrom[0] ?? row.transfersTo[0];
+  const classification = effectiveClassification(
+    row.account.kind,
+    row.amountMinor.toString(),
+    row.override?.classificationKind ?? null,
+  );
+  const linked = paired || pair !== undefined;
   return transactionSchema.parse({
     id: row.id,
     accountId: row.accountId,
@@ -48,9 +68,27 @@ export function projectTransaction(
     createdAt: row.createdAt.toISOString(),
     category: row.override?.category ?? null,
     merchant: row.override?.merchant ?? null,
+    classificationKind: row.override?.classificationKind ?? null,
+    effectiveKind: row.splits.length ? null : classification.kind,
+    classificationConfirmed:
+      row.splits.length > 0 || !classification.provisional,
+    splits: row.splits.map((line) => ({
+      id: line.id,
+      position: line.position,
+      category: line.category,
+      classificationKind: line.classificationKind,
+      money: { amountMinor: line.amountMinor.toString(), currency: "GBP" },
+    })),
+    transfer: linked
+      ? { confirmed: true, id: pair?.id ?? null, canRemove: pair !== undefined }
+      : null,
     note: { body: note?.body ?? null, version: note?.version ?? 0 },
     permissions: {
-      canCorrect: owned && row.sourceNamespace === "MANUAL",
+      canCorrect:
+        owned &&
+        row.sourceNamespace === "MANUAL" &&
+        row.splits.length === 0 &&
+        !linked,
       canClassify: owned,
       canNote: true,
     },
@@ -66,7 +104,12 @@ export async function readTransaction(
     include: transactionInclude(context),
   });
   if (!row) throw new NotFoundException();
-  return projectTransaction(row, await ownsAccount(tx, context, row.accountId));
+  const paired = await pairedTransactionIds(tx, [id]);
+  return projectTransaction(
+    row,
+    await ownsAccount(tx, context, row.accountId),
+    paired.has(id),
+  );
 }
 export async function lockTransactionAccount(
   tx: Prisma.TransactionClient,
@@ -97,4 +140,15 @@ export async function lockTransactionAccount(
   });
   if (!current) throw new NotFoundException();
   return current;
+}
+
+export async function pairedTransactionIds(
+  tx: Prisma.TransactionClient,
+  ids: readonly string[],
+): Promise<Set<string>> {
+  if (ids.length === 0) return new Set();
+  const rows = await tx.$queryRaw<
+    { id: string }[]
+  >`SELECT app.paired_transaction_ids(${[...ids]}::uuid[]) AS id`;
+  return new Set(rows.map((row) => row.id));
 }

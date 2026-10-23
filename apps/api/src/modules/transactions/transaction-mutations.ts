@@ -11,6 +11,7 @@ import {
   transactionFingerprint,
   transactionSourceHash,
 } from "@joint/domain/csv";
+import { validateClassificationKind } from "@joint/domain/cash-flow";
 import { londonToday } from "@joint/domain/transactions";
 import { randomUUID } from "node:crypto";
 import {
@@ -24,6 +25,7 @@ import { hashToken, type IdentityVault } from "../identity/identity-vault.js";
 import {
   lockTransactionAccount,
   readTransaction,
+  pairedTransactionIds,
 } from "./transaction-projection.js";
 
 type CreateInput = ReturnType<typeof transactionCreateSchema.parse>;
@@ -65,7 +67,7 @@ export class TransactionMutations {
         route,
         key,
         digest,
-        transactionSchema,
+        transactionSchema.pick({ id: true }).strip(),
       );
       if (previous) return readTransaction(tx, context, previous.id);
       await requireStableAccount(tx, input.accountId);
@@ -116,6 +118,26 @@ export class TransactionMutations {
       await requireStableAccount(tx, current.accountId);
       if (current.sourceNamespace !== "MANUAL")
         throw new BadRequestException({ error: { code: "SOURCE_IMMUTABLE" } });
+      if (
+        (await pairedTransactionIds(tx, [id])).has(id) ||
+        (await tx.transactionSplit.count({ where: { transactionId: id } }))
+      )
+        throw new ConflictException({
+          error: { code: "CLASSIFICATION_LOCKED" },
+        });
+      const annotation = await tx.transactionOverride.findUnique({
+        where: { transactionId: id },
+      });
+      try {
+        validateClassificationKind(
+          input.money.amountMinor,
+          annotation?.classificationKind ?? null,
+        );
+      } catch {
+        throw new BadRequestException({
+          error: { code: "INVALID_CLASSIFICATION" },
+        });
+      }
       await tx.transaction.update({
         where: { id },
         data: {

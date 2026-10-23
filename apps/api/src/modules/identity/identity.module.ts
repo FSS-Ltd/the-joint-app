@@ -23,6 +23,16 @@ import { createTransactionsController } from "../transactions/transactions.contr
 import { TransactionQueries } from "../transactions/transaction-queries.js";
 import { TransactionMutations } from "../transactions/transaction-mutations.js";
 import { TransactionAnnotations } from "../transactions/transaction-annotations.js";
+import { TransactionSplits } from "../transactions/transaction-splits.js";
+import { ReportService } from "../reports/report.service.js";
+import { CategoriesService } from "../categories/category.service.js";
+import { BudgetMutations } from "../budgets/budget-mutations.js";
+import { AccountCoverage } from "../accounts/account-coverage.js";
+import { createReportsController } from "../reports/reports.controller.js";
+import { createBudgetsController } from "../budgets/budgets.controller.js";
+import { createCoverageController } from "../accounts/coverage.controller.js";
+import { TransfersService } from "../transfers/transfers.service.js";
+import { createTransfersController } from "../transfers/transfers.controller.js";
 export interface AuthOptions {
   database: PrismaClient;
   environment: AuthServerEnvironment;
@@ -35,6 +45,10 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       createAccountsController(),
       createImportsController(),
       createTransactionsController(),
+      createReportsController(),
+      createBudgetsController(),
+      createCoverageController(),
+      createTransfersController(),
     ];
   const { database, environment: env } = options;
   const provider = new AuthProvider(
@@ -50,7 +64,26 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   );
   const identity = new IdentityService(sessions, provider, database, vault);
   const scoped = new ScopedDatabase(database);
+  const reports = new ReportService(scoped);
   return [
+    createTransfersController({
+      identity,
+      transfers: new TransfersService(scoped, vault),
+    }),
+    createReportsController({
+      identity,
+      reports,
+      categories: new CategoriesService(scoped),
+    }),
+    createBudgetsController({
+      identity,
+      reports,
+      budgets: new BudgetMutations(scoped),
+    }),
+    createCoverageController({
+      identity,
+      coverage: new AccountCoverage(scoped),
+    }),
     createIdentityController(identity, new HouseholdService(database, vault)),
     createAccountsController({
       identity,
@@ -63,6 +96,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       queries: new TransactionQueries(scoped, vault),
       mutations: new TransactionMutations(scoped, vault),
       annotations: new TransactionAnnotations(scoped),
+      splits: new TransactionSplits(scoped),
     }),
     createImportsController({
       identity,

@@ -406,7 +406,10 @@ test("real CSV review, replay, overlap choices, private notes, corrections and r
   await expectMutation(page, `${base}/transactions/${manualId}`, "PATCH", () =>
     page.getByRole("button", { name: "Save correction" }).click(),
   );
-  await page.getByLabel("Category", { exact: true }).fill("Food");
+  const classification = page.locator("section").filter({
+    has: page.getByRole("heading", { name: "Classification", exact: true }),
+  });
+  await classification.getByLabel("Category", { exact: true }).fill("Food");
   await page.getByLabel("Merchant", { exact: true }).fill("Synthetic café");
   await expectMutation(
     page,
@@ -423,7 +426,9 @@ test("real CSV review, replay, overlap choices, private notes, corrections and r
         .getByRole("button", { name: "Undo last classification change" })
         .click(),
   );
-  await expect(page.getByLabel("Category", { exact: true })).toHaveValue("");
+  await expect(
+    classification.getByLabel("Category", { exact: true }),
+  ).toHaveValue("");
   await page
     .getByRole("textbox", { name: "Private note", exact: true })
     .fill("Owner-only synthetic reminder");

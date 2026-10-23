@@ -90,7 +90,7 @@ A client-supplied household ID; a totals-only partner requesting detailed data; 
 - [ ] Implement calendar-month budgets with GBP defaults, complete-period reporting and clear missing-history labels.
 - [ ] Build responsive dashboard, activity filters and budget charts with accessible table alternatives; use permission-scoped query keys.
 - [ ] Ensure the service worker caches only static/offline-shell assets and finance responses are no-store.
-- [ ] Run `pnpm --filter @joint/domain test -- cash-flow` and `pnpm --filter @joint/web test:e2e -- monthly-review`.
+- [ ] Run `pnpm exec vitest run tests/cash-flow.test.ts` and `pnpm test:e2e tests/browser/monthly-review.spec.ts`.
 
 **Acceptance:** Both adults can review an authorised month, correct categories and see spending without transfer/card double counting. Hidden-account information cannot be inferred from an inconsistent total.
 

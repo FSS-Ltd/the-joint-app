@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  Put,
   ServiceUnavailableException,
   type Type,
 } from "@nestjs/common";
@@ -19,6 +20,7 @@ import {
   transactionCreateSchema,
   transactionListQuerySchema,
   transactionPatchSchema,
+  transactionSplitsSchema,
 } from "@joint/contracts";
 import type { IdentityService } from "../identity/identity.service.js";
 import { financeContext, validateInput as valid } from "../../http-input.js";
@@ -26,11 +28,14 @@ import type { TransactionQueries } from "./transaction-queries.js";
 import type { TransactionMutations } from "./transaction-mutations.js";
 import type { TransactionAnnotations } from "./transaction-annotations.js";
 
+import type { TransactionSplits } from "./transaction-splits.js";
+
 interface Services {
   identity: IdentityService;
   queries: TransactionQueries;
   mutations: TransactionMutations;
   annotations: TransactionAnnotations;
+  splits: TransactionSplits;
 }
 export function createTransactionsController(
   services?: Services,
@@ -54,6 +59,7 @@ export function createTransactionsController(
         input.accountId,
         input.limit,
         input.cursor,
+        input,
       );
     }
     @Get(":id")
@@ -102,6 +108,22 @@ export function createTransactionsController(
         uuid,
         input,
         expected,
+      );
+    }
+    @Put(":id/splits")
+    @Header("Cache-Control", "no-store")
+    async split(
+      @Headers("authorization") auth: string | undefined,
+      @Param("householdId") hh: string,
+      @Param("id") id: string,
+      @Headers("if-match") version: string | undefined,
+      @Body() body: unknown,
+    ) {
+      return use().splits.replace(
+        await financeContext(use().identity, auth, hh),
+        valid(idempotencyKeySchema, id),
+        valid(transactionSplitsSchema, body),
+        valid(quotedVersionSchema, version),
       );
     }
     @Patch(":id/annotation")
