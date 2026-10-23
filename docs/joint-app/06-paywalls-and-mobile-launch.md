@@ -1,5 +1,7 @@
 # 06 — Paywalls, household subscriptions and mobile launch
 
+> **CSV-first MVP revision, 23 October 2026:** Direct bank connections and bank procurement are post-MVP by founder instruction. The current MVP uses CSV/manual records; historical live-bank prerequisites and live-refresh paywall promises below are deferred. Provider evidence remains required before future live work. No live broker connector is included in the CSV-first build; its separate permission gate remains. See the [canonical scope revision](01-product-specification.md).
+
 **Research checked: 22 October 2026.** This is a proposed product and engineering specification. Prices, costs and conversion assumptions are hypotheses; no subscriptions, provider contracts or regulatory permissions have been purchased or obtained. “Verified” below means supported by the linked official documentation on this date. Store policies, vendor terms and law must be checked again before release.
 
 ## 1. Commercial decision

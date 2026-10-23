@@ -1,5 +1,7 @@
 # Phase 0 — Feasibility and Access Implementation Plan
 
+> **CSV-first MVP revision, 23 October 2026:** Direct bank connections and bank procurement are post-MVP by founder instruction. The current MVP uses CSV/manual records; historical live-bank prerequisites and live-refresh paywall promises below are deferred. Provider evidence remains required before future live work. No live broker connector is included in the CSV-first build; its separate permission gate remains. See the [canonical scope revision](../01-product-specification.md).
+
 **Goal:** Resolve the facts that could make the planned connected product impossible or uneconomic, and establish an executable baseline.
 
 **Architecture:** Confirm a cloud-backed TypeScript app with local inference and explicit provider boundaries. Use research, synthetic fixtures and targeted permitted spikes.

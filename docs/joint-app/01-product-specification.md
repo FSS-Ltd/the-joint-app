@@ -16,6 +16,14 @@ The founder explicitly deferred child profiles until post-MVP. Child-specific pr
 
 Investing scope excludes crypto. Other investment coverage is verified per source/product and remains read-only; no blanket provider or asset-method support is promised. All product UI is mobile first and follows [the design direction](../decisions/design-direction.md).
 
+## CSV-first MVP revision — 23 October 2026
+
+By explicit founder instruction, direct bank connections are post-MVP. The initial manual founder/public MVP uses CSV uploads and manual records; it does not require a live bank feed, bank supplier approval, or connected-bank billing allowances. Bank integration sections below are retained as post-MVP design material. R02 and direct-bank portions of R16 are deferred; no screen or marketing may describe imported records as connected accounts.
+
+The CSV-first MVP does not implement a live broker connector. Provider-specific broker work retains its approval gate; generic CSV/manual investment tracking is independent. Requirements for approved live feeds in the historical “connected finance core”, founder/public release definitions and founder acceptance lists below do not gate the initial CSV/manual MVP. Retain financial correctness, permissions, privacy, projection/local-AI requirements appropriate to their actual delivery phases, security, recovery and device/billing release checks. CSV support is not relabelled as live connectivity.
+
+Supplier procurement evidence remains required before the future live-bank implementation/activation, not before generic/manual MVP development. Child profiles are also post-MVP. Only implemented capabilities may be sold or advertised; bank-refresh pricing and entitlement limits remain future hypotheses.
+
 ## 1. Executive summary
 
 The Joint App brings spending, debts, savings, investments and children's assets into one permission-aware household view. It answers: Where did our money go? What do we own and owe? What have we put aside? When could we reach a goal if these assumptions hold? What spending changes would alter that date?
