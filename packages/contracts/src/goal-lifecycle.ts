@@ -14,20 +14,10 @@ export const goalWriteSchema = goalDtoSchema
   .extend({ name: goalDtoSchema.shape.name.refine(isSupportedFinancialText) });
 export type GoalWrite = z.infer<typeof goalWriteSchema>;
 export const goalPageQuerySchema = z
-  .object({
-    afterVersion: z
-      .string()
-      .regex(/^(0|[1-9]\d{0,9})$/)
-      .transform(Number)
-      .pipe(z.number().int().max(2147483647))
-      .optional()
-      .default(0),
-  })
+  .object({ cursor: z.string().min(1).max(4096).optional() })
   .strict();
-export const goalListQuerySchema = z
-  .object({ afterId: z.uuid().optional() })
-  .strict();
-export const goalPageDtoSchema = z
+export const goalListQuerySchema = goalPageQuerySchema;
+export const goalRevisionPageSchema = z
   .object({
     goal: goalDtoSchema,
     revisions: z
@@ -38,11 +28,17 @@ export const goalPageDtoSchema = z
     nextAfterVersion: z.number().int().positive().max(2147483647).nullable(),
   })
   .strict();
-export const goalListDtoSchema = z
+export const goalRevisionListSchema = z
   .object({
     goals: z.array(goalDtoSchema).max(50),
     nextAfterId: z.uuid().nullable(),
   })
   .strict();
+export const goalPageDtoSchema = goalRevisionPageSchema
+  .omit({ nextAfterVersion: true })
+  .extend({ nextCursor: z.string().max(4096).nullable() });
+export const goalListDtoSchema = goalRevisionListSchema
+  .omit({ nextAfterId: true })
+  .extend({ nextCursor: z.string().max(4096).nullable() });
 export type GoalPageDto = z.infer<typeof goalPageDtoSchema>;
 export type GoalListDto = z.infer<typeof goalListDtoSchema>;

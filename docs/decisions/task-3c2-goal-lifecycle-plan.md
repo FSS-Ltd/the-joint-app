@@ -31,9 +31,9 @@
 
 ## Task 1: Contracts and database lifecycle
 
-**Files:** create `packages/contracts/src/goal-lifecycle.ts`, `tests/goal-lifecycle.test.ts`, `tests/goal-lifecycle.integration.ts`, additive migration `20261023081000_shared_goal_lifecycle/migration.sql`; update contract exports and Prisma schema.
+**Files:** create `packages/contracts/src/goal-lifecycle.ts`, `tests/goal-lifecycle.test.ts`, `tests/goal-lifecycle.integration.ts`, additive migrations `20261023081000_shared_goal_lifecycle/migration.sql` and `20261023081100_goal_input_boundary/migration.sql`; update contract exports and Prisma schema.
 
-**Interfaces:** `goalWriteSchema` contains name/status/beneficiary/priority/target/targetDate; `goalPageDtoSchema` contains goal, immutable revision entries (goal plus timestamp), nextAfterVersion; `goalListDtoSchema` contains goals and nextAfterId. Query schemas permit one canonical cursor only. `app.write_goal(uuid,integer,jsonb)` creates at expected version zero or edits at exact current version. `app.read_goal(uuid,integer)` returns a bounded history page and latest accessible metadata. `app.list_goals(uuid)` returns fifty goals and a continuation. The functions are usable in active scope or read-only archive scope as appropriate; runtime direct tables remain inaccessible.
+**Interfaces:** `goalWriteSchema` contains name/status/beneficiary/priority/target/targetDate; `goalPageDtoSchema` contains goal, immutable revision entries (goal plus timestamp) and encrypted nextCursor; `goalListDtoSchema` contains goals and encrypted nextCursor. Strict query schemas permit only an opaque cursor. Internal revision page/list schemas validate database nextAfterVersion/nextAfterId fields before the service seals them. `app.write_goal(uuid,integer,jsonb)` creates at expected version zero or edits at exact current version. `app.read_goal(uuid,integer)` returns a bounded history page and latest accessible metadata. `app.list_goals(uuid)` returns fifty goals and a continuation. The functions are usable in active scope or read-only archive scope as appropriate; runtime direct tables remain inaccessible.
 
 - [ ] Write strict contract and real-runtime integration assertions first: two-adult edits, int64 amounts, history, stale concurrent writes, archived read-only, legacy default denial, cross-tenant denial, no raw privileges, exit cutoff, replacement-member denial and deletion retention.
 - [ ] Run focused tests. Expected: FAIL because lifecycle contracts/functions do not exist.
@@ -45,7 +45,7 @@
 
 **Files:** create focused services/controllers under `apps/api/src/modules/goals/`, endpoint tests; update identity registration, API documentation and `docs/progress.md`.
 
-**Interfaces:** `PUT /v1/households/:householdId/goals/:goalId` with strict goal metadata and quoted If-Match (`"0"` creates, later exact versions edit); GET collection/detail/history page and `/export` (JSON attachment with fresh MFA). Separate `/v1/me/archive/goals` list/detail/export uses recorded participant cutoff rather than caller household. Reads are no-store; archive has no writes. Safe unavailable/invalid/version errors reveal no source details.
+**Interfaces:** `POST /v1/households/:householdId/goals` with Idempotency-Key creates; `PUT /v1/households/:householdId/goals/:goalId` with strict goal metadata and positive quoted If-Match edits; GET collection/detail/history page and `/export` (JSON attachment with fresh MFA). Separate `/v1/me/archive/goals` list/detail/export uses recorded participant cutoff rather than caller household. Reads are no-store; archive has no writes. Safe unavailable/invalid/version errors reveal no source details.
 
 - [ ] Write real service/HTTP assertions first: safe input rejection, active/archive dispatch, missing session, current-session revocation, fresh-MFA export requirement, free export with no entitlement and no funding fields. Expected focused run: FAIL because routes/services are missing.
 - [ ] Implement thin controllers, small scoped service and safe database error mapping; register in the existing identity factory. Reuse existing identity/archive context and input helpers.
@@ -56,3 +56,5 @@
 ## Recovery and limitations
 
 This is an additive migration with no ownership backfill. Disable lifecycle routes to roll back application behavior while retaining immutable evidence; do not drop shared records. Participants cannot be widened in this step: explicit resharing requires a separate reviewed policy. Future funding activation must integrate account locks, source evidence, privacy fences and archive semantics. JSON pages are a new metadata-only export; they do not claim account history or stored export-job coverage. No UI or production performance claim is made.
+
+Implementation refinement: public creation uses the existing encrypted RequestReplay convention, and public cursors are authenticated/encrypted with the existing IdentityVault and bound to user, session, active membership/grant scope, goal and operation. Internal SQL creation at expected version zero and raw database cursors are not exposed as public creation/pagination conventions. This corrects the draft interface against the canonical API rules before delivery.

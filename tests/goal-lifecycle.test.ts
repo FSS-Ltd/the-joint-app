@@ -31,17 +31,15 @@ it("accepts exact adult goal metadata and rejects private funding fields", () =>
   ])
     expect(goalWriteSchema.safeParse(bad).success).toBe(false);
 });
-it("accepts only canonical bounded history and list cursors", () => {
-  expect(goalPageQuerySchema.parse({})).toEqual({ afterVersion: 0 });
-  expect(goalPageQuerySchema.parse({ afterVersion: "50" })).toEqual({
-    afterVersion: 50,
-  });
-  for (const value of ["01", "-1", "1.0", "2147483648", ["1"]])
-    expect(goalPageQuerySchema.safeParse({ afterVersion: value }).success).toBe(
-      false,
-    );
+it("accepts only bounded opaque pagination input", () => {
+  expect(goalPageQuerySchema.parse({})).toEqual({});
   expect(goalListQuerySchema.parse({})).toEqual({});
-  expect(goalListQuerySchema.safeParse({ householdId: "secret" }).success).toBe(
-    false,
-  );
+  for (const query of [
+    { afterVersion: "1" },
+    { afterId: "secret" },
+    { cursor: "" },
+    { cursor: "x".repeat(4097) },
+    { cursor: ["x"] },
+  ])
+    expect(goalPageQuerySchema.safeParse(query).success).toBe(false);
 });

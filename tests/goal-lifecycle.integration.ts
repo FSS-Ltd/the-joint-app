@@ -1,15 +1,19 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import type { AuthContext, GoalDto } from "../packages/contracts/dist/index.js";
 import { createOrm, type Prisma } from "../packages/database/dist/client.js";
 import { ScopedDatabase } from "../packages/database/dist/scoped-transaction.js";
 import { ArchiveDatabase } from "../packages/database/dist/archive-transaction.js";
 import { createFixtureOwner } from "./fixtures/database.js";
+import { GoalService } from "../apps/api/src/modules/goals/goals.service.js";
+import { IdentityVault } from "../apps/api/src/modules/identity/identity-vault.js";
 const owner = createFixtureOwner();
 if (!process.env.DATABASE_URL) throw Error("Local runtime database required");
 const runtime = createOrm(process.env.DATABASE_URL),
   scoped = new ScopedDatabase(runtime),
   archive = new ArchiveDatabase(runtime);
+const key = randomBytes(32).toString("base64"),
+  service = new GoalService(scoped, archive, new IdentityVault(key, key));
 const hh = randomUUID(),
   otherHh = randomUUID();
 function actor(householdId = hh): AuthContext {
@@ -226,6 +230,34 @@ it("bounds and resumes history and list pages without duplicates", async () => {
   const last = await scoped.withScope(a, (tx) => page(tx, id, 50));
   expect(last?.revisions.map((r) => r.goal.version)).toEqual([51, 52]);
   expect(last?.nextAfterVersion).toBeNull();
+  const publicPage = await service.read(a, id);
+  expect(publicPage.revisions).toHaveLength(50);
+  expect(publicPage.nextCursor).toBeTypeOf("string");
+  const publicNext = await service.export(
+    { ...a, mfaAuthenticatedAt: Date.now() },
+    id,
+    publicPage.nextCursor ?? undefined,
+  );
+  expect(publicNext.revisions.map((r) => r.goal.version)).toEqual([51, 52]);
+  await expect(
+    service.read(outsider, id, publicPage.nextCursor ?? undefined),
+  ).rejects.toMatchObject({ status: 400 });
+  await expect(
+    service.readArchive(b, id, publicPage.nextCursor ?? undefined),
+  ).rejects.toMatchObject({ status: 400 });
+  const alternate = await write(a, randomUUID(), 0);
+  await expect(
+    service.read(a, alternate.id, publicPage.nextCursor ?? undefined),
+  ).rejects.toMatchObject({ status: 400 });
+  for (let i = 0; i < 49; i++) await write(a, randomUUID(), 0);
+  const listing = await service.list(a);
+  expect(listing.goals).toHaveLength(50);
+  const more = await service.list(a, listing.nextCursor ?? undefined);
+  expect(more.goals.length).toBeGreaterThan(0);
+  expect(new Set([...listing.goals, ...more.goals].map((g) => g.id)).size).toBe(
+    listing.goals.length + more.goals.length,
+  );
+
   const [list] = await scoped.withScope(
     a,
     (tx) =>
