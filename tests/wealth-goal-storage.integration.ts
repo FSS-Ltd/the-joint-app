@@ -18,8 +18,10 @@ const accountB = randomUUID();
 const valuationA = randomUUID();
 const valuationB = randomUUID();
 const goalId = randomUUID();
+const otherGoalId = randomUUID();
 const scenarioId = randomUUID();
 const runId = randomUUID();
+const sourceRunId = randomUUID();
 const basicInput = JSON.stringify({
   schema: "projection-input",
   schemaVersion: 1,
@@ -91,11 +93,11 @@ beforeAll(async () => {
     ],
   });
   await owner.$executeRaw`INSERT INTO app."Goal" (id,"householdId",name,priority,"targetMinor") VALUES (${goalId}::uuid,${householdA}::uuid,'Synthetic goal',1,1000)`;
+  await owner.$executeRaw`INSERT INTO app."Goal" (id,"householdId",name,priority,"targetMinor") VALUES (${otherGoalId}::uuid,${householdA}::uuid,'Other synthetic goal',2,2000)`;
 });
 
 afterAll(async () => {
   await runtime.$disconnect();
-  await owner.$executeRaw`DELETE FROM app."ProjectionSource" WHERE "householdId"=${householdA}::uuid`;
   await owner.$executeRaw`DELETE FROM app."GoalAllocation" WHERE "householdId"=${householdA}::uuid`;
   await owner.$executeRaw`DELETE FROM app."ProjectionRun" WHERE "householdId"=${householdA}::uuid`;
   await owner.$executeRaw`DELETE FROM app."Scenario" WHERE "householdId"=${householdA}::uuid`;
@@ -166,28 +168,77 @@ it("binds immutable scenario and run evidence to matching modes and hashes", asy
   await expect(
     owner.$executeRaw`INSERT INTO app."ProjectionRun" (id,"householdId","goalId",mode,"canonicalInput",input,"inputHash",result,"engineVersion","datasetVersion","grantVersion") VALUES (${randomUUID()}::uuid,${householdA}::uuid,${goalId}::uuid,'BASIC',${missingMode},${missingMode}::jsonb,${hash(missingMode)},'{}'::jsonb,'1.0.0',1,0)`,
   ).rejects.toThrow();
+  await expect(
+    owner.$executeRaw`INSERT INTO app."ProjectionRun" (id,"householdId","goalId","scenarioId",mode,"canonicalInput",input,"inputHash",result,"engineVersion","datasetVersion","grantVersion") VALUES (${randomUUID()}::uuid,${householdA}::uuid,${otherGoalId}::uuid,${scenarioId}::uuid,'ADVANCED',${advancedInput},${advancedInput}::jsonb,${hash(advancedInput)},'{}'::jsonb,'1.0.0',1,0)`,
+  ).rejects.toThrow();
+  const changedAdvancedInput = JSON.stringify({
+    ...JSON.parse(advancedInput),
+    horizonMonths: 2,
+  });
+  await expect(
+    owner.$executeRaw`INSERT INTO app."ProjectionRun" (id,"householdId","goalId","scenarioId",mode,"canonicalInput",input,"inputHash",result,"engineVersion","datasetVersion","grantVersion") VALUES (${randomUUID()}::uuid,${householdA}::uuid,${goalId}::uuid,${scenarioId}::uuid,'ADVANCED',${changedAdvancedInput},${changedAdvancedInput}::jsonb,${hash(changedAdvancedInput)},'{}'::jsonb,'1.0.0',1,0)`,
+  ).rejects.toThrow();
   await owner.$executeRaw`INSERT INTO app."ProjectionRun" (id,"householdId","goalId",mode,"canonicalInput",input,"inputHash",result,"engineVersion","datasetVersion","grantVersion") VALUES (${runId}::uuid,${householdA}::uuid,${goalId}::uuid,'BASIC',${basicInput},${basicInput}::jsonb,${hash(basicInput)},'{}'::jsonb,'1.0.0',1,0)`;
   await expect(
     owner.$executeRaw`UPDATE app."ProjectionRun" SET "grantVersion"=1 WHERE id=${runId}::uuid`,
   ).rejects.toThrow();
 });
 
-it("deduplicates tenant-matched source dependencies and denies runtime access", async () => {
+it("freezes source dependencies with their run and denies runtime access", async () => {
   const sourceId = randomUUID();
-  await owner.$executeRaw`INSERT INTO app."ProjectionSource" (id,"householdId","runId","accountId","valuationId") VALUES (${sourceId}::uuid,${householdA}::uuid,${runId}::uuid,${accountA}::uuid,${valuationA}::uuid)`;
   await expect(
     owner.$executeRaw`INSERT INTO app."ProjectionSource" (id,"householdId","runId","accountId","valuationId") VALUES (${randomUUID()}::uuid,${householdA}::uuid,${runId}::uuid,${accountA}::uuid,${valuationA}::uuid)`,
   ).rejects.toThrow();
+  await owner.$transaction(async (tx) => {
+    await tx.$executeRaw`INSERT INTO app."ProjectionRun" (id,"householdId","goalId",mode,"canonicalInput",input,"inputHash",result,"engineVersion","datasetVersion","grantVersion") VALUES (${sourceRunId}::uuid,${householdA}::uuid,${goalId}::uuid,'BASIC',${basicInput},${basicInput}::jsonb,${hash(basicInput)},'{}'::jsonb,'1.0.0',1,0)`;
+    await tx.$executeRaw`INSERT INTO app."ProjectionSource" (id,"householdId","runId","accountId","valuationId") VALUES (${sourceId}::uuid,${householdA}::uuid,${sourceRunId}::uuid,${accountA}::uuid,${valuationA}::uuid)`;
+  });
+  const sources = await owner.$queryRaw<
+    { id: string }[]
+  >`SELECT id FROM app."ProjectionSource" WHERE "runId"=${sourceRunId}::uuid`;
+  expect(sources).toEqual([{ id: sourceId }]);
   await expect(
-    owner.$executeRaw`INSERT INTO app."ProjectionSource" (id,"householdId","runId","accountId","valuationId") VALUES (${randomUUID()}::uuid,${householdA}::uuid,${runId}::uuid,${accountA}::uuid,${valuationB}::uuid)`,
+    owner.$executeRaw`DELETE FROM app."ProjectionSource" WHERE id=${sourceId}::uuid`,
   ).rejects.toThrow();
   await expect(
     owner.$executeRaw`UPDATE app."ProjectionSource" SET "valuationId"=${valuationA}::uuid WHERE id=${sourceId}::uuid`,
   ).rejects.toThrow();
+  await owner.$executeRaw`DELETE FROM app."ProjectionRun" WHERE id=${sourceRunId}::uuid`;
+  expect(
+    await owner.$queryRaw`SELECT id FROM app."ProjectionSource" WHERE id=${sourceId}::uuid`,
+  ).toEqual([]);
   await expect(runtime.$queryRaw`SELECT id FROM app."Goal"`).rejects.toThrow();
   await expect(
     runtime.$executeRaw`INSERT INTO app."Goal" (id,"householdId",name,priority,"targetMinor") VALUES (${randomUUID()}::uuid,${householdA}::uuid,'Forged',1,100)`,
   ).rejects.toThrow();
+});
+
+it("rejects duplicate and mismatched source references during atomic creation", async () => {
+  const duplicateRunId = randomUUID();
+  await expect(
+    owner.$transaction(async (tx) => {
+      await tx.$executeRaw`INSERT INTO app."ProjectionRun" (id,"householdId","goalId",mode,"canonicalInput",input,"inputHash",result,"engineVersion","datasetVersion","grantVersion") VALUES (${duplicateRunId}::uuid,${householdA}::uuid,${goalId}::uuid,'BASIC',${basicInput},${basicInput}::jsonb,${hash(basicInput)},'{}'::jsonb,'1.0.0',1,0)`;
+      await tx.$executeRaw`INSERT INTO app."ProjectionSource" (id,"householdId","runId","accountId","valuationId") VALUES (${randomUUID()}::uuid,${householdA}::uuid,${duplicateRunId}::uuid,${accountA}::uuid,${valuationA}::uuid)`;
+      await tx.$executeRaw`INSERT INTO app."ProjectionSource" (id,"householdId","runId","accountId","valuationId") VALUES (${randomUUID()}::uuid,${householdA}::uuid,${duplicateRunId}::uuid,${accountA}::uuid,${valuationA}::uuid)`;
+    }),
+  ).rejects.toThrow();
+
+  const mismatchedRunId = randomUUID();
+  await expect(
+    owner.$transaction(async (tx) => {
+      await tx.$executeRaw`INSERT INTO app."ProjectionRun" (id,"householdId","goalId",mode,"canonicalInput",input,"inputHash",result,"engineVersion","datasetVersion","grantVersion") VALUES (${mismatchedRunId}::uuid,${householdA}::uuid,${goalId}::uuid,'BASIC',${basicInput},${basicInput}::jsonb,${hash(basicInput)},'{}'::jsonb,'1.0.0',1,0)`;
+      await tx.$executeRaw`INSERT INTO app."ProjectionSource" (id,"householdId","runId","accountId","valuationId") VALUES (${randomUUID()}::uuid,${householdA}::uuid,${mismatchedRunId}::uuid,${accountA}::uuid,${valuationB}::uuid)`;
+    }),
+  ).rejects.toThrow();
+});
+
+it("stamps run creation transaction in the database", async () => {
+  const forgedRunId = randomUUID();
+  await owner.$executeRaw`INSERT INTO app."ProjectionRun" (id,"householdId","goalId",mode,"canonicalInput",input,"inputHash",result,"engineVersion","datasetVersion","grantVersion","creationTransactionId") VALUES (${forgedRunId}::uuid,${householdA}::uuid,${goalId}::uuid,'BASIC',${basicInput},${basicInput}::jsonb,${hash(basicInput)},'{}'::jsonb,'1.0.0',1,0,0)`;
+  const [run] = await owner.$queryRaw<
+    { creationTransactionId: bigint }[]
+  >`SELECT "creationTransactionId" FROM app."ProjectionRun" WHERE id=${forgedRunId}::uuid`;
+  expect(run?.creationTransactionId).toBeGreaterThan(0n);
 });
 
 it("forces RLS and grants no runtime privileges on every new table", async () => {

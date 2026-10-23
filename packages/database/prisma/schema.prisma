@@ -415,6 +415,7 @@ model ProjectionRun {
   roundingConvention String @default("HALF_UP_MINOR_UNIT") @db.VarChar(24)
   datasetVersion Int
   grantVersion Int
+  creationTransactionId BigInt @default(dbgenerated("txid_current()"))
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   sources ProjectionSource[]
   @@unique([householdId, id])
