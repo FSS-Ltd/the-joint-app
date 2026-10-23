@@ -6,6 +6,10 @@ import { createDatabase } from "../../packages/database/dist/index.js";
 import { createOrm } from "../../packages/database/dist/client.js";
 import { startIdentityFixture } from "../fixtures/identity.js";
 
+const apiPort = Number(process.env.BOOTSTRAP_TEST_API_PORT ?? 3001);
+if (!Number.isInteger(apiPort) || apiPort < 1024 || apiPort > 65535)
+  throw new Error("Invalid isolated bootstrap test API port");
+
 test("web forwards its HttpOnly session to the API without trusting client household IDs", async ({
   context,
   page,
@@ -42,7 +46,7 @@ test("web forwards its HttpOnly session to the API without trusting client house
         },
       },
     });
-    await app.listen(3001, "127.0.0.1");
+    await app.listen(apiPort, "127.0.0.1");
     expect((await context.request.get("/api/bootstrap")).status()).toBe(401);
     await context.addCookies([
       {

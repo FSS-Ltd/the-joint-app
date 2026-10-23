@@ -9,6 +9,7 @@ import {
   type Identity,
 } from "./client";
 import { Feedback, IdentityFrame } from "./frame";
+import { PasswordField } from "./password-field";
 
 type Mode = "sign-in" | "sign-up" | "recovery";
 type Stage = "credentials" | "verify" | "password";
@@ -170,29 +171,23 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
           )}
           {(stage === "password" ||
             (stage === "credentials" && mode !== "recovery")) && (
-            <label>
-              {stage === "password" ? "New password" : "Password"}
-              <input
-                disabled={disabled}
-                type="password"
-                autoComplete={
-                  mode === "sign-in" && stage === "credentials"
-                    ? "current-password"
-                    : "new-password"
-                }
-                required
-                minLength={mode === "sign-in" ? 1 : 12}
-                maxLength={128}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                aria-describedby="password-hint"
-              />
-              <span className="field-hint" id="password-hint">
-                {mode === "sign-in"
+            <PasswordField
+              label={stage === "password" ? "New password" : "Password"}
+              hint={
+                mode === "sign-in"
                   ? "Use the password for your Joint App account."
-                  : "Use 12–128 characters. A longer phrase works well."}
-              </span>
-            </label>
+                  : "Use 12–128 characters. A longer phrase works well."
+              }
+              value={password}
+              onChange={setPassword}
+              disabled={disabled}
+              autoComplete={
+                mode === "sign-in" && stage === "credentials"
+                  ? "current-password"
+                  : "new-password"
+              }
+              minLength={mode === "sign-in" ? 1 : 12}
+            />
           )}
           {stage === "verify" && (
             <label>
