@@ -63,7 +63,16 @@ export class JobsRepository {
       );
     const token = randomUUID();
     return this.database.$transaction(async (tx) => {
-      await tx.$executeRaw`UPDATE app."Job" SET state = 'FAILED', "leaseToken" = NULL, "leaseOwner" = NULL, "leaseUntil" = NULL WHERE state = 'LEASED' AND "leaseUntil" <= clock_timestamp() AND attempt >= "maxAttempts"`;
+      await tx.$executeRaw`
+        WITH exhausted AS (
+          SELECT id FROM app."Job" WHERE type = ANY(${[...types]}::text[])
+            AND (${jobId ?? null}::uuid IS NULL OR id = ${jobId ?? null}::uuid)
+            AND state = 'LEASED' AND "leaseUntil" <= clock_timestamp() AND attempt >= "maxAttempts"
+          ORDER BY "leaseUntil", id FOR UPDATE SKIP LOCKED LIMIT 100
+        )
+        UPDATE app."Job" AS job SET state = 'FAILED', "leaseToken" = NULL, "leaseOwner" = NULL, "leaseUntil" = NULL
+        FROM exhausted WHERE job.id = exhausted.id
+      `;
       const rows = await tx.$queryRaw<JobLease[]>`
         WITH candidate AS (
           SELECT id FROM app."Job"
@@ -100,14 +109,31 @@ export class JobsRepository {
     apply: (tx: Prisma.TransactionClient) => Promise<void>,
     timeoutMs = 5000,
   ): Promise<boolean> {
+    if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 5000)
+      throw new Error("Job transaction timeout must be 1–5000 milliseconds");
     try {
       return await this.database.$transaction(
         async (tx) => {
+          await tx.$queryRaw`SELECT set_config('statement_timeout', ${String(timeoutMs)}, true)`;
           const rows = await tx.$queryRaw<
             { id: string }[]
           >`SELECT id FROM app."Job" WHERE id = ${lease.id}::uuid AND state = 'LEASED' AND "leaseToken" = ${lease.leaseToken}::uuid AND "leaseUntil" > clock_timestamp() FOR UPDATE`;
           if (!rows.length) return false;
-          await apply(tx);
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          try {
+            // Prisma's transaction timeout alone does not settle a hanging callback.
+            await Promise.race([
+              apply(tx),
+              new Promise<never>((_resolve, reject) => {
+                timer = setTimeout(
+                  () => reject(new Error("Job handler deadline exceeded")),
+                  timeoutMs,
+                );
+              }),
+            ]);
+          } finally {
+            clearTimeout(timer);
+          }
           const changed =
             await tx.$executeRaw`UPDATE app."Job" SET state = 'SUCCEEDED', "leaseOwner" = NULL, "leaseToken" = NULL, "leaseUntil" = NULL WHERE id = ${lease.id}::uuid AND "leaseUntil" > clock_timestamp()`;
           if (changed !== 1) throw new LeaseExpired();

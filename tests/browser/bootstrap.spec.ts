@@ -74,3 +74,22 @@ test("web forwards its HttpOnly session to the API without trusting client house
     await identity.close();
   }
 });
+
+test("web returns a safe unavailable response when its API is offline", async ({
+  context,
+}) => {
+  await context.addCookies([
+    {
+      name: "joint-access",
+      value: "synthetic-token-never-echo",
+      url: "http://127.0.0.1:3000",
+      httpOnly: true,
+      sameSite: "Lax",
+      secure: false,
+    },
+  ]);
+  const response = await context.request.get("/api/bootstrap");
+  expect(response.status()).toBe(503);
+  expect(await response.json()).toEqual({ status: "unavailable" });
+  expect(response.headers()["cache-control"]).toContain("no-store");
+});

@@ -119,3 +119,45 @@ it("retries a failed handler without publishing its writes or exception details"
     await database.$disconnect();
   }
 });
+
+it("bounds an unresponsive handler so the worker can finish its cycle", async () => {
+  const database = createOrm(
+    process.env.DATABASE_URL ??
+      "postgresql://joint:local-development-only@127.0.0.1:5432/joint",
+  );
+  const householdId = randomUUID();
+  const type = `synthetic.timeout.${randomUUID()}`;
+  const jobs = new JobsRepository(database);
+  try {
+    await database.household.create({ data: { id: householdId } });
+    await jobs.enqueue({
+      householdId,
+      type,
+      resourceId: randomUUID(),
+      idempotencyKey: randomUUID(),
+      payload: {},
+    });
+    const started = performance.now();
+    const result = await runJobs(
+      jobs,
+      {
+        [type]: async () => {
+          await new Promise(() => {});
+        },
+      },
+      { owner: "test", maxJobs: 1, budgetMs: 250 },
+    );
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect(result.failed).toBe(1);
+    expect(
+      (
+        await database.household.findUniqueOrThrow({
+          where: { id: householdId },
+        })
+      ).revision,
+    ).toBe(0);
+  } finally {
+    await database.household.deleteMany({ where: { id: householdId } });
+    await database.$disconnect();
+  }
+}, 2000);

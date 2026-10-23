@@ -46,11 +46,19 @@ export async function runJobs(
     const handler = handlers[lease.type];
     if (!handler) throw new Error("Claimed job has no registered handler");
     try {
+      const transactionBudget = Math.min(
+        5000,
+        Math.floor(deadline - performance.now()),
+      );
+      if (transactionBudget < 1 || options.signal?.aborted) {
+        await jobs.fail(lease, 0);
+        break;
+      }
       if (
         await jobs.complete(
           lease,
           (tx) => handler(lease, tx),
-          Math.max(1, Math.floor(deadline - performance.now())),
+          transactionBudget,
         )
       )
         result.succeeded++;

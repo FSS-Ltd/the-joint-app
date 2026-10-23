@@ -67,7 +67,12 @@ it("verifies identity, resolves household from DB and rejects revoked or forged 
       ).toBe(401);
     await database.sessionRegistry.update({
       where: { id: sessionId },
-      data: { revokedAt: new Date() },
+      data: { expiresAt: new Date(0) },
+    });
+    expect((await request(token)).status).toBe(401);
+    await database.sessionRegistry.update({
+      where: { id: sessionId },
+      data: { expiresAt: new Date(Date.now() + 60_000), revokedAt: new Date() },
     });
     expect((await request(token)).status).toBe(401);
   } finally {

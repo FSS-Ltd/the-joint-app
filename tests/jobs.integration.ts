@@ -205,3 +205,77 @@ it("rejects cross-household outbox references at the database boundary", async (
     0,
   );
 });
+
+it("skips exhausted leases locked by another transaction when claiming unrelated work", async () => {
+  const type = `synthetic.lock.${randomUUID()}`;
+  const exhausted = await jobs.enqueue({
+    householdId,
+    type,
+    resourceId: randomUUID(),
+    idempotencyKey: randomUUID(),
+    payload: {},
+    maxAttempts: 1,
+  });
+  const next = await jobs.enqueue({
+    householdId,
+    type,
+    resourceId: randomUUID(),
+    idempotencyKey: randomUUID(),
+    payload: {},
+  });
+  expect(await jobs.claim("crashed", [type], 50, exhausted.id)).not.toBeNull();
+  let release: () => void = () => {};
+  let locked: () => void = () => {};
+  const released = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const acquired = new Promise<void>((resolve) => {
+    locked = resolve;
+  });
+  const holder = database.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM app."Job" WHERE id = ${exhausted.id}::uuid FOR UPDATE`;
+    locked();
+    await released;
+  });
+  await acquired;
+  await delay(100);
+  const claim = jobs.claim("other", [type], 2000);
+  try {
+    const result = await Promise.race([
+      claim,
+      delay(300).then(() => "blocked"),
+    ]);
+    expect(result).not.toBe("blocked");
+    expect(result).toMatchObject({ id: next.id });
+  } finally {
+    release();
+    await holder;
+    await claim;
+  }
+});
+
+it("rejects a handler deadline promptly and fences delayed writes after rollback", async () => {
+  const job = await enqueue();
+  const lease = await jobs.claim("late", [job.type], 2000, job.id);
+  if (!lease) throw new Error("Expected a lease");
+  const started = performance.now();
+  await expect(
+    jobs.complete(
+      lease,
+      async (tx) => {
+        await delay(300);
+        await tx.household.update({
+          where: { id: householdId },
+          data: { revision: { increment: 1 } },
+        });
+      },
+      100,
+    ),
+  ).rejects.toThrow();
+  expect(performance.now() - started).toBeLessThan(250);
+  await delay(350);
+  expect(
+    (await database.household.findUniqueOrThrow({ where: { id: householdId } }))
+      .revision,
+  ).toBe(0);
+});

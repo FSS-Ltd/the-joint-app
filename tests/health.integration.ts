@@ -14,6 +14,7 @@ it("checks real connectivity and keeps liveness independent of database failure"
     expect((await fetch(`${url}/health/ready`)).status).toBe(200);
     await database.close();
     expect((await fetch(`${url}/health/ready`)).status).toBe(503);
+    expect((await fetch(`${url}/v1/bootstrap`)).status).toBe(401);
     expect(await (await fetch(`${url}/health/live`)).json()).toEqual({
       status: "ok",
     });

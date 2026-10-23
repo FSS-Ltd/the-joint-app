@@ -21,6 +21,12 @@ All execution/data remain local until the MVP is complete and explicit deploymen
 - Do not create empty domain/entitlement/test-fixture packages. Add them when real shared implementations exist; tests keep their fixtures locally for now.
 - Future hosted execution runs bounded batches. The local worker remains independently runnable; no Function depends on a permanent timer or process.
 
+## Runner execution contract
+
+A handler performs database-only work through the supplied transaction; external effects belong in later idempotent outbox consumers. Each handler gets at most five seconds, with an explicit callback deadline as well as Prisma and transaction-local SQL timeouts. Deadline rollback fences later transaction writes even if the JavaScript callback eventually resumes. CPU-heavy or external work must be split into bounded stages; a JavaScript timer cannot preempt synchronous CPU work.
+
+`budgetMs` is an admission/handler budget, not an exact end-to-end wall-clock deadline: connection acquisition, claims and failure cleanup add bounded database overhead. Future scheduled adapters must reserve that overhead below the platform invocation deadline. Cancellation stops admitting more work; an active transaction drains or reaches its deadline before worker shutdown closes the pools. No permanent Function timers, external side effects inside handler transactions or claims of production deployment compatibility.
+
 ## State
 
-Local implementation verified; independent review and fresh-checkout verification pending before PR. Five unit tests, sixteen integration tests and three browser tests passed. PostgreSQL stop/recovery preserved liveness; combined pnpm dev started all three processes. No later task started. Authoritative final revisions/check/merge evidence will be recorded in docs/progress.md and the step PR.
+Local implementation verified; independent review completed with three queue findings fixed; final local checks passed; PR/current CI/merge pending. Final local checks passed: 5 unit tests, 19 integration tests and 4 browser tests, including nonblocking cleanup, hanging callbacks, late writes, registry expiry, unconfigured auth and unavailable upstream. A clean archive passed frozen install/build/types. PostgreSQL stop/recovery preserved liveness; combined pnpm dev started all three processes. No later task started. Authoritative final revisions/check/merge evidence will be recorded in docs/progress.md and the step PR.
