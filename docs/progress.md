@@ -85,3 +85,15 @@ Branch: build/0.3-csv-investment-boundary. Current step records generic CSV/manu
 Acceptance: explicit CSV/manual boundary, held API permission/actual account gates, no fabricated holdings/coverage, correct source references and local document review before raising its PR. This is a boundary disposition for CSV-first development, not provider permission or a connected release. Next Task 0.4 begins only after this step's current CI and verified merge.
 
 Task 0.3 PR: https://github.com/FSS-Ltd/the-joint-app/pull/4. Initial checked local revision: `4c80f5243ead6282987695d1bd0c8f0f58b7bd50`. Formatting, diff, links/disclosure, primary-source review and missing-gate assertions passed before raising the PR. Existing full runtime CI is required on the latest revision; final head/test-merge evidence is recorded on the PR. Merge evidence is pending; no Task 0.4 work started.
+
+## Task 0.4 — Architecture, version and model baseline
+
+Predecessor Task 0.3 PR #4 verified merged at `9a5d2b3de3b29d8474a9f4bf41eea3936f78b2e7`. Final head `4dda7a4c1d5ec43ccb60d58ab3248c6bd473e529` and test-merge `e94a4c6a1c7fa446d8844015651faa2126368978` had successful Foundation checks (run 39876114710). This supersedes historical pending-merge Task 0.3 entries.
+
+Branch: build/0.4-architecture-version-baseline. Existing installed direct versions/licences compared against frozen-lockfile install; proposed ORM/auth/native pins checked through registry/official docs. Supabase region, backup and server-only auth boundary researched; no hosted project provisioned. Supabase skill was consulted; project Prisma-only migration history remains authoritative.
+
+Three bounded synthetic-only loopback model requests completed with digest verification and final unload. Short-prompt latency and artifact size are recorded; peak memory, 4K saturation, exact E4B/E2B lineage/comparison, household uptime and per-adult consent remain later gates. No download, real account data or cloud AI used. Task 0.4 acceptance is a truthful executable baseline and explicit measurement/implementation gates, not fabricated production/device approval.
+
+No product code/schema/dependencies or cloud resources changed. Current step will be locally checked and reviewed before its PR. Task 0.5 cannot begin until current CI and verified merge pass.
+
+Task 0.4 PR: https://github.com/FSS-Ltd/the-joint-app/pull/5. Locally checked baseline revision: `0ba8bb75fa8b525075f4dd91f22ed6b4b3ce14c0`. Pre-PR verification passed: frozen install, exact installed version/licence metadata, formatting, lint, 4 unit tests, links/disclosure/diff review, three synthetic model runs and JSON/fact/limit checks. No app code changed; full runtime CI remains required on the final PR head. Final head/test-merge/check evidence is recorded on the PR. Merge pending; no Task 0.5 work started.
