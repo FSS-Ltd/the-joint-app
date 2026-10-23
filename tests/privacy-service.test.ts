@@ -14,12 +14,9 @@ it("requires fresh MFA and verified live identity before journalling a deletion 
   const calls: string[] = [];
   const service = new PrivacyService(
     {
-      authorize: async () => {
+      requestJournaled: async () => {
         calls.push("authorize");
         throw new Error("invalid identity");
-      },
-      request: async () => {
-        throw new Error("must not mutate");
       },
       status: async () => null,
     },
@@ -42,10 +39,9 @@ it("does not mutate account state if the independent journal cannot persist the 
   const calls: string[] = [];
   const service = new PrivacyService(
     {
-      authorize: async () => {
+      requestJournaled: async (_context, _id, _hash, _expiry, persist) => {
         calls.push("authorize");
-      },
-      request: async () => {
+        await persist([]);
         calls.push("mutation");
         throw new Error("must not mutate");
       },
@@ -68,10 +64,15 @@ it("returns only a purpose-bound receipt after durable intent precedes revocatio
     id = randomUUID();
   const service = new PrivacyService(
     {
-      authorize: async () => {
+      requestJournaled: async (_context, requestId, hash, _expiry, persist) => {
         calls.push("authorize");
-      },
-      request: async (_context, requestId, hash) => {
+        await persist([
+          {
+            provider: "clerk",
+            issuer: "https://synthetic.clerk.accounts.dev",
+            subject: "user_synthetic",
+          },
+        ]);
         calls.push("mutation");
         expect(hash).toMatch(/^[a-f0-9]{64}$/);
         return {

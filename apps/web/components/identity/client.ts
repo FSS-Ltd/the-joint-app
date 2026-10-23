@@ -1,3 +1,8 @@
+import {
+  authContinuation,
+  readAuthDestination,
+  type AuthDestination,
+} from "../../lib/auth-continuation";
 import type { MeResponse } from "@joint/contracts";
 
 export type Identity = MeResponse;
@@ -117,25 +122,15 @@ export function errorMessage(error: unknown): string {
     : "Something went wrong. Please try again.";
 }
 
-export function nextDestination():
-  "/join" | "/accounts" | "/household" | "/archive" | "/settings/privacy" {
-  const next = new URLSearchParams(window.location.search).get("next");
-  return next === "archive"
-    ? "/archive"
-    : next === "privacy"
-      ? "/settings/privacy"
-      : next === "join"
-        ? "/join"
-        : next === "accounts"
-          ? "/accounts"
-          : "/household";
+export function nextDestination(): AuthDestination {
+  return readAuthDestination(window.location.search);
 }
 
 export function finishAuth(state: string): void {
   const next = nextDestination();
   window.location.assign(
     state === "MFA_REQUIRED"
-      ? `/security${next === "/household" ? "" : `?next=${next === "/settings/privacy" ? "privacy" : next.slice(1)}`}`
+      ? authContinuation("/security", window.location.search)
       : next,
   );
 }

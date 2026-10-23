@@ -3,19 +3,22 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "next dev --hostname 127.0.0.1",
+    "dev": "node --import=../../scripts/web-env.mjs node_modules/next/dist/bin/next dev --hostname 127.0.0.1",
     "build": "next build",
-    "start": "next start --hostname 127.0.0.1",
+    "start": "node --import=../../scripts/web-env.mjs node_modules/next/dist/bin/next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "16.4.2",
-    "react": "19.3.1",
-    "react-dom": "19.3.1",
+    "@clerk/nextjs": "7.9.19",
     "@joint/contracts": "workspace:*",
-    "@joint/domain": "workspace:*"
+    "@joint/domain": "workspace:*",
+    "next": "16.4.2",
+    "qrcode": "1.5.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
   "devDependencies": {
+    "@types/qrcode": "1.5.6",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3"
   }

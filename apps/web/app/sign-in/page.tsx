@@ -1,4 +1,4 @@
-import { AuthForm } from "../../components/identity/auth-form";
+import { AuthEntry } from "../../components/identity/auth-entry";
 export default function SignInPage() {
-  return <AuthForm mode="sign-in" />;
+  return <AuthEntry mode="sign-in" />;
 }

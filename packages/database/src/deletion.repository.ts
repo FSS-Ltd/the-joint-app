@@ -1,3 +1,4 @@
+import type { ClerkPrivacyIdentity } from "./privacy-journal-entry.js";
 import type { OwnerArchiveContext } from "./archive-transaction.js";
 import type { Prisma, PrismaClient } from "./client.js";
 
@@ -38,6 +39,30 @@ export class DeletionRepository {
   ): Promise<DeletionStatus> {
     return this.withRuntime(async (tx) => {
       await bindIdentity(tx, context);
+      const [row] = await tx.$queryRaw<
+        StatusRow[]
+      >`SELECT * FROM app.request_deletion(${id}::uuid,${statusTokenHash},${statusExpiresAt}::timestamptz)`;
+      if (!row) throw new Error("Verified deletion unavailable");
+      return projectStatus(row);
+    });
+  }
+
+  /** Hold the actor lock across durable intent and revocation to exclude concurrent identity links. */
+  async requestJournaled(
+    context: OwnerArchiveContext,
+    id: string,
+    statusTokenHash: string,
+    statusExpiresAt: Date,
+    persist: (identities: readonly ClerkPrivacyIdentity[]) => Promise<void>,
+  ): Promise<DeletionStatus> {
+    return this.withRuntime(async (tx) => {
+      await bindIdentity(tx, context);
+      const identities = await tx.$queryRaw<
+        { issuer: string; subject: string }[]
+      >`SELECT * FROM app.deletion_clerk_identities()`;
+      await persist(
+        identities.map((identity) => ({ provider: "clerk", ...identity })),
+      );
       const [row] = await tx.$queryRaw<
         StatusRow[]
       >`SELECT * FROM app.request_deletion(${id}::uuid,${statusTokenHash},${statusExpiresAt}::timestamptz)`;

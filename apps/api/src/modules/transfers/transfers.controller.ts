@@ -17,10 +17,10 @@ import {
   transferRemoveSchema,
 } from "@joint/contracts";
 import { financeContext, validateInput as valid } from "../../http-input.js";
-import type { IdentityService } from "../identity/identity.service.js";
+import type { IdentityAccess } from "../identity/identity.service.js";
 import type { TransfersService } from "./transfers.service.js";
 interface Services {
-  identity: IdentityService;
+  identity: IdentityAccess;
   transfers: TransfersService;
 }
 export function createTransfersController(services?: Services): Type<unknown> {

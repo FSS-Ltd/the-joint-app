@@ -42,7 +42,10 @@ export const acceptInviteSchema = z
   .strict();
 export const idempotencyKeySchema = z.uuid();
 export const mfaCodeSchema = z
-  .object({ factorId: z.uuid(), code: z.string().regex(/^\d{6}$/) })
+  .object({
+    factorId: z.union([z.uuid(), z.literal("clerk_totp")]),
+    code: z.string().regex(/^\d{6}$/),
+  })
   .strict();
 
 export const verifiedIdentitySchema = z.object({
@@ -73,6 +76,12 @@ export const authResultSchema = z
       "PASSWORD_RESET_REQUIRED",
       "SIGNED_OUT",
     ]),
+    providerCleanupPending: z.boolean().optional(),
+    providerCleanupToken: z
+      .string()
+      .max(4096)
+      .regex(/^v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/)
+      .optional(),
     browserToken: z
       .string()
       .regex(/^[A-Za-z0-9_-]{43}$/)
@@ -121,7 +130,7 @@ export const meResponseSchema = z
     factors: z.array(
       z
         .object({
-          id: z.uuid(),
+          id: z.union([z.uuid(), z.literal("clerk_totp")]),
           friendlyName: z.string(),
           status: z.enum(["verified", "unverified"]),
         })

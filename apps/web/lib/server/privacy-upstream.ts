@@ -1,3 +1,4 @@
+import { sessionAuthorization } from "./clerk-session";
 import { readEnvironment, webEnvironmentSchema } from "@joint/contracts";
 import { BffError } from "./responses";
 
@@ -30,7 +31,7 @@ export async function privacyUpstream(
   const response = await fetch(url, {
     method: options.body ? "POST" : "GET",
     headers: {
-      Authorization: `Session ${token}`,
+      Authorization: sessionAuthorization(token),
       Accept: path.endsWith("/download") ? "text/csv" : "application/json",
       ...(options.body ? { "Content-Type": "application/json" } : {}),
     },

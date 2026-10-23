@@ -70,6 +70,8 @@ const knownErrors: Record<string, string> = {
   HOUSEHOLD_FULL: "This household already has two adult members.",
   HOUSEHOLD_EXISTS: "You already belong to a household.",
   IDEMPOTENCY_CONFLICT: "This request key was used with different details.",
+  IDENTITY_MIGRATION_REQUIRED:
+    "Verify your existing account before linking this sign-in.",
   MFA_REQUIRED: "Verify your authenticator before continuing.",
   MFA_REAUTH_REQUIRED:
     "Verify your authenticator again before this sensitive action.",

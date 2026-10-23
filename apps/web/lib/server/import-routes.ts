@@ -29,7 +29,7 @@ export function uploadCsv(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const household = financeId(householdId);
     const accountId = financeId(request.headers.get("X-Account-Id") ?? "");
     let mapping: string | undefined;
@@ -82,7 +82,7 @@ export function listImports(
       parseResponse(
         importListSchema,
         await upstream(`/v1/households/${financeId(householdId)}/imports`, {
-          token: sessionToken(request),
+          token: await sessionToken(request),
           query: financeQuery(request, importListQuerySchema),
         }),
       ),
@@ -96,7 +96,7 @@ export function readImport(
   rows = false,
 ): Promise<Response> {
   return route(async () => {
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const path =
       `/v1/households/${financeId(householdId)}/imports/${financeId(batchId)}` as const;
     const result = rows
@@ -120,7 +120,7 @@ export function mutateImport(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const path =
       `/v1/households/${financeId(householdId)}/imports/${financeId(batchId)}` as const;
     const ifMatch = financeVersion(request);

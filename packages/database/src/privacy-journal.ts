@@ -6,7 +6,10 @@ import {
   parseJournalEntry,
   type PrivacyJournalEntry,
 } from "./privacy-journal-entry.js";
-export type { PrivacyJournalEntry } from "./privacy-journal-entry.js";
+export type {
+  PrivacyJournalEntry,
+  ClerkPrivacyIdentity,
+} from "./privacy-journal-entry.js";
 
 /** Local-only journal, stored outside every database backup. Failure closes access. */
 export class PrivacyJournal {

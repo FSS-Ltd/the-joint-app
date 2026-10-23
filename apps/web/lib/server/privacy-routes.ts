@@ -26,7 +26,7 @@ export function createExport(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const body = await requestBody(request, exportScopeSchema);
     const response = await privacyUpstream(exportPath(householdId), token, {
       body,
@@ -42,7 +42,7 @@ export function readExport(
   return route(async () => {
     const response = await privacyUpstream(
       `${exportPath(householdId)}/${financeId(id)}`,
-      sessionToken(request),
+      await sessionToken(request),
     );
     return json(parseResponse(exportStatusSchema, await response.json()));
   });
@@ -61,7 +61,7 @@ export async function downloadExport(
       );
     const response = await privacyUpstream(
       `${exportPath(householdId)}/${financeId(id)}/download`,
-      sessionToken(request),
+      await sessionToken(request),
       { signal: request.signal },
     );
     if (
@@ -118,7 +118,7 @@ export function readEntitlements(
         await (
           await privacyUpstream(
             `/v1/households/${financeId(householdId)}/entitlements`,
-            sessionToken(request),
+            await sessionToken(request),
           )
         ).json(),
       ),
@@ -131,7 +131,7 @@ export function archiveAccounts(
   transactions = false,
 ): Promise<Response> {
   return route(async () => {
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const path = accountId
       ? (`/v1/me/archive/accounts/${financeId(accountId)}` as const)
       : "/v1/me/archive/accounts";

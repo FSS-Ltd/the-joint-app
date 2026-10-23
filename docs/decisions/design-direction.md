@@ -1,6 +1,6 @@
 # Mobile-first visual direction
 
-Date: 23 October 2026. Product direction grounded in all eight supplied images in local `Design/`. This is a reference analysis and implementation brief; no product screen is claimed implemented.
+Date: 23 October 2026. Product direction grounded in all eight supplied images in local `Design/`. This is a reference analysis and implementation brief; no product screen is claimed implemented. The [visual contract](../design/DESIGN.md) and its wireframe register refine this direction following the user’s fidelity review.
 
 ## Reference synthesis
 
@@ -30,14 +30,15 @@ These are third-party references retained locally, not redistributable product a
 | Focus          | #805A27 | Visible focus outline on light surfaces           |
 | Negative/error | #9C3838 | Error text with explicit label/icon               |
 
-Avoid neon yellow, hard black panels and full-screen saturated gradients from the references. Use warm accents to make the product welcoming without gender-coding ownership. Optional translucency is limited to navigation framing; financial text always has an opaque background. Provide an opaque fallback when blur is unsupported. Check actual foreground/background pairs at implementation, including hover, selected and focus states.
+Avoid neon yellow, hard black panels and full-screen saturated gradients from the references. Use a deep forest mobile backdrop and desktop navigation rail, with restrained sage/apricot abstract ribbons behind content. Preserve the reference’s depth through translucent card framing and navigation; financial text always has an opaque background. Use warm accents to make the product welcoming without gender-coding ownership. Provide an opaque fallback when blur is unsupported. Check actual foreground/background pairs at implementation, including hover, selected and focus states.
 
 ## Responsive layout and hierarchy
 
 - Design at 360–430px first. Use a single content column, 16px side gutters, 16px base text and at least 44px interactive targets. Support 320px without horizontal page scrolling.
-- Use 24px card radii, 12px control radii, 8px spacing increments and restrained shadows. Use system sans-serif text, clear medium-weight headings and tabular numerals for aligned amounts. Currency and signs stay explicit.
+- Use 6px card radii, 8px field/action radii, 8px spacing increments and restrained shadows. Glass outer frames may use 10px corners with 8px inset. Large ovals and capsule content cards are rejected across all mobile and desktop screens; reserve capsules for navigation and small chips. Use system sans-serif text, clear medium-weight headings and tabular numerals for aligned amounts. Currency and signs stay explicit.
 - Mobile navigation follows the product spec: Home, Activity, Goals, Wealth and More. Text labels remain available for every item. Account scope and freshness precede financial figures; sharing state sits beside account labels.
 - At 768px, use two columns only when content remains readable. At 1100px, add a 224px navigation rail and bounded main content. An optional account column appears only on account-focused screens. Do not shrink a three-column desktop composition onto a phone.
+- All desktop financial panels, including the amount summary, account cards, analytics, notices and ledger, use standard rectangular shapes with small corners of at most 6px. Never use large ovals or capsules for these panels. Carry visible glass framing and highlight borders into desktop while keeping financial text on opaque surfaces, following the user's wireframe feedback.
 - Use a 28–36px page heading on phones and a 32–44px key total. Secondary values remain subordinate. A household total must never imply visibility of hidden accounts or mix adult-spendable and child-owned assets.
 - Charts accompany text totals and accessible tables. Do not use colour alone for owner, gain/loss, category or sharing. Keep transaction lists readable before introducing charts.
 

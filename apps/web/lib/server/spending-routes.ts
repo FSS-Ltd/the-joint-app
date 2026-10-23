@@ -49,7 +49,7 @@ export function readSpending(
         await upstream(
           `/v1/households/${financeId(householdId)}/reports/spending`,
           {
-            token: sessionToken(request),
+            token: await sessionToken(request),
             query: financeQuery(request, spendingQuerySchema),
           },
         ),
@@ -66,7 +66,7 @@ export function readCategories(
       parseResponse(
         categoriesSchema,
         await upstream(`/v1/households/${financeId(householdId)}/categories`, {
-          token: sessionToken(request),
+          token: await sessionToken(request),
           query: financeQuery(request, categoryQuerySchema),
         }),
       ),
@@ -85,7 +85,7 @@ export function readBudget(
         await upstream(
           `/v1/households/${financeId(householdId)}/budgets/${month(period)}`,
           {
-            token: sessionToken(request),
+            token: await sessionToken(request),
             query: financeQuery(request, budgetQuerySchema),
           },
         ),
@@ -100,7 +100,7 @@ export function writeBudget(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request),
+    const token = await sessionToken(request),
       path =
         `/v1/households/${financeId(householdId)}/budgets/${month(period)}` as const,
       ifMatch = version(request, true),
@@ -121,7 +121,7 @@ export function writeCoverage(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request),
+    const token = await sessionToken(request),
       path =
         `/v1/households/${financeId(householdId)}/accounts/${financeId(accountId)}/coverage/${month(period)}` as const,
       ifMatch = version(request, true),
@@ -141,7 +141,7 @@ export function writeSplits(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request),
+    const token = await sessionToken(request),
       path =
         `/v1/households/${financeId(householdId)}/transactions/${financeId(transactionId)}/splits` as const,
       ifMatch = version(request),
@@ -160,7 +160,7 @@ export function confirmTransfer(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request),
+    const token = await sessionToken(request),
       path =
         `/v1/households/${financeId(householdId)}/transfers/confirm` as const,
       idempotencyKey = financeKey(request),
@@ -180,7 +180,7 @@ export function removeTransfer(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request),
+    const token = await sessionToken(request),
       path =
         `/v1/households/${financeId(householdId)}/transfers/${financeId(transferId)}` as const,
       body = await requestBody(request, transferRemoveSchema);
@@ -204,7 +204,7 @@ export function readTransfer(
         transferResultSchema,
         await upstream(
           `/v1/households/${financeId(householdId)}/transfers/${financeId(transferId)}`,
-          { token: sessionToken(request) },
+          { token: await sessionToken(request) },
         ),
       ),
     ),

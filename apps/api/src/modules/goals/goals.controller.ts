@@ -19,10 +19,10 @@ import {
   quotedVersionSchema,
 } from "@joint/contracts";
 import { financeContext, validateInput as valid } from "../../http-input.js";
-import type { IdentityService } from "../identity/identity.service.js";
+import type { IdentityAccess } from "../identity/identity.service.js";
 import type { GoalService } from "./goals.service.js";
 export interface GoalServices {
-  identity: IdentityService;
+  identity: IdentityAccess;
   goals: GoalService;
 }
 export function createGoalsController(services?: GoalServices): Type<unknown> {

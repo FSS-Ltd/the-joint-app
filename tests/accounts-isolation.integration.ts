@@ -5,6 +5,7 @@ import { PrismaPg } from "../packages/database/node_modules/@prisma/adapter-pg/d
 import { PrismaClient } from "../packages/database/dist/generated/prisma/client.js";
 import { createOrm } from "../packages/database/dist/client.js";
 import { ScopedDatabase } from "../packages/database/dist/scoped-transaction.js";
+import { fixtureTimestamp } from "./fixtures/database.js";
 
 const ownerUrl = process.env.MIGRATION_DATABASE_URL;
 const runtimeUrl = process.env.DATABASE_URL;
@@ -262,16 +263,18 @@ it("requires fresh MFA for wider grants while allowing a downgrade without reaut
       }),
     ),
   ).rejects.toThrow();
-  await scoped.withScope({ ...alice, mfaAuthenticatedAt: Date.now() }, (tx) =>
-    tx.accountGrant.update({
-      where: {
-        accountId_membershipId: {
-          accountId: accountA,
-          membershipId: partner.membershipId,
+  await scoped.withScope(
+    { ...alice, mfaAuthenticatedAt: await fixtureTimestamp(owner) },
+    (tx) =>
+      tx.accountGrant.update({
+        where: {
+          accountId_membershipId: {
+            accountId: accountA,
+            membershipId: partner.membershipId,
+          },
         },
-      },
-      data: { level: "TRANSACTIONS" },
-    }),
+        data: { level: "TRANSACTIONS" },
+      }),
   );
   const access = await scoped.withScope(
     partner,

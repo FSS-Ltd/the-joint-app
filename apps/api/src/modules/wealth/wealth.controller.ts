@@ -10,10 +10,10 @@ import {
 } from "@nestjs/common";
 import { wealthQuerySchema, type WealthSummaryDto } from "@joint/contracts";
 import { financeContext, validateInput } from "../../http-input.js";
-import type { IdentityService } from "../identity/identity.service.js";
+import type { IdentityAccess } from "../identity/identity.service.js";
 import type { WealthService } from "./wealth.service.js";
 interface Services {
-  identity: IdentityService;
+  identity: IdentityAccess;
   wealth: WealthService;
 }
 export function createWealthController(services?: Services): Type<unknown> {

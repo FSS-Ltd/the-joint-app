@@ -52,7 +52,7 @@ export function listAccounts(
   householdId: string,
 ): Promise<Response> {
   return route(async () => {
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const id = validId(householdId);
     const params = new URL(request.url).searchParams;
     if ([...params.keys()].some((name) => params.getAll(name).length !== 1))
@@ -85,7 +85,7 @@ export function getAccount(
   accountId: string,
 ): Promise<Response> {
   return route(async () => {
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     return json(
       parseResponse(
         accountSchema,
@@ -104,7 +104,7 @@ export function createAccount(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const id = validId(householdId);
     const idempotencyKey = key(request);
     const body = await requestBody(request, accountCreateSchema);
@@ -128,7 +128,7 @@ export function patchAccount(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const path =
       `/v1/households/${validId(householdId)}/accounts/${validId(accountId)}` as const;
     const ifMatch = version(request);
@@ -149,7 +149,7 @@ export function valueAccount(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const path =
       `/v1/households/${validId(householdId)}/accounts/${validId(accountId)}/valuations` as const;
     const ifMatch = version(request);
@@ -172,7 +172,7 @@ export function grantAccount(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const path =
       `/v1/households/${validId(householdId)}/accounts/${validId(accountId)}/grants/${validId(membershipId)}` as const;
     const ifMatch = version(request);

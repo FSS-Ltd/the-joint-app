@@ -11,7 +11,7 @@ import type { PrivacyJournal } from "@joint/database/privacy-journal";
 import { requireFreshMfa } from "../accounts/account-transaction.js";
 import { hashToken, newOpaqueToken } from "../identity/identity-vault.js";
 
-type Repository = Pick<DeletionRepository, "authorize" | "request" | "status">;
+type Repository = Pick<DeletionRepository, "requestJournaled" | "status">;
 export class PrivacyService {
   constructor(
     private readonly repository: Repository,
@@ -27,22 +27,24 @@ export class PrivacyService {
       throw new ServiceUnavailableException({
         error: { code: "PRIVACY_UNAVAILABLE" },
       });
-    await this.repository.authorize(context);
     const statusToken = newOpaqueToken();
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60_000);
-    await this.journal.append({
-      version: 1,
-      eventId: randomUUID(),
-      requestId,
-      userId: context.userId,
-      kind: "DELETE_USER",
-      recordedAt: new Date().toISOString(),
-    });
-    const status = await this.repository.request(
+    const journal = this.journal;
+    const status = await this.repository.requestJournaled(
       context,
       requestId,
       hashToken(statusToken),
       expiresAt,
+      (identities) =>
+        journal.append({
+          version: 1,
+          eventId: randomUUID(),
+          requestId,
+          userId: context.userId,
+          kind: "DELETE_USER",
+          recordedAt: new Date().toISOString(),
+          ...(identities.length ? { providerIdentities: identities } : {}),
+        }),
     );
     return deletionReceiptSchema.parse({
       id: status.id,

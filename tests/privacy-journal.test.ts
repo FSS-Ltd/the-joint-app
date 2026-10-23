@@ -118,3 +118,30 @@ it("closes a partially consumed replay and refuses to append onto a truncated jo
   );
   expect(await readFile(path, "utf8")).toBe(truncated);
 });
+
+it("retains only bounded external Clerk identifiers for deletion replay", async () => {
+  const { journal } = await fixture();
+  const identity = {
+    provider: "clerk",
+    issuer: "https://synthetic.clerk.accounts.dev",
+    subject: "user_synthetic",
+  };
+  const intent = { ...entry(), providerIdentities: [identity] };
+  await journal.append(intent);
+  const entries = [];
+  for await (const value of journal.entries()) entries.push(value);
+  expect(entries).toEqual([intent]);
+  for (const providerIdentities of [
+    [{ ...identity, email: "private@example.test" }],
+    [{ ...identity, issuer: "https://example.test/path?secret=SENTINEL" }],
+    [{ ...identity, subject: "internal-uuid" }],
+    [identity, identity],
+    Array.from({ length: 6 }, (_, i) => ({
+      ...identity,
+      subject: `user_${i}`,
+    })),
+  ])
+    await expect(
+      journal.append({ ...entry(), providerIdentities }),
+    ).rejects.toThrow("Privacy journal unavailable");
+});

@@ -259,3 +259,6 @@ export class IdentityService {
     }
   }
 }
+
+/** Public identity operations shared by explicit provider adapters. */
+export type IdentityAccess = Omit<IdentityService, "sessions">;

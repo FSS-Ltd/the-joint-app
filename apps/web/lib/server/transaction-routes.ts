@@ -28,7 +28,7 @@ export function listTransactions(
         await upstream(
           `/v1/households/${financeId(householdId)}/transactions`,
           {
-            token: sessionToken(request),
+            token: await sessionToken(request),
             query: financeQuery(request, transactionListQuerySchema),
           },
         ),
@@ -47,7 +47,7 @@ export function getTransaction(
         transactionSchema,
         await upstream(
           `/v1/households/${financeId(householdId)}/transactions/${financeId(transactionId)}`,
-          { token: sessionToken(request) },
+          { token: await sessionToken(request) },
         ),
       ),
     ),
@@ -59,7 +59,7 @@ export function createTransaction(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const household = financeId(householdId);
     const idempotencyKey = financeKey(request);
     const body = await requestBody(request, transactionCreateSchema);
@@ -83,7 +83,7 @@ export function patchTransaction(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const path =
       `/v1/households/${financeId(householdId)}/transactions/${financeId(transactionId)}` as const;
     const ifMatch = financeVersion(request);

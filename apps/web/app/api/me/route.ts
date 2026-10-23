@@ -5,7 +5,7 @@ import { upstream } from "../../../lib/server/upstream";
 
 export function GET(request: Request): Promise<Response> {
   return route(async () => {
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     return json(
       parseResponse(meResponseSchema, await upstream("/v1/me", { token })),
     );

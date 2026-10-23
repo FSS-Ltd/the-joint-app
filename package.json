@@ -24,7 +24,8 @@
     "auth:down": "node --env-file-if-exists=.env scripts/auth-stack.mjs down",
     "db:runtime": "node --env-file-if-exists=.env --env-file-if-exists=.env.database scripts/runtime-database.mjs",
     "imports:setup": "node scripts/imports-setup.mjs",
-    "privacy:setup": "node --env-file-if-exists=.env.auth scripts/privacy-setup.mjs"
+    "privacy:setup": "node --env-file-if-exists=.env.auth scripts/privacy-setup.mjs",
+    "auth:clerk:setup": "pnpm --filter @joint/contracts build && node scripts/clerk-setup.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

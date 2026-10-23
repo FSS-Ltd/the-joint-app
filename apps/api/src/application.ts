@@ -52,6 +52,14 @@ export async function createApplication(
     ApplicationModule,
     { logger: false, bodyParser: false },
   );
+  app.useBodyParser("raw", {
+    limit: "64kb",
+    type: (request: IncomingMessage) =>
+      request.method === "POST" &&
+      request.url?.split("?")[0] === "/v1/webhooks/clerk" &&
+      request.headers["content-type"]?.split(";")[0]?.trim() ===
+        "application/json",
+  });
   app.useBodyParser("json", { limit: "32kb" });
   app.useBodyParser("raw", {
     limit: MAX_CSV_BYTES,

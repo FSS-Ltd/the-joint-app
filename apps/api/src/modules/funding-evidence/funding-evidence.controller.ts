@@ -17,10 +17,10 @@ import {
   quotedVersionSchema,
 } from "@joint/contracts";
 import { financeContext, validateInput as valid } from "../../http-input.js";
-import type { IdentityService } from "../identity/identity.service.js";
+import type { IdentityAccess } from "../identity/identity.service.js";
 import type { FundingEvidenceService } from "./funding-evidence.service.js";
 export interface FundingEvidenceServices {
-  identity: IdentityService;
+  identity: IdentityAccess;
   funding: FundingEvidenceService;
 }
 export function createFundingEvidenceController(

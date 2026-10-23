@@ -83,3 +83,9 @@ Local identity infrastructure pins `supabase/gotrue:v2.197.0` (MIT), `postgres:1
 ## Task 3A workspace addition
 
 `@joint/projections` is a private workspace package exposing the versioned projection contract types. It depends only on `@joint/contracts`; no calculator or third-party dependency is installed in this step.
+
+## AUTH2 installed Clerk additions
+
+`@clerk/backend` **3.26.1** (MIT) is installed in the API for maintained session-token and webhook signature verification. `@clerk/nextjs` **7.9.19** (MIT) is installed in the web app for the official Next.js integration and Core 3 custom authentication flows. These SDKs are necessary for the approved Clerk provider migration; no alternate auth UI library or new cryptography dependency is introduced. Exact transitive dependencies are recorded in the frozen lockfile. The existing local Auth SDK/images remain available for synthetic fixtures and explicit legacy identity proof/cleanup. No hosted resource, production data-region guarantee, paid plan or deployment is included.
+
+Authenticator QR setup uses `qrcode` 1.5.4 and `@types/qrcode` 1.5.6. This encoder runs locally in the browser; no external QR service receives enrollment secrets. Both are exactly pinned in the lockfile.

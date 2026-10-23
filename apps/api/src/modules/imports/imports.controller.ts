@@ -24,7 +24,7 @@ import {
   MAX_CSV_BYTES,
   quotedVersionSchema,
 } from "@joint/contracts";
-import type { IdentityService } from "../identity/identity.service.js";
+import type { IdentityAccess } from "../identity/identity.service.js";
 import { financeContext, validateInput as valid } from "../../http-input.js";
 import type { ImportQueries } from "./import-queries.js";
 import type { ImportPreview } from "./import-preview.js";
@@ -32,7 +32,7 @@ import type { ImportReview } from "./import-review.js";
 import type { ImportLifecycle } from "./import-lifecycle.js";
 
 interface Services {
-  identity: IdentityService;
+  identity: IdentityAccess;
   queries: ImportQueries;
   preview: ImportPreview;
   review: ImportReview;

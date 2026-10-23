@@ -22,7 +22,7 @@ import {
   transactionPatchSchema,
   transactionSplitsSchema,
 } from "@joint/contracts";
-import type { IdentityService } from "../identity/identity.service.js";
+import type { IdentityAccess } from "../identity/identity.service.js";
 import { financeContext, validateInput as valid } from "../../http-input.js";
 import type { TransactionQueries } from "./transaction-queries.js";
 import type { TransactionMutations } from "./transaction-mutations.js";
@@ -31,7 +31,7 @@ import type { TransactionAnnotations } from "./transaction-annotations.js";
 import type { TransactionSplits } from "./transaction-splits.js";
 
 interface Services {
-  identity: IdentityService;
+  identity: IdentityAccess;
   queries: TransactionQueries;
   mutations: TransactionMutations;
   annotations: TransactionAnnotations;

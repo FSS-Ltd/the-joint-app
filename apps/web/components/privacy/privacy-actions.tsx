@@ -8,12 +8,15 @@ import {
   RequestError,
 } from "../identity/client";
 import { Feedback } from "../identity/frame";
+import { useAuthRuntime } from "../identity/auth-runtime";
 
 export function PrivacyActions({
   householdId,
 }: {
   householdId?: string;
 }): ReactNode {
+  const { finishSignOut } = useAuthRuntime();
+  const [destination, setDestination] = useState<string | null>(null);
   const [action, setAction] = useState<"leave" | "delete" | null>(null);
   const [confirmation, setConfirmation] = useState(false);
   const [pending, setPending] = useState(false);
@@ -26,6 +29,21 @@ export function PrivacyActions({
     setError("");
     setMfa(false);
     setRequestId(crypto.randomUUID());
+  }
+  async function completeExit(next: string) {
+    setDestination(next);
+    setPending(true);
+    setError("");
+    announceSessionChange();
+    try {
+      await finishSignOut();
+      window.location.replace(next);
+    } catch {
+      setError(
+        "Your app access has ended. Browser sign-out could not finish. Retry below; your completed request will not be repeated.",
+      );
+      setPending(false);
+    }
   }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,15 +61,13 @@ export function PrivacyActions({
           undefined,
           { method: "DELETE" },
         );
-        announceSessionChange();
-        window.location.replace("/sign-in?next=archive");
+        await completeExit("/sign-in?next=archive");
       } else {
         const receipt = await request<Omit<DeletionReceipt, "statusToken">>(
           "/api/privacy/deletion-requests",
           { confirmation: "DELETE_MY_ACCOUNT", requestId },
         );
-        announceSessionChange();
-        window.location.replace(`/privacy/deletion?id=${receipt.id}`);
+        await completeExit(`/privacy/deletion?id=${receipt.id}`);
       }
     } catch (cause) {
       setError(errorMessage(cause));
@@ -61,6 +77,28 @@ export function PrivacyActions({
       setPending(false);
     }
   }
+  if (destination)
+    return (
+      <section className="surface form-card" aria-busy={pending}>
+        <h2>
+          {action === "leave" ? "Household access ended" : "Deletion requested"}
+        </h2>
+        <p role="status">
+          {pending
+            ? "Finishing browser sign-out…"
+            : "Your request was saved. Finish signing out before continuing."}
+        </p>
+        <Feedback error={error} />
+        <button
+          type="button"
+          className="button primary"
+          disabled={pending}
+          onClick={() => void completeExit(destination)}
+        >
+          Retry browser sign-out
+        </button>
+      </section>
+    );
   return (
     <section className="surface form-card privacy-danger">
       <p className="step-label">Your next chapter</p>

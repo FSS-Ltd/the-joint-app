@@ -23,16 +23,16 @@ import {
   ownerArchiveContext,
   validateInput,
 } from "../../http-input.js";
-import type { IdentityService } from "../identity/identity.service.js";
+import type { IdentityAccess } from "../identity/identity.service.js";
 import type { LeaveService } from "./leave.service.js";
 import type { PrivacyService } from "./privacy.service.js";
 
 interface PrivacyServices {
-  identity: IdentityService;
+  identity: IdentityAccess;
   privacy: PrivacyService;
 }
 interface LeaveServices {
-  identity: IdentityService;
+  identity: IdentityAccess;
   leave: LeaveService;
   journal?: PrivacyJournal;
 }

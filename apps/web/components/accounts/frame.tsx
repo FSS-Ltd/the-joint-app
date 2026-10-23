@@ -1,3 +1,4 @@
+import { Brand } from "../brand";
 import type { ReactNode } from "react";
 import "../identity/identity-controls.css";
 import "../identity/identity-layout.css";
@@ -31,12 +32,7 @@ export function AccountsFrame({
         Skip to content
       </a>
       <header className="identity-header">
-        <a className="brand" href="/">
-          <span className="brand-mark" aria-hidden="true">
-            j.
-          </span>
-          The Joint App
-        </a>
+        <Brand />
         <span className="environment-label">Local development</span>
       </header>
       <nav className="accounts-nav" aria-label="App">

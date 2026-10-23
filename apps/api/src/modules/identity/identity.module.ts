@@ -1,11 +1,13 @@
+import { createClerkLogoutController } from "./clerk/logout.controller.js";
+import { createLegacyLinkController } from "./clerk/legacy-link.controller.js";
+import {
+  createIdentityAdapter,
+  type IdentityAdapterOptions,
+} from "./identity-adapter.js";
 import type { Type } from "@nestjs/common";
-import type { AuthServerEnvironment } from "@joint/contracts";
-import type { PrismaClient } from "@joint/database/client";
-import { AuthProvider } from "./auth-provider.js";
-import { IdentityService } from "./identity.service.js";
-import { IdentityVerifier } from "./identity-verifier.js";
-import { IdentityVault } from "./identity-vault.js";
-import { SessionStore } from "./session-store.js";
+import { createClerkGateway } from "./clerk/provider-gateway.js";
+import { ClerkWebhookService } from "./clerk/webhook-service.js";
+import { createClerkWebhookController } from "./clerk/webhook.controller.js";
 import { createIdentityController } from "./identity.controller.js";
 import { HouseholdService } from "../households/households.service.js";
 import { ScopedDatabase } from "@joint/database/scoped";
@@ -59,12 +61,11 @@ import { createGoalArchiveController } from "../goals/goal-archive.controller.js
 import { FundingEvidenceService } from "../funding-evidence/funding-evidence.service.js";
 import { createFundingEvidenceController } from "../funding-evidence/funding-evidence.controller.js";
 import { createFundingArchiveController } from "../funding-evidence/funding-archive.controller.js";
-export interface AuthOptions {
-  database: PrismaClient;
-  environment: AuthServerEnvironment;
+export type AuthOptions = IdentityAdapterOptions & {
+  clerkWebhook?: { signingSecret: string; instanceId: string };
   importKey?: string;
   privacyJournalPath?: string;
-}
+};
 export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   if (!options)
     return [
@@ -88,19 +89,9 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       createPrivacyController(),
       createLeaveController(),
     ];
-  const { database, environment: env } = options;
-  const provider = new AuthProvider(
-    env.SUPABASE_AUTH_URL,
-    env.SUPABASE_PUBLISHABLE_KEY,
-  );
-  const vault = new IdentityVault(env.AUTH_TOKEN_KEY, env.AUTH_EMAIL_HASH_KEY);
-  const sessions = new SessionStore(
-    database,
-    vault,
-    new IdentityVerifier(env.AUTH_ISSUER),
-    provider,
-  );
-  const identity = new IdentityService(sessions, provider, database, vault);
+  const { database } = options;
+  const { identity, vault, legacyLinker, clerkLogout } =
+    createIdentityAdapter(options);
   const scoped = new ScopedDatabase(database);
   const reports = new ReportService(scoped);
   const archive = new ArchiveDatabase(database);
@@ -116,6 +107,17 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   };
   const goals = { identity, goals: new GoalService(scoped, archive, vault) };
   return [
+    createClerkWebhookController(
+      options.provider === "clerk" && options.clerkWebhook
+        ? new ClerkWebhookService(
+            database,
+            options.environment.CLERK_ISSUER,
+            options.clerkGateway ?? createClerkGateway(options.environment),
+            options.environment.CLERK_TIMEOUT_MS,
+          )
+        : undefined,
+      options.clerkWebhook,
+    ),
     createFundingEvidenceController(funding),
     createFundingArchiveController(funding),
     createGoalsController(goals),
@@ -159,6 +161,8 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       coverage: new AccountCoverage(scoped),
     }),
     createIdentityController(identity, new HouseholdService(database, vault)),
+    createLegacyLinkController(legacyLinker),
+    createClerkLogoutController(clerkLogout),
     createAccountsController({
       identity,
       queries: new AccountQueries(scoped, vault),

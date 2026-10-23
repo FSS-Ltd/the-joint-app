@@ -43,7 +43,7 @@ export function InvitationForm({
       <h2 id="invite-heading">Invite your person</h2>
       <p>
         Create a private link for the other adult in your household. Share it
-        with them yourself.
+        with them yourself, or start on your own and invite them later.
       </p>
       <form className="form-stack" onSubmit={invite} aria-busy={pending}>
         <label>
@@ -67,6 +67,9 @@ export function InvitationForm({
           {pending ? "Creating link…" : "Create invitation link"}
           <span aria-hidden="true">↗</span>
         </button>
+        <a className="button secondary" href="/accounts">
+          Invite later<span aria-hidden="true">↗</span>
+        </a>
       </form>
       {link && (
         <div className="invite-result">

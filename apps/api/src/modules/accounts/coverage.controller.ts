@@ -15,10 +15,10 @@ import {
   quotedVersionSchema,
 } from "@joint/contracts";
 import { financeContext, validateInput as valid } from "../../http-input.js";
-import type { IdentityService } from "../identity/identity.service.js";
+import type { IdentityAccess } from "../identity/identity.service.js";
 import type { AccountCoverage } from "./account-coverage.js";
 interface Services {
-  identity: IdentityService;
+  identity: IdentityAccess;
   coverage: AccountCoverage;
 }
 export function createCoverageController(services?: Services): Type<unknown> {

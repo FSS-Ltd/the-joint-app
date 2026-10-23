@@ -1,3 +1,4 @@
+import { sessionAuthorization } from "./clerk-session";
 import { readEnvironment, webEnvironmentSchema } from "@joint/contracts";
 import { BffError } from "./responses";
 
@@ -9,7 +10,9 @@ type Path =
   | "/v1/auth/password"
   | "/v1/auth/mfa/enroll"
   | "/v1/auth/mfa/verify"
+  | "/v1/auth/logout/retry"
   | "/v1/auth/logout"
+  | "/v1/auth/link-legacy"
   | "/v1/me"
   | "/v1/households"
   | "/v1/invitations/accept"
@@ -25,7 +28,7 @@ type Path =
   | `/v1/households/${string}/budgets/${string}`
   | `/v1/households/${string}/transfers/${string}`;
 const allowedPath =
-  /^\/v1\/(?:auth\/(?:signup|login|verify|recovery|password|logout|mfa\/(?:enroll|verify))|me|households(?:\/[0-9a-f-]{36}\/(?:invitations|accounts(?:\/[0-9a-f-]{36}(?:\/(?:valuations|coverage\/\d{4}-\d{2}|grants\/[0-9a-f-]{36}))?)?|imports(?:\/(?:inspect|preview|[0-9a-f-]{36}(?:\/(?:rows|review|commit|original))?))?|reports\/spending|categories|budgets\/\d{4}-\d{2}|transfers\/(?:confirm|[0-9a-f-]{36})|transactions(?:\/[0-9a-f-]{36}(?:\/(?:annotation|splits))?)?))?|invitations\/accept)$/i;
+  /^\/v1\/(?:auth\/(?:signup|login|verify|recovery|password|logout(?:\/retry)?|link-legacy|mfa\/(?:enroll|verify))|me|households(?:\/[0-9a-f-]{36}\/(?:invitations|accounts(?:\/[0-9a-f-]{36}(?:\/(?:valuations|coverage\/\d{4}-\d{2}|grants\/[0-9a-f-]{36}))?)?|imports(?:\/(?:inspect|preview|[0-9a-f-]{36}(?:\/(?:rows|review|commit|original))?))?|reports\/spending|categories|budgets\/\d{4}-\d{2}|transfers\/(?:confirm|[0-9a-f-]{36})|transactions(?:\/[0-9a-f-]{36}(?:\/(?:annotation|splits))?)?))?|invitations\/accept)$/i;
 const safeErrors: Record<string, string> = {
   INVALID_SCOPE: "Choose between one and fifty available accounts.",
   SCOPE_SELECTION_REQUIRED: "Choose up to fifty accounts for this report.",
@@ -54,6 +57,8 @@ const safeErrors: Record<string, string> = {
     "Verify a fresh authenticator code before sharing more access.",
   VERSION_CONFLICT:
     "This record changed in another tab. Reload it and try again.",
+  IDENTITY_MIGRATION_REQUIRED:
+    "Verify your existing account before linking this sign-in.",
   MFA_REQUIRED: "Verify your authenticator code to continue.",
   IMPORT_REVIEW_REQUIRED:
     "Choose Keep or Skip for every overlap before committing.",
@@ -92,6 +97,8 @@ export async function upstream(
   options: {
     body?: object;
     token?: string;
+    legacyToken?: string;
+    logoutCleanup?: string;
     idempotencyKey?: string;
     method?: "PATCH" | "PUT" | "DELETE";
     csv?: { bytes: ArrayBuffer; accountId: string; mapping?: string };
@@ -107,13 +114,25 @@ export async function upstream(
     );
   const environment = readEnvironment(webEnvironmentSchema, process.env);
   const headers: Record<string, string> = { Accept: "application/json" };
+  if (options.logoutCleanup)
+    headers["X-Logout-Cleanup"] = options.logoutCleanup;
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
   if (options.csv) {
     headers["Content-Type"] = "text/csv; charset=UTF-8";
     headers["X-Account-Id"] = options.csv.accountId;
     if (options.csv.mapping) headers["X-Import-Mapping"] = options.csv.mapping;
   }
-  if (options.token) headers.Authorization = `Session ${options.token}`;
+  if (options.token)
+    headers.Authorization = sessionAuthorization(options.token);
+  if (options.legacyToken) {
+    if (!/^[A-Za-z0-9_-]{43}$/.test(options.legacyToken))
+      throw new BffError(
+        401,
+        "UNAUTHORIZED",
+        "Your existing session is unavailable.",
+      );
+    headers["X-Legacy-Session"] = options.legacyToken;
+  }
   if (options.idempotencyKey)
     headers["Idempotency-Key"] = options.idempotencyKey;
   if (options.ifMatch) headers["If-Match"] = options.ifMatch;

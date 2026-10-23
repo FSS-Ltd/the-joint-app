@@ -110,3 +110,4 @@ export * from "./projections.js";
 
 export { bookedDateSchema } from "./financial-input.js";
 export * from "./funding-evidence.js";
+export * from "./clerk.js";
