@@ -85,17 +85,40 @@ describe("Task 3A contract boundaries", () => {
       scope: {
         kind: "VISIBLE",
         accountIds: [id],
-        datasetVersion: 1,
+        sources: [{ accountId: id, totalsVersion: 1, valuationId: id2 }],
         grantVersion: 2,
       },
       completeness: "PARTIAL",
       excludedReasons: ["MISSING_VALUATION"],
       valuations: [source],
       asOfDate: "2026-10-23",
+      calculatedAt: "2026-10-23T12:00:00Z",
       adultNetWorth: money("100000"),
       liquidAdultAssets: money("100000"),
     };
     expect(wealthSummaryDtoSchema.safeParse(summary).success).toBe(true);
+    expect(
+      wealthSummaryDtoSchema.safeParse({
+        ...summary,
+        adultNetWorth: null,
+        liquidAdultAssets: null,
+        excludedReasons: ["UNKNOWN_ADULT_PORTION"],
+      }).success,
+    ).toBe(true);
+    for (const sources of [
+      [],
+      [...summary.scope.sources, ...summary.scope.sources],
+      [{ accountId: id3, totalsVersion: 1, valuationId: id2 }],
+      [{ accountId: id, totalsVersion: 1, valuationId: null }],
+    ]) {
+      expect(
+        wealthSummaryDtoSchema.safeParse({
+          ...summary,
+          scope: { ...summary.scope, sources },
+        }).success,
+      ).toBe(false);
+    }
+
     expect(
       wealthSummaryDtoSchema.safeParse({
         ...summary,

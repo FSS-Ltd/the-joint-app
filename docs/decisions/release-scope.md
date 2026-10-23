@@ -15,7 +15,7 @@ Preserve all six phase IDs for traceability. Current execution path: Phase 0 bas
 
 The FSS delivery gate remains unchanged: each numbered/standalone unit gets a branch and PR; verify its predecessor's actual merged state, run local checks and self-review before raising the PR, require current-head/test-merge/queue CI and required reviews, merge within standing user authority, verify host merge and record evidence before advancing. Never work on the next unit while a current unit is unmerged.
 
-External approvals can remain held when not required by current scope. Do not relabel missing supplier evidence approved, or use a CSV parser to implement an unauthorised API client. No current step authorises supplier messages, contracts, cloud spend or production deployment.
+External approvals can remain held when not required by current scope. Do not relabel missing supplier evidence approved, or use a CSV parser to implement an unauthorised API client. No current step authorises supplier messages, contracts, cloud spend or production deployment. All execution remains local until the entire MVP is complete and the founder explicitly approves deployment. This includes preview, staging, production, deployment hooks and hosted databases. GitHub source delivery and synthetic CI remain authorized.
 
 ## Phase 0 handoff coverage
 

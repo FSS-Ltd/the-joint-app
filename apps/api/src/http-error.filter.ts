@@ -15,6 +15,8 @@ const knownErrors: Record<string, string> = {
   PRIVACY_UNAVAILABLE:
     "Local privacy controls need setup. Run pnpm privacy:setup after auth:setup, then restart the API and worker.",
   INVALID_SCOPE: "Select between one and fifty distinct available accounts.",
+  SCOPE_REQUIRED:
+    "Select up to fifty accounts before requesting wealth totals.",
   SCOPE_SELECTION_REQUIRED:
     "Select up to fifty accounts before requesting a report.",
   SCOPE_CHANGED:

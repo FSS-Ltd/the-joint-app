@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { bookedDateSchema } from "./financial-input.js";
 
 export const accountKindSchema = z.enum([
   "CURRENT",
@@ -42,20 +43,43 @@ export const accountPatchSchema = z
     liquidity: liquiditySchema,
   })
   .strict();
+function validAdultPortion(value: {
+  money: unknown;
+  adultMoney?: unknown;
+}): boolean {
+  const original = moneySchema.safeParse(value.money);
+  if (!original.success) return false;
+  if (value.adultMoney === undefined || value.adultMoney === null) return true;
+  const adult = moneySchema.safeParse(value.adultMoney);
+  if (!adult.success) return false;
+  const amount = BigInt(original.data.amountMinor);
+  const portion = BigInt(adult.data.amountMinor);
+  return amount < 0n ? portion === amount : portion >= 0n && portion <= amount;
+}
+
 export const valuationInputSchema = z
-  .object({ money: moneySchema, asOfDate: z.iso.date() })
-  .strict();
+  .object({
+    money: moneySchema,
+    asOfDate: bookedDateSchema,
+    adultMoney: moneySchema.nullable().optional(),
+  })
+  .strict()
+  .refine(validAdultPortion, "Adult portion must match the recorded balance");
+export type ValuationInput = z.infer<typeof valuationInputSchema>;
 export const grantInputSchema = z.object({ level: grantLevelSchema }).strict();
 export const valuationSchema = z
   .object({
     id: z.uuid(),
     money: moneySchema,
-    asOfDate: z.iso.date(),
+    asOfDate: bookedDateSchema,
     recordedAt: z.iso.datetime(),
     complete: z.boolean(),
     source: z.literal("MANUAL"),
+    // Historical replay records predate owner attestation and remain unknown.
+    adultMoney: moneySchema.nullable().default(null),
   })
-  .strict();
+  .strict()
+  .refine(validAdultPortion, "Adult portion must match the recorded balance");
 export const sharingSchema = z
   .object({
     membershipId: z.uuid().nullable(),

@@ -82,6 +82,7 @@ beforeAll(async () => {
       accountId,
       authorMembershipId: actor.membershipId,
       amountMinor: 9007199254740993n,
+      adultAmountMinor: 700000n,
       asOfDate: new Date("2026-10-01"),
     },
   });
@@ -259,6 +260,7 @@ it("TOTALS exports include metadata and balances without transaction details", a
   const csv = await text(result.id, viewer);
   expect(csv).toContain('"ACCOUNT"');
   expect(csv).toContain('"BALANCE"');
+  expect(csv).toContain('""adultAmountMinor"": ""700000""');
   expect(csv).not.toContain('"TRANSACTION"');
   expect(csv).not.toContain('"NOTE"');
   expect(csv).not.toContain("PRIVATE_SENTINEL");
@@ -526,6 +528,7 @@ it("archive exports require recorded archived ownership, never a former grant", 
   for await (const chunk of stream) output += Buffer.from(chunk).toString();
   expect(output.match(/"TRANSACTION"/g)).toHaveLength(501);
   expect(output).not.toContain("Other author note sentinel");
+  expect(output).toContain('""adultAmountMinor"": ""700000""');
   await expect(
     service.requestArchiveExport(
       { ...context, userId: viewer.userId, sessionId: viewer.sessionId },

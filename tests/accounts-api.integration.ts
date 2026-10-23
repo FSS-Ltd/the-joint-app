@@ -7,6 +7,7 @@ import {
   authServerEnvironmentSchema,
   mfaEnrollmentSchema,
   type AuthContext,
+  wealthSummaryDtoSchema,
 } from "../packages/contracts/dist/index.js";
 import { createDatabase } from "../packages/database/dist/index.js";
 import { createOrm } from "../packages/database/dist/client.js";
@@ -213,6 +214,7 @@ it("enforces real-runtime private accounts, owner writes, grant epochs and fresh
     const valuationKey = randomUUID();
     const valuation = {
       money: { amountMinor: "12345", currency: "GBP" },
+      adultMoney: { amountMinor: "10000", currency: "GBP" },
       asOfDate: "2026-01-01",
     };
     const valueHeaders = {
@@ -229,6 +231,25 @@ it("enforces real-runtime private accounts, owner writes, grant epochs and fresh
     expect(valued.ok).toBe(true);
     account = accountSchema.parse(await valued.json());
     expect(account.latestValuation).toMatchObject(valuation);
+    const wealthPath = `/households/${householdId}/wealth`;
+    const wealthResponse = await request(wealthPath, actor.token);
+    expect(wealthResponse.status).toBe(200);
+    expect(wealthResponse.headers.get("cache-control")).toBe("no-store");
+    const wealth = wealthSummaryDtoSchema.parse(await wealthResponse.json());
+    expect(wealth.scope.accountIds).toEqual([account.id]);
+    expect(wealth.excludedReasons).toEqual(["STALE_VALUATION"]);
+    expect(wealth.adultNetWorth).toBeNull();
+    expect((await request(wealthPath)).status).toBe(401);
+    for (const query of [
+      `accountIds=${account.id},${account.id}`,
+      "accountIds=invalid",
+      "unknown=true",
+    ]) {
+      const rejected = await request(`${wealthPath}?${query}`, actor.token);
+      expect(rejected.status).toBe(400);
+      expect(rejected.headers.get("cache-control")).toBe("no-store");
+    }
+
     expect(
       (
         await request(
@@ -246,7 +267,10 @@ it("enforces real-runtime private accounts, owner writes, grant epochs and fresh
           `${accountPath}/valuations`,
           actor.token,
           "POST",
-          { ...valuation, money: { ...valuation.money, amountMinor: "999" } },
+          {
+            ...valuation,
+            adultMoney: { ...valuation.adultMoney, amountMinor: "9000" },
+          },
           valueHeaders,
         )
       ).status,
@@ -293,6 +317,22 @@ it("enforces real-runtime private accounts, owner writes, grant epochs and fresh
         )
       ).status,
     ).toBe(409);
+    const sharedWealth = await request(
+      `${wealthPath}?accountIds=${account.id}`,
+      admin.token,
+    );
+    expect(sharedWealth.status).toBe(200);
+    expect(
+      wealthSummaryDtoSchema.parse(await sharedWealth.json()).scope.accountIds,
+    ).toEqual([account.id]);
+    expect(
+      (
+        await request(
+          `${wealthPath}?accountIds=${account.id},${secondAccount.id}`,
+          admin.token,
+        )
+      ).status,
+    ).toBe(404);
     const shared = accountSchema.parse(
       await (await request(accountPath, admin.token)).json(),
     );

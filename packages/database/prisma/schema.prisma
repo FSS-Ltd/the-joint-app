@@ -291,6 +291,7 @@ model BalanceSnapshot {
   currency String @default("GBP") @db.Char(3)
   account Account @relation(fields: [householdId, accountId, currency], references: [householdId, id, currency], onDelete: Cascade)
   amountMinor BigInt
+  adultAmountMinor BigInt?
   asOfDate DateTime @db.Date
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   authorMembershipId String @db.Uuid
