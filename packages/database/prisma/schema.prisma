@@ -33,6 +33,7 @@ model Household {
   auditEvents AuditEvent[]
   accounts Account[]
   budgetScopes BudgetScope[]
+  goals Goal[]
   @@schema("app")
 }
 
@@ -251,6 +252,8 @@ model Account {
   transactions Transaction[]
   coverage AccountMonthCoverage[]
   budgetScopeAccounts BudgetScopeAccount[]
+  goalAllocations GoalAllocation[]
+  projectionSources ProjectionSource[]
   @@unique([householdId, id])
   @@unique([householdId, id, currency])
   @@index([householdId, createdAt, id])
@@ -294,7 +297,142 @@ model BalanceSnapshot {
   author Membership @relation("BalanceAuthor", fields: [householdId, authorMembershipId], references: [householdId, id])
   complete Boolean @default(true)
   source String @default("MANUAL") @db.VarChar(20)
+  goalAllocations GoalAllocation[]
+  projectionSources ProjectionSource[]
+  @@unique([householdId, accountId, id])
   @@index([householdId, accountId, asOfDate(sort: Desc), createdAt(sort: Desc), id])
+  @@schema("app")
+}
+
+enum GoalStatus {
+  ACTIVE
+  ARCHIVED
+  @@schema("app")
+}
+
+enum AllocationBasis {
+  FIXED
+  FRACTION
+  @@schema("app")
+}
+
+enum ProjectionMode {
+  BASIC
+  ADVANCED
+  @@schema("app")
+}
+
+model Goal {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  name String @db.VarChar(120)
+  status GoalStatus @default(ACTIVE)
+  beneficiary String @default("ADULT") @db.VarChar(10)
+  priority Int
+  version Int @default(1)
+  targetMinor BigInt
+  targetDate DateTime? @db.Date
+  allocations GoalAllocation[]
+  contributionPlan ContributionPlan?
+  scenarios Scenario[]
+  runs ProjectionRun[]
+  @@unique([householdId, id])
+  @@index([householdId, status, priority])
+  @@schema("app")
+}
+
+model GoalAllocation {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  goalId String @db.Uuid
+  goal Goal @relation(fields: [householdId, goalId], references: [householdId, id], onDelete: Cascade)
+  accountId String @db.Uuid
+  account Account @relation(fields: [householdId, accountId], references: [householdId, id])
+  valuationId String @db.Uuid
+  valuation BalanceSnapshot @relation(fields: [householdId, accountId, valuationId], references: [householdId, accountId, id])
+  basis AllocationBasis
+  amountMinor BigInt?
+  fraction Decimal? @db.Decimal(13, 12)
+  @@unique([householdId, goalId, accountId])
+  @@index([householdId, accountId, valuationId])
+  @@schema("app")
+}
+
+model ContributionPlan {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  goalId String @db.Uuid
+  goal Goal @relation(fields: [householdId, goalId], references: [householdId, id], onDelete: Cascade)
+  version Int @default(1)
+  firstContributionDate DateTime @db.Date
+  steps ContributionStep[]
+  @@unique([householdId, goalId])
+  @@unique([householdId, id])
+  @@schema("app")
+}
+
+model ContributionStep {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  planId String @db.Uuid
+  plan ContributionPlan @relation(fields: [householdId, planId], references: [householdId, id], onDelete: Cascade)
+  fromMonth Int
+  amountMinor BigInt
+  @@unique([householdId, planId, fromMonth])
+  @@schema("app")
+}
+
+model Scenario {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  goalId String @db.Uuid
+  goal Goal @relation(fields: [householdId, goalId], references: [householdId, id], onDelete: Cascade)
+  version Int @default(1)
+  canonicalInput String @db.Text
+  input Json
+  inputHash String @db.Char(64)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  runs ProjectionRun[]
+  @@unique([householdId, goalId, id])
+  @@index([householdId, goalId, createdAt])
+  @@schema("app")
+}
+
+model ProjectionRun {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  goalId String @db.Uuid
+  goal Goal @relation(fields: [householdId, goalId], references: [householdId, id], onDelete: Cascade)
+  scenarioId String? @db.Uuid
+  scenario Scenario? @relation(fields: [householdId, goalId, scenarioId], references: [householdId, goalId, id])
+  mode ProjectionMode
+  canonicalInput String @db.Text
+  input Json
+  inputHash String @db.Char(64)
+  result Json
+  engineVersion String @db.VarChar(32)
+  roundingConvention String @default("HALF_UP_MINOR_UNIT") @db.VarChar(24)
+  datasetVersion Int
+  grantVersion Int
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  sources ProjectionSource[]
+  @@unique([householdId, id])
+  @@index([householdId, goalId, createdAt])
+  @@schema("app")
+}
+
+model ProjectionSource {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  runId String @db.Uuid
+  run ProjectionRun @relation(fields: [householdId, runId], references: [householdId, id], onDelete: Cascade)
+  accountId String @db.Uuid
+  account Account @relation(fields: [householdId, accountId], references: [householdId, id])
+  valuationId String @db.Uuid
+  valuation BalanceSnapshot @relation(fields: [householdId, accountId, valuationId], references: [householdId, accountId, id])
+  @@unique([householdId, runId, accountId])
+  @@index([householdId, accountId, valuationId])
   @@schema("app")
 }
 
