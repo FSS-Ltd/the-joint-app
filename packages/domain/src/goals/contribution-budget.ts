@@ -58,8 +58,9 @@ export function assessContributionBudget(
     !isList(input.goals)
   )
     return invalid();
-  const capacity = input.capacity.map(minor);
-  const goals = input.goals.map((goal) => {
+  const capacity = Array.from(input.capacity, minor);
+  const goals = Array.from(input.goals, (goal) => {
+    if (!goal || typeof goal !== "object") return invalid();
     if (
       !idempotencyKeySchema.safeParse(goal.goalId).success ||
       !Number.isInteger(goal.priority) ||
@@ -72,7 +73,7 @@ export function assessContributionBudget(
     return {
       goalId: goal.goalId.toLowerCase(),
       priority: goal.priority,
-      requested: goal.requested.map(minor),
+      requested: Array.from(goal.requested, minor),
     };
   });
   if (new Set(goals.map((goal) => goal.goalId)).size !== goals.length)

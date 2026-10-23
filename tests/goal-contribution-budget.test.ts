@@ -193,4 +193,21 @@ describe("finite shared planned contribution budget", () => {
       ).toThrow(/^Invalid contribution budget input$/);
     }
   });
+  it("rejects sparse month and goal vectors rather than omitting missing intentions", () => {
+    const missingMoney = new Array<ContributionBudgetInput["capacity"][number]>(
+      1,
+    );
+    const missingGoals = new Array<ContributionBudgetInput["goals"][number]>(1);
+    for (const input of [
+      { ...base, capacity: missingMoney },
+      { ...base, goals: missingGoals },
+      {
+        ...base,
+        goals: [{ goalId: goal1, priority: 1, requested: missingMoney }],
+      },
+    ])
+      expect(() => assessContributionBudget(input)).toThrow(
+        /^Invalid contribution budget input$/,
+      );
+  });
 });
