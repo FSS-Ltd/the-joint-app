@@ -85,16 +85,16 @@ A client-supplied household ID; a totals-only partner requesting detailed data; 
 
 **Interfaces:** `summariseSpending(input): SpendSummary` and `BudgetService.upsert(ctx, month, lines, version)`. Input contains authorised booked rows only.
 
-- [ ] Write golden assertions for £500 own-account transfer → £0 consumption; £120 card purchase + payment → £120 spending; February refund leaves January posting history intact.
-- [ ] Implement explicit manual classification/transfer confirmation and category splits summing exactly to the parent.
-- [ ] Implement calendar-month budgets with GBP defaults, complete-period reporting and clear missing-history labels.
-- [ ] Build responsive dashboard, activity filters and budget charts with accessible table alternatives; use permission-scoped query keys.
-- [ ] Ensure the service worker caches only static/offline-shell assets and finance responses are no-store.
-- [ ] Run `pnpm exec vitest run tests/cash-flow.test.ts` and `pnpm test:e2e tests/browser/monthly-review.spec.ts`.
+- [x] Write golden assertions for £500 own-account transfer → £0 consumption; £120 card purchase + payment → £120 spending; February refund leaves January posting history intact.
+- [x] Implement explicit manual classification/transfer confirmation and category splits summing exactly to the parent.
+- [x] Implement calendar-month budgets with GBP defaults, complete-period reporting and clear missing-history labels.
+- [x] Build responsive dashboard, activity filters and budget charts with accessible table alternatives; use permission-scoped query keys.
+- [x] Ensure the service worker caches only static/offline-shell assets and finance responses are no-store.
+- [x] Run `pnpm exec vitest run tests/cash-flow.test.ts` and `pnpm test:e2e tests/browser/monthly-review.spec.ts`.
 
 **Acceptance:** Both adults can review an authorised month, correct categories and see spending without transfer/card double counting. Hidden-account information cannot be inferred from an inconsistent total.
 
-## Task 1.6 — Entitlements, privacy controls and founder deployment rehearsal
+## Task 1.6 — Entitlements, privacy controls and local recovery rehearsal
 
 **Files:** `packages/entitlements/src/capabilities.ts`, `apps/api/src/modules/entitlements/`, `privacy/`, `audit/`, `apps/worker/src/handlers/export.handler.ts`, `docs/runbooks/restore.md`.
 
@@ -108,7 +108,7 @@ A client-supplied household ID; a totals-only partner requesting detailed data; 
 - [ ] Restore an isolated database backup and apply a synthetic deletion ledger before serving it.
 - [ ] Run the critical Playwright journey: two adults → accounts → import → budget → grant downgrade → export → leave.
 
-**Acceptance:** Manual foundation works with actual controls and documented recovery. A real-data founder deployment only occurs after its security/auth/backup gates; no external deployment is implied by this written plan.
+**Acceptance:** Manual foundation works with actual controls and documented recovery. All execution and data remain local. A deployment requires the entire MVP to be complete and the founder's explicit approval, in addition to security/auth/backup gates.
 
 ## Exit and rollback
 

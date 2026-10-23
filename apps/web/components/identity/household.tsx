@@ -65,6 +65,8 @@ export function Household(): ReactNode {
           <nav className="account-nav" aria-label="Your account">
             <a href="/accounts">Accounts</a>
             <a href="/security">Account security</a>
+            <a href="/settings/privacy">Privacy</a>
+            <a href="/archive">Owner archive</a>
             <button
               type="button"
               className="text-button"

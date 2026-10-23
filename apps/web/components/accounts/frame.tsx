@@ -16,7 +16,14 @@ export function AccountsFrame({
   household?: string;
   children: ReactNode;
   reportQuery?: string;
-  active?: "accounts" | "activity" | "dashboard" | "budgets" | "review";
+  active?:
+    | "accounts"
+    | "activity"
+    | "dashboard"
+    | "budgets"
+    | "review"
+    | "privacy"
+    | "archive";
 }): ReactNode {
   return (
     <div className="identity-shell accounts-shell">
@@ -62,6 +69,18 @@ export function AccountsFrame({
         </a>
         <a href="/household">Household</a>
         <a href="/security">Security</a>
+        <a
+          href="/settings/privacy"
+          aria-current={active === "privacy" ? "page" : undefined}
+        >
+          Privacy
+        </a>
+        <a
+          href="/archive"
+          aria-current={active === "archive" ? "page" : undefined}
+        >
+          Archive
+        </a>
       </nav>
       <main className="accounts-main" id="main">
         <header className="accounts-heading">

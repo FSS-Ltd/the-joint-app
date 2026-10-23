@@ -59,7 +59,7 @@ export function projectAccount(
     currency: row.currency,
     legalOwnerKind: row.legalOwnerKind,
     liquidity: row.liquidity,
-    version: row.version,
+    version: access === "TOTALS" ? row.totalsVersion : row.version,
     source: "MANUAL",
     ownership: owned ? "OWNED" : "SHARED",
     access,

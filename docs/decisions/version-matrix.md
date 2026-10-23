@@ -75,3 +75,7 @@ Local identity infrastructure pins `supabase/gotrue:v2.197.0` (MIT), `postgres:1
 ## Task 1.4 installed parser addition
 
 `csv-parse` 7.0.3 (MIT) is installed in the server-only `@joint/domain/csv` export for maintained quoted/newline CSV parsing with explicit limits. Browser imports remain restricted to the domain root Money helpers; API/worker share the same validated normalization. Original bytes use Node AES-256-GCM with a separate local key; no additional cryptography dependency or cloud storage is introduced. Exact transitive versions remain in the lockfile.
+
+## Task 1.6 workspace addition
+
+`@joint/entitlements` is a private workspace package for deterministic capability resolution. Its only dependency is the existing `@joint/contracts` workspace. Privacy exports reuse the existing DataVault and PostgreSQL; local recovery uses Node tooling, the installed `pg` dependency and the same pinned `postgres:17.6` image. No third-party dependency, image version, hosted service or licence grant is added. CI starts the existing loopback-bound Compose PostgreSQL service so its isolated recovery checks use the same source-discovery boundary as local development.

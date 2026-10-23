@@ -22,7 +22,7 @@ const sessionMutations = new Set([
 let sessionChannel: BroadcastChannel | undefined;
 let sessionListeners = 0;
 
-function announceSessionChange(): void {
+export function announceSessionChange(): void {
   if (typeof BroadcastChannel === "undefined") return;
   const channel =
     sessionChannel ?? new BroadcastChannel("joint-session-events");
@@ -54,7 +54,7 @@ export async function request<T>(
   path: string,
   body?: object,
   idempotencyKey?: string,
-  options: { method?: "PATCH" | "PUT"; ifMatch?: number } = {},
+  options: { method?: "PATCH" | "PUT" | "DELETE"; ifMatch?: number } = {},
 ): Promise<T> {
   try {
     const headers: Record<string, string> = {};
@@ -117,20 +117,25 @@ export function errorMessage(error: unknown): string {
     : "Something went wrong. Please try again.";
 }
 
-export function nextDestination(): "/join" | "/accounts" | "/household" {
+export function nextDestination():
+  "/join" | "/accounts" | "/household" | "/archive" | "/settings/privacy" {
   const next = new URLSearchParams(window.location.search).get("next");
-  return next === "join"
-    ? "/join"
-    : next === "accounts"
-      ? "/accounts"
-      : "/household";
+  return next === "archive"
+    ? "/archive"
+    : next === "privacy"
+      ? "/settings/privacy"
+      : next === "join"
+        ? "/join"
+        : next === "accounts"
+          ? "/accounts"
+          : "/household";
 }
 
 export function finishAuth(state: string): void {
   const next = nextDestination();
   window.location.assign(
     state === "MFA_REQUIRED"
-      ? `/security${next === "/household" ? "" : `?next=${next.slice(1)}`}`
+      ? `/security${next === "/household" ? "" : `?next=${next === "/settings/privacy" ? "privacy" : next.slice(1)}`}`
       : next,
   );
 }

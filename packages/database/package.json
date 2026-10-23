@@ -23,6 +23,26 @@
     "./data-vault": {
       "types": "./dist/data-vault.d.ts",
       "import": "./dist/data-vault.js"
+    },
+    "./archive": {
+      "types": "./dist/archive-transaction.d.ts",
+      "import": "./dist/archive-transaction.js"
+    },
+    "./privacy-journal": {
+      "types": "./dist/privacy-journal.d.ts",
+      "import": "./dist/privacy-journal.js"
+    },
+    "./export-maintenance": {
+      "types": "./dist/export-maintenance.d.ts",
+      "import": "./dist/export-maintenance.js"
+    },
+    "./deletion": {
+      "types": "./dist/deletion.repository.d.ts",
+      "import": "./dist/deletion.repository.js"
+    },
+    "./diagnostics": {
+      "types": "./dist/diagnostics.d.ts",
+      "import": "./dist/diagnostics.js"
     }
   },
   "scripts": {

@@ -50,7 +50,9 @@ export function requireMfa(context: AuthContext): void {
   if (context.aal !== "aal2")
     throw new ForbiddenException({ error: { code: "MFA_REQUIRED" } });
 }
-export function requireFreshMfa(context: AuthContext): void {
+export function requireFreshMfa(
+  context: Pick<AuthContext, "aal" | "mfaAuthenticatedAt">,
+): void {
   const proof = context.mfaAuthenticatedAt;
   if (
     context.aal !== "aal2" ||

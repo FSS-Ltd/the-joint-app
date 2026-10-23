@@ -26,7 +26,12 @@ export function useIdentity(redirect = true): {
     } catch (cause) {
       if (cause instanceof RequestError && cause.status === 401) {
         setIdentity(null);
-        if (redirect) window.location.replace("/sign-in");
+        if (redirect)
+          window.location.replace(
+            window.location.pathname === "/archive"
+              ? "/sign-in?next=archive"
+              : "/sign-in",
+          );
       } else setError(errorMessage(cause));
     } finally {
       setLoading(false);
@@ -35,6 +40,13 @@ export function useIdentity(redirect = true): {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+  useEffect(() => {
+    function refreshRestoredPage(event: PageTransitionEvent) {
+      if (event.persisted) window.location.reload();
+    }
+    window.addEventListener("pageshow", refreshRestoredPage);
+    return () => window.removeEventListener("pageshow", refreshRestoredPage);
+  }, []);
   useEffect(
     () =>
       subscribeSessionChanges(() => {
