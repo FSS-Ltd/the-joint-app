@@ -82,11 +82,8 @@ export function Security(): ReactNode {
       eyebrow="Your account, protected"
       title="A little extra peace of mind."
       description="Keep your shared home secure, with a sign-in that belongs to you."
+      navigation={identity ? "security" : undefined}
     >
-      <nav className="account-nav" aria-label="Your account">
-        <a href="/household">Back to household</a>
-        <a href="/accounts">Accounts</a>
-      </nav>
       <section className="surface form-card" aria-labelledby="security-heading">
         <p className="step-label">Two-step verification</p>
         <h2 id="security-heading">Your authenticator</h2>

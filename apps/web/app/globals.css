@@ -7,13 +7,17 @@
   --sage: #dde7dd;
   --apricot: #f0d6bc;
   --border: #ccd5cc;
+  --focus: #805a27;
+  --radius-card: 6px;
+  --radius-control: 8px;
+  --radius-frame: 10px;
 }
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
-  background: var(--canvas);
+  background: var(--ink);
   color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.6;

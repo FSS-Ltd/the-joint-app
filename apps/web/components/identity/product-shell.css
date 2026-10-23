@@ -1,0 +1,187 @@
+html:has(.app-navigation) {
+  scroll-padding-block: 16px calc(112px + env(safe-area-inset-bottom));
+}
+.identity-shell {
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  background-color: var(--ink);
+  overflow-wrap: anywhere;
+  --focus-ring: var(--apricot);
+}
+.identity-shell::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 110% 520px at -40% -160px,
+      #dde7dd24 68%,
+      transparent 68.2%
+    ),
+    radial-gradient(
+      ellipse 130% 650px at 150% 480px,
+      #f0d6bc0d 58%,
+      transparent 58.2%
+    );
+}
+.identity-header .brand {
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 12px;
+  border-radius: var(--radius-control);
+  background: var(--canvas);
+}
+.identity-header {
+  flex-wrap: wrap;
+}
+.identity-header .environment-label,
+.identity-footer {
+  color: var(--sage);
+}
+.identity-header a:focus-visible,
+.identity-footer a:focus-visible {
+  outline-color: var(--apricot);
+}
+.identity-intro,
+.identity-content {
+  color: var(--canvas);
+  --muted: #dde7dd;
+}
+.identity-intro .together-note strong {
+  color: var(--canvas);
+}
+.together-note > span {
+  color: var(--ink);
+}
+.identity-content {
+  grid-template-columns: minmax(0, 1fr);
+  --focus-ring: var(--focus);
+  padding: 8px;
+  border: 1px solid #dde7dd59;
+  border-radius: var(--radius-frame);
+  background: #dde7dd1f;
+}
+.identity-content > .privacy-note {
+  color: var(--sage);
+}
+.identity-content > .session-actions button:focus-visible,
+.identity-content > .button:focus-visible,
+.identity-content > .text-button:focus-visible {
+  outline-color: var(--apricot);
+}
+.identity-content .text-button {
+  color: inherit;
+}
+.surface,
+.development-note,
+.finance-empty,
+.finance-confirm,
+.finance-warning,
+.finance-status,
+.accounts-private-note,
+.account-mfa-note,
+.privacy-readonly {
+  color: var(--ink);
+  --muted: #52665c;
+  --focus-ring: var(--focus);
+}
+.surface {
+  box-shadow:
+    0 0 0 4px #dde7dd1f,
+    0 8px 24px #10281f0d;
+}
+.accounts-main {
+  color: var(--canvas);
+  --muted: #dde7dd;
+}
+.accounts-main .text-button {
+  color: inherit;
+}
+.accounts-heading h1 {
+  max-width: 780px;
+  line-height: 1.12;
+}
+.accounts-shell > .identity-footer,
+.has-app-navigation > .identity-footer {
+  padding-bottom: calc(108px + env(safe-area-inset-bottom));
+}
+.identity-shell .skip-link {
+  z-index: 10;
+  color: var(--ink);
+  border-radius: var(--radius-control);
+}
+@supports (backdrop-filter: blur(16px)) {
+  .identity-content {
+    backdrop-filter: blur(16px);
+  }
+}
+@media (max-width: 1099px) {
+  .accounts-main {
+    padding-bottom: 48px;
+  }
+  .accounts-shell .account-section-title .text-button:focus-visible,
+  .accounts-shell .account-back a:focus-visible {
+    outline-color: var(--apricot);
+  }
+}
+@media (max-width: 767px) {
+  .identity-main {
+    padding-inline: 16px;
+  }
+  .identity-content {
+    gap: 16px;
+  }
+  .identity-header,
+  .identity-footer {
+    padding-inline: 16px;
+  }
+}
+@media (min-width: 1100px) {
+  html:has(.app-navigation) {
+    scroll-padding-bottom: 24px;
+  }
+  .has-app-navigation {
+    display: grid;
+    grid-template-columns: 224px minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    max-width: 1400px;
+    margin: 0 auto;
+    align-items: start;
+  }
+  .has-app-navigation > .identity-header,
+  .has-app-navigation > .identity-footer {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: none;
+  }
+  .has-app-navigation > .identity-main {
+    grid-column: 2;
+    grid-row: 2;
+    padding: 32px;
+    gap: 32px;
+  }
+  .accounts-shell > .accounts-main {
+    margin: 24px 16px 32px;
+    width: calc(100% - 32px);
+    padding: 28px;
+    border: 8px solid transparent;
+    border-radius: var(--radius-frame);
+    background:
+      linear-gradient(var(--canvas), var(--canvas)) padding-box,
+      linear-gradient(135deg, #dde7dd88, #ffffff24) border-box;
+    color: var(--ink);
+    --muted: #52665c;
+    --focus-ring: var(--focus);
+  }
+  .accounts-shell > .identity-footer,
+  .has-app-navigation > .identity-footer {
+    padding-bottom: 28px;
+  }
+  .accounts-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+    gap: 24px;
+  }
+}

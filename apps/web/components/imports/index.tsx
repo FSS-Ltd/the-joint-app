@@ -10,7 +10,7 @@ export function Imports(): ReactNode {
   const scope = useFinanceScope(true);
   return (
     <AccountsFrame
-      active="activity"
+      active="imports"
       title="Bring your activity together."
       description="Inspect, map and review your CSV before any booked rows are published."
       household={scope.identity?.membership?.household.name}

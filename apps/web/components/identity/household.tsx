@@ -37,6 +37,7 @@ export function Household(): ReactNode {
       eyebrow="Your household"
       title={membership ? membership.household.name : "A home for your plans."}
       description="Start with the people. The rest can grow from here."
+      navigation={identity ? "household" : undefined}
     >
       {loading && (
         <p className="surface form-card" role="status">
@@ -55,11 +56,7 @@ export function Household(): ReactNode {
       )}
       {identity && !loading && (
         <>
-          <nav className="account-nav" aria-label="Your account">
-            <a href="/accounts">Accounts</a>
-            <a href="/security">Account security</a>
-            <a href="/settings/privacy">Privacy</a>
-            <a href="/archive">Owner archive</a>
+          <div className="session-actions">
             <button
               type="button"
               className="text-button"
@@ -68,7 +65,7 @@ export function Household(): ReactNode {
             >
               Sign out
             </button>
-          </nav>
+          </div>
           {!membership ? (
             <section
               className="surface form-card"

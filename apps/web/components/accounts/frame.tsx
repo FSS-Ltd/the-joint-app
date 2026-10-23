@@ -1,8 +1,13 @@
 import { Brand } from "../brand";
 import type { ReactNode } from "react";
+import {
+  AppNavigation,
+  type AppDestination,
+} from "../navigation/app-navigation";
 import "../identity/identity-controls.css";
 import "../identity/identity-layout.css";
 import "./accounts.css";
+import "../identity/product-shell.css";
 
 export function AccountsFrame({
   title,
@@ -17,14 +22,7 @@ export function AccountsFrame({
   household?: string;
   children: ReactNode;
   reportQuery?: string;
-  active?:
-    | "accounts"
-    | "activity"
-    | "dashboard"
-    | "budgets"
-    | "review"
-    | "privacy"
-    | "archive";
+  active?: AppDestination;
 }): ReactNode {
   return (
     <div className="identity-shell accounts-shell">
@@ -35,49 +33,7 @@ export function AccountsFrame({
         <Brand />
         <span className="environment-label">Local development</span>
       </header>
-      <nav className="accounts-nav" aria-label="App">
-        {(
-          [
-            ["dashboard", "Home"],
-            ["budgets", "Budgets"],
-            ["review", "Review"],
-          ] as const
-        ).map(([path, label]) => (
-          <a
-            key={path}
-            href={`/${path}${reportQuery ? `?${reportQuery}` : ""}`}
-            aria-current={active === path ? "page" : undefined}
-          >
-            {label}
-          </a>
-        ))}
-        <a
-          href="/accounts"
-          aria-current={active === "accounts" ? "page" : undefined}
-        >
-          Accounts
-        </a>
-        <a
-          href="/activity"
-          aria-current={active === "activity" ? "page" : undefined}
-        >
-          Activity
-        </a>
-        <a href="/household">Household</a>
-        <a href="/security">Security</a>
-        <a
-          href="/settings/privacy"
-          aria-current={active === "privacy" ? "page" : undefined}
-        >
-          Privacy
-        </a>
-        <a
-          href="/archive"
-          aria-current={active === "archive" ? "page" : undefined}
-        >
-          Archive
-        </a>
-      </nav>
+      <AppNavigation active={active} reportQuery={reportQuery} />
       <main className="accounts-main" id="main">
         <header className="accounts-heading">
           <p className="eyebrow">{household ?? "Your personal space"}</p>

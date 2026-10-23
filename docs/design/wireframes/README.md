@@ -1,6 +1,6 @@
 # Wireframe register
 
-Status: six self-reviewed proposals, revised following the user's all-screen rectangular-card correction. Human approval and application redesign are not claimed.
+Status: six revised wireframes approved by the user as the UI implementation baseline on 23 October 2026. Application implementation and accessibility acceptance remain separate verification tasks.
 
 Private Stitch project: `projects/16873688144152014118`, **The Family Fund App — canonical wireframes**. Project creation returned `visibility: PRIVATE`.
 
@@ -15,7 +15,7 @@ The [visual contract](../DESIGN.md) defines the palette, reference interpretatio
 | Activity and CSV review                 | Mobile  | [Activity](activity-mobile.png) | [Source](sources/activity.html) |
 | Household setup and optional invitation | Mobile  | [Setup](setup-mobile.png)       | [Source](sources/setup.html)    |
 
-Every frame must label synthetic figures as sample data. Exported designs are proposals; production implementation must preserve existing authentication, permissions and financial semantics.
+Every frame labels synthetic figures as sample data. The approved exports establish visual direction; production implementation must preserve existing authentication, permissions and financial semantics.
 
 ## Canonical files
 
@@ -27,6 +27,6 @@ Sources retain compiled styling but contain no scripts. Editable previews use Go
 
 All six final renders were visually inspected for rectangular financial panels, rectangular actions, retained glass, explicit scope and sample-data labelling. The £50 cap includes within-limit, zero-left and £8-over states; the saving calculation is £200−£8=£192. Setup separates email verification from authenticator setup and keeps partner invitation optional. The original source images remain private.
 
-This does not verify working authentication, live balances, full accessibility or every production state. The actual app must still pass the acceptance checks in the visual contract, including zoom, keyboard flows, permission boundaries and reduced motion. No app restyle, deployment, subsequent runtime unit or human approval is recorded here.
+This does not verify working authentication, live balances, full accessibility or every production state. The actual app must still pass the acceptance checks in the visual contract, including zoom, keyboard flows, permission boundaries and reduced motion. The user approved applying this baseline after AUTH2 merged; UI1 implementation is tracked separately. No deployment or completed app restyle is claimed here.
 
 Further variants suggested by Stitch include a cap-edit modal and an Activity empty state. These are suggestions, not implemented features or authorised next build steps.

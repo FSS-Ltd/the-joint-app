@@ -4,14 +4,14 @@
   "designSystem": "assets/3d9cb4dde5ff486cbbf38f3735905a3b",
   "canonicalGeometry": "geometry.css",
   "geometrySha256": "2cdc8cb8d8640448010ef8c4660c4a010e2a0a5cab1131dcde870d1124c048a2",
-  "humanApproval": "not recorded",
+  "humanApproval": "2026-10-23: user approved applying the revised wireframes and docs/design/DESIGN.md as the UI baseline",
   "screens": [
     {
       "key": "home",
       "stitchScreen": "projects/16873688144152014118/screens/94cdf9d2b43741b7aa44a3d48c79fd80",
       "source": "sources/home.html",
       "image": "home-mobile.png",
-      "status": "self-reviewed proposal",
+      "status": "approved implementation baseline",
       "imagePixels": {
         "width": 780,
         "height": 2410
@@ -24,7 +24,7 @@
       "stitchScreen": "projects/16873688144152014118/screens/f77d8d40ad0343c1a6c7bbbf387cbd6c",
       "source": "sources/accounts.html",
       "image": "accounts-mobile.png",
-      "status": "self-reviewed proposal",
+      "status": "approved implementation baseline",
       "imagePixels": {
         "width": 780,
         "height": 2512
@@ -37,7 +37,7 @@
       "stitchScreen": "projects/16873688144152014118/screens/3aa7083acf8a4ad3a33646180eb4497f",
       "source": "sources/caps.html",
       "image": "caps-mobile.png",
-      "status": "self-reviewed proposal",
+      "status": "approved implementation baseline",
       "imagePixels": {
         "width": 780,
         "height": 3090
@@ -50,7 +50,7 @@
       "stitchScreen": "projects/16873688144152014118/screens/9057451de7f24d1eb9a29ce929192498",
       "source": "sources/activity.html",
       "image": "activity-mobile.png",
-      "status": "self-reviewed proposal",
+      "status": "approved implementation baseline",
       "imagePixels": {
         "width": 780,
         "height": 2492
@@ -63,7 +63,7 @@
       "stitchScreen": "projects/16873688144152014118/screens/b4be8abe5c4a48059066d60aebc999f6",
       "source": "sources/setup.html",
       "image": "setup-mobile.png",
-      "status": "self-reviewed proposal",
+      "status": "approved implementation baseline",
       "imagePixels": {
         "width": 780,
         "height": 2246
@@ -76,7 +76,7 @@
       "stitchScreen": "projects/16873688144152014118/screens/9401f0b7728c4ed69bd5741855e43216",
       "source": "sources/desktop.html",
       "image": "home-desktop.png",
-      "status": "self-reviewed proposal",
+      "status": "approved implementation baseline",
       "imagePixels": {
         "width": 2880,
         "height": 2200

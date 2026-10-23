@@ -308,7 +308,14 @@ test("real local identity, two-tab refresh, MFA and invitations preserve session
       });
   }
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("link", { name: "Account security" }).click();
+  await page
+    .getByRole("navigation", { name: "App", exact: true })
+    .getByText("More", { exact: true })
+    .click();
+  await page
+    .getByRole("navigation", { name: "App", exact: true })
+    .getByRole("link", { name: "Security", exact: true })
+    .click();
   const enrollmentResponse = page.waitForResponse(
     (response) => response.url() === `${origin}/api/auth/mfa/enroll`,
   );
@@ -335,7 +342,14 @@ test("real local identity, two-tab refresh, MFA and invitations preserve session
     fullPage: true,
   });
 
-  await page.getByRole("link", { name: "Back to household" }).click();
+  await page
+    .getByRole("navigation", { name: "App", exact: true })
+    .getByText("More", { exact: true })
+    .click();
+  await page
+    .getByRole("navigation", { name: "App", exact: true })
+    .getByRole("link", { name: "Household", exact: true })
+    .click();
   await page.getByLabel("Their email address").fill(member.email);
   await page.getByRole("button", { name: "Create invitation link" }).click();
   const invitationLink = await page

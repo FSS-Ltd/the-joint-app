@@ -587,7 +587,7 @@ test("real monthly spending, owned transfer pairs, exact splits, budgets, covera
   await expect(page).toHaveURL(`${origin}/sign-in`);
   expect(
     await page.evaluate(async () => {
-      const cache = await caches.open("joint-static-shell-v1");
+      const cache = await caches.open("joint-static-shell-v2");
       return (await cache.keys()).map((r) => new URL(r.url).pathname).sort();
     }),
   ).toEqual(["/app-icon.svg", "/offline.html"]);
@@ -606,6 +606,9 @@ test("static offline shell never caches authentication or finance", async ({
       page.evaluate(() => Boolean(navigator.serviceWorker.controller)),
     )
     .toBe(true);
+  expect(await page.evaluate(() => caches.keys())).toEqual([
+    "joint-static-shell-v2",
+  ]);
   await page.goto(`${origin}/sign-in`);
   await page.evaluate(async () => {
     await fetch("/api/auth/csrf", { cache: "no-store" });

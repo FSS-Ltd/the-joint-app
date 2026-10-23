@@ -11,6 +11,14 @@ for (const width of [390, 1280])
     ).toBeVisible();
     await page.keyboard.press("Tab");
     await expect(
+      page.getByRole("link", { name: "Skip to content" }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(
+      page.getByRole("link", { name: "The Family Fund App home" }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(
       page.getByRole("link", { name: "Follow development on GitHub" }),
     ).toBeFocused();
     await page.keyboard.press("Tab");

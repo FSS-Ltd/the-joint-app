@@ -1,6 +1,6 @@
 .surface {
   background: var(--surface);
-  border-radius: 24px;
+  border-radius: var(--radius-card);
   box-shadow: 0 4px 28px #203b3206;
   border: 1px solid #e8ece5;
 }
@@ -44,7 +44,7 @@
   width: 100%;
   min-width: 0;
   border: 1px solid #7f9488;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   padding: 13px 14px;
   font: inherit;
   font-weight: 400;
@@ -60,7 +60,7 @@
 .identity-shell button:focus-visible,
 .identity-shell a:focus-visible,
 .identity-shell summary:focus-visible {
-  outline: 3px solid #805a27;
+  outline: 3px solid var(--focus-ring, var(--focus));
   outline-offset: 4px;
 }
 .field-hint {
@@ -79,7 +79,7 @@
   min-height: 48px;
   padding: 13px 18px;
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   font: inherit;
   font-weight: 600;
   font-size: 14px;
@@ -150,7 +150,7 @@
   color: #9c3838 !important;
   background: #fff1ed;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   margin: 0;
   overflow-wrap: anywhere;
 }
@@ -158,20 +158,15 @@
   background: var(--sage);
   color: var(--ink) !important;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
 }
-.account-nav {
+.session-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 16px;
   font-size: 14px;
-}
-.account-nav a {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
 }
 .detail-list {
   margin: 0;
@@ -190,7 +185,7 @@
   font-weight: 600;
 }
 .development-note {
-  border-radius: 24px;
+  border-radius: var(--radius-card);
   padding: 28px 32px;
   background: var(--sage);
 }
@@ -227,7 +222,7 @@
 }
 .privacy-label {
   padding: 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   background: var(--apricot);
   color: var(--ink) !important;
   font-size: 12px !important;
@@ -237,7 +232,7 @@
   font-size: 14px;
   padding: 12px;
   background: var(--canvas);
-  border-radius: 12px;
+  border-radius: var(--radius-card);
 }
 .identity-shell summary {
   min-height: 44px;
@@ -248,7 +243,7 @@
 .verified-panel {
   background: var(--sage);
   padding: 20px;
-  border-radius: 16px;
+  border-radius: var(--radius-card);
 }
 .verified-panel .status {
   margin: 0;
