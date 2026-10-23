@@ -56,6 +56,9 @@ import { WealthService } from "../wealth/wealth.service.js";
 import { GoalService } from "../goals/goals.service.js";
 import { createGoalsController } from "../goals/goals.controller.js";
 import { createGoalArchiveController } from "../goals/goal-archive.controller.js";
+import { FundingEvidenceService } from "../funding-evidence/funding-evidence.service.js";
+import { createFundingEvidenceController } from "../funding-evidence/funding-evidence.controller.js";
+import { createFundingArchiveController } from "../funding-evidence/funding-archive.controller.js";
 export interface AuthOptions {
   database: PrismaClient;
   environment: AuthServerEnvironment;
@@ -71,6 +74,8 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       createTransactionsController(),
       createReportsController(),
       createWealthController(),
+      createFundingEvidenceController(),
+      createFundingArchiveController(),
       createGoalsController(),
       createGoalArchiveController(),
       createBudgetsController(),
@@ -105,8 +110,14 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   const exports = options.importKey
     ? new ExportService(scoped, archive, new DataVault(options.importKey))
     : undefined;
+  const funding = {
+    identity,
+    funding: new FundingEvidenceService(scoped, archive, vault),
+  };
   const goals = { identity, goals: new GoalService(scoped, archive, vault) };
   return [
+    createFundingEvidenceController(funding),
+    createFundingArchiveController(funding),
     createGoalsController(goals),
     createGoalArchiveController(goals),
     createWealthController({ identity, wealth: new WealthService(scoped) }),

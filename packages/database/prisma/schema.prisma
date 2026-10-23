@@ -134,6 +134,7 @@ model Membership {
   createdBudgets Budget[]
   budgetRevisions BudgetRevision[]
   goalParticipations GoalParticipant[]
+  authoredFundingEvidence FundingEvidence[]
   @@unique([householdId, id])
   @@unique([householdId, id, userId])
   @@unique([userId, householdId])
@@ -253,6 +254,7 @@ model Account {
   transactions Transaction[]
   coverage AccountMonthCoverage[]
   budgetScopeAccounts BudgetScopeAccount[]
+  fundingEvidence FundingEvidence[]
   goalAllocations GoalAllocation[]
   projectionSources ProjectionSource[]
   @@unique([householdId, id])
@@ -268,6 +270,7 @@ model AccountOwner {
   membershipId String @db.Uuid
   membership Membership @relation("AccountOwnership", fields: [householdId, membershipId, userId], references: [householdId, id, userId])
   status AccountOwnerStatus @default(ACTIVE)
+  fundingCutoffVersion Int @default(0)
   @@id([accountId, userId])
   @@index([userId, status, accountId])
   @@index([householdId, membershipId, accountId])
@@ -299,6 +302,7 @@ model BalanceSnapshot {
   author Membership @relation("BalanceAuthor", fields: [householdId, authorMembershipId], references: [householdId, id])
   complete Boolean @default(true)
   source String @default("MANUAL") @db.VarChar(20)
+  fundingEvidence FundingEvidence[]
   goalAllocations GoalAllocation[]
   projectionSources ProjectionSource[]
   @@unique([householdId, accountId, id])
@@ -868,5 +872,23 @@ model GoalRevision {
   createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(3)
   goal Goal @relation(fields: [householdId, goalId], references: [householdId, id], onDelete: Cascade)
   @@id([goalId, version])
+  @@schema("app")
+}
+
+model FundingEvidence {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  accountId String @db.Uuid
+  valuationId String @db.Uuid
+  authorMembershipId String @db.Uuid
+  version Int
+  settledAdultAmountMinor BigInt
+  billReservesMinor BigInt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  account Account @relation(fields: [householdId, accountId], references: [householdId, id], onDelete: Cascade)
+  valuation BalanceSnapshot @relation(fields: [householdId, accountId, valuationId], references: [householdId, accountId, id], onDelete: Cascade)
+  author Membership @relation(fields: [householdId, authorMembershipId], references: [householdId, id])
+  @@unique([accountId, version])
+  @@index([valuationId])
   @@schema("app")
 }

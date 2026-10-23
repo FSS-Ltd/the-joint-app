@@ -38,6 +38,7 @@ export interface ImportsHttpFixture {
     token?: string,
     headers?: Record<string, string>,
   ): Promise<Response>;
+  reauthenticateActor(): Promise<string>;
   uploadHeaders(id?: string): Record<string, string>;
   batch(id: string): Promise<ImportBatchResponse>;
   preview(csv: string): Promise<ImportBatchResponse>;
@@ -220,7 +221,12 @@ export async function createImportsHttpFixture(): Promise<ImportsHttpFixture> {
       const result = authResultSchema.parse(await response.json());
       if (!result.browserToken)
         throw new Error("Expected opaque browser credentials");
-      return { id: user.session.user.id, token: result.browserToken };
+      return {
+        id: user.session.user.id,
+        token: result.browserToken,
+        email: user.email,
+        password: user.password,
+      };
     }
     const actor = await createUser();
     const member = await createUser();
@@ -291,6 +297,26 @@ export async function createImportsHttpFixture(): Promise<ImportsHttpFixture> {
       root,
       maintenance,
       request,
+      async reauthenticateActor() {
+        const logged = await request(
+          "/auth/login",
+          "POST",
+          { email: actor.email, password: actor.password },
+          "",
+        );
+        expect(logged.ok).toBe(true);
+        const result = authResultSchema.parse(await logged.json());
+        if (!result.browserToken)
+          throw Error("Expected new opaque actor session");
+        const verified = await request(
+          "/auth/mfa/verify",
+          "POST",
+          { factorId: factor.factorId, code: totp(factor.secret) },
+          result.browserToken,
+        );
+        expect(verified.ok).toBe(true);
+        return result.browserToken;
+      },
       uploadHeaders,
       batch,
       preview,

@@ -109,3 +109,4 @@ export * from "./goal-lifecycle.js";
 export * from "./projections.js";
 
 export { bookedDateSchema } from "./financial-input.js";
+export * from "./funding-evidence.js";
