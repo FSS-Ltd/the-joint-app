@@ -54,4 +54,4 @@ Files: modify global tokens, identity layout/controls, account/finance/spending 
 
 ## Execution record
 
-UI1 baseline approval received. AUTH2 gate is complete. Shared navigation and visual foundation are implemented, including the authenticated household/security frames. Local geometry and focus regressions were reproduced and corrected; final verification and independent review precede PR publication. UI1 is not complete until host-verified merge.
+UI1 baseline approval received. AUTH2 gate is complete. Shared navigation and visual foundation are implemented, including the authenticated household/security frames. Local geometry and focus regressions were reproduced and corrected. One independent whole-branch review found expanded-menu focus occlusion; the coordinated fix passes its regression and all44 browser cases. Final verification precedes PR publication. UI1 is not complete until host-verified merge.

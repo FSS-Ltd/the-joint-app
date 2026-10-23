@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+"use client";
+
+import type { FocusEvent, KeyboardEvent, ReactNode } from "react";
 import { NavigationIcon, type NavigationIconName } from "./navigation-icon";
 import "./navigation.css";
 
@@ -63,6 +65,19 @@ const secondary: readonly Destination[] = [
   { key: "archive", label: "Archive", href: "/archive", icon: "archive" },
 ];
 
+function dismissOnFocusExit(event: FocusEvent<HTMLDetailsElement>): void {
+  if (!event.currentTarget.contains(event.relatedTarget)) {
+    event.currentTarget.open = false;
+  }
+}
+
+function dismissOnEscape(event: KeyboardEvent<HTMLDetailsElement>): void {
+  if (event.key !== "Escape" || !event.currentTarget.open) return;
+  event.preventDefault();
+  event.currentTarget.open = false;
+  event.currentTarget.querySelector("summary")?.focus();
+}
+
 export function AppNavigation({
   active,
   reportQuery,
@@ -90,7 +105,11 @@ export function AppNavigation({
         <p className="nav-section-label">Your household</p>
         {links(secondary)}
       </div>
-      <details className="nav-more">
+      <details
+        className="nav-more"
+        onBlur={dismissOnFocusExit}
+        onKeyDown={dismissOnEscape}
+      >
         <summary
           data-active={Boolean(currentSecondary)}
           aria-label={

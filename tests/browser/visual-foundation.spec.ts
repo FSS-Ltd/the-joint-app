@@ -67,6 +67,33 @@ test("mobile navigation exposes secondary destinations with the keyboard", async
   ).toHaveAttribute("aria-current", "page");
 });
 
+test("mobile More dismisses when focus leaves and Escape restores its trigger", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 640 });
+  await page.goto("/household");
+  const navigation = page.getByRole("navigation", { name: "App", exact: true });
+  const disclosure = navigation.locator("details");
+  const more = navigation.locator("summary");
+  await more.focus();
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Tab");
+  await expect(
+    navigation.getByRole("link", { name: "Review", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(more).toBeFocused();
+  await expect(disclosure).not.toHaveAttribute("open");
+  await page.keyboard.press("Enter");
+  for (let step = 0; step < 7; step++) await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("button", { name: "Sign out", exact: true }),
+  ).toBeFocused();
+  await expect(disclosure).not.toHaveAttribute("open");
+  await page.keyboard.press("Tab");
+  await expect(page.getByLabel("Household name")).toBeFocused();
+});
+
 test("report navigation retains explicit scope only on report destinations", async ({
   page,
 }) => {
