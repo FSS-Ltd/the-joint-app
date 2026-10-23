@@ -12,6 +12,7 @@ import {
 
 const id = "11111111-1111-4111-8111-111111111111";
 const id2 = "22222222-2222-4222-8222-222222222222";
+const id3 = "33333333-3333-4333-8333-333333333333";
 const money = (amountMinor: string) => ({ amountMinor, currency: "GBP" });
 const userRate = {
   sourceKind: "USER",
@@ -41,23 +42,36 @@ const baseResult = {
   schemaVersion: 1,
   status: "reachable",
   firstQualifyingDate: "2027-10-31",
-  series: [
-    {
-      month: 1,
-      date: "2026-11-30",
-      closing: money("125000"),
-      target: money("400000"),
-    },
-  ],
+  series: (
+    [
+      ["2026-11-30", "125000"],
+      ["2026-12-31", "150000"],
+      ["2027-01-31", "175000"],
+      ["2027-02-28", "200000"],
+      ["2027-03-31", "225000"],
+      ["2027-04-30", "250000"],
+      ["2027-05-31", "275000"],
+      ["2027-06-30", "300000"],
+      ["2027-07-31", "325000"],
+      ["2027-08-31", "350000"],
+      ["2027-09-30", "375000"],
+      ["2027-10-31", "400000"],
+    ] as const
+  ).map(([date, closing], index) => ({
+    month: index + 1,
+    date,
+    closing: money(closing),
+    target: money("400000"),
+  })),
   breakdown: {
     opening: money("100000"),
-    contributions: money("25000"),
+    contributions: money("300000"),
     withdrawals: money("0"),
     growth: money("0"),
     proportionalFees: money("0"),
     fixedFees: money("0"),
     tax: money("0"),
-    closing: money("125000"),
+    closing: money("400000"),
   },
   warnings: [],
 };
@@ -82,6 +96,37 @@ describe("Task 3A contract boundaries", () => {
       liquidAdultAssets: money("100000"),
     };
     expect(wealthSummaryDtoSchema.safeParse(summary).success).toBe(true);
+    expect(
+      wealthSummaryDtoSchema.safeParse({
+        ...summary,
+        scope: { ...summary.scope, accountIds: [id, id] },
+      }).success,
+    ).toBe(false);
+    expect(
+      wealthSummaryDtoSchema.safeParse({
+        ...summary,
+        valuations: [source, source],
+      }).success,
+    ).toBe(false);
+    expect(
+      wealthSummaryDtoSchema.safeParse({
+        ...summary,
+        valuations: [source, { ...source, valuationId: id3 }],
+      }).success,
+    ).toBe(false);
+    expect(
+      wealthSummaryDtoSchema.safeParse({
+        ...summary,
+        valuations: [{ ...source, accountId: id3 }],
+      }).success,
+    ).toBe(false);
+    expect(
+      wealthSummaryDtoSchema.safeParse({
+        ...summary,
+        scope: { ...summary.scope, accountIds: [id, id3] },
+        valuations: [source, { ...source, accountId: id3 }],
+      }).success,
+    ).toBe(false);
     expect(
       wealthSummaryDtoSchema.safeParse({
         ...summary,
@@ -160,6 +205,38 @@ describe("Task 3A contract boundaries", () => {
       ],
     };
     expect(goalAllocationSetDtoSchema.safeParse(allocation).success).toBe(true);
+    expect(
+      goalAllocationSetDtoSchema.safeParse({
+        ...allocation,
+        allocations: [
+          allocation.allocations[0],
+          { ...allocation.allocations[0], valuationId: id3 },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      goalAllocationSetDtoSchema.safeParse({
+        ...allocation,
+        allocations: [
+          allocation.allocations[0],
+          {
+            basis: "FIXED",
+            accountId: id,
+            valuationId: id3,
+            amount: money("100"),
+          },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      goalAllocationSetDtoSchema.safeParse({
+        ...allocation,
+        allocations: [
+          allocation.allocations[0],
+          { ...allocation.allocations[0], accountId: id3, valuationId: id3 },
+        ],
+      }).success,
+    ).toBe(true);
     for (const fraction of ["0", "1.01", "-0", "0.250", "25%", "01", "1.0"])
       expect(
         goalAllocationSetDtoSchema.safeParse({
@@ -420,6 +497,82 @@ describe("Task 3A contract boundaries", () => {
       createdAt: "2026-10-23T12:00:00Z",
     };
     expect(projectionRunDtoSchema.safeParse(run).success).toBe(true);
+    expect(
+      projectionRunDtoSchema.safeParse({
+        ...run,
+        input: { ...baseInput, horizonMonths: 11 },
+      }).success,
+    ).toBe(false);
+    expect(
+      projectionRunDtoSchema.safeParse({
+        ...run,
+        result: {
+          ...baseResult,
+          series: [...baseResult.series, baseResult.series[11]],
+        },
+      }).success,
+    ).toBe(false);
+    expect(
+      projectionRunDtoSchema.safeParse({
+        ...run,
+        result: {
+          ...baseResult,
+          series: [baseResult.series[1], baseResult.series[0]],
+        },
+      }).success,
+    ).toBe(false);
+    expect(
+      projectionRunDtoSchema.safeParse({
+        ...run,
+        result: {
+          ...baseResult,
+          series: [
+            ...baseResult.series.slice(0, 11),
+            { ...baseResult.series[11], month: 13 },
+          ],
+        },
+      }).success,
+    ).toBe(false);
+    expect(
+      projectionRunDtoSchema.safeParse({
+        ...run,
+        result: {
+          ...baseResult,
+          series: [
+            ...baseResult.series.slice(0, 11),
+            { ...baseResult.series[11], date: "2027-11-30" },
+          ],
+        },
+      }).success,
+    ).toBe(false);
+    expect(
+      projectionRunDtoSchema.safeParse({
+        ...run,
+        result: { ...baseResult, firstQualifyingDate: "2027-09-30" },
+      }).success,
+    ).toBe(false);
+    expect(
+      projectionRunDtoSchema.safeParse({
+        ...run,
+        result: {
+          ...baseResult,
+          series: [
+            ...baseResult.series.slice(0, 11),
+            { ...baseResult.series[11], closing: money("399999") },
+          ],
+        },
+      }).success,
+    ).toBe(false);
+    expect(
+      projectionRunDtoSchema.safeParse({
+        ...run,
+        result: {
+          ...baseResult,
+          status: "already_achieved",
+          firstQualifyingDate: null,
+        },
+      }).success,
+    ).toBe(true);
     expect(
       projectionRunDtoSchema.safeParse({ ...run, scenarioId: id }).success,
     ).toBe(false);

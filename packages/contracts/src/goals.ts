@@ -55,7 +55,13 @@ export const goalAllocationSetDtoSchema = z
     ...goalIdentity,
     allocations: z.array(goalAllocationSchema).max(50),
   })
-  .strict();
+  .strict()
+  .refine(
+    (set) =>
+      new Set(
+        set.allocations.map((allocation) => allocation.accountId.toLowerCase()),
+      ).size === set.allocations.length,
+  );
 export type GoalAllocationSetDto = z.infer<typeof goalAllocationSetDtoSchema>;
 
 export const monthlyContributionSchema = z

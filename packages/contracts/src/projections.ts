@@ -5,6 +5,7 @@ import {
   grossAnnualRateSchema,
   inflationAnnualRateSchema,
   monthEndDateSchema,
+  monthEndAtOffset,
   monthEndWithinHorizon,
   nonnegativeMoneySchema,
   positiveVersionSchema,
@@ -149,7 +150,10 @@ export const projectionResultV1Schema = z
       )
       .max(20),
   })
-  .strict();
+  .strict()
+  .refine((result) =>
+    result.series.every((entry, index) => entry.month === index + 1),
+  );
 export type ProjectionResultV1 = z.infer<typeof projectionResultV1Schema>;
 
 export const scenarioDtoSchema = z
@@ -191,5 +195,24 @@ export const projectionRunDtoSchema = z
       (run.input.mode === "BASIC"
         ? run.scenarioId === null
         : run.scenarioId === run.input.scenarioId),
-  );
+  )
+  .refine((run) =>
+    run.result.series.every(
+      (entry) =>
+        entry.month <= run.input.horizonMonths &&
+        entry.date ===
+          monthEndAtOffset(run.input.firstContributionDate, entry.month - 1),
+    ),
+  )
+  .refine((run) => {
+    if (run.result.status !== "reachable") return true;
+    const firstQualifying = run.result.series.find(
+      (entry) =>
+        BigInt(entry.closing.amountMinor) >= BigInt(entry.target.amountMinor),
+    );
+    return (
+      firstQualifying !== undefined &&
+      firstQualifying.date === run.result.firstQualifyingDate
+    );
+  });
 export type ProjectionRunDto = z.infer<typeof projectionRunDtoSchema>;

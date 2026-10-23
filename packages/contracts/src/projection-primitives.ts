@@ -22,6 +22,16 @@ export const monthEndWithinHorizon = (
   const [year, month] = date.split("-").map(Number);
   return year! * 12 + month! - 1 + months - 1 <= 9999 * 12 + 11;
 };
+export const monthEndAtOffset = (date: string, offset: number): string => {
+  const [year, month] = date.split("-").map(Number);
+  const monthIndex = year! * 12 + month! - 1 + offset;
+  const resultYear = Math.floor(monthIndex / 12);
+  const resultMonth = (monthIndex % 12) + 1;
+  const day = new Date(
+    Date.UTC(2000 + (resultYear % 400), resultMonth, 0),
+  ).getUTCDate();
+  return `${String(resultYear).padStart(4, "0")}-${String(resultMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+};
 
 const canonicalDecimalSchema = z
   .string()
