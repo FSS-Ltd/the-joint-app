@@ -4,6 +4,7 @@ import {
   authServerEnvironmentSchema,
   identityEnvironmentSchema,
   importEnvironmentSchema,
+  privacyEnvironmentSchema,
   readEnvironment,
 } from "@joint/contracts";
 import { createOrm } from "@joint/database/client";
@@ -24,6 +25,10 @@ async function main(): Promise<void> {
     process.env.IMPORT_DATA_KEY === undefined
       ? undefined
       : readEnvironment(importEnvironmentSchema, process.env);
+  const privacy =
+    process.env.PRIVACY_JOURNAL_PATH === undefined
+      ? undefined
+      : readEnvironment(privacyEnvironmentSchema, process.env);
   const orm =
     identity.AUTH_ISSUER || auth ? createOrm(env.DATABASE_URL) : undefined;
   const database = createDatabase(env.DATABASE_URL, env.DATABASE_TIMEOUT_MS);
@@ -37,6 +42,7 @@ async function main(): Promise<void> {
           database: orm,
           environment: auth,
           importKey: imports?.IMPORT_DATA_KEY,
+          privacyJournalPath: privacy?.PRIVACY_JOURNAL_PATH,
         }
       : undefined,
   );

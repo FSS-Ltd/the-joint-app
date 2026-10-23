@@ -1,0 +1,89 @@
+.privacy-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 24px;
+  align-items: start;
+}
+.privacy-stack {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.privacy-layout .surface {
+  min-width: 0;
+}
+.privacy-accounts {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+}
+.privacy-accounts legend {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.identity-shell .privacy-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--canvas);
+}
+.identity-shell .privacy-choice input {
+  width: 20px;
+  min-height: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  accent-color: var(--primary);
+}
+.privacy-choice span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.privacy-choice small {
+  display: block;
+  color: var(--muted);
+  font-weight: 400;
+  margin-top: 4px;
+}
+.privacy-export-status {
+  margin-top: 24px;
+  border-top: 1px solid var(--sage);
+  padding-top: 12px;
+}
+.privacy-danger {
+  border-color: #a15b46;
+}
+.privacy-danger .button {
+  background: #793b2f;
+  color: white;
+}
+.privacy-connections {
+  background: var(--sage);
+}
+.privacy-readonly {
+  border-radius: 16px;
+  padding: 16px 20px;
+  background: var(--sage);
+}
+.privacy-activity {
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+.privacy-activity li {
+  padding-block: 12px;
+  border-bottom: 1px solid var(--sage);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  .privacy-layout .form-card {
+    padding: 24px 20px;
+  }
+}

@@ -2,6 +2,7 @@ import { randomInt } from "node:crypto";
 import { performance } from "node:perf_hooks";
 import type { Prisma } from "@joint/database/client";
 import type { JobLease, JobsRepository } from "@joint/database/jobs";
+import { diagnosticLine } from "@joint/database/diagnostics";
 export type JobHandler = (
   lease: JobLease,
   transaction: Prisma.TransactionClient,
@@ -64,6 +65,9 @@ export async function runJobs(
         result.succeeded++;
     } catch {
       // Handler errors may contain financial payloads; persist state, never text.
+      process.stderr.write(
+        diagnosticLine({ code: "WORKER_JOB_FAILED", jobId: lease.id }),
+      );
       const ceiling = Math.min(300, 2 ** Math.min(lease.attempt, 8));
       await jobs.fail(lease, randomInt(1, ceiling + 1));
       result.failed++;

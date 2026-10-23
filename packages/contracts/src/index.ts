@@ -100,3 +100,6 @@ export * from "./classifications.js";
 export * from "./budgets.js";
 export * from "./spending.js";
 export * from "./transfers.js";
+export * from "./exports.js";
+export * from "./privacy.js";
+export * from "./entitlements.js";

@@ -5,6 +5,20 @@ import {
 } from "@nestjs/common";
 import { idempotencyKeySchema, type AuthContext } from "@joint/contracts";
 import type { IdentityService } from "./modules/identity/identity.service.js";
+import { randomUUID } from "node:crypto";
+import type { OwnerArchiveContext } from "@joint/database/archive";
+
+export async function ownerArchiveContext(
+  identity: IdentityService,
+  header: string | undefined,
+): Promise<OwnerArchiveContext> {
+  if (!header || !/^Session [A-Za-z0-9_-]{43}$/.test(header))
+    throw new UnauthorizedException();
+  return {
+    ...(await identity.actor(header.slice(8))),
+    requestId: randomUUID(),
+  };
+}
 
 export function validateInput<T>(
   schema: {

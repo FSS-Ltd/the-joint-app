@@ -1,6 +1,6 @@
 # The Joint App
 
-Household finance built around shared goals and individual privacy. **In development: local identity, private accounts and CSV/manual activity. Spending, budgets and monthly review are being verified.**
+Household finance built around shared goals and individual privacy. **In development: local identity, private accounts and CSV/manual activity. Spending, budgets and monthly review are available locally. Privacy and recovery controls are being verified.**
 
 ## Local setup
 
@@ -16,12 +16,13 @@ pnpm db:migrate
 pnpm db:runtime
 pnpm db:seed
 pnpm imports:setup
+pnpm privacy:setup
 pnpm dev
 ```
 
 Web: http://127.0.0.1:3000. API: http://127.0.0.1:3001/health/live and /health/ready. PostgreSQL: loopback port 5432. Local credentials are disposable development defaults, never production credentials. Auth is loopback http://127.0.0.1:15421/auth/v1; its development email inbox is http://127.0.0.1:15424. No messages leave the local inbox.
 
-Run apps separately with `pnpm --filter @joint/web dev`, `pnpm --filter @joint/api dev`, and `pnpm --filter @joint/worker dev`. Build shared packages first with `pnpm build`. Production builds start with the package's `start` script; the worker runs bounded CSV preview, commit and restore jobs. Stop with Ctrl-C.
+Run apps separately with `pnpm --filter @joint/web dev`, `pnpm --filter @joint/api dev`, and `pnpm --filter @joint/worker dev`. Build shared packages first with `pnpm build`. Production builds start with the package's `start` script; the worker runs bounded CSV preview, commit, restore and export jobs, plus verified local deletion cleanup. Stop with Ctrl-C.
 
 `pnpm auth:down` stops Auth and its inbox. `pnpm db:down` stops Compose services and preserves volumes. Do not delete volumes containing wanted data.
 
@@ -67,7 +68,7 @@ Open `/sign-up`, create a synthetic individual account and copy its six-digit co
 
 Open `/security` to enroll and verify a TOTP authenticator. A later sign-in requires the enrolled factor before household actions. `/recovery` sends a local email code and requires an existing authenticator when enrolled. A successful password reset keeps its current browser session and revokes other app sessions. Local/global logout revokes server registry entries immediately, independently of JWT expiry; logout reloads the page. Lost-authenticator support and production recovery operations remain release gates; there is no partner override.
 
-`pnpm auth:setup` creates ignored `.env.auth` with restrictive file permissions and generated local signing/encryption keys. Existing settings are preserved. Keep that file with its development volumes: replacing its encryption key makes stored provider sessions unreadable, and replacing its signing keys invalidates local Auth credentials. Never commit it, copy its test admin key into app configuration, or use its keys/data outside local development. Configure a different Auth HTTP port before initial setup using `AUTH_HTTP_PORT`; keep issuer, gateway and signed local keys consistent.
+`pnpm auth:setup` creates ignored `.env.auth` with restrictive file permissions and generated local signing/encryption keys. Existing settings are preserved. Keep that file with its development volumes: replacing its encryption key makes stored provider sessions unreadable, and replacing its signing keys invalidates local Auth credentials. Never commit it or use its keys/data outside local development. The explicit local privacy setup copies its synthetic admin key into a separate ignored worker-only file; the API receives no privacy admin credential. Configure a different Auth HTTP port before initial setup using `AUTH_HTTP_PORT`; keep issuer, gateway and signed local keys consistent.
 
 Only random opaque session cookies reach the browser; provider access/refresh tokens stay encrypted in PostgreSQL. Mutation requests require matching Origin and CSRF proof. The loopback synthetic inbox allows up to 1,000 Auth emails/hour with a one-second resend cooldown so repeated test runs do not exhaust the vendor default. This is not a production abuse-protection configuration. Real Auth integration tests require `pnpm auth:up`, migrated application data and built packages. No hosted Supabase project is provisioned.
 
@@ -81,7 +82,7 @@ Open `/accounts` after joining a household. Enroll/verify an authenticator befor
 
 Owners can choose Private, Values only or Values and details for the other active adult. Widening access requires a TOTP proof from the last five minutes; the Security screen can request fresh verification. Downgrades take effect on the next request, invalidating old membership epochs and cursors. Viewing grants do not permit edits, valuation entry or re-sharing. Values and details also permits viewing booked activity and scoped reports. It never permits changing another owner's source records. Holdings remain future work.
 
-All four finance tables force PostgreSQL row-level security. Trusted server context is scoped to a transaction and rechecks the current user, membership, session and grant epoch. Tests connect as the restricted runtime role; they do not substitute table-owner queries as isolation evidence. There is no hosted Data API. Joint-owner confirmation, archive/lifecycle flows and later financial features retain their own acceptance gates. See [Task 1.3 design](docs/decisions/task-1.3-plan.md).
+Financial tables force PostgreSQL row-level security. Trusted server context is scoped to a transaction and rechecks the current user, membership, session and grant epoch. Tests connect as the restricted runtime role; they do not substitute table-owner queries as isolation evidence. There is no hosted Data API. Joint-owner confirmation and later financial features retain their own acceptance gates; archive and lifecycle controls are verified in Task 1.6. See [Task 1.3 design](docs/decisions/task-1.3-plan.md).
 
 ## Local CSV and manual activity
 
@@ -100,3 +101,15 @@ Owners classify activity as spending, income, refund, transfer, debt service, pr
 History remains incomplete until owners confirm coverage for every selected account in a closed month and financial components are reviewed. An upload's date range does not prove complete history. Comparisons stay unavailable for incomplete periods. Charts include visible amount tables, and financial calculations retain exact GBP minor units beyond source-row limits.
 
 The local PWA caches only its generic offline document and public icon. Offline navigation shows no financial figures; authenticated HTML, API responses, statements and credentials are never placed in CacheStorage. No production hosting or deployment is enabled. See [Task 1.5 decisions](docs/decisions/task-1.5-plan.md).
+
+## Local privacy and recovery
+
+After `pnpm auth:setup`, run `pnpm privacy:setup`. It creates ignored, private `.env.privacy` and `.env.privacy-worker` files plus `.local/privacy/deletion-ledger.ndjson`. Preserve this journal independently of every database backup. Setup preserves existing contents and refuses hosted Auth. Only the worker loads the new administrative Auth credential file. Do not use these synthetic credentials outside local development.
+
+Open `/settings/privacy` to export selected authorised accounts, leave or request account deletion. Exports and deletion require a fresh authenticator proof. Values-only access exports account details and balances; detailed access includes published activity, corrections and the requester's own private notes. CSV text is escaped for spreadsheet safety. Downloads require the requesting session and unchanged permissions, expire after fifteen minutes, and encrypted objects expire after twenty-four hours. Retrying or resuming cannot bypass revocation. Already downloaded bytes cannot be recovered.
+
+Leaving is available without a pre-exit export or partner approval. It revokes household access and requires a fresh sign-in. `/archive` then provides read/export-only access to recorded sole or verified joint ownership; former viewing grants and another author's private notes do not carry over. A former member cannot reactivate the original household membership; create a new household and explicitly import owned records instead. No automatic cross-household copy exists.
+
+Deletion immediately revokes app access and returns a minimal status receipt in a purpose-bound HttpOnly cookie. The local worker verifies independent journal intent, purges eligible personal records and confirms upstream Auth deletion before reporting completion. Another recorded owner's source records remain; minimal UUID tombstones preserve justified shared history. Provider failure remains pending and retries. Keep the receipt browser until completion; lost or expired receipts need an independently verified local operator process, never partner approval. Safety controls remain free. Direct connection disconnection stays disabled because this build has no bank/broker connections.
+
+The recovery rehearsal and its limitations are documented in [the local restore runbook](docs/runbooks/restore.md). Production backup automation, legal retention review, vendor approval and production recovery objectives remain future gates. **No deployment, preview, staging, deployment hook or hosted database is authorised until the entire MVP is complete and the founder explicitly approves deployment.**

@@ -12,17 +12,6 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       PLAYWRIGHT_WS_ENDPOINT: ws://127.0.0.1:3002/
-    services:
-      postgres:
-        image: postgres:17.6
-        env:
-          POSTGRES_USER: joint
-          POSTGRES_PASSWORD: local-development-only
-          POSTGRES_DB: joint
-        ports: [5432:5432]
-        options: >-
-          --health-cmd "pg_isready -U joint -d joint"
-          --health-interval 2s --health-timeout 3s --health-retries 30
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -35,6 +24,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm build
       - run: cp .env.example .env
+      - run: pnpm db:up
       - run: pnpm db:migrate
       - run: pnpm db:runtime
       - run: pnpm db:seed
@@ -42,6 +32,7 @@ jobs:
       - run: pnpm test
       - run: pnpm imports:setup
       - run: pnpm auth:setup
+      - run: pnpm privacy:setup
       - name: Start local Auth and synthetic inbox
         run: >-
           docker compose --env-file .env.auth --profile auth

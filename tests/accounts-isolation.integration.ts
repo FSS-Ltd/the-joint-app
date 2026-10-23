@@ -25,6 +25,7 @@ const runtime = new PrismaClient({
 const scoped = new ScopedDatabase(runtime);
 const householdA = randomUUID();
 const householdB = randomUUID();
+const exitedHousehold = randomUUID();
 function actor(householdId: string): AuthContext {
   return {
     userId: randomUUID(),
@@ -40,7 +41,8 @@ function actor(householdId: string): AuthContext {
 const alice = actor(householdA);
 const partner = actor(householdA);
 const outsider = actor(householdB);
-const actors = [alice, partner, outsider];
+const departing = actor(exitedHousehold);
+const actors = [alice, partner, outsider, departing];
 let accountA: string;
 let accountB: string;
 async function createAccount(context: AuthContext): Promise<string> {
@@ -74,7 +76,7 @@ async function createAccount(context: AuthContext): Promise<string> {
 }
 beforeAll(async () => {
   await owner.household.createMany({
-    data: [{ id: householdA }, { id: householdB }],
+    data: [{ id: householdA }, { id: householdB }, { id: exitedHousehold }],
   });
   for (const [index, context] of actors.entries()) {
     await owner.user.create({
@@ -104,10 +106,10 @@ beforeAll(async () => {
 afterAll(async () => {
   await runtime.$disconnect();
   await owner.account.deleteMany({
-    where: { householdId: { in: [householdA, householdB] } },
+    where: { householdId: { in: [householdA, householdB, exitedHousehold] } },
   });
   await owner.household.deleteMany({
-    where: { id: { in: [householdA, householdB] } },
+    where: { id: { in: [householdA, householdB, exitedHousehold] } },
   });
   await owner.user.deleteMany({
     where: { id: { in: actors.map((a) => a.userId) } },
@@ -318,17 +320,20 @@ it("rejects forged and revoked scopes against live records", async () => {
     where: { id: alice.userId },
     data: { status: "ACTIVE" },
   });
+  expect(await scoped.withScope(departing, (tx) => tx.account.count())).toBe(0);
   await owner.membership.update({
-    where: { id: alice.membershipId },
+    where: { id: departing.membershipId },
     data: { status: "LEFT", slot: null },
   });
   await expect(
-    scoped.withScope(alice, (tx) => tx.account.count()),
+    scoped.withScope(departing, (tx) => tx.account.count()),
   ).rejects.toThrow("scope");
-  await owner.membership.update({
-    where: { id: alice.membershipId },
-    data: { status: "ACTIVE", slot: 1 },
-  });
+  await expect(
+    owner.membership.update({
+      where: { id: departing.membershipId },
+      data: { status: "ACTIVE", slot: 1 },
+    }),
+  ).rejects.toThrow("Exited membership cannot be reactivated");
   await owner.sessionRegistry.update({
     where: { id: alice.sessionId },
     data: { revokedAt: new Date() },

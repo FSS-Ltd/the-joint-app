@@ -82,7 +82,29 @@ async function expectMutation(
       result.request().method() === method,
   );
   await action();
-  expect((await response).status()).toBe(200);
+  const result = await response;
+  const id = /\/transactions\/([0-9a-f-]{36})/.exec(path)?.[1];
+  const current =
+    result.status() !== 200 && id
+      ? await database.transaction.findUnique({
+          where: { id },
+          select: {
+            version: true,
+            notes: {
+              where: { authorUserId: owner.session.user.id },
+              select: { version: true },
+            },
+          },
+        })
+      : null;
+  expect(
+    result.status(),
+    JSON.stringify({
+      ifMatch: result.request().headers()["if-match"],
+      currentVersion: current?.version,
+      noteVersions: current?.notes.map((note) => note.version),
+    }),
+  ).toBe(200);
 }
 test.beforeAll(async () => {
   if (!process.env.DATABASE_URL || !process.env.MIGRATION_DATABASE_URL)
@@ -426,6 +448,9 @@ test("real CSV review, replay, overlap choices, private notes, corrections and r
         .getByRole("button", { name: "Undo last classification change" })
         .click(),
   );
+  await expect(
+    classification.getByText("Classification change undone.", { exact: true }),
+  ).toBeVisible();
   await expect(
     classification.getByLabel("Category", { exact: true }),
   ).toHaveValue("");

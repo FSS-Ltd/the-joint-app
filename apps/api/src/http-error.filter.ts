@@ -4,12 +4,16 @@ import {
   type ArgumentsHost,
   type ExceptionFilter,
 } from "@nestjs/common";
+import { randomUUID } from "node:crypto";
+import { diagnosticLine } from "@joint/database/diagnostics";
 interface SafeResponse {
   status(code: number): SafeResponse;
   header(name: string, value: string): SafeResponse;
   json(value: unknown): void;
 }
 const knownErrors: Record<string, string> = {
+  PRIVACY_UNAVAILABLE:
+    "Local privacy controls need setup. Run pnpm privacy:setup after auth:setup, then restart the API and worker.",
   INVALID_SCOPE: "Select between one and fifty distinct available accounts.",
   SCOPE_SELECTION_REQUIRED:
     "Select up to fifty accounts before requesting a report.",
@@ -66,7 +70,7 @@ const knownErrors: Record<string, string> = {
   IDEMPOTENCY_CONFLICT: "This request key was used with different details.",
   MFA_REQUIRED: "Verify your authenticator before continuing.",
   MFA_REAUTH_REQUIRED:
-    "Verify your authenticator again before sharing more details.",
+    "Verify your authenticator again before this sensitive action.",
   VERSION_CONFLICT: "This account changed. Refresh it before trying again.",
   INVALID_CURSOR: "This account list changed. Refresh it to continue.",
   SESSION_UNAVAILABLE: "Session unavailable. Sign in again or retry shortly.",
@@ -133,9 +137,14 @@ export class HttpErrorFilter implements ExceptionFilter {
           message:
             "This service is temporarily unavailable. Try again shortly.",
         });
+    const requestId = randomUUID();
+    process.stderr.write(
+      diagnosticLine({ code: "API_REQUEST_REJECTED", requestId, status }),
+    );
     response
       .status(status)
       .header("Cache-Control", "no-store")
+      .header("X-Request-Id", requestId)
       .json({ error: safeError });
   }
 }

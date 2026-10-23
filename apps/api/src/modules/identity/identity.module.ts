@@ -33,10 +33,29 @@ import { createBudgetsController } from "../budgets/budgets.controller.js";
 import { createCoverageController } from "../accounts/coverage.controller.js";
 import { TransfersService } from "../transfers/transfers.service.js";
 import { createTransfersController } from "../transfers/transfers.controller.js";
+import { EntitlementService } from "../entitlements/entitlement.service.js";
+import { createEntitlementsController } from "../entitlements/entitlements.controller.js";
+import { ArchiveDatabase } from "@joint/database/archive";
+import { ArchiveService } from "../archive/archive.service.js";
+import { createArchiveController } from "../archive/archive.controller.js";
+import { ExportService } from "../exports/export.service.js";
+import {
+  createExportsController,
+  createArchiveExportsController,
+} from "../exports/exports.controller.js";
+import { PrivacyJournal } from "@joint/database/privacy-journal";
+import { DeletionRepository } from "@joint/database/deletion";
+import { PrivacyService } from "../privacy/privacy.service.js";
+import { LeaveService } from "../privacy/leave.service.js";
+import {
+  createLeaveController,
+  createPrivacyController,
+} from "../privacy/privacy.controller.js";
 export interface AuthOptions {
   database: PrismaClient;
   environment: AuthServerEnvironment;
   importKey?: string;
+  privacyJournalPath?: string;
 }
 export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   if (!options)
@@ -49,6 +68,12 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       createBudgetsController(),
       createCoverageController(),
       createTransfersController(),
+      createEntitlementsController(),
+      createArchiveController(),
+      createExportsController(),
+      createArchiveExportsController(),
+      createPrivacyController(),
+      createLeaveController(),
     ];
   const { database, environment: env } = options;
   const provider = new AuthProvider(
@@ -65,7 +90,33 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   const identity = new IdentityService(sessions, provider, database, vault);
   const scoped = new ScopedDatabase(database);
   const reports = new ReportService(scoped);
+  const archive = new ArchiveDatabase(database);
+  const journal = options.privacyJournalPath
+    ? new PrivacyJournal(options.privacyJournalPath)
+    : undefined;
+  const exports = options.importKey
+    ? new ExportService(scoped, archive, new DataVault(options.importKey))
+    : undefined;
   return [
+    createPrivacyController({
+      identity,
+      privacy: new PrivacyService(new DeletionRepository(database), journal),
+    }),
+    createLeaveController({
+      identity,
+      leave: new LeaveService(scoped),
+      journal,
+    }),
+    createArchiveController({
+      identity,
+      archive: new ArchiveService(archive, vault),
+    }),
+    createExportsController(exports ? { identity, exports } : undefined),
+    createArchiveExportsController(exports ? { identity, exports } : undefined),
+    createEntitlementsController({
+      identity,
+      entitlements: new EntitlementService(scoped),
+    }),
     createTransfersController({
       identity,
       transfers: new TransfersService(scoped, vault),

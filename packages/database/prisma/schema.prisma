@@ -241,6 +241,7 @@ model Account {
   legalOwnerKind LegalOwnerKind @default(ADULT)
   liquidity Liquidity @default(AVAILABLE)
   version Int @default(1)
+  totalsVersion Int @default(1)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   archivedAt DateTime? @db.Timestamptz(3)
   owners AccountOwner[]
@@ -264,6 +265,7 @@ model AccountOwner {
   membership Membership @relation("AccountOwnership", fields: [householdId, membershipId, userId], references: [householdId, id, userId])
   status AccountOwnerStatus @default(ACTIVE)
   @@id([accountId, userId])
+  @@index([userId, status, accountId])
   @@index([householdId, membershipId, accountId])
   @@schema("app")
 }
@@ -594,5 +596,111 @@ model BudgetRevision {
   data Json
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   @@unique([budgetId, version])
+  @@schema("app")
+}
+
+// References are constrained by SQL to avoid adding unrelated model relations.
+model EntitlementGrant {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  membershipId String @db.Uuid
+  userId String @db.Uuid
+  issuer String @db.VarChar(120)
+  reason String @db.VarChar(500)
+  capabilities String[]
+  issuedAt DateTime @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  revokedAt DateTime? @db.Timestamptz(3)
+  revision Int @default(1)
+  @@index([householdId, membershipId, userId])
+  @@schema("app")
+}
+
+model EntitlementGrantAudit {
+  id BigInt @id @default(autoincrement())
+  grantId String @db.Uuid
+  householdId String @db.Uuid
+  issuer String @db.VarChar(120)
+  operation String
+  changedAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(3)
+  databaseActor String @default(dbgenerated("SESSION_USER"))
+  snapshot Json
+  @@index([grantId, id])
+  @@schema("app")
+}
+
+// Export references are constrained in SQL; runtime access uses fenced functions.
+model ExportRequest {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  sessionId String @db.Uuid
+  membershipId String? @db.Uuid
+  householdId String @db.Uuid
+  archive Boolean
+  state String @default("QUEUED") @db.VarChar(20)
+  cursor String @default("") @db.VarChar(100)
+  sourceCount Int @default(0)
+  chunkCount Int @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  downloadExpiresAt DateTime? @db.Timestamptz(3)
+  @@index([expiresAt])
+  @@schema("app")
+}
+model ExportSource {
+  exportId String @db.Uuid
+  accountId String @db.Uuid
+  householdId String @db.Uuid
+  membershipId String @db.Uuid
+  level String @db.VarChar(20)
+  owned Boolean
+  grantVersion Int
+  detailVersion BigInt?
+  noteVersion BigInt?
+  sourceVersion BigInt
+  @@id([exportId, accountId])
+  @@index([accountId])
+  @@schema("app")
+}
+model ExportChunk {
+  exportId String @db.Uuid
+  sequence Int
+  ciphertext String @db.Text
+  @@id([exportId, sequence])
+  @@schema("app")
+}
+model ExportAccountRevision {
+  accountId String @id @db.Uuid
+  version BigInt @default(0)
+  detailVersion BigInt @default(0)
+  @@schema("app")
+}
+
+// User references are constrained by SQL to retain minimal deletion tombstones.
+model DeletionRequest {
+  id String @id @db.Uuid
+  userId String @unique @db.Uuid
+  statusTokenHash String @db.Char(64)
+  statusExpiresAt DateTime @db.Timestamptz(3)
+  requestedAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(3)
+  attempt Int @default(0)
+  runAfter DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(3)
+  state String @default("PENDING") @db.VarChar(20)
+  leaseToken String? @db.Uuid
+  leaseUntil DateTime? @db.Timestamptz(3)
+  purgedAt DateTime? @db.Timestamptz(3)
+  providerDeletedAt DateTime? @db.Timestamptz(3)
+  completedAt DateTime? @db.Timestamptz(3)
+  @@index([state, runAfter, requestedAt])
+  @@index([state, requestedAt])
+  @@schema("app")
+}
+
+// References are constrained by SQL; private author epochs have no runtime grants.
+model ExportNoteRevision {
+  accountId String @db.Uuid
+  userId String @db.Uuid
+  version BigInt @default(0)
+  @@id([accountId, userId])
   @@schema("app")
 }
