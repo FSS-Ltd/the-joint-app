@@ -101,6 +101,13 @@ Use `H = /v1/households/{householdId}`. Generate OpenAPI from validated contract
 - [ ] Show accessible table plus chart, target assumptions, first payment date, source freshness and excluded funds. Render numbers from the DTO. “Projected September 2027” is conditional, not a guarantee.
 - [ ] Expose incomplete, stale, underfunded, already-achieved and unreachable states. A paywall appears only on an explicit advanced action, never when viewing basic goals, history, ownership or privacy controls.
 
+### Category-cap and savings feedback extension
+
+- [ ] Extend the existing budgets/monthly review UI with category caps, a remaining-money countdown, steady red at zero and a brief gentle overspend pulse with reduced-motion support.
+- [ ] Show the qualified effect of net budget variance on confirmed monthly savings/contributions and, only with sufficient authorised engine inputs, the goal timeline. Preserve shortfalls and avoid double-counting across goals.
+- [ ] Add supportive month-end encouragement to plan an eligible leftover amount towards a user-selected savings/investment goal. Require explicit confirmation; no automatic transfer, trade or observed savings entry.
+- [ ] Verify all examples, missing-data, permission, exact-money, mobile and accessibility outcomes in [category caps and savings requirements](../../decisions/category-caps-and-savings-plan.md). Deliver this extension through its own build-step gate; none of these requirements is complete yet.
+
 ## 7. Critical verification and planned commands
 
 Create `packages/projections/src/__tests__/golden.test.ts`, `allocation-properties.test.ts` in the domain package, `apps/api/test/wealth-goals-projections.e2e-spec.ts` and `apps/web/tests/goals.spec.ts`. Cover these outcomes rather than snapshots of implementation details:

@@ -94,6 +94,8 @@ A client-supplied household ID; a totals-only partner requesting detailed data; 
 
 **Acceptance:** Both adults can review an authorised month, correct categories and see spending without transfer/card double counting. Hidden-account information cannot be inferred from an inconsistent total.
 
+**Later enhancement requested 2026-10-23:** Category-cap countdown, accessible red/overspend feedback, savings impact and month-end encouragement extend these delivered budget foundations. They remain unimplemented and are tracked in Phase 3 Task E and [the requirement addition](../../decisions/category-caps-and-savings-plan.md); the completed checkboxes above do not cover this new scope.
+
 ## Task 1.6 — Entitlements, privacy controls and local recovery rehearsal
 
 **Files:** `packages/entitlements/src/capabilities.ts`, `apps/api/src/modules/entitlements/`, `privacy/`, `audit/`, `apps/worker/src/handlers/export.handler.ts`, `docs/runbooks/restore.md`.
