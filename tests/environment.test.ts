@@ -35,3 +35,21 @@ describe("public contracts and environment", () => {
     ).toMatchObject({ API_PORT: 3001, DATABASE_TIMEOUT_MS: 2000 });
   });
 });
+
+it("rejects unsafe server endpoints without exposing configuration values", async () => {
+  const { identityEnvironmentSchema, webEnvironmentSchema } =
+    await import("../packages/contracts/src/index.js");
+  for (const value of [
+    "synthetic-secret",
+    "http://remote.invalid/auth/v1",
+    "https://user:secret@example.invalid/auth/v1",
+    "https://example.invalid/auth/v1?secret=value",
+  ]) {
+    expect(() =>
+      readEnvironment(identityEnvironmentSchema, { AUTH_ISSUER: value }),
+    ).toThrow("Invalid environment fields: AUTH_ISSUER");
+  }
+  expect(readEnvironment(webEnvironmentSchema, {})).toEqual({
+    API_BASE_URL: "http://127.0.0.1:3001",
+  });
+});

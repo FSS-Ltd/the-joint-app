@@ -1,17 +1,30 @@
 import "reflect-metadata";
-import { apiEnvironmentSchema, readEnvironment } from "@joint/contracts";
+import {
+  apiEnvironmentSchema,
+  identityEnvironmentSchema,
+  readEnvironment,
+} from "@joint/contracts";
+import { createOrm } from "@joint/database/client";
 import { createDatabase } from "@joint/database";
 import { createApplication } from "./application.js";
 async function main(): Promise<void> {
   const env = readEnvironment(apiEnvironmentSchema, process.env);
+  const identity = readEnvironment(identityEnvironmentSchema, process.env);
+  const orm = identity.AUTH_ISSUER ? createOrm(env.DATABASE_URL) : undefined;
   const database = createDatabase(env.DATABASE_URL, env.DATABASE_TIMEOUT_MS);
-  const app = await createApplication(database);
+  const app = await createApplication(
+    database,
+    orm && identity.AUTH_ISSUER
+      ? { database: orm, issuer: identity.AUTH_ISSUER }
+      : undefined,
+  );
   app.getHttpAdapter().getInstance().disable("x-powered-by");
   // Nest closes the listener before releasing its database pool.
   await app.listen(env.API_PORT, "127.0.0.1");
   const close = async (): Promise<void> => {
     await app.close();
     await database.close();
+    await orm?.$disconnect();
   };
   process.once("SIGINT", () => {
     void close();

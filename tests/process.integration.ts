@@ -40,3 +40,21 @@ for (const service of ["api", "worker"])
     expect(output).toContain("Invalid environment fields: DATABASE_URL");
     expect(output).not.toContain(sentinel);
   });
+
+it("migration command rejects invalid configuration without echoing credentials", async () => {
+  const sentinel = "synthetic-secret-do-not-log";
+  const child = spawn(process.execPath, ["scripts/database.mjs", "migrate"], {
+    env: { ...process.env, MIGRATION_DATABASE_URL: sentinel },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let output = "";
+  child.stderr.on("data", (chunk) => {
+    output += String(chunk);
+  });
+  const [code] = await once(child, "exit");
+  expect(code).toBe(1);
+  expect(output).toContain(
+    "Invalid environment fields: MIGRATION_DATABASE_URL",
+  );
+  expect(output).not.toContain(sentinel);
+});

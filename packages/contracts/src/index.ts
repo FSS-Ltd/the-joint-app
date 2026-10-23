@@ -3,14 +3,15 @@ export const healthSchema = z
   .object({ status: z.enum(["ok", "unavailable"]) })
   .strict();
 export type HealthResponse = z.infer<typeof healthSchema>;
+const postgresUrlSchema = z
+  .url()
+  .refine(
+    (value) =>
+      URL.canParse(value) &&
+      ["postgres:", "postgresql:"].includes(new URL(value).protocol),
+  );
 export const databaseEnvironmentSchema = z.object({
-  DATABASE_URL: z
-    .url()
-    .refine(
-      (value) =>
-        URL.canParse(value) &&
-        ["postgres:", "postgresql:"].includes(new URL(value).protocol),
-    ),
+  DATABASE_URL: postgresUrlSchema,
   DATABASE_TIMEOUT_MS: z.coerce
     .number()
     .int()
@@ -40,3 +41,37 @@ export function readEnvironment<T>(
     );
   return result.data;
 }
+
+export const bootstrapSchema = z
+  .object({ status: z.literal("ok"), householdId: z.uuid() })
+  .strict();
+export type BootstrapResponse = z.infer<typeof bootstrapSchema>;
+export const identityClaimsSchema = z.object({
+  sub: z.uuid(),
+  session_id: z.uuid(),
+  role: z.literal("authenticated"),
+});
+
+const serverUrlSchema = z.url().refine((value) => {
+  if (!URL.canParse(value)) return false;
+  const url = new URL(value);
+  return (
+    !url.username &&
+    !url.password &&
+    !url.search &&
+    !url.hash &&
+    (url.protocol === "https:" ||
+      (url.protocol === "http:" &&
+        ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)))
+  );
+});
+export const webEnvironmentSchema = z.object({
+  API_BASE_URL: serverUrlSchema.default("http://127.0.0.1:3001"),
+});
+export const identityEnvironmentSchema = z.object({
+  AUTH_ISSUER: serverUrlSchema.optional(),
+});
+
+export const migrationEnvironmentSchema = z.object({
+  MIGRATION_DATABASE_URL: postgresUrlSchema.optional(),
+});

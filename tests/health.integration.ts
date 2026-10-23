@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
-import { createDatabase } from "../packages/database/src/index.js";
-import { createApplication } from "../apps/api/src/application.js";
+import { createDatabase } from "../packages/database/dist/index.js";
+import { createApplication } from "../apps/api/dist/application.js";
 it("checks real connectivity and keeps liveness independent of database failure", async () => {
   const database = createDatabase(
     process.env.DATABASE_URL ??

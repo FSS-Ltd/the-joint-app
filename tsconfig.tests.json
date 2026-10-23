@@ -1,0 +1,9 @@
+{
+  "extends": "./packages/config/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": ["tests/**/*.ts", "vitest*.ts", "playwright.config.ts"]
+}

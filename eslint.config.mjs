@@ -4,6 +4,7 @@ export default tseslint.config(
   {
     ignores: [
       "**/dist/**",
+      "**/generated/**",
       "**/.next/**",
       "**/node_modules/**",
       "the-joint-app-plan/**",

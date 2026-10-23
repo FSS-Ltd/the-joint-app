@@ -7,16 +7,31 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./jobs": {
+      "types": "./dist/jobs.repository.d.ts",
+      "import": "./dist/jobs.repository.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "prisma db seed"
   },
   "dependencies": {
-    "pg": "8.23.1"
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "pg": "8.23.1",
+    "@joint/contracts": "workspace:*"
   },
   "devDependencies": {
-    "@types/pg": "8.16.0"
+    "@types/pg": "8.16.0",
+    "prisma": "7.10.1"
   }
 }
