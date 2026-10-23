@@ -19,6 +19,10 @@
     "./scoped": {
       "types": "./dist/scoped-transaction.d.ts",
       "import": "./dist/scoped-transaction.js"
+    },
+    "./data-vault": {
+      "types": "./dist/data-vault.d.ts",
+      "import": "./dist/data-vault.js"
     }
   },
   "scripts": {

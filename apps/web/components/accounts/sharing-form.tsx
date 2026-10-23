@@ -78,8 +78,8 @@ export function SharingForm({
           </label>
           <p className="field-hint">
             Private means no access. Values only shares the account summary.
-            Detailed history is not imported yet; “Values and details” sets
-            permission for it when available.
+            “Values and details” includes booked activity. Private notes remain
+            visible only to their author.
           </p>
           <p className="field-hint">
             Sharing more access requires an authenticator code verified within

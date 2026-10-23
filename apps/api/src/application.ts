@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import type { IncomingMessage } from "node:http";
 import { HttpErrorFilter } from "./http-error.filter.js";
 import {
   Controller,
@@ -11,6 +12,7 @@ import type { NestExpressApplication } from "@nestjs/platform-express";
 import type { INestApplication } from "@nestjs/common";
 import type { DatabaseConnection } from "@joint/database";
 import type { HealthResponse } from "@joint/contracts";
+import { MAX_CSV_BYTES } from "@joint/contracts";
 import {
   BootstrapService,
   type BootstrapOptions,
@@ -51,6 +53,15 @@ export async function createApplication(
     { logger: false, bodyParser: false },
   );
   app.useBodyParser("json", { limit: "32kb" });
+  app.useBodyParser("raw", {
+    limit: MAX_CSV_BYTES,
+    type: (request: IncomingMessage) =>
+      request.method === "POST" &&
+      /^\/v1\/households\/[a-f0-9-]{36}\/imports\/(?:inspect|preview)(?:\?.*)?$/i.test(
+        request.url ?? "",
+      ) &&
+      request.headers["content-type"]?.split(";")[0]?.trim() === "text/csv",
+  });
   app.useGlobalFilters(new HttpErrorFilter());
   return app;
 }

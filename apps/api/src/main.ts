@@ -3,6 +3,7 @@ import {
   apiEnvironmentSchema,
   authServerEnvironmentSchema,
   identityEnvironmentSchema,
+  importEnvironmentSchema,
   readEnvironment,
 } from "@joint/contracts";
 import { createOrm } from "@joint/database/client";
@@ -19,6 +20,10 @@ async function main(): Promise<void> {
   ].some((key) => process.env[key] !== undefined)
     ? readEnvironment(authServerEnvironmentSchema, process.env)
     : undefined;
+  const imports =
+    process.env.IMPORT_DATA_KEY === undefined
+      ? undefined
+      : readEnvironment(importEnvironmentSchema, process.env);
   const orm =
     identity.AUTH_ISSUER || auth ? createOrm(env.DATABASE_URL) : undefined;
   const database = createDatabase(env.DATABASE_URL, env.DATABASE_TIMEOUT_MS);
@@ -27,7 +32,13 @@ async function main(): Promise<void> {
     orm && identity.AUTH_ISSUER
       ? { database: orm, issuer: identity.AUTH_ISSUER }
       : undefined,
-    orm && auth ? { database: orm, environment: auth } : undefined,
+    orm && auth
+      ? {
+          database: orm,
+          environment: auth,
+          importKey: imports?.IMPORT_DATA_KEY,
+        }
+      : undefined,
   );
   app.getHttpAdapter().getInstance().disable("x-powered-by");
   // Nest closes the listener before releasing its database pool.
