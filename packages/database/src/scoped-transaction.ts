@@ -83,7 +83,8 @@ async function requireRestrictedRole(
     AND NOT EXISTS (
       SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
       WHERE n.nspname = 'app' AND c.relname IN ('Account', 'AccountOwner', 'AccountGrant', 'BalanceSnapshot',
-        'ImportBatch', 'ImportObject', 'Transaction', 'TransactionRevision', 'TransactionOverride', 'TransactionNote')
+        'ImportBatch', 'ImportObject', 'Transaction', 'TransactionRevision', 'TransactionOverride', 'TransactionNote', 'TransactionSplit', 'TransferLink', 'AccountMonthCoverage',
+        'CoverageRevision', 'BudgetScope', 'BudgetScopeAccount', 'Budget', 'BudgetLine', 'BudgetRevision')
         AND pg_has_role(current_user, c.relowner, 'MEMBER')
     ) AS safe FROM pg_catalog.pg_roles r WHERE r.rolname = current_user`;
   if (!role?.safe)

@@ -15,6 +15,10 @@
     "./transactions": {
       "types": "./dist/transaction-normalisation.d.ts",
       "import": "./dist/transaction-normalisation.js"
+    },
+    "./cash-flow": {
+      "types": "./dist/cash-flow.d.ts",
+      "import": "./dist/cash-flow.js"
     }
   },
   "scripts": {

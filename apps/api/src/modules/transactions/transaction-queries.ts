@@ -5,10 +5,16 @@ import type { ScopedDatabase } from "@joint/database/scoped";
 import type { IdentityVault } from "../identity/identity-vault.js";
 import {
   ownsAccount,
+  pairedTransactionIds,
   projectTransaction,
   readTransaction,
   transactionInclude,
 } from "./transaction-projection.js";
+
+import {
+  transactionFilters,
+  type ActivityFilters,
+} from "./transaction-filters.js";
 
 export class TransactionQueries {
   constructor(
@@ -25,8 +31,16 @@ export class TransactionQueries {
     accountId: string,
     limit: number,
     cursor?: string,
+    filters: ActivityFilters = {},
   ) {
-    const aad = `transactions:${context.userId}:${context.membershipId}:${context.householdId}:${context.grantVersion}:${accountId}`;
+    const filterKey = JSON.stringify([
+      filters.month ?? null,
+      filters.search ?? null,
+      filters.category ?? null,
+      filters.uncategorized ?? false,
+      filters.classificationKind ?? null,
+    ]);
+    const aad = `transactions:${context.userId}:${context.membershipId}:${context.householdId}:${context.grantVersion}:${accountId}:${filterKey}`;
     let after: Prisma.TransactionWhereInput = {};
     if (cursor) {
       try {
@@ -53,7 +67,7 @@ export class TransactionQueries {
           householdId: context.householdId,
           accountId,
           status: "BOOKED",
-          ...after,
+          AND: [after, transactionFilters(filters)],
         },
         take: limit + 1,
         orderBy: [{ bookedDate: "desc" }, { id: "asc" }],
@@ -62,8 +76,14 @@ export class TransactionQueries {
       const owned = await ownsAccount(tx, context, accountId);
       const page = rows.slice(0, limit),
         last = page.at(-1);
+      const paired = await pairedTransactionIds(
+        tx,
+        page.map((row) => row.id),
+      );
       return {
-        items: page.map((row) => projectTransaction(row, owned)),
+        items: page.map((row) =>
+          projectTransaction(row, owned, paired.has(row.id)),
+        ),
         nextCursor:
           rows.length > limit && last
             ? this.vault.seal(

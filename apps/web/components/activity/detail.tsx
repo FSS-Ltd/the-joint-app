@@ -11,6 +11,11 @@ import { financePath } from "../finance/http";
 import { EntryForm } from "./entry-form";
 import { ClassificationForm, PrivateNoteForm } from "./annotations";
 import "../finance/finance.css";
+import "../spending/spending.css";
+import { kindLabels } from "./kinds";
+import { SplitSummary } from "./split-summary";
+import { SplitForm } from "./split-form";
+import { TransferForm } from "./transfer-form";
 
 export function TransactionDetail({
   transactionId,
@@ -42,6 +47,18 @@ export function TransactionDetail({
       current = false;
     };
   }, [householdId, transactionId, revision]);
+  useEffect(() => {
+    const focus = () => {
+      setTransaction(null);
+      setRevision((value) => value + 1);
+    };
+    window.addEventListener("focus", focus);
+    return () => window.removeEventListener("focus", focus);
+  }, []);
+  function unavailable() {
+    setTransaction(null);
+    setRevision((value) => value + 1);
+  }
   return (
     <AccountsFrame
       active="activity"
@@ -77,7 +94,7 @@ export function TransactionDetail({
           Reload transaction
         </button>
       )}
-      {transaction && householdId && (
+      {transaction && householdId && !identityError && (
         <div className="finance-stack">
           <section className="surface form-card">
             <p className="step-label">
@@ -92,13 +109,25 @@ export function TransactionDetail({
             >
               Reload transaction
             </button>
+            <p>
+              {transaction.splits.length
+                ? `Split transaction · ${transaction.splits.length} components`
+                : `${kindLabels[transaction.effectiveKind ?? "UNCLASSIFIED"]} · ${transaction.classificationConfirmed ? "Reviewed" : "Unreviewed default"}`}
+              {transaction.transfer?.confirmed ? " · Confirmed transfer" : ""}
+            </p>
             <p className="transaction-value">
               {formatMoney(transaction.money)}
             </p>
             <p>
-              {[transaction.category, transaction.merchant]
+              {[
+                transaction.splits.length ? null : transaction.category,
+                transaction.merchant,
+              ]
                 .filter(Boolean)
-                .join(" · ") || "No classification yet."}
+                .join(" · ") ||
+                (transaction.splits.length
+                  ? "Categorized through split components."
+                  : "No classification yet.")}
             </p>
             {transaction.source === "CSV" && (
               <p className="field-hint">
@@ -113,30 +142,55 @@ export function TransactionDetail({
               </p>
             )}
           </section>
+          <SplitSummary transaction={transaction} />
           <div className="finance-grid">
             <div className="finance-stack">
-              {transaction.permissions.canCorrect && (
-                <EntryForm
-                  key={transaction.id}
-                  householdId={householdId}
-                  accountId={transaction.accountId}
-                  transaction={transaction}
-                  saved={setTransaction}
-                />
-              )}
+              {transaction.permissions.canCorrect &&
+                !transaction.transfer?.confirmed &&
+                !transaction.splits.length && (
+                  <EntryForm
+                    key={transaction.id}
+                    householdId={householdId}
+                    accountId={transaction.accountId}
+                    transaction={transaction}
+                    saved={setTransaction}
+                    unavailable={unavailable}
+                  />
+                )}
               {transaction.permissions.canClassify && (
                 <ClassificationForm
                   householdId={householdId}
                   transaction={transaction}
                   saved={setTransaction}
+                  unavailable={unavailable}
                 />
               )}
             </div>
+            {transaction.permissions.canClassify && (
+              <div className="finance-stack">
+                {!transaction.transfer?.confirmed && (
+                  <SplitForm
+                    key={`${transaction.id}:${transaction.version}`}
+                    householdId={householdId}
+                    transaction={transaction}
+                    saved={setTransaction}
+                    unavailable={unavailable}
+                  />
+                )}
+                <TransferForm
+                  householdId={householdId}
+                  transaction={transaction}
+                  saved={setTransaction}
+                  unavailable={unavailable}
+                />
+              </div>
+            )}
             {transaction.permissions.canNote && (
               <PrivateNoteForm
                 householdId={householdId}
                 transaction={transaction}
                 saved={setTransaction}
+                unavailable={unavailable}
               />
             )}
           </div>

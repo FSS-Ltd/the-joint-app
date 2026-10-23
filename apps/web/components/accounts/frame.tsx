@@ -9,12 +9,14 @@ export function AccountsFrame({
   household,
   children,
   active = "accounts",
+  reportQuery,
 }: {
   title: string;
   description: string;
   household?: string;
   children: ReactNode;
-  active?: "accounts" | "activity";
+  reportQuery?: string;
+  active?: "accounts" | "activity" | "dashboard" | "budgets" | "review";
 }): ReactNode {
   return (
     <div className="identity-shell accounts-shell">
@@ -31,6 +33,21 @@ export function AccountsFrame({
         <span className="environment-label">Local development</span>
       </header>
       <nav className="accounts-nav" aria-label="App">
+        {(
+          [
+            ["dashboard", "Home"],
+            ["budgets", "Budgets"],
+            ["review", "Review"],
+          ] as const
+        ).map(([path, label]) => (
+          <a
+            key={path}
+            href={`/${path}${reportQuery ? `?${reportQuery}` : ""}`}
+            aria-current={active === path ? "page" : undefined}
+          >
+            {label}
+          </a>
+        ))}
         <a
           href="/accounts"
           aria-current={active === "accounts" ? "page" : undefined}

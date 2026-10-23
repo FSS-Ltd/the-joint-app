@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import "./globals.css";
+import { OfflineRegistration } from "../components/finance/offline-registration";
 export const metadata = {
   title: "The Joint App",
   description:
@@ -12,7 +13,10 @@ export default function RootLayout({
 }): ReactNode {
   return (
     <html lang="en-GB">
-      <body>{children}</body>
+      <body>
+        <OfflineRegistration />
+        {children}
+      </body>
     </html>
   );
 }

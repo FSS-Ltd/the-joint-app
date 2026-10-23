@@ -1,45 +1,64 @@
 "use client";
 import { useState, type FormEvent, type ReactNode } from "react";
-import type { TransactionResponse } from "@joint/contracts";
+import {
+  classificationKindSchema,
+  type TransactionResponse,
+} from "@joint/contracts";
 import { request, errorMessage } from "../identity/client";
+import { isAccessError } from "../finance/access-error";
 import { Feedback } from "../identity/frame";
 import { financePath } from "../finance/http";
+import { KindOptions } from "./kinds";
 
-type Classification = Pick<TransactionResponse, "category" | "merchant">;
+type Classification = Pick<
+  TransactionResponse,
+  "category" | "merchant" | "classificationKind"
+>;
 export function ClassificationForm({
   householdId,
   transaction,
   saved,
+  unavailable,
 }: {
   householdId: string;
   transaction: TransactionResponse;
   saved: (transaction: TransactionResponse) => void;
+  unavailable?: () => void;
 }): ReactNode {
   const [previous, setPrevious] = useState<Classification | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  async function change(value: Classification, undo = false) {
+  async function change(value: Partial<Classification>, undo = false) {
     setPending(true);
     setError("");
     setSuccess("");
     try {
+      const body =
+        transaction.transfer?.confirmed || transaction.splits.length > 0
+          ? { merchant: value.merchant }
+          : value;
       const result = await request<TransactionResponse>(
         `${financePath(householdId, "transactions", transaction.id)}/annotation`,
-        value,
+        body,
         undefined,
         { method: "PATCH", ifMatch: transaction.version },
       );
       setPrevious(
         undo
           ? null
-          : { category: transaction.category, merchant: transaction.merchant },
+          : {
+              category: transaction.category,
+              merchant: transaction.merchant,
+              classificationKind: transaction.classificationKind,
+            },
       );
       saved(result);
       setSuccess(
         undo ? "Classification change undone." : "Classification saved.",
       );
     } catch (cause) {
+      if (isAccessError(cause)) unavailable?.();
       setError(errorMessage(cause));
     } finally {
       setPending(false);
@@ -49,7 +68,16 @@ export function ClassificationForm({
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     void change({
-      category: String(form.get("category")).trim() || null,
+      classificationKind:
+        transaction.transfer?.confirmed || transaction.splits.length > 0
+          ? transaction.classificationKind
+          : form.get("classificationKind")
+            ? classificationKindSchema.parse(form.get("classificationKind"))
+            : null,
+      category:
+        transaction.transfer?.confirmed || transaction.splits.length > 0
+          ? transaction.category
+          : String(form.get("category")).trim() || null,
       merchant: String(form.get("merchant")).trim() || null,
     });
   }
@@ -60,7 +88,30 @@ export function ClassificationForm({
         Category and merchant are visible to adults with Values and details
         access. The original description remains unchanged.
       </p>
+      {(transaction.transfer?.confirmed || transaction.splits.length > 0) && (
+        <p className="field-hint">
+          Financial type and category use the confirmed pair or split
+          components. Remove the pair or clear the split before changing them.
+          Merchant remains editable.
+        </p>
+      )}
       <form className="form-stack" onSubmit={submit} aria-busy={pending}>
+        <label>
+          Financial type
+          <select
+            name="classificationKind"
+            key={`kind-${transaction.version}`}
+            defaultValue={transaction.classificationKind ?? ""}
+            disabled={
+              pending ||
+              transaction.transfer?.confirmed ||
+              transaction.splits.length > 0
+            }
+          >
+            <option value="">Unreviewed default</option>
+            <KindOptions />
+          </select>
+        </label>
         <label>
           Category
           <input
@@ -68,7 +119,11 @@ export function ClassificationForm({
             name="category"
             maxLength={80}
             defaultValue={transaction.category ?? ""}
-            disabled={pending}
+            disabled={
+              pending ||
+              transaction.transfer?.confirmed ||
+              transaction.splits.length > 0
+            }
           />
         </label>
         <label>
@@ -86,26 +141,38 @@ export function ClassificationForm({
         </button>
       </form>
       <div className="finance-actions">
-        {previous && (
-          <button
-            className="text-button"
-            disabled={pending}
-            type="button"
-            onClick={() => void change(previous, true)}
-          >
-            Undo last classification change
-          </button>
-        )}
-        {(transaction.category || transaction.merchant) && (
-          <button
-            className="text-button"
-            disabled={pending}
-            type="button"
-            onClick={() => void change({ category: null, merchant: null })}
-          >
-            Clear classification
-          </button>
-        )}
+        {previous &&
+          !transaction.transfer?.confirmed &&
+          !transaction.splits.length && (
+            <button
+              className="text-button"
+              disabled={pending}
+              type="button"
+              onClick={() => void change(previous, true)}
+            >
+              Undo last classification change
+            </button>
+          )}
+        {(transaction.category ||
+          transaction.merchant ||
+          transaction.classificationKind) &&
+          !transaction.transfer?.confirmed &&
+          !transaction.splits.length && (
+            <button
+              className="text-button"
+              disabled={pending}
+              type="button"
+              onClick={() =>
+                void change({
+                  category: null,
+                  merchant: null,
+                  classificationKind: null,
+                })
+              }
+            >
+              Clear classification
+            </button>
+          )}
       </div>
       <Feedback error={error} success={success} />
     </section>
@@ -115,10 +182,12 @@ export function PrivateNoteForm({
   householdId,
   transaction,
   saved,
+  unavailable,
 }: {
   householdId: string;
   transaction: TransactionResponse;
   saved: (transaction: TransactionResponse) => void;
+  unavailable?: () => void;
 }): ReactNode {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -143,6 +212,7 @@ export function PrivateNoteForm({
       );
       setSuccess("Your private note was saved.");
     } catch (cause) {
+      if (isAccessError(cause)) unavailable?.();
       setError(errorMessage(cause));
     } finally {
       setPending(false);

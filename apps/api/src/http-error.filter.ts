@@ -10,6 +10,21 @@ interface SafeResponse {
   json(value: unknown): void;
 }
 const knownErrors: Record<string, string> = {
+  INVALID_SCOPE: "Select between one and fifty distinct available accounts.",
+  SCOPE_SELECTION_REQUIRED:
+    "Select up to fifty accounts before requesting a report.",
+  SCOPE_CHANGED:
+    "Account access or financial details changed. Refresh this report.",
+  INVALID_CLASSIFICATION:
+    "Choose a classification consistent with the amount's direction.",
+  CLASSIFICATION_LOCKED:
+    "Remove the transfer link or clear the splits before changing financial details.",
+  INVALID_SPLITS:
+    "Use two to twenty nonzero lines that add exactly to the original amount, with valid classifications.",
+  INVALID_TRANSFER:
+    "Choose two unpaired booked transactions in accounts you own with equal opposite amounts.",
+  OPEN_COVERAGE_PERIOD:
+    "Only a closed calendar month can have complete history confirmed.",
   IMPORTS_UNAVAILABLE:
     "Local imports are unavailable. Run pnpm imports:setup and restart the API and worker.",
   IMPORT_BUSY:

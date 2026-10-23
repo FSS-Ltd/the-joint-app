@@ -1,6 +1,6 @@
 # The Joint App
 
-Household finance built around shared goals and individual privacy. **In development: local identity, household membership and private manual accounts. CSV/manual activity is being verified; financial reporting remains future work.**
+Household finance built around shared goals and individual privacy. **In development: local identity, private accounts and CSV/manual activity. Spending, budgets and monthly review are being verified.**
 
 ## Local setup
 
@@ -40,7 +40,7 @@ pnpm test:e2e
 
 If port 5432 is occupied, set POSTGRES_PORT=15432 and update DATABASE_URL in .env. Root integration/browser commands load `.env`, `.env.database`, `.env.auth` and `.env.imports` automatically; exported environment variables take precedence.
 
-Integration and browser tests require migrated local PostgreSQL and built packages. Browser tests start the web app automatically and bind their synthetic APIs on ports 3001, 3302, 3402 and 3502, plus isolated identity/account web processes on 3301, 3401 and 3501; stop development processes on those ports before testing. The API and worker load `.env.database` after `.env`; both load `.env.imports`, and the API also loads `.env.auth`. CI uses disposable PostgreSQL, Auth and email containers with synthetic identities. Type checking builds package declarations first and also checks test sources.
+Integration and browser tests require migrated local PostgreSQL and built packages. Browser tests start the web app automatically and bind their synthetic APIs on ports 3001, 3302, 3402, 3502 and 3602, plus isolated identity/account/review web processes on 3301, 3401, 3501 and 3601; stop development processes on those ports before testing. The API and worker load `.env.database` after `.env`; both load `.env.imports`, and the API also loads `.env.auth`. CI uses disposable PostgreSQL, Auth and email containers with synthetic identities. Type checking builds package declarations first and also checks test sources.
 
 ## Structure and delivery
 
@@ -79,7 +79,7 @@ Run `pnpm db:runtime` after migrations and before starting the API/worker or tes
 
 Open `/accounts` after joining a household. Enroll/verify an authenticator before creating an account. Creation records your self-declared sole adult ownership; a viewing grant does not make the other adult an owner. Accounts start private, even when another adult joins. An unknown value stays unknown until its owner records a dated manual GBP value. Liability values mean nonnegative outstanding debt. Account kinds and legal ownership cannot be changed through metadata edits.
 
-Owners can choose Private, Values only or Values and details for the other active adult. Widening access requires a TOTP proof from the last five minutes; the Security screen can request fresh verification. Downgrades take effect on the next request, invalidating old membership epochs and cursors. Viewing grants do not permit edits, valuation entry or re-sharing. Values and details is a permission tier; transaction/holding records and CSV imports are not implemented yet.
+Owners can choose Private, Values only or Values and details for the other active adult. Widening access requires a TOTP proof from the last five minutes; the Security screen can request fresh verification. Downgrades take effect on the next request, invalidating old membership epochs and cursors. Viewing grants do not permit edits, valuation entry or re-sharing. Values and details also permits viewing booked activity and scoped reports. It never permits changing another owner's source records. Holdings remain future work.
 
 All four finance tables force PostgreSQL row-level security. Trusted server context is scoped to a transaction and rechecks the current user, membership, session and grant epoch. Tests connect as the restricted runtime role; they do not substitute table-owner queries as isolation evidence. There is no hosted Data API. Joint-owner confirmation, archive/lifecycle flows and later financial features retain their own acceptance gates. See [Task 1.3 design](docs/decisions/task-1.3-plan.md).
 
@@ -90,3 +90,13 @@ Run `pnpm imports:setup` before starting the API and worker. It generates a sepa
 Open `/imports` for an owned account. CSV files must use UTF-8, a header row, at most 10 MiB and 50,000 transaction records. Choose columns, date order, decimal separator and sign explicitly. Review rejects and overlap warnings before committing. Equal purchases remain separate unless an explicit stable source identifier proves a duplicate. Preview originals expire after 24 hours; successful originals expire within seven days and can be deleted earlier.
 
 Open `/activity` to add manual transactions, correct their financial details, classify owned activity and keep author-private notes. Imported financial fields retain their original source. Rollback is available only when an import has no later edits, classifications or notes; restore republishes the same transaction identities. Manually recorded account balances are not changed automatically by transaction activity. See [Task 1.4 decisions](docs/decisions/task-1.4-plan.md).
+
+## Local spending, budgets and review
+
+Open `/dashboard`, `/budgets` or `/review` and select the calendar month and accounts. Reports use only accounts with current **Values and details** access; an explicit unavailable selection fails instead of silently changing totals. Budgets belong to the exact selected-account scope. Either adult may edit its limits only while they can see every account in that scope. Limits do not change account balances.
+
+Owners classify activity as spending, income, refund, transfer, debt service, principal, contribution or unclassified. Negative cash/card entries start as provisional spending; positive entries are never guessed as income. In transaction details, use exact splits to replace a parent amount or confirm equal opposite transfer legs in two accounts you own. Clear splits or remove a transfer link before changing financial fields. Card settlement must be excluded separately from the card purchase to avoid double counting. Refunds offset spending in their booked month.
+
+History remains incomplete until owners confirm coverage for every selected account in a closed month and financial components are reviewed. An upload's date range does not prove complete history. Comparisons stay unavailable for incomplete periods. Charts include visible amount tables, and financial calculations retain exact GBP minor units beyond source-row limits.
+
+The local PWA caches only its generic offline document and public icon. Offline navigation shows no financial figures; authenticated HTML, API responses, statements and credentials are never placed in CacheStorage. No production hosting or deployment is enabled. See [Task 1.5 decisions](docs/decisions/task-1.5-plan.md).

@@ -19,10 +19,28 @@ type Path =
   | `/v1/households/${string}/imports`
   | `/v1/households/${string}/imports/${string}`
   | `/v1/households/${string}/transactions`
-  | `/v1/households/${string}/transactions/${string}`;
+  | `/v1/households/${string}/transactions/${string}`
+  | `/v1/households/${string}/reports/spending`
+  | `/v1/households/${string}/categories`
+  | `/v1/households/${string}/budgets/${string}`
+  | `/v1/households/${string}/transfers/${string}`;
 const allowedPath =
-  /^\/v1\/(?:auth\/(?:signup|login|verify|recovery|password|logout|mfa\/(?:enroll|verify))|me|households(?:\/[0-9a-f-]{36}\/(?:invitations|accounts(?:\/[0-9a-f-]{36}(?:\/(?:valuations|grants\/[0-9a-f-]{36}))?)?|imports(?:\/(?:inspect|preview|[0-9a-f-]{36}(?:\/(?:rows|review|commit|original))?))?|transactions(?:\/[0-9a-f-]{36}(?:\/annotation)?)?))?|invitations\/accept)$/i;
+  /^\/v1\/(?:auth\/(?:signup|login|verify|recovery|password|logout|mfa\/(?:enroll|verify))|me|households(?:\/[0-9a-f-]{36}\/(?:invitations|accounts(?:\/[0-9a-f-]{36}(?:\/(?:valuations|coverage\/\d{4}-\d{2}|grants\/[0-9a-f-]{36}))?)?|imports(?:\/(?:inspect|preview|[0-9a-f-]{36}(?:\/(?:rows|review|commit|original))?))?|reports\/spending|categories|budgets\/\d{4}-\d{2}|transfers\/(?:confirm|[0-9a-f-]{36})|transactions(?:\/[0-9a-f-]{36}(?:\/(?:annotation|splits))?)?))?|invitations\/accept)$/i;
 const safeErrors: Record<string, string> = {
+  INVALID_SCOPE: "Choose between one and fifty available accounts.",
+  SCOPE_SELECTION_REQUIRED: "Choose up to fifty accounts for this report.",
+  SCOPE_CHANGED:
+    "Account access changed. Choose your accounts again and reload.",
+  INVALID_CLASSIFICATION:
+    "Choose a financial type that matches this amount’s direction.",
+  CLASSIFICATION_LOCKED:
+    "Remove the transfer pair or clear the split before changing financial details.",
+  INVALID_SPLITS:
+    "Use two to twenty non-zero components that add exactly to the original amount.",
+  INVALID_TRANSFER:
+    "Choose equal and opposite booked entries in two accounts you own, without splits or existing pairs.",
+  OPEN_COVERAGE_PERIOD:
+    "A current or future month cannot have complete history. Review a closed month instead.",
   INVITATION_UNAVAILABLE:
     "This invitation is unavailable. Ask your household admin for a new link.",
   ADMIN_REQUIRED: "Only the household admin can create an invitation.",

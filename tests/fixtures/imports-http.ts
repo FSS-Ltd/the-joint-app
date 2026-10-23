@@ -167,6 +167,9 @@ export async function createImportsHttpFixture(): Promise<ImportsHttpFixture> {
 
   async function close(): Promise<void> {
     await app?.close();
+    await maintenance.budgetScope.deleteMany({
+      where: { householdId: { in: [householdId, otherHouseholdId] } },
+    });
     await maintenance.transaction.deleteMany({
       where: { householdId: { in: [householdId, otherHouseholdId] } },
     });
