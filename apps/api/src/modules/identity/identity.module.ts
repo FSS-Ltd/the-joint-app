@@ -13,12 +13,29 @@ import { createAccountsController } from "../accounts/accounts.controller.js";
 import { AccountQueries } from "../accounts/account-queries.js";
 import { AccountMutations } from "../accounts/account-mutations.js";
 import { AccountGrants } from "../accounts/account-grants.js";
+import { DataVault } from "@joint/database/data-vault";
+import { createImportsController } from "../imports/imports.controller.js";
+import { ImportQueries } from "../imports/import-queries.js";
+import { ImportPreview } from "../imports/import-preview.js";
+import { ImportReview } from "../imports/import-review.js";
+import { ImportLifecycle } from "../imports/import-lifecycle.js";
+import { createTransactionsController } from "../transactions/transactions.controller.js";
+import { TransactionQueries } from "../transactions/transaction-queries.js";
+import { TransactionMutations } from "../transactions/transaction-mutations.js";
+import { TransactionAnnotations } from "../transactions/transaction-annotations.js";
 export interface AuthOptions {
   database: PrismaClient;
   environment: AuthServerEnvironment;
+  importKey?: string;
 }
 export function identityControllers(options?: AuthOptions): Type<unknown>[] {
-  if (!options) return [createIdentityController(), createAccountsController()];
+  if (!options)
+    return [
+      createIdentityController(),
+      createAccountsController(),
+      createImportsController(),
+      createTransactionsController(),
+    ];
   const { database, environment: env } = options;
   const provider = new AuthProvider(
     env.SUPABASE_AUTH_URL,
@@ -40,6 +57,23 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       queries: new AccountQueries(scoped, vault),
       mutations: new AccountMutations(scoped, vault),
       grants: new AccountGrants(scoped),
+    }),
+    createTransactionsController({
+      identity,
+      queries: new TransactionQueries(scoped, vault),
+      mutations: new TransactionMutations(scoped, vault),
+      annotations: new TransactionAnnotations(scoped),
+    }),
+    createImportsController({
+      identity,
+      queries: new ImportQueries(scoped, vault),
+      preview: new ImportPreview(
+        scoped,
+        vault,
+        options.importKey ? new DataVault(options.importKey) : undefined,
+      ),
+      review: new ImportReview(scoped),
+      lifecycle: new ImportLifecycle(scoped, vault),
     }),
   ];
 }

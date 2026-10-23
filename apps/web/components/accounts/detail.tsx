@@ -70,6 +70,24 @@ export function AccountDetail({ accountId }: { accountId: string }): ReactNode {
       )}
       {account && !loading && (
         <>
+          <div className="finance-actions">
+            {account.access === "TRANSACTIONS" && (
+              <a
+                className="button secondary compact-button"
+                href={`/activity?account=${account.id}`}
+              >
+                View activity
+              </a>
+            )}
+            {account.ownership === "OWNED" && (
+              <a
+                className="button secondary compact-button"
+                href={`/imports?account=${account.id}`}
+              >
+                Import CSV
+              </a>
+            )}
+          </div>
           <div className="account-detail-summary">
             <AccountCard account={account} linked={false} />
             <aside className="accounts-private-note">
@@ -83,7 +101,9 @@ export function AccountDetail({ accountId }: { accountId: string }): ReactNode {
               <p>
                 {account.ownership === "OWNED"
                   ? "Only an owner can change this account or its sharing permissions."
-                  : "You can view the summary shared with you. Editing and sharing controls belong to the owner."}
+                  : account.access === "TRANSACTIONS"
+                    ? "You can view the shared value and booked activity, and keep your own private notes. The owner controls account changes and sharing."
+                    : "You can view the value shared with you. Account changes, activity and sharing controls belong to the owner."}
               </p>
             </aside>
           </div>

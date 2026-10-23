@@ -122,6 +122,10 @@ model Membership {
   ownedAccounts AccountOwner[] @relation("AccountOwnership")
   accountGrants AccountGrant[] @relation("AccountGrantee")
   authoredBalances BalanceSnapshot[] @relation("BalanceAuthor")
+  requestedImports ImportBatch[]
+  transactionRevisions TransactionRevision[]
+  transactionOverrides TransactionOverride[]
+  transactionNotes TransactionNote[]
   @@unique([householdId, id])
   @@unique([householdId, id, userId])
   @@unique([userId, householdId])
@@ -236,6 +240,8 @@ model Account {
   owners AccountOwner[]
   grants AccountGrant[]
   balances BalanceSnapshot[]
+  imports ImportBatch[]
+  transactions Transaction[]
   @@unique([householdId, id])
   @@unique([householdId, id, currency])
   @@index([householdId, createdAt, id])
@@ -279,5 +285,159 @@ model BalanceSnapshot {
   complete Boolean @default(true)
   source String @default("MANUAL") @db.VarChar(20)
   @@index([householdId, accountId, asOfDate(sort: Desc), createdAt(sort: Desc), id])
+  @@schema("app")
+}
+
+
+enum ImportBatchState {
+  QUEUED
+  PREVIEWING
+  READY
+  COMMITTING
+  COMMITTED
+  ROLLED_BACK
+  FAILED
+  EXPIRED
+  @@schema("app")
+}
+enum TransactionSource {
+  CSV
+  MANUAL
+  @@schema("app")
+}
+enum TransactionStatus {
+  BOOKED
+  SUPERSEDED
+  @@schema("app")
+}
+enum TransactionRevisionKind {
+  CREATED
+  MANUAL_CORRECTION
+  CLASSIFICATION
+  @@schema("app")
+}
+model ImportBatch {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  accountId String @db.Uuid
+  account Account @relation(fields: [householdId, accountId], references: [householdId, id], onDelete: Cascade)
+  requestedByUserId String @db.Uuid
+  requestedByMembershipId String @db.Uuid
+  requester Membership @relation(fields: [householdId, requestedByMembershipId, requestedByUserId], references: [householdId, id, userId])
+  fileChecksum String @db.Char(64)
+  mappingHash String @db.Char(64)
+  mapping Json
+  parserVersion String @db.VarChar(40)
+  datasetVersion Int @default(0)
+  state ImportBatchState @default(QUEUED)
+  version Int @default(1)
+  preview Json @default("[]")
+  decisions Json @default("{}")
+  totalRows Int @default(0)
+  processedRows Int @default(0)
+  validRows Int @default(0)
+  rejectedRows Int @default(0)
+  overlapRows Int @default(0)
+  duplicateRows Int @default(0)
+  committedRows Int @default(0)
+  skippedRows Int @default(0)
+  failureCode String? @db.VarChar(80)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  committedAt DateTime? @db.Timestamptz(3)
+  rolledBackAt DateTime? @db.Timestamptz(3)
+  previewExpiresAt DateTime @db.Timestamptz(3)
+  object ImportObject?
+  transactions Transaction[]
+  @@unique([accountId, fileChecksum])
+  @@unique([householdId, accountId, id])
+  @@index([householdId, accountId, createdAt, id])
+  @@schema("app")
+}
+model ImportObject {
+  batchId String @id @db.Uuid
+  householdId String @db.Uuid
+  accountId String @db.Uuid
+  batch ImportBatch @relation(fields: [householdId, accountId, batchId], references: [householdId, accountId, id], onDelete: Cascade)
+  ciphertext String? @db.Text
+  expiresAt DateTime @db.Timestamptz(3)
+  deletedAt DateTime? @db.Timestamptz(3)
+  @@unique([householdId, accountId, batchId])
+  @@index([expiresAt])
+  @@schema("app")
+}
+model Transaction {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  accountId String @db.Uuid
+  currency String @default("GBP") @db.Char(3)
+  account Account @relation(fields: [householdId, accountId, currency], references: [householdId, id, currency], onDelete: Cascade)
+  sourceNamespace TransactionSource
+  sourceId String @db.VarChar(160)
+  sourceHash String @db.Char(64)
+  fingerprint String @db.Char(64)
+  amountMinor BigInt
+  bookedDate DateTime @db.Date
+  description String @db.VarChar(500)
+  status TransactionStatus @default(BOOKED)
+  originImportBatchId String? @db.Uuid
+  originImportBatch ImportBatch? @relation(fields: [householdId, accountId, originImportBatchId], references: [householdId, accountId, id])
+  csvRowNumber Int?
+  version Int @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  revisions TransactionRevision[]
+  override TransactionOverride?
+  notes TransactionNote[]
+  @@unique([accountId, sourceNamespace, sourceId])
+  @@unique([householdId, accountId, id])
+  @@index([householdId, accountId, bookedDate(sort: Desc), id])
+  @@index([accountId, fingerprint])
+  @@index([originImportBatchId])
+  @@schema("app")
+}
+model TransactionRevision {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  accountId String @db.Uuid
+  transactionId String @db.Uuid
+  transaction Transaction @relation(fields: [householdId, accountId, transactionId], references: [householdId, accountId, id], onDelete: Cascade)
+  actorMembershipId String @db.Uuid
+  actor Membership @relation(fields: [householdId, actorMembershipId], references: [householdId, id])
+  version Int
+  kind TransactionRevisionKind
+  data Json
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([transactionId, version])
+  @@schema("app")
+}
+model TransactionOverride {
+  transactionId String @id @db.Uuid
+  householdId String @db.Uuid
+  accountId String @db.Uuid
+  transaction Transaction @relation(fields: [householdId, accountId, transactionId], references: [householdId, accountId, id], onDelete: Cascade)
+  authorMembershipId String @db.Uuid
+  author Membership @relation(fields: [householdId, authorMembershipId], references: [householdId, id])
+  category String? @db.VarChar(80)
+  merchant String? @db.VarChar(120)
+  version Int @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  @@unique([householdId, accountId, transactionId])
+  @@schema("app")
+}
+model TransactionNote {
+  transactionId String @db.Uuid
+  householdId String @db.Uuid
+  accountId String @db.Uuid
+  transaction Transaction @relation(fields: [householdId, accountId, transactionId], references: [householdId, accountId, id], onDelete: Cascade)
+  authorUserId String @db.Uuid
+  authorMembershipId String @db.Uuid
+  author Membership @relation(fields: [householdId, authorMembershipId, authorUserId], references: [householdId, id, userId])
+  body String? @db.VarChar(2000)
+  version Int @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  @@id([transactionId, authorUserId])
   @@schema("app")
 }

@@ -1,14 +1,26 @@
-import { workerEnvironmentSchema, readEnvironment } from "@joint/contracts";
+import {
+  workerEnvironmentSchema,
+  importEnvironmentSchema,
+  readEnvironment,
+} from "@joint/contracts";
 import { randomUUID } from "node:crypto";
 import { createOrm } from "@joint/database/client";
 import { JobsRepository } from "@joint/database/jobs";
 import { runJobs } from "./job-runner.js";
 import { createDatabase } from "@joint/database";
+import { createImportHandlers } from "./imports/handlers.js";
+import { maintainImports } from "./import-maintenance.js";
 async function main(): Promise<void> {
   const env = readEnvironment(workerEnvironmentSchema, process.env);
   const database = createDatabase(env.DATABASE_URL, env.DATABASE_TIMEOUT_MS);
   const orm = createOrm(env.DATABASE_URL);
   const jobs = new JobsRepository(orm);
+  const handlers =
+    process.env.IMPORT_DATA_KEY === undefined
+      ? {}
+      : createImportHandlers(
+          readEnvironment(importEnvironmentSchema, process.env).IMPORT_DATA_KEY,
+        );
   const owner = randomUUID();
   const abort = new AbortController();
   let active: Promise<void> = Promise.resolve();
@@ -17,13 +29,15 @@ async function main(): Promise<void> {
   const check = async (): Promise<void> => {
     try {
       const ready = await database.ready();
-      // Real import handlers are registered in Task 1.4; unknown jobs stay queued.
-      if (ready && !stopping)
-        await runJobs(
-          jobs,
-          {},
-          { owner, maxJobs: 10, budgetMs: 2000, signal: abort.signal },
-        );
+      if (ready && !stopping) {
+        await maintainImports(orm);
+        await runJobs(jobs, handlers, {
+          owner,
+          maxJobs: 10,
+          budgetMs: 5000,
+          signal: abort.signal,
+        });
+      }
       process.stdout.write(
         `Worker database ${ready ? "ready" : "unavailable"}\n`,
       );

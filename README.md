@@ -1,6 +1,6 @@
 # The Joint App
 
-Household finance built around shared goals and individual privacy. **In development: local identity, household membership and private manual accounts. CSV imports and financial reporting remain future steps.**
+Household finance built around shared goals and individual privacy. **In development: local identity, household membership and private manual accounts. CSV/manual activity is being verified; financial reporting remains future work.**
 
 ## Local setup
 
@@ -15,12 +15,13 @@ pnpm build
 pnpm db:migrate
 pnpm db:runtime
 pnpm db:seed
+pnpm imports:setup
 pnpm dev
 ```
 
 Web: http://127.0.0.1:3000. API: http://127.0.0.1:3001/health/live and /health/ready. PostgreSQL: loopback port 5432. Local credentials are disposable development defaults, never production credentials. Auth is loopback http://127.0.0.1:15421/auth/v1; its development email inbox is http://127.0.0.1:15424. No messages leave the local inbox.
 
-Run apps separately with `pnpm --filter @joint/web dev`, `pnpm --filter @joint/api dev`, and `pnpm --filter @joint/worker dev`. Build shared packages first with `pnpm build`. Production builds start with the package's `start` script; the worker has no queue handlers yet. Stop with Ctrl-C.
+Run apps separately with `pnpm --filter @joint/web dev`, `pnpm --filter @joint/api dev`, and `pnpm --filter @joint/worker dev`. Build shared packages first with `pnpm build`. Production builds start with the package's `start` script; the worker runs bounded CSV preview, commit and restore jobs. Stop with Ctrl-C.
 
 `pnpm auth:down` stops Auth and its inbox. `pnpm db:down` stops Compose services and preserves volumes. Do not delete volumes containing wanted data.
 
@@ -37,15 +38,15 @@ pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
-If port 5432 is occupied, set POSTGRES_PORT=15432 and update DATABASE_URL in .env. Root integration/browser commands load `.env`, `.env.database` and `.env.auth` automatically; exported environment variables take precedence.
+If port 5432 is occupied, set POSTGRES_PORT=15432 and update DATABASE_URL in .env. Root integration/browser commands load `.env`, `.env.database`, `.env.auth` and `.env.imports` automatically; exported environment variables take precedence.
 
-Integration and browser tests require migrated local PostgreSQL and built packages. Browser tests start the web app automatically and bind their synthetic APIs on ports 3001, 3302 and 3402, plus isolated identity/account web processes on 3301 and 3401; stop development processes on those ports before testing. The API and worker load `.env.database` after `.env`; the API also loads `.env.auth`. CI uses disposable PostgreSQL, Auth and email containers with synthetic identities. Type checking builds package declarations first and also checks test sources.
+Integration and browser tests require migrated local PostgreSQL and built packages. Browser tests start the web app automatically and bind their synthetic APIs on ports 3001, 3302, 3402 and 3502, plus isolated identity/account web processes on 3301, 3401 and 3501; stop development processes on those ports before testing. The API and worker load `.env.database` after `.env`; both load `.env.imports`, and the API also loads `.env.auth`. CI uses disposable PostgreSQL, Auth and email containers with synthetic identities. Type checking builds package declarations first and also checks test sources.
 
 ## Structure and delivery
 
 - apps/web: Next.js introduction, identity/household onboarding and mobile-first manual accounts.
 - apps/api: NestJS health, server-owned identity/session and household/invitation and private account/grant endpoints.
-- apps/worker: independent local process and bounded job runner; no CSV handlers yet.
+- apps/worker: independent local process and bounded job runner with staged CSV publication.
 - packages/contracts: validated health, identity, household, account and exact-Money interfaces plus environment validation.
 - packages/database: bounded connectivity, Prisma migrations and durable Job/Outbox storage.
 - packages/domain: exact GBP input and display helpers; no floating-point money arithmetic.
@@ -54,7 +55,7 @@ Integration and browser tests require migrated local PostgreSQL and built packag
 
 See [bootstrap decisions](docs/decisions/bootstrap.md), [progress](docs/progress.md) and [version matrix](docs/decisions/version-matrix.md).
 
-Repository visibility is temporarily public for Actions usage. No open-source licence is granted. The original local plan and all environment secrets are excluded from Git. Authentication uses the maintained Supabase Auth server locally. CSV handling, reports and integrations remain future steps.
+Repository visibility is temporarily public for Actions usage. No open-source licence is granted. The original local plan and all environment secrets are excluded from Git. Authentication uses the maintained Supabase Auth server locally. Reports and direct provider integrations remain future steps.
 
 All application execution/data remain local until the MVP is complete and the founder explicitly approves deployment. No hosted previews, staging, production, deployment hooks or cloud app/database provisioning before that approval. GitHub source delivery and synthetic CI remain authorised. Existing Vercel Pro and a free database are future hosting targets only.
 
@@ -81,3 +82,11 @@ Open `/accounts` after joining a household. Enroll/verify an authenticator befor
 Owners can choose Private, Values only or Values and details for the other active adult. Widening access requires a TOTP proof from the last five minutes; the Security screen can request fresh verification. Downgrades take effect on the next request, invalidating old membership epochs and cursors. Viewing grants do not permit edits, valuation entry or re-sharing. Values and details is a permission tier; transaction/holding records and CSV imports are not implemented yet.
 
 All four finance tables force PostgreSQL row-level security. Trusted server context is scoped to a transaction and rechecks the current user, membership, session and grant epoch. Tests connect as the restricted runtime role; they do not substitute table-owner queries as isolation evidence. There is no hosted Data API. Joint-owner confirmation, archive/lifecycle flows and later financial features retain their own acceptance gates. See [Task 1.3 design](docs/decisions/task-1.3-plan.md).
+
+## Local CSV and manual activity
+
+Run `pnpm imports:setup` before starting the API and worker. It generates a separate local encryption key in ignored `.env.imports` with restrictive permissions and preserves an existing valid key. Keep it with the database; replacing it makes retained originals unreadable. No key reaches the browser.
+
+Open `/imports` for an owned account. CSV files must use UTF-8, a header row, at most 10 MiB and 50,000 transaction records. Choose columns, date order, decimal separator and sign explicitly. Review rejects and overlap warnings before committing. Equal purchases remain separate unless an explicit stable source identifier proves a duplicate. Preview originals expire after 24 hours; successful originals expire within seven days and can be deleted earlier.
+
+Open `/activity` to add manual transactions, correct their financial details, classify owned activity and keep author-private notes. Imported financial fields retain their original source. Rollback is available only when an import has no later edits, classifications or notes; restore republishes the same transaction identities. Manually recorded account balances are not changed automatically by transaction activity. See [Task 1.4 decisions](docs/decisions/task-1.4-plan.md).

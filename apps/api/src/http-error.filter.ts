@@ -10,6 +10,38 @@ interface SafeResponse {
   json(value: unknown): void;
 }
 const knownErrors: Record<string, string> = {
+  IMPORTS_UNAVAILABLE:
+    "Local imports are unavailable. Run pnpm imports:setup and restart the API and worker.",
+  IMPORT_BUSY:
+    "An import is already processing for this account. Wait for it to finish or retry its failed commit.",
+  IMPORT_NOT_READY:
+    "This import is not ready for this action. Refresh its status.",
+  IMPORT_EXPIRED:
+    "This preview expired. Upload the file again to create a fresh preview.",
+  IMPORT_REVIEW_REQUIRED:
+    "Review the highlighted rows before committing this import.",
+  IMPORT_REJECTS_UNCONFIRMED:
+    "Confirm that rejected rows will be excluded before committing.",
+  IMPORT_PROTECTED:
+    "This import has later edits or notes and cannot be rolled back.",
+  PREVIEW_STALE:
+    "Account activity changed. Upload the file again and review a fresh preview.",
+  SOURCE_IMMUTABLE:
+    "Imported financial details cannot be edited. Use classifications or a separate manual correction.",
+  CSV_INVALID_MAPPING:
+    "Choose distinct available columns and a consistent amount format.",
+  CSV_INVALID_FORMAT:
+    "Use a valid comma-separated CSV file with correctly quoted fields.",
+  CSV_INVALID_ENCODING: "Save the CSV file using UTF-8 encoding.",
+  CSV_INVALID_HEADERS:
+    "Use a non-empty header row with column names no longer than 128 characters.",
+  CSV_EMPTY: "Choose a CSV file containing a header and transaction rows.",
+  CSV_TOO_LARGE: "Choose a CSV file no larger than 10 MiB.",
+  CSV_TOO_MANY_ROWS:
+    "Split this CSV into files containing at most 50,000 transaction rows.",
+  CSV_TOO_MANY_COLUMNS: "Use a CSV file containing at most 100 columns.",
+  CSV_RECORD_TOO_LARGE: "Each CSV record must be no larger than 64 KiB.",
+
   INVITATION_UNAVAILABLE:
     "This invitation is unavailable. Ask for a new invitation.",
   ADMIN_REQUIRED: "Only a household admin can create invitations.",

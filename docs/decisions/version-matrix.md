@@ -71,3 +71,7 @@ Local identity infrastructure pins `supabase/gotrue:v2.197.0` (MIT), `postgres:1
 ## Task 1.3 workspace addition
 
 `@joint/domain` is a private workspace package containing exact GBP parse/format and liability-kind helpers. It adds no external dependency; its only dependency is `@joint/contracts`. API and web reuse the same bounded integer Money contract. Existing external pins and licences remain unchanged.
+
+## Task 1.4 installed parser addition
+
+`csv-parse` 7.0.3 (MIT) is installed in the server-only `@joint/domain/csv` export for maintained quoted/newline CSV parsing with explicit limits. Browser imports remain restricted to the domain root Money helpers; API/worker share the same validated normalization. Original bytes use Node AES-256-GCM with a separate local key; no additional cryptography dependency or cloud storage is introduced. Exact transitive versions remain in the lockfile.

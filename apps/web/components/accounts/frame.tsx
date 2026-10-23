@@ -8,11 +8,13 @@ export function AccountsFrame({
   description,
   household,
   children,
+  active = "accounts",
 }: {
   title: string;
   description: string;
   household?: string;
   children: ReactNode;
+  active?: "accounts" | "activity";
 }): ReactNode {
   return (
     <div className="identity-shell accounts-shell">
@@ -29,8 +31,17 @@ export function AccountsFrame({
         <span className="environment-label">Local development</span>
       </header>
       <nav className="accounts-nav" aria-label="App">
-        <a href="/accounts" aria-current="page">
+        <a
+          href="/accounts"
+          aria-current={active === "accounts" ? "page" : undefined}
+        >
           Accounts
+        </a>
+        <a
+          href="/activity"
+          aria-current={active === "activity" ? "page" : undefined}
+        >
+          Activity
         </a>
         <a href="/household">Household</a>
         <a href="/security">Security</a>

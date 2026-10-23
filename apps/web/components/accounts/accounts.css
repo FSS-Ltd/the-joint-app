@@ -345,3 +345,16 @@
     padding: 22px;
   }
 }
+
+.finance-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+@media (max-width: 767px) {
+  .accounts-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
