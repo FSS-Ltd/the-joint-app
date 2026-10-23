@@ -220,7 +220,7 @@ test("long account names and exact large negative values remain readable", async
   }
 });
 
-for (const width of [320, 390, 1280]) {
+for (const width of [320, 390, 800, 1280]) {
   test(`account workspace remains readable at ${width}px and enlarged text`, async ({
     page,
   }) => {
