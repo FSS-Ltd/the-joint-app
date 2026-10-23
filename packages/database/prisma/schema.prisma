@@ -103,6 +103,7 @@ model User {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   memberships Membership[]
   sessions SessionRegistry[]
+  clerkIdentities ClerkIdentity[]
   invitations Invitation[]
   requestKeys RequestKey[]
   auditEvents AuditEvent[]
@@ -890,5 +891,30 @@ model FundingEvidence {
   author Membership @relation(fields: [householdId, authorMembershipId], references: [householdId, id])
   @@unique([accountId, version])
   @@index([valuationId])
+  @@schema("app")
+}
+
+model ClerkIdentity {
+  issuer String @db.VarChar(255)
+  subject String @db.VarChar(128)
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  disabledAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  sessions ClerkSession[]
+  @@id([issuer, subject])
+  @@unique([issuer, userId])
+  @@schema("app")
+}
+model ClerkSession {
+  issuer String @db.VarChar(255)
+  externalSessionId String @db.VarChar(128)
+  subject String @db.VarChar(128)
+  identity ClerkIdentity @relation(fields: [issuer, subject], references: [issuer, subject], onDelete: Restrict)
+  internalSessionId String @unique @db.Uuid
+  revokedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@id([issuer, externalSessionId])
+  @@index([issuer, subject], map: "ClerkSession_identity_idx")
   @@schema("app")
 }

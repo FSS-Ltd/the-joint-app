@@ -21,6 +21,7 @@ export interface ClerkCredential {
   sessionId: string;
   email: string;
   expiresAt: number;
+  sessionExpiresAt: number;
   mfaEnrolled: boolean;
   authenticatedAt: number | null;
   mfaAuthenticatedAt: number | null;
@@ -115,6 +116,7 @@ export class ClerkCredentialVerifier {
         sessionId: claims.sid,
         email: user.email,
         expiresAt: Math.min(claims.exp * 1000, session.expiresAt),
+        sessionExpiresAt: session.expiresAt,
         mfaEnrolled,
         authenticatedAt: factorTime(claims.fva?.[0]),
         mfaAuthenticatedAt:
