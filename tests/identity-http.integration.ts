@@ -1,3 +1,4 @@
+import { createFixtureOwner } from "./fixtures/database.js";
 import { randomUUID } from "node:crypto";
 import { expect, it } from "vitest";
 import {
@@ -37,6 +38,7 @@ async function withIdentityApi(
     process.env.DATABASE_URL ??
     "postgresql://joint:local-development-only@127.0.0.1:5432/joint";
   const database = createOrm(connectionString);
+  const fixtureOwner = createFixtureOwner();
   const health = createDatabase(connectionString, 500);
   const auth = createLocalAuthFixture();
   const users: string[] = [];
@@ -73,15 +75,22 @@ async function withIdentityApi(
     });
   } finally {
     await app.close();
-    await database.household.deleteMany({ where: { id: { in: households } } });
-    await database.sessionRegistry.deleteMany({
+    await fixtureOwner.household.deleteMany({
+      where: { id: { in: households } },
+    });
+    await fixtureOwner.sessionRegistry.deleteMany({
       where: { userId: { in: users } },
     });
-    await database.requestKey.deleteMany({ where: { userId: { in: users } } });
-    await database.auditEvent.deleteMany({ where: { userId: { in: users } } });
-    await database.user.deleteMany({ where: { id: { in: users } } });
+    await fixtureOwner.requestKey.deleteMany({
+      where: { userId: { in: users } },
+    });
+    await fixtureOwner.auditEvent.deleteMany({
+      where: { userId: { in: users } },
+    });
+    await fixtureOwner.user.deleteMany({ where: { id: { in: users } } });
     for (const id of users) await auth.deleteUser(id);
     await database.$disconnect();
+    await fixtureOwner.$disconnect();
     await health.close();
   }
 }

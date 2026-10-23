@@ -43,17 +43,24 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-  const [join, setJoin] = useState(false);
+  const [next, setNext] = useState<"join" | "accounts" | null>(null);
   const text = content[mode];
   useEffect(() => {
-    setJoin(nextDestination() === "/join");
+    const destination = nextDestination();
+    setNext(
+      destination === "/join"
+        ? "join"
+        : destination === "/accounts"
+          ? "accounts"
+          : null,
+    );
     if (mode === "recovery") {
       void request<Identity>("/api/me")
         .then((me) => {
           if (me.session.purpose !== "RECOVERY") return;
           if (me.session.needsMfa)
             window.location.replace(
-              `/security?recovery=1${nextDestination() === "/join" ? "&next=join" : ""}`,
+              `/security?recovery=1${nextDestination() === "/household" ? "" : `&next=${nextDestination().slice(1)}`}`,
             );
           else setStage("password");
         })
@@ -81,7 +88,7 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
         if (result.state === "PASSWORD_RESET_REQUIRED") setStage("password");
         else if (mode === "recovery" && result.state === "MFA_REQUIRED")
           window.location.assign(
-            `/security?recovery=1${join ? "&next=join" : ""}`,
+            `/security?recovery=1${next ? `&next=${next}` : ""}`,
           );
         else finishAuth(result.state);
       } else {
@@ -105,7 +112,7 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
       setPending(false);
     }
   }
-  const suffix = join ? "?next=join" : "";
+  const suffix = next ? `?next=${next}` : "";
   return (
     <IdentityFrame {...text}>
       <section className="surface form-card" aria-labelledby="form-title">

@@ -63,6 +63,7 @@ export function Household(): ReactNode {
       {identity && !loading && (
         <>
           <nav className="account-nav" aria-label="Your account">
+            <a href="/accounts">Accounts</a>
             <a href="/security">Account security</a>
             <button
               type="button"
@@ -164,8 +165,9 @@ export function Household(): ReactNode {
             <p className="step-label">A foundation, with care</p>
             <h2>One small step at a time.</h2>
             <p>
-              This local build supports accounts, household membership and
-              security. Financial features are still in development.
+              This local build supports private manual accounts, household
+              membership and security. Imports and connected accounts are still
+              in development.
             </p>
           </aside>
           <p className="privacy-note break-word">

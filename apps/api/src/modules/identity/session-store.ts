@@ -6,7 +6,10 @@ import { providerTokensSchema, type ProviderTokens } from "@joint/contracts";
 import type { PrismaClient, Prisma } from "@joint/database/client";
 import type { AuthSession, AuthUser } from "@supabase/supabase-js";
 import type { AuthProvider } from "./auth-provider.js";
-import type { IdentityPrincipal } from "./identity-context.js";
+import {
+  principalFromClaims,
+  type IdentityPrincipal,
+} from "./identity-context.js";
 import { IdentityVerifier } from "./identity-verifier.js";
 import { hashToken, IdentityVault, newOpaqueToken } from "./identity-vault.js";
 
@@ -151,15 +154,10 @@ export class SessionStore {
             throw new UnauthorizedException();
           if (row.purpose !== "NORMAL" && row.purpose !== "RECOVERY")
             throw new UnauthorizedException();
-          const principal: IdentityPrincipal = {
-            userId: row.userId,
-            sessionId: id,
-            emailHash: this.vault.emailHash(user.email),
-            aal: claims.aal,
-            authenticatedAt: claims.amr?.length
-              ? Math.max(...claims.amr.map((value) => value.timestamp)) * 1000
-              : null,
-          };
+          const principal = principalFromClaims(
+            claims,
+            this.vault.emailHash(user.email),
+          );
           identity = {
             principal,
             user,
@@ -175,7 +173,10 @@ export class SessionStore {
                 access_token: session.access_token,
                 refresh_token: session.refresh_token,
               });
-              identity.principal = { ...principal, aal: next.aal };
+              identity.principal = principalFromClaims(
+                next,
+                principal.emailHash,
+              );
               await transaction.sessionRegistry.update({
                 where: { id },
                 data: {

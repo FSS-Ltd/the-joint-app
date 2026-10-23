@@ -1,3 +1,4 @@
+import { createFixtureOwner } from "./fixtures/database.js";
 import { randomUUID } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
 import { afterAll, beforeAll, expect, it } from "vitest";
@@ -8,6 +9,7 @@ const database = createOrm(
   process.env.DATABASE_URL ??
     "postgresql://joint:local-development-only@127.0.0.1:5432/joint",
 );
+const fixtureOwner = createFixtureOwner();
 const jobs = new JobsRepository(database);
 const householdId = randomUUID();
 const secondHouseholdId = randomUUID();
@@ -17,10 +19,11 @@ beforeAll(async () => {
   });
 });
 afterAll(async () => {
-  await database.household.deleteMany({
+  await fixtureOwner.household.deleteMany({
     where: { id: { in: [householdId, secondHouseholdId] } },
   });
   await database.$disconnect();
+  await fixtureOwner.$disconnect();
 });
 const enqueue = (key = randomUUID(), household = householdId) =>
   jobs.enqueue({

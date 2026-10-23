@@ -17,7 +17,7 @@ import {
 } from "./modules/bootstrap/bootstrap.service.js";
 import { createBootstrapController } from "./modules/bootstrap/bootstrap.controller.js";
 import {
-  identityController,
+  identityControllers,
   type AuthOptions,
 } from "./modules/identity/identity.module.js";
 export async function createApplication(
@@ -39,7 +39,7 @@ export async function createApplication(
   @Module({
     controllers: [
       HealthController,
-      identityController(auth),
+      ...identityControllers(auth),
       createBootstrapController(
         bootstrap ? new BootstrapService(bootstrap) : undefined,
       ),

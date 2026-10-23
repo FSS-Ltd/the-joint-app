@@ -67,3 +67,7 @@ Prisma, @prisma/client and @prisma/adapter-pg are installed at 7.10.1 (Apache-2.
 `@supabase/supabase-js` 2.118.0 (MIT) is installed only in the API for its maintained Auth client. `@supabase/ssr` is not installed: browser-assisted token storage does not satisfy this project's server-owned session policy. The client uses explicit refresh ownership and no browser persistence. The lockfile records exact transitive dependencies.
 
 Local identity infrastructure pins `supabase/gotrue:v2.197.0` (MIT), `postgres:17.6` (PostgreSQL licence), `nginx:1.30.6-alpine-slim` (BSD-2-Clause upstream) and `axllent/mailpit:v1.32.0` (MIT). Image contents have their own third-party notices; these upstream licences do not license the repository. Auth owns its vendor schema in a separate database. Prisma remains the sole application schema migration history. No hosted resources or production region/backup settings were created or verified.
+
+## Task 1.3 workspace addition
+
+`@joint/domain` is a private workspace package containing exact GBP parse/format and liability-kind helpers. It adds no external dependency; its only dependency is `@joint/contracts`. API and web reuse the same bounded integer Money contract. Existing external pins and licences remain unchanged.

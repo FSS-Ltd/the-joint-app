@@ -1,3 +1,4 @@
+import { createFixtureOwner } from "./fixtures/database.js";
 import { randomUUID } from "node:crypto";
 import { expect, it } from "vitest";
 import { createOrm } from "../packages/database/dist/client.js";
@@ -9,6 +10,7 @@ it("runs a bounded synthetic import batch and commits its domain write and outbo
     process.env.DATABASE_URL ??
       "postgresql://joint:local-development-only@127.0.0.1:5432/joint",
   );
+  const fixtureOwner = createFixtureOwner();
   const householdId = randomUUID();
   const type = `synthetic.import.${randomUUID()}`;
   const jobs = new JobsRepository(database);
@@ -73,8 +75,9 @@ it("runs a bounded synthetic import batch and commits its domain write and outbo
       await runJobs(jobs, {}, { owner: "test", maxJobs: 2, budgetMs: 2000 }),
     ).toEqual({ succeeded: 0, failed: 0 });
   } finally {
-    await database.household.deleteMany({ where: { id: householdId } });
+    await fixtureOwner.household.deleteMany({ where: { id: householdId } });
     await database.$disconnect();
+    await fixtureOwner.$disconnect();
   }
 });
 
@@ -83,6 +86,7 @@ it("retries a failed handler without publishing its writes or exception details"
     process.env.DATABASE_URL ??
       "postgresql://joint:local-development-only@127.0.0.1:5432/joint",
   );
+  const fixtureOwner = createFixtureOwner();
   const householdId = randomUUID();
   const type = `synthetic.failure.${randomUUID()}`;
   const jobs = new JobsRepository(database);
@@ -115,8 +119,9 @@ it("retries a failed handler without publishing its writes or exception details"
       "synthetic-secret-never-store",
     );
   } finally {
-    await database.household.deleteMany({ where: { id: householdId } });
+    await fixtureOwner.household.deleteMany({ where: { id: householdId } });
     await database.$disconnect();
+    await fixtureOwner.$disconnect();
   }
 });
 
@@ -125,6 +130,7 @@ it("bounds an unresponsive handler so the worker can finish its cycle", async ()
     process.env.DATABASE_URL ??
       "postgresql://joint:local-development-only@127.0.0.1:5432/joint",
   );
+  const fixtureOwner = createFixtureOwner();
   const householdId = randomUUID();
   const type = `synthetic.timeout.${randomUUID()}`;
   const jobs = new JobsRepository(database);
@@ -157,7 +163,8 @@ it("bounds an unresponsive handler so the worker can finish its cycle", async ()
       ).revision,
     ).toBe(0);
   } finally {
-    await database.household.deleteMany({ where: { id: householdId } });
+    await fixtureOwner.household.deleteMany({ where: { id: householdId } });
     await database.$disconnect();
+    await fixtureOwner.$disconnect();
   }
 }, 2000);

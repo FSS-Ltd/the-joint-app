@@ -18,6 +18,10 @@ const knownErrors: Record<string, string> = {
   HOUSEHOLD_EXISTS: "You already belong to a household.",
   IDEMPOTENCY_CONFLICT: "This request key was used with different details.",
   MFA_REQUIRED: "Verify your authenticator before continuing.",
+  MFA_REAUTH_REQUIRED:
+    "Verify your authenticator again before sharing more details.",
+  VERSION_CONFLICT: "This account changed. Refresh it before trying again.",
+  INVALID_CURSOR: "This account list changed. Refresh it to continue.",
   SESSION_UNAVAILABLE: "Session unavailable. Sign in again or retry shortly.",
 };
 const messages: Record<number, { code: string; message: string }> = {

@@ -8,12 +8,17 @@ import { IdentityVault } from "./identity-vault.js";
 import { SessionStore } from "./session-store.js";
 import { createIdentityController } from "./identity.controller.js";
 import { HouseholdService } from "../households/households.service.js";
+import { ScopedDatabase } from "@joint/database/scoped";
+import { createAccountsController } from "../accounts/accounts.controller.js";
+import { AccountQueries } from "../accounts/account-queries.js";
+import { AccountMutations } from "../accounts/account-mutations.js";
+import { AccountGrants } from "../accounts/account-grants.js";
 export interface AuthOptions {
   database: PrismaClient;
   environment: AuthServerEnvironment;
 }
-export function identityController(options?: AuthOptions): Type<unknown> {
-  if (!options) return createIdentityController();
+export function identityControllers(options?: AuthOptions): Type<unknown>[] {
+  if (!options) return [createIdentityController(), createAccountsController()];
   const { database, environment: env } = options;
   const provider = new AuthProvider(
     env.SUPABASE_AUTH_URL,
@@ -26,8 +31,15 @@ export function identityController(options?: AuthOptions): Type<unknown> {
     new IdentityVerifier(env.AUTH_ISSUER),
     provider,
   );
-  return createIdentityController(
-    new IdentityService(sessions, provider, database, vault),
-    new HouseholdService(database, vault),
-  );
+  const identity = new IdentityService(sessions, provider, database, vault);
+  const scoped = new ScopedDatabase(database);
+  return [
+    createIdentityController(identity, new HouseholdService(database, vault)),
+    createAccountsController({
+      identity,
+      queries: new AccountQueries(scoped, vault),
+      mutations: new AccountMutations(scoped, vault),
+      grants: new AccountGrants(scoped),
+    }),
+  ];
 }

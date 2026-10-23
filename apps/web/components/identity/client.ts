@@ -6,6 +6,7 @@ export class RequestError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    readonly code?: string,
   ) {
     super(message);
   }
@@ -53,6 +54,7 @@ export async function request<T>(
   path: string,
   body?: object,
   idempotencyKey?: string,
+  options: { method?: "PATCH" | "PUT"; ifMatch?: number } = {},
 ): Promise<T> {
   try {
     const headers: Record<string, string> = {};
@@ -61,9 +63,11 @@ export async function request<T>(
       headers["Content-Type"] = "application/json";
       headers["X-CSRF-Token"] = csrf.csrfToken;
       if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
+      if (options.ifMatch !== undefined)
+        headers["If-Match"] = `"${options.ifMatch}"`;
     }
     const response = await fetch(path, {
-      method: body === undefined ? "GET" : "POST",
+      method: options.method ?? (body === undefined ? "GET" : "POST"),
       credentials: "same-origin",
       cache: "no-store",
       headers,
@@ -81,7 +85,17 @@ export async function request<T>(
         typeof data.error.message === "string"
           ? data.error.message
           : "This request could not be completed. Please try again.";
-      throw new RequestError(message, response.status);
+      const code =
+        typeof data === "object" &&
+        data !== null &&
+        "error" in data &&
+        typeof data.error === "object" &&
+        data.error !== null &&
+        "code" in data.error &&
+        typeof data.error.code === "string"
+          ? data.error.code
+          : undefined;
+      throw new RequestError(message, response.status, code);
     }
     if (body !== undefined && sessionMutations.has(path))
       announceSessionChange();
@@ -103,17 +117,20 @@ export function errorMessage(error: unknown): string {
     : "Something went wrong. Please try again.";
 }
 
-export function nextDestination(): "/join" | "/household" {
-  return new URLSearchParams(window.location.search).get("next") === "join"
+export function nextDestination(): "/join" | "/accounts" | "/household" {
+  const next = new URLSearchParams(window.location.search).get("next");
+  return next === "join"
     ? "/join"
-    : "/household";
+    : next === "accounts"
+      ? "/accounts"
+      : "/household";
 }
 
 export function finishAuth(state: string): void {
   const next = nextDestination();
   window.location.assign(
     state === "MFA_REQUIRED"
-      ? `/security${next === "/join" ? "?next=join" : ""}`
+      ? `/security${next === "/household" ? "" : `?next=${next.slice(1)}`}`
       : next,
   );
 }

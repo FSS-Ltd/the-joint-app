@@ -114,6 +114,7 @@ export const meResponseSchema = z
         aal: z.enum(["aal1", "aal2"]),
         expiresAt: z.iso.datetime(),
         needsMfa: z.boolean(),
+        mfaVerifiedAt: z.iso.datetime().nullable().default(null),
         purpose: z.enum(["NORMAL", "RECOVERY"]),
       })
       .strict(),

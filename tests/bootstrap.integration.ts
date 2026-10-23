@@ -1,3 +1,4 @@
+import { createFixtureOwner } from "./fixtures/database.js";
 import { randomUUID } from "node:crypto";
 import { expect, it } from "vitest";
 import { createDatabase } from "../packages/database/dist/index.js";
@@ -10,6 +11,7 @@ it("verifies identity, resolves household from DB and rejects revoked or forged 
     process.env.DATABASE_URL ??
     "postgresql://joint:local-development-only@127.0.0.1:5432/joint";
   const database = createOrm(connectionString);
+  const fixtureOwner = createFixtureOwner();
   const health = createDatabase(connectionString, 500);
   const identity = await startIdentityFixture();
   const householdId = randomUUID();
@@ -78,9 +80,10 @@ it("verifies identity, resolves household from DB and rejects revoked or forged 
     expect((await request(token)).status).toBe(401);
   } finally {
     await app.close();
-    await database.household.deleteMany({ where: { id: householdId } });
-    await database.user.deleteMany({ where: { id: userId } });
+    await fixtureOwner.household.deleteMany({ where: { id: householdId } });
+    await fixtureOwner.user.deleteMany({ where: { id: userId } });
     await database.$disconnect();
+    await fixtureOwner.$disconnect();
     await health.close();
     await identity.close();
   }
