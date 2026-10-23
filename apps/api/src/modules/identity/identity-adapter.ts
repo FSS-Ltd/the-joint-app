@@ -14,6 +14,10 @@ import { ClerkIdentityStore } from "./clerk/identity-store.js";
 import { ClerkIdentityService } from "./clerk/identity.service.js";
 import { ClerkLogout } from "./clerk/logout.service.js";
 import {
+  createClerkTotpVerifier,
+  type ClerkTotpVerifier,
+} from "./clerk/totp-verifier.js";
+import {
   createClerkRevoker,
   type ClerkRevoker,
 } from "./clerk/session-revoker.js";
@@ -26,6 +30,7 @@ export type IdentityAdapterOptions = { database: PrismaClient } & (
         Pick<AuthServerEnvironment, "AUTH_TOKEN_KEY" | "AUTH_EMAIL_HASH_KEY">;
       clerkGateway?: ClerkGateway;
       clerkRevoker?: ClerkRevoker;
+      clerkTotp?: ClerkTotpVerifier;
     }
 );
 export function createIdentityAdapter(options: IdentityAdapterOptions): {
@@ -49,7 +54,12 @@ export function createIdentityAdapter(options: IdentityAdapterOptions): {
       options.environment.CLERK_TIMEOUT_MS,
     );
     return {
-      identity: new ClerkIdentityService(verifier, store, logout),
+      identity: new ClerkIdentityService(
+        verifier,
+        store,
+        logout,
+        options.clerkTotp ?? createClerkTotpVerifier(options.environment),
+      ),
       vault,
     };
   }

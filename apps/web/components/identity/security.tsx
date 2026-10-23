@@ -119,7 +119,7 @@ export function Security(): ReactNode {
                   <p>
                     {identity.session.needsMfa || reauth
                       ? "Enter the six-digit code from your authenticator app to continue."
-                      : "Add The Joint App to your authenticator app, then enter a code to finish setup."}
+                      : "Add The Family Fund App to your authenticator app, then enter a code to finish setup."}
                   </p>
                   {!verifiedFactor && !enrollment && (
                     <button

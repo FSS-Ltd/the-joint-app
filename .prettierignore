@@ -5,3 +5,5 @@ node_modules
 the-joint-app-plan
 
 packages/database/src/generated/
+.superpowers/
+.playwright-mcp/

@@ -42,7 +42,10 @@ export const acceptInviteSchema = z
   .strict();
 export const idempotencyKeySchema = z.uuid();
 export const mfaCodeSchema = z
-  .object({ factorId: z.uuid(), code: z.string().regex(/^\d{6}$/) })
+  .object({
+    factorId: z.union([z.uuid(), z.literal("clerk_totp")]),
+    code: z.string().regex(/^\d{6}$/),
+  })
   .strict();
 
 export const verifiedIdentitySchema = z.object({

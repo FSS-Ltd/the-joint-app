@@ -1,0 +1,10 @@
+.brand-logo {
+  display: block;
+  width: clamp(128px, 24vw, 180px);
+  height: auto;
+}
+.google-button {
+  width: 100%;
+  margin-top: 16px;
+  justify-content: center;
+}

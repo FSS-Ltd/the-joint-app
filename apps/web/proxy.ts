@@ -34,7 +34,6 @@ export default async function proxy(
   // Leave the custom setup state renderable; no keyless provisioning or legacy fallback.
   if (!server.success || !web.success) return NextResponse.next();
   return clerkMiddleware({
-    secretKey: server.data.CLERK_SECRET_KEY,
     publishableKey: web.data.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     jwtKey: server.data.CLERK_JWT_KEY,
     authorizedParties: server.data.CLERK_AUTHORIZED_PARTIES,

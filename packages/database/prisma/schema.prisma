@@ -908,6 +908,7 @@ model ClerkIdentity {
   @@schema("app")
 }
 model ClerkSession {
+  totpVerifiedAt DateTime? @db.Timestamptz(3)
   issuer String @db.VarChar(255)
   externalSessionId String @db.VarChar(128)
   subject String @db.VarChar(128)

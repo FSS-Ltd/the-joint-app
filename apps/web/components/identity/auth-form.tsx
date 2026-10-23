@@ -11,33 +11,10 @@ import {
 import { Feedback, IdentityFrame } from "./frame";
 import { PasswordField } from "./password-field";
 
-type Mode = "sign-in" | "sign-up" | "recovery";
+import { authContent, type AuthMode } from "./auth-content";
 type Stage = "credentials" | "verify" | "password";
-const content = {
-  "sign-in": {
-    eyebrow: "Welcome back",
-    title: "Make room for together.",
-    description: "Sign in to your household, with a little space for yourself.",
-    heading: "Sign in",
-    action: "Sign in",
-  },
-  "sign-up": {
-    eyebrow: "A fresh start",
-    title: "Better, together.",
-    description: "Create your account. Then make a home for your shared plans.",
-    heading: "Create your account",
-    action: "Create account",
-  },
-  recovery: {
-    eyebrow: "Here to help",
-    title: "Find your way back.",
-    description: "A few small steps to safely return to your account.",
-    heading: "Reset your password",
-    action: "Send recovery code",
-  },
-};
 
-export function AuthForm({ mode }: { mode: Mode }): ReactNode {
+export function AuthForm({ mode }: { mode: AuthMode }): ReactNode {
   const [stage, setStage] = useState<Stage>("credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +23,7 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
   const [pending, setPending] = useState(false);
   const [ready, setReady] = useState(false);
   const [next, setNext] = useState<"join" | "accounts" | null>(null);
-  const text = content[mode];
+  const text = authContent[mode];
   useEffect(() => {
     let current = true;
     setReady(false);
@@ -175,7 +152,7 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
               label={stage === "password" ? "New password" : "Password"}
               hint={
                 mode === "sign-in"
-                  ? "Use the password for your Joint App account."
+                  ? "Use the password for your Family Fund account."
                   : "Use 12–128 characters. A longer phrase works well."
               }
               value={password}
@@ -243,7 +220,7 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
         <p className="form-footnote">
           {mode === "sign-up"
             ? "Already have an account?"
-            : "New to The Joint App?"}{" "}
+            : "New to The Family Fund App?"}{" "}
           <a
             href={
               ready

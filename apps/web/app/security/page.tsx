@@ -1,4 +1,4 @@
-import { Security } from "../../components/identity/security";
+import { SecurityEntry } from "../../components/identity/security-entry";
 export default function SecurityPage() {
-  return <Security />;
+  return <SecurityEntry />;
 }

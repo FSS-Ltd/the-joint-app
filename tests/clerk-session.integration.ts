@@ -15,12 +15,14 @@ const owner = createFixtureOwner(),
   runtime = createOrm(process.env.DATABASE_URL);
 const connection = createDatabase(process.env.DATABASE_URL, 1000);
 const revoke = vi.fn(async () => {});
+const verifyTotp = vi.fn(async () => true);
 const app = await createApplication(connection, undefined, {
   provider: "clerk",
   database: runtime,
   environment: fixture.environment,
   clerkGateway: fixture.gateway,
   clerkRevoker: { revoke },
+  clerkTotp: { verify: verifyTotp },
 });
 let origin = "";
 const internalUsers = new Set<string>(),
@@ -241,4 +243,73 @@ it("persists observed terminal provider session revocation", async () => {
   expect((await me(person.userId, person.sessionId)).status).toBe(401);
   session.status = "active";
   expect((await me(person.userId, person.sessionId)).status).toBe(401);
+});
+
+it("supports backup-code enrollment while requiring explicit fresh TOTP proof for sensitive actions", async () => {
+  const person = fixture.account(true);
+  const user = fixture.users.get(person.userId);
+  if (!user) throw Error("Missing synthetic user");
+  user.otherSecondFactorsEnabled = true;
+  expect(
+    meResponseSchema.parse(
+      await (await me(person.userId, person.sessionId)).json(),
+    ).session.aal,
+  ).toBe("aal1");
+  const token = await fixture.token(person.userId, person.sessionId);
+  const response = await fetch(origin + "/v1/auth/mfa/verify", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ factorId: "clerk_totp", code: "123456" }),
+  });
+  expect(response.status).toBe(200);
+  expect(verifyTotp).toHaveBeenCalledWith(person.userId, "123456");
+  const current = meResponseSchema.parse(
+    await (await me(person.userId, person.sessionId)).json(),
+  );
+  expect(current.session.aal).toBe("aal2");
+  await owner.$executeRaw`UPDATE app."ClerkSession" SET "totpVerifiedAt"=clock_timestamp()-interval '6 minutes' WHERE issuer=${fixture.environment.CLERK_ISSUER} AND "externalSessionId"=${person.sessionId}`;
+  const stale = meResponseSchema.parse(
+    await (await me(person.userId, person.sessionId)).json(),
+  );
+  expect(stale.session.aal).toBe("aal2");
+  expect(new Date(stale.session.mfaVerifiedAt ?? "").getTime()).toBeLessThan(
+    Date.now() - 300000,
+  );
+});
+
+it("cannot grant TOTP proof from a failed verification or a locally revoked session", async () => {
+  const person = fixture.account(true);
+  const user = fixture.users.get(person.userId);
+  if (!user) throw Error("Missing synthetic user");
+  user.otherSecondFactorsEnabled = true;
+  await me(person.userId, person.sessionId);
+  const token = await fixture.token(person.userId, person.sessionId);
+  const verify = () =>
+    fetch(origin + "/v1/auth/mfa/verify", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + token,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ factorId: "clerk_totp", code: "123456" }),
+    });
+  verifyTotp.mockResolvedValueOnce(false);
+  expect((await verify()).status).toBe(403);
+  expect(
+    meResponseSchema.parse(
+      await (await me(person.userId, person.sessionId)).json(),
+    ).session.aal,
+  ).toBe("aal1");
+  await fetch(origin + "/v1/auth/logout", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ scope: "local" }),
+  });
+  expect((await verify()).status).toBe(401);
 });

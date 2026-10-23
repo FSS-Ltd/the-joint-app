@@ -18,12 +18,14 @@ import type {
   ClerkIdentityStore,
 } from "./identity-store.js";
 import type { ClerkLogout } from "./logout.service.js";
+import type { ClerkTotpVerifier } from "./totp-verifier.js";
 
 export class ClerkIdentityService implements IdentityAccess {
   constructor(
     private readonly verifier: ClerkCredentialVerifier,
     private readonly store: ClerkIdentityStore,
     private readonly signout: ClerkLogout,
+    private readonly totp: ClerkTotpVerifier,
   ) {}
   private async withIdentity<T>(
     token: string,
@@ -136,8 +138,31 @@ export class ClerkIdentityService implements IdentityAccess {
   async enroll(): Promise<never> {
     return providerFlowRequired();
   }
-  async verifyMfa(): Promise<never> {
-    return providerFlowRequired();
+  async verifyMfa(
+    token: string,
+    factorId: string,
+    code: string,
+  ): Promise<{ state: "AUTHENTICATED" }> {
+    const credential = await this.verifier.verify(token);
+    if (
+      factorId !== "clerk_totp" ||
+      !credential.totpEnrolled ||
+      !/^\d{6}$/.test(code)
+    )
+      throw new ForbiddenException();
+    // Both authoritative checks and the TOTP request happen outside database locks.
+    const startedAt = Date.now();
+    if (!(await this.totp.verify(credential.subject, code)))
+      throw new ForbiddenException();
+    const current = await this.verifier.verify(token);
+    if (
+      !current.totpEnrolled ||
+      current.subject !== credential.subject ||
+      current.sessionId !== credential.sessionId
+    )
+      throw new ForbiddenException();
+    await this.store.recordTotp(current, startedAt);
+    return { state: "AUTHENTICATED" };
   }
   async password(): Promise<never> {
     return providerFlowRequired();

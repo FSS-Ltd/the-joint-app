@@ -141,6 +141,10 @@ export const clerkProviderSessionListSchema = z.object({
 });
 
 export type ClerkSessionClaims = z.infer<typeof clerkSessionClaimsSchema>;
+export const clerkTotpVerificationSchema = z.object({
+  verified: z.literal(true),
+  code_type: z.literal("totp"),
+});
 export const clerkWebhookEnvelopeSchema = z.object({
   object: z.literal("event"),
   instance_id: z.string(),

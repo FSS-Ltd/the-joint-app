@@ -20,6 +20,7 @@ interface MappingRow {
   userId: string;
   sessionId: string;
   expiresAt: Date;
+  totpVerifiedAt: Date | null;
 }
 
 /** Accept only a credential returned by the verifier, never a request body. */
@@ -38,10 +39,24 @@ export class ClerkIdentityStore {
       return await this.database.$transaction(async (transaction) => {
         const [row] = await transaction.$queryRaw<
           MappingRow[]
-        >`SELECT * FROM app.resolve_clerk_identity(
+        >`SELECT mapped.*,app.clerk_totp_proof(${credential.issuer},${credential.sessionId}) AS "totpVerifiedAt" FROM app.resolve_clerk_identity(
           ${credential.issuer},${credential.subject},${credential.sessionId},${this.vault.emailHash(credential.email)},
-          ${new Date(credential.expiresAt)}::timestamptz,${new Date(credential.sessionExpiresAt)}::timestamptz,${new Date(credential.sessionCreatedAt)}::timestamptz)`;
+          ${new Date(credential.expiresAt)}::timestamptz,${new Date(credential.sessionExpiresAt)}::timestamptz,${new Date(credential.sessionCreatedAt)}::timestamptz) mapped`;
         if (!row) throw new UnauthorizedException();
+        const localProof = credential.totpEnrolled
+          ? (row.totpVerifiedAt?.getTime() ?? null)
+          : null;
+        const proof = [credential.mfaAuthenticatedAt, localProof].reduce<
+          number | null
+        >(
+          (latest, value) =>
+            value !== null &&
+            value <= Date.now() &&
+            (latest === null || value > latest)
+              ? value
+              : latest,
+          null,
+        );
         return apply({
           credential,
           transaction,
@@ -50,15 +65,24 @@ export class ClerkIdentityStore {
             userId: row.userId,
             sessionId: row.sessionId,
             emailHash: this.vault.emailHash(credential.email),
-            aal: credential.mfaAuthenticatedAt === null ? "aal1" : "aal2",
+            aal: proof === null ? "aal1" : "aal2",
             authenticatedAt: credential.authenticatedAt,
-            mfaAuthenticatedAt: credential.mfaAuthenticatedAt,
+            mfaAuthenticatedAt: proof,
           },
         });
       });
     } catch (error) {
       throw mapError(error);
     }
+  }
+
+  async recordTotp(
+    credential: ClerkCredential,
+    verifiedAt: number,
+  ): Promise<void> {
+    await this.withCredential(credential, async ({ transaction }) => {
+      await transaction.$executeRaw`SELECT app.record_clerk_totp(${credential.issuer},${credential.subject},${credential.sessionId},${new Date(verifiedAt)}::timestamptz)`;
+    });
   }
 
   async revokeRejectedSession(error: ClerkSessionRejected): Promise<void> {

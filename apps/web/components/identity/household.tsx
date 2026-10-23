@@ -5,8 +5,10 @@ import { errorMessage, request } from "./client";
 import { Feedback, IdentityFrame } from "./frame";
 import { InvitationForm } from "./invitation-form";
 import { useIdentity } from "./use-identity";
+import { useAuthRuntime } from "./auth-runtime";
 
 export function Household(): ReactNode {
+  const { finishSignOut } = useAuthRuntime();
   const { identity, error: loadError, loading, refresh } = useIdentity();
   const [name, setName] = useState("");
   const [key, setKey] = useState("");
@@ -32,6 +34,7 @@ export function Household(): ReactNode {
     setError("");
     try {
       await request("/api/auth/logout", { scope });
+      await finishSignOut();
       window.location.assign("/sign-in");
     } catch (cause) {
       setError(errorMessage(cause));
