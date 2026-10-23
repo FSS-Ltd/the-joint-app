@@ -40,5 +40,5 @@ export function assessFundingSource(
       : adult < 0n || adult > original)
   )
     return null;
-  return { available: settled > reserves ? settled - reserves : 0n, settled };
+  return { available: settled > reserves ? settled - reserves : 0n };
 }

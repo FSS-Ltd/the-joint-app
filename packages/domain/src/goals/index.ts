@@ -6,3 +6,9 @@ export type {
   FundingAccount,
   ValuationBasis,
 } from "./funding-types.js";
+
+export { assessContributionBudget } from "./contribution-budget.js";
+export type {
+  ContributionBudgetInput,
+  ContributionBudgetAssessment,
+} from "./contribution-budget.js";

@@ -3,7 +3,7 @@ import type {
   AggregateMoney,
   goalAllocationSchema,
 } from "@joint/contracts";
-interface SourceMoney {
+export interface SourceMoney {
   readonly amountMinor: string;
   readonly currency: string;
 }

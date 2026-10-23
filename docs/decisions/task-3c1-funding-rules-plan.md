@@ -66,7 +66,7 @@ Contribution inputs are already aligned relative monthly vectors. Calendar align
 
 **Interfaces:**
 
-- `ContributionBudgetInput`: `{capacity: readonly Money[], goals: readonly {goalId: string, priority: number, requested: readonly Money[]}[]}`.
+- `ContributionBudgetInput`: `{capacity: readonly SourceMoney[], goals: readonly {goalId: string, priority: number, requested: readonly SourceMoney[]}[]}`. SourceMoney uses string amount/currency inputs, validated against existing canonical GBP Money at the boundary; unsupported currencies fail safely.
 - `assessContributionBudget(input: ContributionBudgetInput): ContributionBudgetAssessment`.
 - `ContributionBudgetAssessment`: `{unfunded: boolean, months: {month: number, capacity: Money, requested: AggregateMoney, planned: Money, shortfall: AggregateMoney, goals: {goalId, requested: Money, planned: Money, shortfall: Money, status: FUNDED | UNFUNDED}[]}[]}`. Months are 1-based; goal rows follow priority/UUID order.
 
