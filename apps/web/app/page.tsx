@@ -15,6 +15,11 @@ export default function Home() {
       <a href="https://github.com/FSS-Ltd/the-joint-app">
         Follow development on GitHub <span aria-hidden="true">↗</span>
       </a>
+      <p>
+        <a href="/sign-in">
+          Sign in to your household <span aria-hidden="true">↗</span>
+        </a>
+      </p>
       <footer>Built by FSS · UK first</footer>
     </main>
   );

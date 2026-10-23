@@ -10,9 +10,9 @@ jobs:
   verify:
     name: Foundation checks
     runs-on: ubuntu-24.04
-    container: mcr.microsoft.com/playwright:v1.58.2-noble
     env:
-      DATABASE_URL: postgresql://joint:local-development-only@postgres:5432/joint
+      DATABASE_URL: postgresql://joint:local-development-only@127.0.0.1:5432/joint
+      PLAYWRIGHT_WS_ENDPOINT: ws://127.0.0.1:3002/
     services:
       postgres:
         image: postgres:17.6
@@ -39,5 +39,25 @@ jobs:
       - run: pnpm db:seed
       - run: pnpm typecheck
       - run: pnpm test
+      - run: pnpm auth:setup
+      - name: Start local Auth and synthetic inbox
+        run: >-
+          docker compose --env-file .env.auth --profile auth
+          up -d --wait auth-gateway auth mailpit auth-db
       - run: pnpm test:integration
+      - name: Start pinned browser server
+        run: |
+          docker run -d --name joint-playwright --init --ipc=host --network=host \
+            --mount "type=bind,source=$GITHUB_WORKSPACE,target=/work,readonly" \
+            --workdir /work mcr.microsoft.com/playwright:v1.58.2-noble \
+            node /work/node_modules/@playwright/test/cli.js run-server \
+            --host 127.0.0.1 --port 3002
+          curl --fail --silent --show-error --retry 30 --retry-connrefused \
+            --retry-delay 1 --max-time 2 http://127.0.0.1:3002/json
       - run: pnpm test:e2e
+      - name: Stop browser server
+        if: always()
+        run: |
+          if docker container inspect joint-playwright >/dev/null 2>&1; then
+            docker rm -f joint-playwright
+          fi

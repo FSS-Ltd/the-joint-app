@@ -3,7 +3,9 @@ import { once } from "node:events";
 import { randomUUID } from "node:crypto";
 import { exportJWK, generateKeyPair, SignJWT } from "jose";
 
-export async function startIdentityFixture(): Promise<{
+export async function startIdentityFixture(
+  options: { jwksStatus?: number } = {},
+): Promise<{
   issuer: string;
   token(
     userId: string,
@@ -21,6 +23,7 @@ export async function startIdentityFixture(): Promise<{
     use: "sig",
   };
   const server = createServer((_request, response) => {
+    response.statusCode = options.jwksStatus ?? 200;
     response.setHeader("content-type", "application/json");
     response.end(JSON.stringify({ keys: [jwk] }));
   });

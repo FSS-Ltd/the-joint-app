@@ -60,4 +60,10 @@ Exact candidate engine/peer/licence metadata was read with npm view at the state
 
 ## Task 1.1 installed additions
 
-Prisma, @prisma/client and @prisma/adapter-pg are installed at 7.10.1 (Apache-2.0), verified with strict TypeScript 6/Node ESM, generated client, additive local migrations and PostgreSQL integration tests. jose 6.2.13 (MIT) supplies maintained asymmetric JWT/JWKS verification; the same exact version is a test dependency for ephemeral synthetic signatures. No hand-written cryptography or production test issuer is included. Supabase SDK/native candidates above remain uninstalled.
+Prisma, @prisma/client and @prisma/adapter-pg are installed at 7.10.1 (Apache-2.0), verified with strict TypeScript 6/Node ESM, generated client, additive local migrations and PostgreSQL integration tests. jose 6.2.13 (MIT) supplies maintained asymmetric JWT/JWKS verification; the same exact version is a test dependency for ephemeral synthetic signatures. No hand-written cryptography or production test issuer is included. The Supabase SDK installation is recorded below; native candidates remain uninstalled.
+
+## Task 1.2 installed local identity additions
+
+`@supabase/supabase-js` 2.118.0 (MIT) is installed only in the API for its maintained Auth client. `@supabase/ssr` is not installed: browser-assisted token storage does not satisfy this project's server-owned session policy. The client uses explicit refresh ownership and no browser persistence. The lockfile records exact transitive dependencies.
+
+Local identity infrastructure pins `supabase/gotrue:v2.197.0` (MIT), `postgres:17.6` (PostgreSQL licence), `nginx:1.30.6-alpine-slim` (BSD-2-Clause upstream) and `axllent/mailpit:v1.32.0` (MIT). Image contents have their own third-party notices; these upstream licences do not license the repository. Auth owns its vendor schema in a separate database. Prisma remains the sole application schema migration history. No hosted resources or production region/backup settings were created or verified.

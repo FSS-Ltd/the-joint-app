@@ -1,11 +1,21 @@
+:root {
+  --canvas: #f7f5ef;
+  --surface: #ffffff;
+  --ink: #203b32;
+  --muted: #52665c;
+  --primary: #244f42;
+  --sage: #dde7dd;
+  --apricot: #f0d6bc;
+  --border: #ccd5cc;
+}
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
-  background: #f5f3ee;
-  color: #20352d;
-  font-family: Arial, sans-serif;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.6;
 }
 main {

@@ -10,7 +10,13 @@ for (const width of [390, 1280])
       page.getByText("In development", { exact: true }),
     ).toBeVisible();
     await page.keyboard.press("Tab");
-    await expect(page.getByRole("link")).toBeFocused();
+    await expect(
+      page.getByRole("link", { name: "Follow development on GitHub" }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(
+      page.getByRole("link", { name: "Sign in to your household" }),
+    ).toBeFocused();
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

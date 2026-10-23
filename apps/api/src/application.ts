@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import { HttpErrorFilter } from "./http-error.filter.js";
 import {
   Controller,
   Get,
@@ -6,6 +7,7 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import type { NestExpressApplication } from "@nestjs/platform-express";
 import type { INestApplication } from "@nestjs/common";
 import type { DatabaseConnection } from "@joint/database";
 import type { HealthResponse } from "@joint/contracts";
@@ -14,9 +16,14 @@ import {
   type BootstrapOptions,
 } from "./modules/bootstrap/bootstrap.service.js";
 import { createBootstrapController } from "./modules/bootstrap/bootstrap.controller.js";
+import {
+  identityController,
+  type AuthOptions,
+} from "./modules/identity/identity.module.js";
 export async function createApplication(
   database: DatabaseConnection,
   bootstrap?: BootstrapOptions,
+  auth?: AuthOptions,
 ): Promise<INestApplication> {
   @Controller("health")
   class HealthController {
@@ -32,12 +39,18 @@ export async function createApplication(
   @Module({
     controllers: [
       HealthController,
+      identityController(auth),
       createBootstrapController(
         bootstrap ? new BootstrapService(bootstrap) : undefined,
       ),
     ],
   })
   class ApplicationModule {}
-  const app = await NestFactory.create(ApplicationModule, { logger: false });
+  const app = await NestFactory.create<NestExpressApplication>(
+    ApplicationModule,
+    { logger: false, bodyParser: false },
+  );
+  app.useBodyParser("json", { limit: "32kb" });
+  app.useGlobalFilters(new HttpErrorFilter());
   return app;
 }

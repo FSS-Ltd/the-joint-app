@@ -25,7 +25,8 @@ it("verifies identity, resolves household from DB and rejects revoked or forged 
         id: householdId,
         memberships: {
           create: {
-            userId,
+            user: { create: { id: userId } },
+            slot: 1,
             sessions: {
               create: {
                 id: sessionId,
@@ -78,6 +79,7 @@ it("verifies identity, resolves household from DB and rejects revoked or forged 
   } finally {
     await app.close();
     await database.household.deleteMany({ where: { id: householdId } });
+    await database.user.deleteMany({ where: { id: userId } });
     await database.$disconnect();
     await health.close();
     await identity.close();
