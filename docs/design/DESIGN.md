@@ -2,6 +2,8 @@
 
 Status: proposed visual baseline, awaiting review of the wireframes. This is design work within the current AUTH2 acceptance correction, not implementation or approval of a subsequent build step.
 
+The user's menu criticism refers to the existing app menu, not the navigation in these mockups. Replacing that menu remains part of the planned UI implementation; this clarification does not approve the proposed screens or change their navigation.
+
 ## Reference and intent
 
 The eight private images in `Design/` supply the composition, not merely a colour mood. See [reference analysis](../decisions/design-direction.md). Adapt the mobile reference's deep backdrop, layered framing, opaque inset finance panels and floating capsule navigation. Adapt the desktop reference's dark navigation rail, optional account column, financial hierarchy and compact rows. Do not redistribute the source images, copy their branding or introduce payment capabilities.
