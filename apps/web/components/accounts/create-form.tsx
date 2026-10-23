@@ -49,7 +49,7 @@ export function CreateAccountForm({
   }
   return (
     <details className="surface account-create" open={!verified}>
-      <summary>
+      <summary id="add-account">
         Add a manual account<span aria-hidden="true">＋</span>
       </summary>
       <div className="account-create-body">
