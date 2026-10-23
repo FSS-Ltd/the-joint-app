@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@clerk/backend": "3.26.1",
     "@joint/contracts": "workspace:*",
     "@joint/database": "workspace:*",
     "@nestjs/common": "12.2.0",

@@ -1,6 +1,6 @@
 # AUTH2 — Clerk authentication migration design
 
-State: builder check completed; awaiting human design approval. AUTH1 is merged; this design does not claim Clerk is implemented.
+State: human approved implementation on 2026-10-23 after builder check. AUTH1 is merged; this design does not claim Clerk is implemented.
 
 ## Intent and agreed scope
 
@@ -83,3 +83,5 @@ Open human input: whether existing real local account access needs migration, an
 - [Webhook consistency and duplicates](https://clerk.com/docs/guides/development/webhooks/syncing)
 
 Builder check: an independent read-only reviewer found no additional material planning questions or impossible security requirement. The two existing inputs above remain; synthetic implementation does not require live keys. No implementation approval is inferred from this review.
+
+User follow-up: approved this design and requested preparing the integration first; Clerk Development instance has not yet been created. Proceed with synthetic fixtures, retaining real-provider checks as unavailable until setup.
