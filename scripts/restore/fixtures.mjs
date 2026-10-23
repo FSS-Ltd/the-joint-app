@@ -1,3 +1,4 @@
+import { seedGoalRestoreFixture } from "./goal-fixtures.mjs";
 import { Buffer } from "node:buffer";
 import { DataVault } from "../../packages/database/dist/data-vault.js";
 import { randomUUID } from "node:crypto";
@@ -204,7 +205,9 @@ export async function seedRestoreFixture(client, recoveryKey) {
       importBatchId,
     ],
   );
+  const goals = await seedGoalRestoreFixture(client, { deleted, remaining });
   return {
+    goals,
     importBatchId,
     encryptedTransactionId,
     deleted,
@@ -231,6 +234,7 @@ export function fixtureIntents(fixture) {
   return [
     { ...base(fixture.deleted.userId), kind: "DELETE_USER" },
     { ...base(fixture.absentUserId), kind: "DELETE_USER" },
+    { ...base(fixture.goals.deleted.userId), kind: "DELETE_USER" },
     {
       ...base(fixture.leaver.userId),
       kind: "LEAVE_HOUSEHOLD",

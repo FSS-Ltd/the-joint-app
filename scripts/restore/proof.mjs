@@ -1,3 +1,4 @@
+import { verifyRestoredGoals } from "./goal-proof.mjs";
 import { Buffer } from "node:buffer";
 import { DataVault } from "../../packages/database/dist/data-vault.js";
 import { randomUUID } from "node:crypto";
@@ -98,7 +99,15 @@ export async function verifyRestoredAccess(
       requestId: randomUUID(),
     };
   }
+  let goalProof;
   try {
+    goalProof = await verifyRestoredGoals(
+      owner,
+      scoped,
+      archive,
+      freshContext,
+      fixture,
+    );
     const remaining = await freshContext(fixture.remaining);
     const remainingRows = await scoped.withScope(remaining, (tx) =>
       tx.account.findMany({ select: { id: true } }),
@@ -187,6 +196,7 @@ export async function verifyRestoredAccess(
     await runtime.$disconnect();
   }
   return {
+    ...goalProof,
     ciphertextRecovered: true,
     absentUserTombstoned: true,
     wholeBudgetScopeRemoved: true,
