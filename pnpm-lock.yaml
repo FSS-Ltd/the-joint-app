@@ -50,6 +50,9 @@ importers:
       '@joint/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@joint/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@nestjs/common':
         specifier: 12.2.0
         version: 12.2.0(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -77,6 +80,9 @@ importers:
       '@joint/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@joint/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       next:
         specifier: 16.4.2
         version: 16.4.2(@playwright/test@1.58.2)(@types/node@22.19.15)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -132,6 +138,12 @@ importers:
       prisma:
         specifier: 7.10.1
         version: 7.10.1(@types/node@22.19.15)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@6.0.3)
+
+  packages/domain:
+    dependencies:
+      '@joint/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
 packages:
 

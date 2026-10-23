@@ -13,9 +13,11 @@ type Path =
   | "/v1/me"
   | "/v1/households"
   | "/v1/invitations/accept"
-  | `/v1/households/${string}/invitations`;
+  | `/v1/households/${string}/invitations`
+  | `/v1/households/${string}/accounts`
+  | `/v1/households/${string}/accounts/${string}`;
 const allowedPath =
-  /^\/v1\/(?:auth\/(?:signup|login|verify|recovery|password|logout|mfa\/(?:enroll|verify))|me|households(?:\/[0-9a-f-]{36}\/invitations)?|invitations\/accept)$/i;
+  /^\/v1\/(?:auth\/(?:signup|login|verify|recovery|password|logout|mfa\/(?:enroll|verify))|me|households(?:\/[0-9a-f-]{36}\/(?:invitations|accounts(?:\/[0-9a-f-]{36}(?:\/(?:valuations|grants\/[0-9a-f-]{36}))?)?))?|invitations\/accept)$/i;
 const safeErrors: Record<string, string> = {
   INVITATION_UNAVAILABLE:
     "This invitation is unavailable. Ask your household admin for a new link.",
@@ -26,6 +28,10 @@ const safeErrors: Record<string, string> = {
   HOUSEHOLD_EXISTS: "You already belong to a household.",
   IDEMPOTENCY_CONFLICT:
     "These details changed. Please try again with a new request.",
+  MFA_REAUTH_REQUIRED:
+    "Verify a fresh authenticator code before sharing more access.",
+  VERSION_CONFLICT:
+    "This account changed in another tab. Reload it and try again.",
   MFA_REQUIRED: "Verify your authenticator code to continue.",
   SESSION_UNAVAILABLE:
     "Your session is unavailable. Please sign in again or retry shortly.",
@@ -33,7 +39,14 @@ const safeErrors: Record<string, string> = {
 
 export async function upstream(
   path: Path,
-  options: { body?: object; token?: string; idempotencyKey?: string } = {},
+  options: {
+    body?: object;
+    token?: string;
+    idempotencyKey?: string;
+    method?: "PATCH" | "PUT";
+    ifMatch?: string;
+    query?: URLSearchParams;
+  } = {},
 ): Promise<unknown> {
   if (!allowedPath.test(path))
     throw new BffError(
@@ -47,8 +60,11 @@ export async function upstream(
   if (options.token) headers.Authorization = `Session ${options.token}`;
   if (options.idempotencyKey)
     headers["Idempotency-Key"] = options.idempotencyKey;
-  const response = await fetch(new URL(path, environment.API_BASE_URL), {
-    method: options.body === undefined ? "GET" : "POST",
+  if (options.ifMatch) headers["If-Match"] = options.ifMatch;
+  const url = new URL(path, environment.API_BASE_URL);
+  if (options.query) url.search = options.query.toString();
+  const response = await fetch(url, {
+    method: options.method ?? (options.body === undefined ? "GET" : "POST"),
     headers,
     cache: "no-store",
     redirect: "error",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { errorMessage, nextDestination, request } from "./client";
 import { Feedback, IdentityFrame } from "./frame";
 import { useIdentity } from "./use-identity";
@@ -18,6 +18,12 @@ export function Security(): ReactNode {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [reauth, setReauth] = useState(false);
+  useEffect(() => {
+    setReauth(
+      new URLSearchParams(window.location.search).get("reauth") === "1",
+    );
+  }, []);
   const verifiedFactor = identity?.factors.find(
     (factor) => factor.status === "verified",
   );
@@ -51,9 +57,13 @@ export function Security(): ReactNode {
       setCode("");
       if (result.state === "PASSWORD_RESET_REQUIRED")
         window.location.assign(
-          `/recovery${nextDestination() === "/join" ? "?next=join" : ""}`,
+          `/recovery${nextDestination() === "/household" ? "" : `?next=${nextDestination().slice(1)}`}`,
         );
-      else if (identity?.session.needsMfa)
+      else if (
+        identity?.session.needsMfa ||
+        reauth ||
+        nextDestination() === "/accounts"
+      )
         window.location.assign(nextDestination());
       else {
         setSuccess(
@@ -75,6 +85,7 @@ export function Security(): ReactNode {
     >
       <nav className="account-nav" aria-label="Your account">
         <a href="/household">Back to household</a>
+        <a href="/accounts">Accounts</a>
       </nav>
       <section className="surface form-card" aria-labelledby="security-heading">
         <p className="step-label">Two-step verification</p>
@@ -88,7 +99,10 @@ export function Security(): ReactNode {
               <p className="break-word">
                 Protecting <strong>{identity.user.email}</strong>
               </p>
-              {verifiedFactor && !identity.session.needsMfa && !enrollment ? (
+              {verifiedFactor &&
+              !identity.session.needsMfa &&
+              !enrollment &&
+              !reauth ? (
                 <div className="verified-panel">
                   <span className="status">
                     {identity.session.aal === "aal2"
@@ -103,7 +117,7 @@ export function Security(): ReactNode {
               ) : (
                 <>
                   <p>
-                    {identity.session.needsMfa
+                    {identity.session.needsMfa || reauth
                       ? "Enter the six-digit code from your authenticator app to continue."
                       : "Add The Joint App to your authenticator app, then enter a code to finish setup."}
                   </p>

@@ -1,0 +1,347 @@
+.accounts-nav {
+  width: min(1056px, calc(100% - 32px));
+  margin: 8px auto 0;
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--sage);
+}
+.accounts-nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 0;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 12px;
+}
+.accounts-nav a[aria-current="page"] {
+  background: white;
+  box-shadow: 0 2px 8px #203b3209;
+}
+.accounts-main {
+  max-width: 1120px;
+  width: 100%;
+  padding: 48px 32px 64px;
+  flex: 1;
+}
+.accounts-heading {
+  margin-bottom: 32px;
+}
+.accounts-heading .eyebrow {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  margin: 0 0 16px;
+}
+.accounts-heading h1 {
+  font-size: clamp(32px, 4vw, 48px);
+  margin: 0 0 16px;
+  font-weight: 550;
+  letter-spacing: -0.05em;
+  overflow-wrap: anywhere;
+}
+.accounts-heading > p:last-child {
+  max-width: 520px;
+  color: var(--muted);
+  font-size: 16px;
+  margin-bottom: 0;
+}
+.accounts-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 32px;
+  align-items: start;
+}
+.account-collection,
+.accounts-sidebar,
+.account-form-column {
+  display: grid;
+  min-width: 0;
+  gap: 24px;
+}
+.account-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.account-section-title h2 {
+  font-size: 22px;
+  margin: 0;
+  letter-spacing: -0.035em;
+}
+.account-grid {
+  display: grid;
+  gap: 20px;
+}
+.account-group > h3 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+.account-group > .field-hint {
+  margin-top: -4px;
+}
+.account-card {
+  padding: 26px 28px;
+  min-width: 0;
+}
+.account-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.account-kind-mark,
+.empty-account-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: var(--sage);
+  border-radius: 14px;
+  font-size: 24px;
+}
+.account-scope {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.account-kind {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0 0 2px;
+}
+.account-card h2 {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.3;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.account-card h2 a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-underline-offset: 4px;
+}
+.account-value {
+  font-size: 34px;
+  letter-spacing: -0.05em;
+  font-weight: 550;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  margin: 20px 0 8px;
+  overflow-wrap: anywhere;
+}
+.unknown-value {
+  font-size: 24px;
+  color: var(--muted);
+}
+.account-provenance {
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.account-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #e8ece5;
+  padding-top: 16px;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.account-sharing {
+  border-radius: 99px;
+  background: var(--sage);
+  color: var(--ink);
+  padding: 4px 10px;
+}
+.account-empty {
+  padding: 32px;
+}
+.empty-account-mark {
+  background: var(--apricot);
+  margin-bottom: 24px;
+}
+.account-empty h3 {
+  font-size: 24px;
+  font-weight: 550;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+  margin: 0 0 16px;
+}
+.account-empty p {
+  font-size: 14px;
+  color: var(--muted);
+}
+.account-create {
+  overflow: hidden;
+}
+.account-create > summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 24px;
+  min-height: 72px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.account-create > summary span {
+  font-size: 20px;
+}
+.account-create[open] > summary {
+  border-bottom: 1px solid #e8ece5;
+}
+.account-create-body {
+  padding: 4px 24px 24px;
+}
+.account-create-body > p {
+  color: var(--muted);
+  font-size: 14px;
+}
+.accounts-shell select {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px 34px 12px 14px;
+  border: 1px solid #7f9488;
+  border-radius: 12px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 400;
+}
+.accounts-shell select:focus-visible {
+  outline: 3px solid #805a27;
+  outline-offset: 4px;
+}
+.accounts-private-note {
+  padding: 28px;
+  border-radius: 24px;
+  background: var(--sage);
+}
+.accounts-private-note h2 {
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 550;
+  letter-spacing: -0.04em;
+  margin: 0 0 20px;
+}
+.accounts-private-note p:last-child {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 0;
+}
+.account-mfa-note {
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--sage);
+}
+.account-mfa-note p {
+  margin-top: 0;
+  font-size: 14px;
+}
+.compact-button {
+  max-width: 320px;
+}
+.account-back {
+  margin: 0 0 24px;
+}
+.account-detail-summary,
+.account-detail-forms {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 24px;
+  align-items: start;
+}
+.account-detail-summary > .account-card {
+  padding: 32px;
+}
+.account-detail-forms {
+  margin-top: 32px;
+}
+.account-detail-forms .form-card > h2 {
+  font-size: 24px;
+}
+.account-detail-forms .form-card {
+  min-width: 0;
+}
+@media (max-width: 767px) {
+  .accounts-nav {
+    margin-top: 0;
+    width: calc(100% - 32px);
+    gap: 0;
+  }
+  .accounts-nav a {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  .accounts-main {
+    padding: 32px 16px 48px;
+  }
+  .accounts-heading {
+    padding: 0 8px;
+    margin-bottom: 28px;
+  }
+  .accounts-heading h1 {
+    font-size: 36px;
+  }
+  .accounts-layout,
+  .account-detail-summary,
+  .account-detail-forms {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .accounts-sidebar {
+    grid-row: 1;
+  }
+  .accounts-sidebar > .accounts-private-note {
+    display: none;
+  }
+  .account-card,
+  .account-detail-summary > .account-card {
+    padding: 24px;
+  }
+  .account-section-title h2 {
+    font-size: 21px;
+  }
+  .account-value {
+    font-size: 32px;
+  }
+  .account-detail-summary > .accounts-private-note {
+    padding: 24px;
+  }
+  .account-detail-summary > .accounts-private-note h2 {
+    font-size: 24px;
+  }
+}
+@media (max-width: 350px) {
+  .accounts-heading h1 {
+    font-size: 32px;
+  }
+  .account-section-title {
+    gap: 8px;
+  }
+  .account-section-title .text-button {
+    font-size: 12px;
+  }
+  .account-card {
+    padding: 22px;
+  }
+}

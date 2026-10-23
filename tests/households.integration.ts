@@ -1,3 +1,4 @@
+import { createFixtureOwner } from "./fixtures/database.js";
 import { randomBytes, randomUUID } from "node:crypto";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { createOrm } from "../packages/database/dist/client.js";
@@ -8,6 +9,7 @@ const database = createOrm(
   process.env.DATABASE_URL ??
     "postgresql://joint:local-development-only@127.0.0.1:5432/joint",
 );
+const fixtureOwner = createFixtureOwner();
 const vault = new IdentityVault(
   randomBytes(32).toString("base64"),
   randomBytes(32).toString("base64"),
@@ -19,6 +21,7 @@ const actors = Array.from({ length: 7 }, (_, index): IdentityPrincipal => ({
   emailHash: vault.emailHash(`adult-${index}@example.test`),
   aal: "aal2",
   authenticatedAt: Date.now(),
+  mfaAuthenticatedAt: Date.now(),
 }));
 const actor = (index: number): IdentityPrincipal => {
   const value = actors[index];
@@ -43,15 +46,22 @@ beforeAll(async () => {
   }
 });
 afterAll(async () => {
-  await database.household.deleteMany({ where: { id: { in: households } } });
+  await fixtureOwner.household.deleteMany({
+    where: { id: { in: households } },
+  });
   const users = actors.map((value) => value.userId);
-  await database.auditEvent.deleteMany({ where: { userId: { in: users } } });
-  await database.requestKey.deleteMany({ where: { userId: { in: users } } });
-  await database.sessionRegistry.deleteMany({
+  await fixtureOwner.auditEvent.deleteMany({
     where: { userId: { in: users } },
   });
-  await database.user.deleteMany({ where: { id: { in: users } } });
+  await fixtureOwner.requestKey.deleteMany({
+    where: { userId: { in: users } },
+  });
+  await fixtureOwner.sessionRegistry.deleteMany({
+    where: { userId: { in: users } },
+  });
+  await fixtureOwner.user.deleteMany({ where: { id: { in: users } } });
   await database.$disconnect();
+  await fixtureOwner.$disconnect();
 });
 it("creates one household idempotently and rejects payload changes or a second active household", async () => {
   const key = randomUUID();
@@ -131,7 +141,7 @@ it("rejects expired invitations and revoked sessions", async () => {
     "adult-5@example.test",
     randomUUID(),
   );
-  await database.invitation.update({
+  await fixtureOwner.invitation.update({
     where: { id: invite.id },
     data: { expiresAt: new Date(0) },
   });

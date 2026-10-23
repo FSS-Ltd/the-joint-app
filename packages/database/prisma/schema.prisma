@@ -31,6 +31,7 @@ model Household {
   memberships Membership[]
   invitations Invitation[]
   auditEvents AuditEvent[]
+  accounts Account[]
   @@schema("app")
 }
 
@@ -117,6 +118,12 @@ model Membership {
   grantVersion Int @default(0)
   acceptedAt DateTime @default(now()) @db.Timestamptz(3)
   sessions SessionRegistry[]
+  createdAccounts Account[] @relation("AccountCreator")
+  ownedAccounts AccountOwner[] @relation("AccountOwnership")
+  accountGrants AccountGrant[] @relation("AccountGrantee")
+  authoredBalances BalanceSnapshot[] @relation("BalanceAuthor")
+  @@unique([householdId, id])
+  @@unique([householdId, id, userId])
   @@unique([userId, householdId])
   @@unique([householdId, slot])
   @@schema("app")
@@ -173,5 +180,104 @@ model AuditEvent {
   action String @db.VarChar(80)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   @@index([householdId, createdAt])
+  @@schema("app")
+}
+
+enum AccountKind {
+  CURRENT
+  SAVINGS
+  CREDIT_CARD
+  LOAN
+  MORTGAGE
+  INVESTMENT
+  PENSION
+  PROPERTY
+  OTHER_ASSET
+  OTHER_LIABILITY
+  @@schema("app")
+}
+enum LegalOwnerKind {
+  ADULT
+  JOINT_ADULT
+  @@schema("app")
+}
+enum Liquidity {
+  AVAILABLE
+  RESTRICTED
+  LOCKED
+  @@schema("app")
+}
+enum AccountOwnerStatus {
+  ACTIVE
+  ARCHIVED
+  @@schema("app")
+}
+enum AccountGrantLevel {
+  NONE
+  TOTALS
+  TRANSACTIONS
+  @@schema("app")
+}
+model Account {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  creatorUserId String @db.Uuid
+  creatorMembershipId String @db.Uuid
+  creator Membership @relation("AccountCreator", fields: [householdId, creatorMembershipId, creatorUserId], references: [householdId, id, userId])
+  kind AccountKind
+  label String @db.VarChar(80)
+  currency String @default("GBP") @db.Char(3)
+  legalOwnerKind LegalOwnerKind @default(ADULT)
+  liquidity Liquidity @default(AVAILABLE)
+  version Int @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  archivedAt DateTime? @db.Timestamptz(3)
+  owners AccountOwner[]
+  grants AccountGrant[]
+  balances BalanceSnapshot[]
+  @@unique([householdId, id])
+  @@unique([householdId, id, currency])
+  @@index([householdId, createdAt, id])
+  @@schema("app")
+}
+model AccountOwner {
+  householdId String @db.Uuid
+  accountId String @db.Uuid
+  account Account @relation(fields: [householdId, accountId], references: [householdId, id], onDelete: Cascade)
+  userId String @db.Uuid
+  membershipId String @db.Uuid
+  membership Membership @relation("AccountOwnership", fields: [householdId, membershipId, userId], references: [householdId, id, userId])
+  status AccountOwnerStatus @default(ACTIVE)
+  @@id([accountId, userId])
+  @@index([householdId, membershipId, accountId])
+  @@schema("app")
+}
+model AccountGrant {
+  householdId String @db.Uuid
+  accountId String @db.Uuid
+  account Account @relation(fields: [householdId, accountId], references: [householdId, id], onDelete: Cascade)
+  membershipId String @db.Uuid
+  membership Membership @relation("AccountGrantee", fields: [householdId, membershipId], references: [householdId, id])
+  level AccountGrantLevel @default(NONE)
+  version Int @default(1)
+  @@id([accountId, membershipId])
+  @@index([householdId, membershipId, accountId])
+  @@schema("app")
+}
+model BalanceSnapshot {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  accountId String @db.Uuid
+  currency String @default("GBP") @db.Char(3)
+  account Account @relation(fields: [householdId, accountId, currency], references: [householdId, id, currency], onDelete: Cascade)
+  amountMinor BigInt
+  asOfDate DateTime @db.Date
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  authorMembershipId String @db.Uuid
+  author Membership @relation("BalanceAuthor", fields: [householdId, authorMembershipId], references: [householdId, id])
+  complete Boolean @default(true)
+  source String @default("MANUAL") @db.VarChar(20)
+  @@index([householdId, accountId, asOfDate(sort: Desc), createdAt(sort: Desc), id])
   @@schema("app")
 }

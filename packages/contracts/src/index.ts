@@ -86,3 +86,4 @@ export const authServerEnvironmentSchema = z.object({
   AUTH_EMAIL_HASH_KEY: identityKeySchema,
 });
 export type AuthServerEnvironment = z.infer<typeof authServerEnvironmentSchema>;
+export * from "./accounts.js";

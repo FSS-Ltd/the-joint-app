@@ -1,8 +1,14 @@
-import { ForbiddenException, UnauthorizedException } from "@nestjs/common";
+import { readIdentity } from "./identity-read.js";
+import { randomUUID } from "node:crypto";
 import {
-  meResponseSchema,
+  ForbiddenException,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import {
   providerTokensSchema,
   type MeResponse,
+  type AuthContext,
 } from "@joint/contracts";
 import type { PrismaClient } from "@joint/database/client";
 import type { AuthSession } from "@supabase/supabase-js";
@@ -45,52 +51,33 @@ export class IdentityService {
     await this.provider.recovery(email);
     return { state: "VERIFY_EMAIL" };
   }
-  async me(token: string): Promise<MeResponse> {
+  me(token: string): Promise<MeResponse> {
+    return this.sessions.withSession(token, (identity) =>
+      readIdentity(identity, this.provider),
+    );
+  }
+  async financeContext(
+    token: string,
+    householdId: string,
+  ): Promise<AuthContext> {
     return this.sessions.withSession(token, async (identity) => {
-      const { principal, transaction } = identity;
-      const member = await transaction.membership.findFirst({
-        where: { userId: principal.userId, status: "ACTIVE" },
-        include: {
-          household: {
-            include: {
-              _count: {
-                select: { memberships: { where: { status: "ACTIVE" } } },
-              },
-            },
-          },
-        },
+      if (identity.purpose !== "NORMAL") throw new ForbiddenException();
+      await this.requireMfaIfEnrolled(identity);
+      const member = await identity.transaction.membership.findFirst({
+        where: { userId: identity.principal.userId, status: "ACTIVE" },
       });
-      const factors = await this.provider.factors(identity.tokens);
-      return meResponseSchema.parse({
-        user: { id: principal.userId, email: identity.user.email },
-        membership: member
-          ? {
-              id: member.id,
-              householdId: member.householdId,
-              role: member.role,
-              grantVersion: member.grantVersion,
-              household: {
-                id: member.household.id,
-                name: member.household.name,
-                baseCurrency: member.household.baseCurrency,
-                timezone: member.household.timezone,
-                memberCount: member.household._count.memberships,
-              },
-            }
-          : null,
-        session: {
-          aal: principal.aal,
-          expiresAt: identity.expiresAt.toISOString(),
-          purpose: identity.purpose,
-          needsMfa:
-            principal.aal !== "aal2" &&
-            factors.some((factor) => factor.status === "verified"),
-        },
-        factors: factors.map((factor) => ({
-          ...factor,
-          friendlyName: factor.friendlyName ?? "Authenticator",
-        })),
-      });
+      if (!member || member.householdId !== householdId)
+        throw new NotFoundException();
+      return {
+        userId: identity.principal.userId,
+        sessionId: identity.principal.sessionId,
+        membershipId: member.id,
+        householdId: member.householdId,
+        grantVersion: member.grantVersion,
+        requestId: randomUUID(),
+        aal: identity.principal.aal,
+        mfaAuthenticatedAt: identity.principal.mfaAuthenticatedAt,
+      };
     });
   }
   async actor(token: string): Promise<IdentityPrincipal> {

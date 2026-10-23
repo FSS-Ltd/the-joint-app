@@ -30,6 +30,7 @@ const identity = {
     aal: "aal1",
     expiresAt: "2026-10-24T00:00:00.000Z",
     needsMfa: false,
+    mfaVerifiedAt: null,
     purpose: "NORMAL",
   },
   factors: [],

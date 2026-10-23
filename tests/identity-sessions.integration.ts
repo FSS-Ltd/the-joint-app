@@ -1,3 +1,4 @@
+import { createFixtureOwner } from "./fixtures/database.js";
 import { randomBytes, randomUUID } from "node:crypto";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import type { AuthProvider } from "../apps/api/src/modules/identity/auth-provider.js";
@@ -13,6 +14,7 @@ const database = createOrm(
   process.env.DATABASE_URL ??
     "postgresql://joint:local-development-only@127.0.0.1:5432/joint",
 );
+const fixtureOwner = createFixtureOwner();
 const vault = new IdentityVault(
   randomBytes(32).toString("base64"),
   randomBytes(32).toString("base64"),
@@ -61,10 +63,11 @@ beforeAll(async () => {
   browserToken = await store.register(providerSession, "NORMAL");
 });
 afterAll(async () => {
-  await database.auditEvent.deleteMany({ where: { userId: user.id } });
-  await database.sessionRegistry.deleteMany({ where: { userId: user.id } });
-  await database.user.deleteMany({ where: { id: user.id } });
+  await fixtureOwner.auditEvent.deleteMany({ where: { userId: user.id } });
+  await fixtureOwner.sessionRegistry.deleteMany({ where: { userId: user.id } });
+  await fixtureOwner.user.deleteMany({ where: { id: user.id } });
   await database.$disconnect();
+  await fixtureOwner.$disconnect();
   await fixture.close();
 });
 it("stores opaque session hashes and authenticated encrypted provider tokens", async () => {

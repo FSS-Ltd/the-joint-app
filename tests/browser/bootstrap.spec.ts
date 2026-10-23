@@ -1,3 +1,4 @@
+import { createFixtureOwner } from "../fixtures/database.js";
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { createApplication } from "../../apps/api/dist/application.js";
@@ -13,6 +14,7 @@ test("web forwards its HttpOnly session to the API without trusting client house
     process.env.DATABASE_URL ??
     "postgresql://joint:local-development-only@127.0.0.1:5432/joint";
   const database = createOrm(connection);
+  const fixtureOwner = createFixtureOwner();
   const health = createDatabase(connection, 500);
   const identity = await startIdentityFixture();
   const householdId = randomUUID();
@@ -69,9 +71,10 @@ test("web forwards its HttpOnly session to the API without trusting client house
     expect((await context.request.get("/api/bootstrap")).status()).toBe(401);
   } finally {
     await app.close();
-    await database.household.deleteMany({ where: { id: householdId } });
-    await database.user.deleteMany({ where: { id: userId } });
+    await fixtureOwner.household.deleteMany({ where: { id: householdId } });
+    await fixtureOwner.user.deleteMany({ where: { id: userId } });
     await database.$disconnect();
+    await fixtureOwner.$disconnect();
     await health.close();
     await identity.close();
   }

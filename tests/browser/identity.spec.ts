@@ -1,3 +1,4 @@
+import { createFixtureOwner } from "../fixtures/database.js";
 import { spawn, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
 import { fileURLToPath } from "node:url";
@@ -19,6 +20,7 @@ let auth: Fixture;
 let owner: LocalUser;
 let member: LocalUser;
 let database: ReturnType<typeof createOrm>;
+let fixtureOwner: ReturnType<typeof createFixtureOwner>;
 let health: ReturnType<typeof createDatabase>;
 let application: Awaited<ReturnType<typeof createApplication>>;
 let web: ChildProcess | undefined;
@@ -64,6 +66,7 @@ test.beforeAll(async () => {
     process.env.DATABASE_URL ??
     "postgresql://joint:local-development-only@127.0.0.1:5432/joint";
   database = createOrm(connection);
+  fixtureOwner = createFixtureOwner();
   health = createDatabase(connection, 500);
   auth = createLocalAuthFixture();
   owner = await auth.createConfirmedUser();
@@ -103,14 +106,21 @@ test.afterAll(async () => {
   await stopWeb();
   if (application) await application.close();
   if (database) {
-    await database.household.deleteMany({ where: { id: { in: households } } });
-    await database.sessionRegistry.deleteMany({
+    await fixtureOwner.household.deleteMany({
+      where: { id: { in: households } },
+    });
+    await fixtureOwner.sessionRegistry.deleteMany({
       where: { userId: { in: users } },
     });
-    await database.requestKey.deleteMany({ where: { userId: { in: users } } });
-    await database.auditEvent.deleteMany({ where: { userId: { in: users } } });
-    await database.user.deleteMany({ where: { id: { in: users } } });
+    await fixtureOwner.requestKey.deleteMany({
+      where: { userId: { in: users } },
+    });
+    await fixtureOwner.auditEvent.deleteMany({
+      where: { userId: { in: users } },
+    });
+    await fixtureOwner.user.deleteMany({ where: { id: { in: users } } });
     await database.$disconnect();
+    await fixtureOwner.$disconnect();
   }
   if (auth) for (const id of users) await auth.deleteUser(id);
   if (health) await health.close();

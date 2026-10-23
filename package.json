@@ -13,15 +13,16 @@
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:integration": "node --env-file-if-exists=.env --env-file-if-exists=.env.auth node_modules/vitest/vitest.mjs run --config vitest.integration.config.ts",
-    "test:e2e": "node --env-file-if-exists=.env --env-file-if-exists=.env.auth node_modules/@playwright/test/cli.js test",
+    "test:integration": "node --env-file-if-exists=.env --env-file-if-exists=.env.database --env-file-if-exists=.env.auth node_modules/vitest/vitest.mjs run --config vitest.integration.config.ts",
+    "test:e2e": "node --env-file-if-exists=.env --env-file-if-exists=.env.database --env-file-if-exists=.env.auth node_modules/@playwright/test/cli.js test",
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
-    "db:migrate": "node --env-file-if-exists=.env scripts/database.mjs migrate",
-    "db:seed": "node --env-file-if-exists=.env scripts/database.mjs seed",
+    "db:migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.database scripts/database.mjs migrate",
+    "db:seed": "node --env-file-if-exists=.env --env-file-if-exists=.env.database scripts/database.mjs seed",
     "auth:setup": "node scripts/auth-setup.mjs",
     "auth:up": "node --env-file-if-exists=.env scripts/auth-stack.mjs up",
-    "auth:down": "node --env-file-if-exists=.env scripts/auth-stack.mjs down"
+    "auth:down": "node --env-file-if-exists=.env scripts/auth-stack.mjs down",
+    "db:runtime": "node --env-file-if-exists=.env --env-file-if-exists=.env.database scripts/runtime-database.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
