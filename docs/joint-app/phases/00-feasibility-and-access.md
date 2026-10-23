@@ -49,6 +49,8 @@ Exact bank-product coverage; personal versus shared/commercial use rights; an ag
 
 ## Task 0.3 — Resolve Trading 212 permissions before specific implementation
 
+> **CSV-first disposition, 23 October 2026:** Record T1/T2 as unmet future API gates and preserve the ownership/import boundary. Written API permission is required before any provider-specific API development, not before generic owner-uploaded CSV/manual work. The permission-procurement tasks below remain deferred until a direct-broker implementation is separately authorised. Current Task 0.3 acceptance is the explicit held gate and CSV/manual scope record; it must not be reported as provider approval.
+
 **Files:** add T1/T2 records to `docs/decisions/provider-gates.md`; create `docs/decisions/trading212-scope.md`.
 
 - [ ] Record the relevant account entities/types and the precise intended personal, partner-display and future commercial use.

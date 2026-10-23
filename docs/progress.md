@@ -75,3 +75,13 @@ Task 0.2 draft PR: https://github.com/FSS-Ltd/the-joint-app/pull/3. Research rev
 Founder explicitly requested CSV/manual records now and direct bank connections post-MVP. This supersedes the previous supplier-evidence blocker for current MVP development. B1–B3 remain missing future live-bank gates, not approved or waived. No live broker connector is included in the CSV-first build; provider-specific work retains its own approval gate.
 
 Task 0.2's revised acceptance is the documented bank-procurement deferral, retained evidence/brief and aligned canonical release scope. PR #3 will be made ready and merged only after local review and successful current-revision CI. No supplier enquiry, contract, spend or deployment performed. No next step started before verified merge.
+
+## Task 0.3 — CSV investment and API permission boundary
+
+Predecessor Task 0.2 PR #3 verified merged at `25221791453d5059536fe5167dde72f3670c2394` on 23 October 2026. Final head `0f1eb8d6aa2ed1577a92a7c59fd0e47adeba0ed8`, test-merge `921057975e13e401ce71fbd59defa01fb4e16644`, Foundation checks SUCCESS (run 39875705715). This supersedes historical Task 0.2 blocked/draft entries; the approved disposition defers direct bank integration post-MVP without approving supplier gates.
+
+Branch: build/0.3-csv-investment-boundary. Current step records generic CSV/manual investment scope and unmet T1/T2 future API gates. Official API terms and export help were inspected; no provider-specific API code, credentials, contact, contract or live data access. Personal account details remain local.
+
+Acceptance: explicit CSV/manual boundary, held API permission/actual account gates, no fabricated holdings/coverage, correct source references and local document review before raising its PR. This is a boundary disposition for CSV-first development, not provider permission or a connected release. Next Task 0.4 begins only after this step's current CI and verified merge.
+
+Task 0.3 PR: https://github.com/FSS-Ltd/the-joint-app/pull/4. Initial checked local revision: `4c80f5243ead6282987695d1bd0c8f0f58b7bd50`. Formatting, diff, links/disclosure, primary-source review and missing-gate assertions passed before raising the PR. Existing full runtime CI is required on the latest revision; final head/test-merge evidence is recorded on the PR. Merge evidence is pending; no Task 0.4 work started.
