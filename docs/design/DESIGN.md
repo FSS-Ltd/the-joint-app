@@ -1,8 +1,8 @@
 # The Family Fund App — visual contract
 
-Status: proposed visual baseline, awaiting review of the wireframes. This is design work within the current AUTH2 acceptance correction, not implementation or approval of a subsequent build step.
+Status: human-approved UI implementation baseline on 23 October 2026. The user explicitly approved applying the revised wireframes and this contract after AUTH2 merged. Approval of the baseline does not claim any production screen implemented.
 
-The user's menu criticism refers to the existing app menu, not the navigation in these mockups. Replacing that menu remains part of the planned UI implementation; this clarification does not approve the proposed screens or change their navigation.
+The user's menu criticism refers to the existing app menu, not the navigation in these mockups. UI1 replaces that menu using the approved visual direction and links only to available features.
 
 ## Reference and intent
 

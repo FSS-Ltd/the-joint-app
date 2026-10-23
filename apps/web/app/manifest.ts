@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "The Joint App",
-    short_name: "Joint",
+    name: "The Family Fund App",
+    short_name: "Family Fund",
     description:
       "Household finance with individual privacy. Local development.",
     start_url: "/dashboard",

@@ -42,6 +42,10 @@
   display: grid;
   gap: 24px;
 }
+.report-hero.surface {
+  color: white;
+  --focus-ring: var(--apricot);
+}
 .report-hero h2 {
   font-size: clamp(32px, 6vw, 52px);
   letter-spacing: -0.045em;
@@ -196,7 +200,7 @@
 }
 .budget-line {
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-card);
   padding: 16px;
   display: grid;
   gap: 12px;
@@ -220,12 +224,6 @@
 .cash-bridge dd {
   margin: 0;
   font-variant-numeric: tabular-nums;
-}
-.accounts-nav {
-  flex-wrap: wrap;
-}
-.accounts-nav a {
-  padding: 8px 12px;
 }
 @media (min-width: 768px) {
   .report-scope {

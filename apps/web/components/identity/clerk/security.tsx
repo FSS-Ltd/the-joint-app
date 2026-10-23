@@ -26,7 +26,7 @@ const appearance = {
     colorText: "#203B32",
     colorBackground: "#FFFFFF",
     colorDanger: "#9A302A",
-    borderRadius: "0.75rem",
+    borderRadius: "0.5rem",
   },
 };
 export function ClerkPasswordTask(): ReactNode {
@@ -146,11 +146,8 @@ export function ClerkSecurity(): ReactNode {
       eyebrow="Your account, protected"
       title="A little extra peace of mind."
       description="Keep your shared home secure, with a sign-in that belongs to you."
+      navigation={user ? "security" : undefined}
     >
-      <nav className="account-nav" aria-label="Your account">
-        <a href="/household">Back to household</a>
-        <a href="/accounts">Accounts</a>
-      </nav>
       {clerk.session?.currentTask?.key === "setup-mfa" ? (
         <TaskSetupMFA
           redirectUrlComplete={authContinuation("/auth/complete", search)}

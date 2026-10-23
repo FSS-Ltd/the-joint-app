@@ -50,7 +50,7 @@ export function ImportDetail({ batchId }: { batchId: string }): ReactNode {
     batch && ["QUEUED", "PREVIEWING", "COMMITTING"].includes(batch.state);
   return (
     <AccountsFrame
-      active="activity"
+      active="imports"
       title="Your import"
       description="Review the source. Keep what belongs. Every change stays traceable."
       household={identity?.membership?.household.name}

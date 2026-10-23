@@ -1,21 +1,28 @@
 import { Brand } from "../brand";
 import type { ReactNode } from "react";
+import {
+  AppNavigation,
+  type AppDestination,
+} from "../navigation/app-navigation";
 import "./identity-controls.css";
 import "./identity-layout.css";
+import "./product-shell.css";
 
 export function IdentityFrame({
   eyebrow,
   title,
   description,
   children,
+  navigation,
 }: {
   eyebrow: string;
   title: string;
   description: string;
   children: ReactNode;
+  navigation?: AppDestination;
 }): ReactNode {
   return (
-    <div className="identity-shell">
+    <div className={`identity-shell${navigation ? " has-app-navigation" : ""}`}>
       <a className="skip-link" href="#main">
         Skip to content
       </a>
@@ -23,6 +30,7 @@ export function IdentityFrame({
         <Brand />
         <span className="environment-label">Local development</span>
       </header>
+      {navigation && <AppNavigation active={navigation} />}
       <main className="identity-main" id="main">
         <section className="identity-intro" aria-labelledby="page-title">
           <p className="eyebrow">{eyebrow}</p>

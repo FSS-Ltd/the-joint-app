@@ -1,5 +1,5 @@
 /* Only the generic offline document and public icon may enter this cache. */
-const CACHE = "joint-static-shell-v1";
+const CACHE = "joint-static-shell-v2";
 const STATIC = ["/offline.html", "/app-icon.svg"];
 globalThis.self.addEventListener("install", (event) => {
   event.waitUntil(

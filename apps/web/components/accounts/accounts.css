@@ -1,28 +1,3 @@
-.accounts-nav {
-  width: min(1056px, calc(100% - 32px));
-  margin: 8px auto 0;
-  display: flex;
-  gap: 8px;
-  padding: 6px;
-  border-radius: 16px;
-  background: var(--sage);
-}
-.accounts-nav a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  min-width: 0;
-  padding: 8px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  border-radius: 12px;
-}
-.accounts-nav a[aria-current="page"] {
-  background: white;
-  box-shadow: 0 2px 8px #203b3209;
-}
 .accounts-main {
   max-width: 1120px;
   width: 100%;
@@ -107,7 +82,7 @@
   width: 44px;
   height: 44px;
   background: var(--sage);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   font-size: 24px;
 }
 .account-scope {
@@ -219,19 +194,19 @@
   min-height: 48px;
   padding: 12px 34px 12px 14px;
   border: 1px solid #7f9488;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   background: white;
   color: var(--ink);
   font: inherit;
   font-weight: 400;
 }
 .accounts-shell select:focus-visible {
-  outline: 3px solid #805a27;
+  outline: 3px solid var(--focus-ring, var(--focus));
   outline-offset: 4px;
 }
 .accounts-private-note {
   padding: 28px;
-  border-radius: 24px;
+  border-radius: var(--radius-card);
   background: var(--sage);
 }
 .accounts-private-note h2 {
@@ -248,7 +223,7 @@
 }
 .account-mfa-note {
   padding: 16px;
-  border-radius: 16px;
+  border-radius: var(--radius-card);
   background: var(--sage);
 }
 .account-mfa-note p {
@@ -282,16 +257,6 @@
   min-width: 0;
 }
 @media (max-width: 767px) {
-  .accounts-nav {
-    margin-top: 0;
-    width: calc(100% - 32px);
-    gap: 0;
-  }
-  .accounts-nav a {
-    flex: 1;
-    padding: 8px 10px;
-    font-size: 13px;
-  }
   .accounts-main {
     padding: 32px 16px 48px;
   }
@@ -352,12 +317,6 @@
   flex-wrap: wrap;
   margin: 16px 0;
 }
-@media (max-width: 767px) {
-  .accounts-nav {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
 
 @media (min-width: 1100px) {
   .accounts-shell {
@@ -375,29 +334,6 @@
     width: 100%;
     max-width: none;
   }
-  .accounts-shell > .accounts-nav {
-    grid-column: 1;
-    grid-row: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    width: auto;
-    margin: 32px 8px 0 24px;
-    padding: 12px;
-    background: var(--primary);
-    border-radius: 24px;
-    position: sticky;
-    top: 24px;
-  }
-  .accounts-shell > .accounts-nav a {
-    justify-content: flex-start;
-    color: white;
-    padding: 12px 16px;
-  }
-  .accounts-shell > .accounts-nav a[aria-current="page"] {
-    background: var(--canvas);
-    color: var(--ink);
-  }
   .accounts-shell > .accounts-main {
     grid-column: 2;
     grid-row: 2;
@@ -410,14 +346,5 @@
     grid-row: 3;
     width: 100%;
     max-width: none;
-  }
-}
-@media (max-width: 767px) {
-  .accounts-nav {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  .accounts-nav a {
-    padding: 8px 4px;
-    font-size: 12px;
   }
 }

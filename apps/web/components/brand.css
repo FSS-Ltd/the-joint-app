@@ -1,6 +1,7 @@
 .brand-logo {
   display: block;
   width: clamp(128px, 24vw, 180px);
+  max-width: 100%;
   height: auto;
 }
 .google-button {
