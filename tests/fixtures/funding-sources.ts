@@ -1,0 +1,122 @@
+import type { Prisma } from "../../packages/database/dist/client.js";
+export const fundingSources = [
+  {
+    kind: "CURRENT",
+    liquidity: "AVAILABLE",
+    age: 30,
+    adult: 100n,
+    amount: 100n,
+    complete: true,
+    settled: "100",
+    allowed: true,
+  },
+  {
+    kind: "CURRENT",
+    liquidity: "AVAILABLE",
+    age: 31,
+    adult: 100n,
+    amount: 100n,
+    complete: true,
+    settled: "100",
+    allowed: false,
+  },
+  {
+    kind: "CURRENT",
+    liquidity: "AVAILABLE",
+    age: -1,
+    adult: 100n,
+    amount: 100n,
+    complete: true,
+    settled: "100",
+    allowed: false,
+  },
+  {
+    kind: "CURRENT",
+    liquidity: "AVAILABLE",
+    age: 0,
+    adult: null,
+    amount: 100n,
+    complete: true,
+    settled: "0",
+    allowed: false,
+  },
+  {
+    kind: "CURRENT",
+    liquidity: "AVAILABLE",
+    age: 0,
+    adult: 100n,
+    amount: 100n,
+    complete: false,
+    settled: "100",
+    allowed: false,
+  },
+  {
+    kind: "CURRENT",
+    liquidity: "AVAILABLE",
+    age: 0,
+    adult: -100n,
+    amount: -100n,
+    complete: true,
+    settled: "0",
+    allowed: true,
+  },
+  {
+    kind: "CURRENT",
+    liquidity: "AVAILABLE",
+    age: 0,
+    adult: -100n,
+    amount: -100n,
+    complete: true,
+    settled: "1",
+    allowed: false,
+  },
+  {
+    kind: "INVESTMENT",
+    liquidity: "AVAILABLE",
+    age: 0,
+    adult: 80n,
+    amount: 100n,
+    complete: true,
+    settled: "80",
+    allowed: true,
+  },
+  {
+    kind: "PENSION",
+    liquidity: "AVAILABLE",
+    age: 0,
+    adult: 100n,
+    amount: 100n,
+    complete: true,
+    settled: "100",
+    allowed: false,
+  },
+  {
+    kind: "PROPERTY",
+    liquidity: "AVAILABLE",
+    age: 0,
+    adult: 100n,
+    amount: 100n,
+    complete: true,
+    settled: "100",
+    allowed: false,
+  },
+  {
+    kind: "SAVINGS",
+    liquidity: "LOCKED",
+    age: 0,
+    adult: 100n,
+    amount: 100n,
+    complete: true,
+    settled: "100",
+    allowed: false,
+  },
+] satisfies {
+  kind: Prisma.AccountCreateInput["kind"];
+  liquidity: NonNullable<Prisma.AccountCreateInput["liquidity"]>;
+  age: number;
+  adult: bigint | null;
+  amount: bigint;
+  complete: boolean;
+  settled: string;
+  allowed: boolean;
+}[];
