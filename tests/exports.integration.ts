@@ -8,7 +8,7 @@ import { JobsRepository } from "../packages/database/dist/jobs.repository.js";
 import { ScopedDatabase } from "../packages/database/dist/scoped-transaction.js";
 import { ExportService } from "../apps/api/src/modules/exports/export.service.js";
 import { createExportHandlers } from "../apps/worker/src/handlers/export.handler.js";
-import { createFixtureOwner } from "./fixtures/database.js";
+import { createFixtureOwner, fixtureTimestamp } from "./fixtures/database.js";
 
 const owner = createFixtureOwner();
 if (!process.env.DATABASE_URL)
@@ -167,7 +167,7 @@ afterAll(async () => {
 });
 async function request(context = actor) {
   return service.requestExport(
-    { ...context, mfaAuthenticatedAt: Date.now() },
+    { ...context, mfaAuthenticatedAt: await fixtureTimestamp(owner) },
     { accountIds: [accountId] },
   );
 }
@@ -186,7 +186,7 @@ async function processExport(id: string) {
 }
 async function text(id: string, context = actor) {
   const chunks = await service.download(
-    { ...context, mfaAuthenticatedAt: Date.now() },
+    { ...context, mfaAuthenticatedAt: await fixtureTimestamp(owner) },
     id,
   );
   let result = "";
@@ -481,10 +481,13 @@ it("includes valid nil UUID source and revision records without initial-cursor t
 it("rejects an MFA proof that expires between streamed chunks instead of truncating CSV", async () => {
   const result = await request();
   await processExport(result.id);
-  const context = { ...actor, mfaAuthenticatedAt: Date.now() };
+  const context = {
+    ...actor,
+    mfaAuthenticatedAt: await fixtureTimestamp(owner),
+  };
   const stream = await service.download(context, result.id);
   expect((await stream.next()).done).toBe(false);
-  context.mfaAuthenticatedAt = Date.now() - 300001;
+  context.mfaAuthenticatedAt = (await fixtureTimestamp(owner)) - 300001;
   await expect(stream.next()).rejects.toThrow();
   expect((await service.status(actor, result.id)).state).toBe("READY");
 });
@@ -515,7 +518,7 @@ it("archive exports require recorded archived ownership, never a former grant", 
     userId: actor.userId,
     sessionId: actor.sessionId,
     aal: "aal2" as const,
-    mfaAuthenticatedAt: Date.now(),
+    mfaAuthenticatedAt: await fixtureTimestamp(owner),
     requestId: randomUUID(),
   };
   const result = await service.requestArchiveExport(context, {

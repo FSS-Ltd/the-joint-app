@@ -128,6 +128,7 @@ export function useClerkAuthFlow(mode: AuthMode) {
       password: string,
       code: string,
       backupCode = false,
+      username = "",
     ) =>
       run(async () => {
         if (stage.step === "credentials") {
@@ -155,6 +156,8 @@ export function useClerkAuthFlow(mode: AuthMode) {
               : signIn.mfa.verifyTOTP({ code })),
           );
           recoveringAuthenticator.current = backupCode;
+        } else if (stage.step === "username") {
+          checked(await signUp.update({ username: username.trim() }));
         } else if (stage.step === "password") {
           if (mode === "sign-up") checked(await signUp.password({ password }));
           else

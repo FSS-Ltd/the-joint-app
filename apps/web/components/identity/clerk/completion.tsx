@@ -1,7 +1,12 @@
 "use client";
 
 import { LegacyLinkForm } from "./legacy-link-form";
-import { HandleSSOCallback, useClerk } from "@clerk/nextjs";
+import {
+  HandleSSOCallback,
+  useClerk,
+  useSignIn,
+  useSignUp,
+} from "@clerk/nextjs";
 import { useEffect, useState, type ReactNode } from "react";
 import { Feedback, IdentityFrame } from "../frame";
 import {
@@ -17,6 +22,27 @@ import { ClerkFlowFailure, taskPath } from "./flow";
 
 export function ClerkCallback(): ReactNode {
   const [error, setError] = useState("");
+  const { signIn } = useSignIn();
+  const { signUp } = useSignUp();
+  useEffect(() => {
+    // The SDK callback handles transfers and challenges, but does not navigate
+    // an existing sign-up that still needs a field such as username.
+    if (
+      signUp.id &&
+      signUp.status === "missing_requirements" &&
+      ["needs_identifier", "needs_first_factor"].includes(signIn.status) &&
+      !signIn.isTransferable &&
+      !signIn.protectCheck &&
+      !signUp.isTransferable &&
+      !signUp.protectCheck &&
+      !signUp.missingFields.includes("protect_check") &&
+      (signUp.missingFields.length > 0 || signUp.unverifiedFields.length > 0)
+    ) {
+      window.location.replace(continuation("/sign-up"));
+    } else if (signIn.status === "needs_client_trust") {
+      window.location.replace(continuation("/sign-in"));
+    }
+  }, [signIn, signUp]);
   return (
     <IdentityFrame
       eyebrow="A secure return"

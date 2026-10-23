@@ -72,7 +72,12 @@ let user = {
 };
 const signIn = {
   id: stage === "google-mfa" ? "si_synthetic" : undefined,
-  status: stage === "google-mfa" ? "needs_second_factor" : "needs_first_factor",
+  status:
+    stage === "google-username"
+      ? "needs_identifier"
+      : stage === "google-mfa"
+        ? "needs_second_factor"
+        : "needs_first_factor",
   supportedSecondFactors: [{ strategy: "totp" }, { strategy: "backup_code" }],
   supportedFirstFactors: [{ strategy: "password" }],
   async create() {
@@ -102,7 +107,9 @@ const signIn = {
       "clerkSyntheticStage",
       scenario === "google-task" || scenario === "password-task"
         ? "complete"
-        : "google-mfa",
+        : scenario === "google-username"
+          ? "google-username"
+          : "google-mfa",
     );
     globalThis.location.assign(settings.redirectCallbackUrl);
     return result();
@@ -159,10 +166,19 @@ const signIn = {
 };
 if (stage === "complete") signIn.status = "complete";
 const signUp = {
-  id: undefined,
+  id: stage === "google-username" ? "su_synthetic" : undefined,
   status: "missing_requirements",
   unverifiedFields: [],
-  missingFields: [],
+  missingFields: stage === "google-username" ? ["username"] : [],
+  isTransferable: false,
+  protectCheck: null,
+  async update({ username }) {
+    await event("signup-username");
+    if (username === "taken") return fail("form_identifier_exists");
+    this.missingFields = [];
+    this.status = "complete";
+    return result();
+  },
   async password() {
     this.id = "su_synthetic";
     this.unverifiedFields = ["email_address"];
@@ -191,7 +207,10 @@ const signUp = {
     async verifyEmailCode({ code }) {
       const value = verify(code);
       if (!value.error) {
-        signUp.status = "complete";
+        signUp.status =
+          scenario === "signup-username" ? "missing_requirements" : "complete";
+        signUp.missingFields =
+          scenario === "signup-username" ? ["username"] : [];
         signUp.unverifiedFields = [];
       }
       await event("signup-verify");

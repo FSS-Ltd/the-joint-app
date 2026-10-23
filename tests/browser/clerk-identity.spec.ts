@@ -568,3 +568,45 @@ test("an existing browser session can finish signing out without losing the arch
   ).toHaveCount(0);
   await expect(page).toHaveURL(origin + "/sign-in?next=archive");
 });
+
+for (const scenario of ["signup-username", "google-username"]) {
+  test(`${scenario} collects the missing username and preserves the destination`, async ({
+    page,
+    context,
+  }) => {
+    const actions = await syntheticClerkBrowser(context, origin, scenario);
+    await page.goto("/sign-up?next=archive");
+    if (scenario === "google-username") {
+      await page.getByRole("button", { name: "Continue with Google" }).click();
+    } else {
+      await page.getByLabel("Email address").fill("synthetic@example.test");
+      await page
+        .getByLabel("Password", { exact: true })
+        .fill("Synthetic phrase only 123!");
+      await page
+        .getByRole("button", { name: "Create account", exact: true })
+        .click();
+      await page.getByLabel("Email verification code").fill("424242");
+      await page
+        .getByRole("button", { name: "Verify code", exact: true })
+        .click();
+    }
+    await expect(
+      page.getByRole("heading", { name: "Choose your username" }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(origin + "/sign-up?next=archive");
+    await page.getByLabel("Username", { exact: true }).fill("taken");
+    await page.getByRole("button", { name: "Continue", exact: true }).click();
+    await expect(
+      page.getByRole("alert").filter({ hasText: "already in use" }),
+    ).toBeVisible();
+    expect(actions).not.toContain("signup-finalize");
+    await page.getByLabel("Username", { exact: true }).fill("synthetic-family");
+    await page.getByRole("button", { name: "Continue", exact: true }).click();
+    await expect.poll(() => actions.includes("signup-finalize")).toBe(true);
+    await expect(page).toHaveURL(/next=archive/);
+    expect(actions.filter((action) => action === "signup-send")).toHaveLength(
+      scenario === "signup-username" ? 1 : 0,
+    );
+  });
+}

@@ -3,6 +3,7 @@ export type ClerkStage =
   | { step: "email"; kind: "signup" | "device" | "recovery" }
   | { step: "mfa" }
   | { step: "password" }
+  | { step: "username" }
   | { step: "complete" };
 
 export class ClerkFlowFailure extends Error {}
@@ -54,6 +55,13 @@ export function clerkFlowError(error: unknown): string {
     case "form_password_incorrect":
     case "form_identifier_not_found":
       return "Check your email and password, then try again.";
+    case "form_identifier_exists":
+      return "That value is already in use. Choose another.";
+    case "form_username_invalid_length":
+      return "Use 4–64 characters for your username.";
+    case "form_username_needs_non_number_char":
+    case "form_username_invalid_character":
+      return "Use letters, numbers, hyphens or underscores, including at least one letter.";
     default:
       return "Sign-in could not be completed. Check your details or connection and try again.";
   }
@@ -96,6 +104,7 @@ export async function advanceSignUp(resource: {
     return { step: "email", kind: "signup" };
   }
   if (resource.missingFields.includes("password")) return { step: "password" };
+  if (resource.missingFields.includes("username")) return { step: "username" };
   throw new ClerkFlowFailure(
     "Sign-up requires additional details. Check the development authentication settings.",
   );

@@ -21,11 +21,12 @@ export function ClerkAuthForm({
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [backupCode, setBackupCode] = useState(false);
+  const [username, setUsername] = useState("");
   const text = authContent[mode];
   const stage = flow.stage.step;
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (await flow.submit(email, password, code, backupCode)) {
+    if (await flow.submit(email, password, code, backupCode, username)) {
       setPassword("");
       setCode("");
     }
@@ -37,7 +38,7 @@ export function ClerkAuthForm({
         <p className="step-label">
           {verification
             ? "One small check"
-            : stage === "password"
+            : stage === "password" || stage === "username"
               ? "One last step"
               : "Your private account"}
         </p>
@@ -46,9 +47,11 @@ export function ClerkAuthForm({
             ? "Verify your email"
             : stage === "mfa"
               ? "Verify your authenticator"
-              : stage === "password"
-                ? "Choose a new password"
-                : text.heading}
+              : stage === "username"
+                ? "Choose your username"
+                : stage === "password"
+                  ? "Choose a new password"
+                  : text.heading}
         </h2>
         {flow.hasExistingSession && (
           <p role="status">
@@ -77,6 +80,12 @@ export function ClerkAuthForm({
               {email || "your email address"}
             </strong>
             . Check your spam folder if it has not arrived.
+          </p>
+        )}
+        {stage === "username" && (
+          <p>
+            Your email is verified. Choose a username to finish creating your
+            account.
           </p>
         )}
         {verification && (
@@ -116,6 +125,20 @@ export function ClerkAuthForm({
           </>
         )}
         <form className="form-stack" onSubmit={submit} aria-busy={flow.pending}>
+          {stage === "username" && (
+            <label>
+              Username
+              <input
+                autoComplete="username"
+                required
+                minLength={4}
+                maxLength={64}
+                disabled={flow.pending}
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+              />
+            </label>
+          )}
           {stage === "credentials" && (
             <label>
               Email address
@@ -181,9 +204,11 @@ export function ClerkAuthForm({
               ? "Please wait…"
               : verification
                 ? "Verify code"
-                : stage === "password"
-                  ? "Save new password"
-                  : text.action}
+                : stage === "username"
+                  ? "Continue"
+                  : stage === "password"
+                    ? "Save new password"
+                    : text.action}
             <span aria-hidden="true">↗</span>
           </button>
         </form>

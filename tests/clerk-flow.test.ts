@@ -104,6 +104,19 @@ it("fails safely when sending a code fails and never echoes provider secrets", a
   expect(clerkFlowError({ code: "verification_expired" })).toContain("expired");
 });
 
+it("collects a required username after email verification without sending another code", async () => {
+  const sendEmailCode = vi.fn(async () => ({ error: null }));
+  expect(
+    await advanceSignUp({
+      status: "missing_requirements",
+      unverifiedFields: [],
+      missingFields: ["username"],
+      verifications: { sendEmailCode },
+    }),
+  ).toEqual({ step: "username" });
+  expect(sendEmailCode).not.toHaveBeenCalled();
+});
+
 it("routes mandatory tasks before the application and rejects unknown tasks", () => {
   expect(taskPath("setup-mfa")).toBe("/security");
   expect(taskPath("reset-password")).toBe("/auth/task/password");
