@@ -147,11 +147,19 @@ test("auth controls wait for delayed hydration and preserve continuation", async
       await page.goto(`${origin}/${mode}?next=join`, { waitUntil: "commit" });
       await expect(page.getByLabel("Email address")).toBeVisible();
       await expect(page.getByLabel("Email address")).toBeDisabled();
-      if (mode !== "recovery")
+      if (mode !== "recovery") {
         await expect(page.getByLabel(/^Password/)).toBeDisabled();
+        await expect(
+          page.getByRole("button", { name: "Show password", exact: true }),
+        ).toBeDisabled();
+      }
       await expect(page.locator('form button[type="submit"]')).toBeDisabled();
       release();
       await expect(page.getByLabel("Email address")).toBeEnabled();
+      if (mode !== "recovery")
+        await expect(
+          page.getByRole("button", { name: "Show password", exact: true }),
+        ).toBeEnabled();
       await expect(page.locator('form button[type="submit"]')).toBeEnabled();
       if (mode === "sign-in") {
         await page.getByLabel("Email address").fill(hydrationUser.email);
