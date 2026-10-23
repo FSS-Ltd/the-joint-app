@@ -20,7 +20,7 @@ Runtime cannot directly read or mutate the table. Narrow security-definer functi
 
 Add `AccountOwner.fundingCutoffVersion`, default zero. On ACTIVE → ARCHIVED capture the account's current evidence version; preserve that cutoff thereafter, regardless of submitted values. Archive reads require the existing authenticated owner-archive scope, LEFT membership and archived ownership. They return only evidence at or below that cutoff, never a remaining joint owner's later planning details or current valuation metadata. Existing archived owners receive no invented historical rights.
 
-Sole-owner source deletion cascades evidence. A remaining joint owner justifies retained source evidence; deleted author's membership is minimal provenance, not exported identity. Actual privacy-worker purge and restored-journal replay must prove both retention and deletion behavior. No new retention exception or widening of account archive access.
+Sole-owner source deletion cascades evidence. A remaining active joint owner justifies retained evidence; if all surviving owners are archived, purge evidence above their greatest frozen cutoff when the last live owner is deleted. The deleted author's membership is minimal provenance, not exported identity. Actual privacy-worker purge and restored-journal replay must prove both retention and deletion behavior. No new retention exception or widening of account archive access.
 
 ## Interfaces and safe failures
 

@@ -1,144 +1,30 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { afterAll, beforeAll, expect, it } from "vitest";
-import type { AuthContext } from "../packages/contracts/dist/index.js";
-import { createOrm } from "../packages/database/dist/client.js";
-import { ScopedDatabase } from "../packages/database/dist/scoped-transaction.js";
-import { ArchiveDatabase } from "../packages/database/dist/archive-transaction.js";
+import { DeletionRepository } from "../packages/database/dist/deletion.repository.js";
 import { fundingSources } from "./fixtures/funding-sources.js";
-import { createFixtureOwner } from "./fixtures/database.js";
-const owner = createFixtureOwner();
-if (!process.env.DATABASE_URL) throw Error("Runtime database required");
-const runtime = createOrm(process.env.DATABASE_URL),
-  scoped = new ScopedDatabase(runtime),
-  archive = new ArchiveDatabase(runtime);
-const hh = randomUUID(),
-  account = randomUUID(),
-  valuation = randomUUID();
-function actor(slot: number): AuthContext {
-  return {
-    userId: randomUUID(),
-    membershipId: randomUUID(),
-    sessionId: randomUUID(),
-    householdId: hh,
-    grantVersion: 0,
-    aal: "aal2",
-    mfaAuthenticatedAt: Date.now(),
-    requestId: String(slot),
-  };
-}
-const a = actor(1),
-  b = actor(2);
-const data = {
-  valuationId: valuation,
-  settledAdultMoney: { amountMinor: "9007199254740993", currency: "GBP" },
-  billReserves: { amountMinor: "100", currency: "GBP" },
-};
-interface Evidence {
-  version: number;
-  valuationId: string;
-  settledAdultMoney: { amountMinor: string };
-  billReserves: { amountMinor: string };
-}
-interface Page {
-  current: Evidence | null;
-  history: Evidence[];
-  nextAfterVersion: number | null;
-}
-async function write(
-  c: AuthContext,
-  version: number,
-  input: unknown = data,
-): Promise<Evidence> {
-  return scoped.withScope(c, async (tx) => {
-    const [row] = await tx.$queryRaw<
-      { data: Evidence }[]
-    >`SELECT app.write_funding_evidence(${account}::uuid,${version}::integer,${JSON.stringify(input)}::jsonb) AS data`;
-    if (!row) throw Error("Missing evidence");
-    return row.data;
-  });
-}
-async function read(c = a): Promise<Page | undefined> {
-  return scoped.withScope(
-    c,
-    async (tx) =>
-      (
-        await tx.$queryRaw<
-          { data: Page }[]
-        >`SELECT app.read_funding_evidence(${account}::uuid,0) AS data`
-      )[0]?.data,
-  );
-}
-beforeAll(async () => {
-  await owner.household.create({ data: { id: hh } });
-  for (const [index, c] of [a, b].entries()) {
-    await owner.user.create({ data: { id: c.userId } });
-    await owner.membership.create({
-      data: {
-        id: c.membershipId,
-        userId: c.userId,
-        householdId: hh,
-        slot: index + 1,
-      },
-    });
-    await owner.sessionRegistry.create({
-      data: {
-        id: c.sessionId,
-        userId: c.userId,
-        householdId: hh,
-        expiresAt: new Date(Date.now() + 600000),
-      },
-    });
-  }
-  await owner.account.create({
-    data: {
-      id: account,
-      householdId: hh,
-      creatorUserId: a.userId,
-      creatorMembershipId: a.membershipId,
-      kind: "CURRENT",
-      label: "Synthetic funding",
-    },
-  });
-  await owner.accountOwner.create({
-    data: {
-      accountId: account,
-      householdId: hh,
-      userId: a.userId,
-      membershipId: a.membershipId,
-    },
-  });
-  await owner.balanceSnapshot.create({
-    data: {
-      accountId: account,
-      id: valuation,
-      householdId: hh,
-      amountMinor: 9007199254740993n,
-      adultAmountMinor: 9007199254740993n,
-      authorMembershipId: a.membershipId,
-      asOfDate: new Date(new Date().toISOString().slice(0, 10)),
-    },
-  });
-  await owner.accountGrant.create({
-    data: {
-      householdId: hh,
-      accountId: account,
-      membershipId: b.membershipId,
-      level: "TRANSACTIONS",
-    },
-  });
-});
-afterAll(async () => {
-  await owner.account.deleteMany({ where: { householdId: hh } });
-  await owner.household.deleteMany({ where: { id: hh } });
-  await owner.auditEvent.deleteMany({
-    where: { userId: { in: [a.userId, b.userId] } },
-  });
-  await owner.sessionRegistry.deleteMany({
-    where: { userId: { in: [a.userId, b.userId] } },
-  });
-  await owner.user.deleteMany({ where: { id: { in: [a.userId, b.userId] } } });
-  await Promise.all([owner.$disconnect(), runtime.$disconnect()]);
-});
+import {
+  createFundingEvidenceFixture,
+  type Page,
+} from "./fixtures/funding-evidence.js";
+const f = createFundingEvidenceFixture();
+const {
+  owner,
+  runtime,
+  scoped,
+  archive,
+  hh,
+  account,
+  valuation,
+  emptyAccount,
+  emptyValuation,
+  a,
+  b,
+  data,
+  write,
+  read,
+} = f;
+beforeAll(f.setup);
+afterAll(f.close);
 it("requires ownership rather than a read grant, and preserves exact amounts", async () => {
   expect((await read())?.current).toBeNull();
   await expect(read(b)).rejects.toBeDefined();
@@ -156,6 +42,13 @@ it("requires ownership rather than a read grant, and preserves exact amounts", a
   ]);
 });
 it("pins settlement, permits reserve revisions, and serializes optimistic writers", async () => {
+  await expect(
+    owner.balanceSnapshot.update({
+      where: { id: valuation },
+      data: { amountMinor: 9007199254740994n },
+    }),
+  ).rejects.toBeDefined();
+
   await expect(
     write(a, 1, {
       ...data,
@@ -317,6 +210,30 @@ it("freezes joint-owner planning at exit", async () => {
   b.grantVersion = (
     await owner.membership.findUniqueOrThrow({ where: { id: b.membershipId } })
   ).grantVersion;
+  await scoped.withScope(
+    b,
+    (tx) =>
+      tx.$queryRaw`SELECT app.write_funding_evidence(${emptyAccount}::uuid,0,${JSON.stringify({ valuationId: emptyValuation, settledAdultMoney: { amountMinor: "100", currency: "GBP" }, billReserves: { amountMinor: "20", currency: "GBP" } })}::jsonb)`,
+  );
+  const archivedOwner = await owner.accountOwner.update({
+    where: { accountId_userId: { accountId: emptyAccount, userId: a.userId } },
+    data: { fundingCutoffVersion: 999 },
+  });
+  expect(archivedOwner.fundingCutoffVersion).toBe(0);
+  const emptyPage = await archive.withScope(
+    a,
+    async (tx) =>
+      (
+        await tx.$queryRaw<
+          { data: Page }[]
+        >`SELECT app.read_funding_evidence(${emptyAccount}::uuid,0) AS data`
+      )[0]?.data,
+  );
+  expect(emptyPage).toEqual({
+    current: null,
+    history: [],
+    nextAfterVersion: null,
+  });
   const latest = (await read(b))?.current;
   if (!latest) throw Error("Missing latest evidence");
   await write(b, 3, {
@@ -342,4 +259,79 @@ it("freezes joint-owner planning at exit", async () => {
   expect(result?.current?.version).toBe(3);
   expect(result?.history).toHaveLength(3);
   expect((await read(b))?.current?.version).toBe(4);
+});
+
+it("actual deletion removes exclusive evidence and later private reserves without changing the frozen archive", async () => {
+  const exclusive = randomUUID(),
+    vid = randomUUID();
+  await owner.account.create({
+    data: {
+      id: exclusive,
+      householdId: hh,
+      creatorUserId: b.userId,
+      creatorMembershipId: b.membershipId,
+      kind: "CURRENT",
+      label: "Synthetic exclusive",
+    },
+  });
+  await owner.accountOwner.create({
+    data: {
+      householdId: hh,
+      accountId: exclusive,
+      userId: b.userId,
+      membershipId: b.membershipId,
+    },
+  });
+  await owner.balanceSnapshot.create({
+    data: {
+      id: vid,
+      householdId: hh,
+      accountId: exclusive,
+      authorMembershipId: b.membershipId,
+      amountMinor: 100n,
+      adultAmountMinor: 100n,
+      asOfDate: new Date(new Date().toISOString().slice(0, 10)),
+    },
+  });
+  await scoped.withScope(
+    b,
+    (tx) =>
+      tx.$queryRaw`SELECT app.write_funding_evidence(${exclusive}::uuid,0,${JSON.stringify({ valuationId: vid, settledAdultMoney: { amountMinor: "100", currency: "GBP" }, billReserves: { amountMinor: "0", currency: "GBP" } })}::jsonb)`,
+  );
+  const repository = new DeletionRepository(runtime),
+    request = await repository.request(
+      b,
+      randomUUID(),
+      randomBytes(32).toString("hex"),
+      new Date(Date.now() + 600000),
+    ),
+    lease = await repository.claim(request.id);
+  if (!lease) throw Error("Missing deletion lease");
+  await repository.purge(lease.id, lease.leaseToken);
+  expect(
+    await owner.fundingEvidence.count({ where: { accountId: exclusive } }),
+  ).toBe(0);
+  expect(
+    await owner.fundingEvidence.count({ where: { accountId: emptyAccount } }),
+  ).toBe(0);
+  const retained = await owner.fundingEvidence.findMany({
+    where: { accountId: account },
+    orderBy: { version: "asc" },
+  });
+  expect(retained.map((e) => e.version)).toEqual([1, 2, 3]);
+  const result = await archive.withScope(
+    a,
+    async (tx) =>
+      (
+        await tx.$queryRaw<
+          { data: Page }[]
+        >`SELECT app.read_funding_evidence(${account}::uuid,0) AS data`
+      )[0]?.data,
+  );
+  expect(result?.current?.version).toBe(3);
+  await repository.purge(lease.id, lease.leaseToken);
+  expect(
+    await owner.fundingEvidence.count({ where: { accountId: account } }),
+  ).toBe(3);
+  await repository.finish(lease.id, lease.leaseToken, true);
 });

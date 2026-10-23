@@ -1,3 +1,4 @@
+import { verifyRestoredFunding } from "./funding-proof.mjs";
 import { verifyRestoredGoals } from "./goal-proof.mjs";
 import { Buffer } from "node:buffer";
 import { DataVault } from "../../packages/database/dist/data-vault.js";
@@ -100,7 +101,15 @@ export async function verifyRestoredAccess(
     };
   }
   let goalProof;
+  let fundingProof;
   try {
+    fundingProof = await verifyRestoredFunding(
+      owner,
+      scoped,
+      archive,
+      freshContext,
+      fixture,
+    );
     goalProof = await verifyRestoredGoals(
       owner,
       scoped,
@@ -197,6 +206,7 @@ export async function verifyRestoredAccess(
   }
   return {
     ...goalProof,
+    ...fundingProof,
     ciphertextRecovered: true,
     absentUserTombstoned: true,
     wholeBudgetScopeRemoved: true,
