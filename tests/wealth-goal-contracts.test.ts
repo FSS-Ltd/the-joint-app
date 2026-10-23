@@ -497,6 +497,40 @@ describe("Task 3A contract boundaries", () => {
       createdAt: "2026-10-23T12:00:00Z",
     };
     expect(projectionRunDtoSchema.safeParse(run).success).toBe(true);
+    for (const field of ["closing", "target"] as const) {
+      for (const amountMinor of ["invalid", "1.5", "1e3"]) {
+        const malformedRun = {
+          ...run,
+          result: {
+            ...baseResult,
+            series: [
+              { ...baseResult.series[0], [field]: money(amountMinor) },
+              ...baseResult.series.slice(1),
+            ],
+          },
+        };
+        const parse = () => projectionRunDtoSchema.safeParse(malformedRun);
+        expect(parse).not.toThrow();
+        expect(parse().success).toBe(false);
+      }
+    }
+    for (const malformedRun of [
+      { ...run, input: { ...baseInput, firstContributionDate: "invalid" } },
+      {
+        ...run,
+        result: {
+          ...baseResult,
+          series: [
+            { ...baseResult.series[0], month: "invalid" },
+            ...baseResult.series.slice(1),
+          ],
+        },
+      },
+    ]) {
+      const parse = () => projectionRunDtoSchema.safeParse(malformedRun);
+      expect(parse).not.toThrow();
+      expect(parse().success).toBe(false);
+    }
     expect(
       projectionRunDtoSchema.safeParse({
         ...run,

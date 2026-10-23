@@ -206,10 +206,15 @@ export const projectionRunDtoSchema = z
   )
   .refine((run) => {
     if (run.result.status !== "reachable") return true;
-    const firstQualifying = run.result.series.find(
-      (entry) =>
-        BigInt(entry.closing.amountMinor) >= BigInt(entry.target.amountMinor),
-    );
+    const firstQualifying = run.result.series.find((entry) => {
+      const closing = aggregateMoneySchema.safeParse(entry.closing);
+      const target = aggregateMoneySchema.safeParse(entry.target);
+      return (
+        closing.success &&
+        target.success &&
+        BigInt(closing.data.amountMinor) >= BigInt(target.data.amountMinor)
+      );
+    });
     return (
       firstQualifying !== undefined &&
       firstQualifying.date === run.result.firstQualifyingDate
