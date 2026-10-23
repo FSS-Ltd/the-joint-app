@@ -160,6 +160,12 @@ importers:
         specifier: workspace:*
         version: link:../contracts
 
+  packages/projections:
+    dependencies:
+      '@joint/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
 packages:
 
   '@borewit/text-codec@0.2.2':

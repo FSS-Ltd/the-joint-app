@@ -79,3 +79,7 @@ Local identity infrastructure pins `supabase/gotrue:v2.197.0` (MIT), `postgres:1
 ## Task 1.6 workspace addition
 
 `@joint/entitlements` is a private workspace package for deterministic capability resolution. Its only dependency is the existing `@joint/contracts` workspace. Privacy exports reuse the existing DataVault and PostgreSQL; local recovery uses Node tooling, the installed `pg` dependency and the same pinned `postgres:17.6` image. No third-party dependency, image version, hosted service or licence grant is added. CI starts the existing loopback-bound Compose PostgreSQL service so its isolated recovery checks use the same source-discovery boundary as local development.
+
+## Task 3A workspace addition
+
+`@joint/projections` is a private workspace package exposing the versioned projection contract types. It depends only on `@joint/contracts`; no calculator or third-party dependency is installed in this step.

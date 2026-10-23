@@ -100,13 +100,13 @@ A client-supplied household ID; a totals-only partner requesting detailed data; 
 
 **Interfaces:** `EntitlementService.require(ctx, capability)`; `GET H/entitlements`; `PrivacyService.requestExport(ctx, scope)`; deletion/leave routes from API spec.
 
-- [ ] Define all seven canonical capabilities. Free grants `finance.manual` and `projections.basic`; a logged founder grant supplies future paid capabilities with <=90-day expiry.
-- [ ] Test that a forged client Plus flag does nothing, an expired grant blocks premium work and export/delete/revoke remain available.
-- [ ] Implement scoped export with CSV injection protection, expiring downloads, account disconnection placeholders disabled until Phase 2, leave and deletion lifecycle, including owner-only archive read/export routes after active membership ends.
-- [ ] Test leaving without a pre-exit export: the owner can retrieve their sole-owned and verified jointly owned history through archive routes, but cannot see former partner-only accounts or private notes. Test an export token issued before a grant revocation fails on new/resumed download.
-- [ ] Add secret/payload redaction and audit IDs; verify logs contain no supplied synthetic token sentinel.
-- [ ] Restore an isolated database backup and apply a synthetic deletion ledger before serving it.
-- [ ] Run the critical Playwright journey: two adults → accounts → import → budget → grant downgrade → export → leave.
+- [x] Define all seven canonical capabilities. Free grants `finance.manual` and `projections.basic`; a logged founder grant supplies future paid capabilities with <=90-day expiry.
+- [x] Test that a forged client Plus flag does nothing, an expired grant blocks premium work and export/delete/revoke remain available.
+- [x] Implement scoped export with CSV injection protection, expiring downloads, account disconnection placeholders disabled until Phase 2, leave and deletion lifecycle, including owner-only archive read/export routes after active membership ends.
+- [x] Test leaving without a pre-exit export: the owner can retrieve their sole-owned and verified jointly owned history through archive routes, but cannot see former partner-only accounts or private notes. Test an export token issued before a grant revocation fails on new/resumed download.
+- [x] Add secret/payload redaction and audit IDs; verify logs contain no supplied synthetic token sentinel.
+- [x] Restore an isolated database backup and apply a synthetic deletion ledger before serving it.
+- [x] Run the critical Playwright journey: two adults → accounts → import → budget → grant downgrade → export → leave.
 
 **Acceptance:** Manual foundation works with actual controls and documented recovery. All execution and data remain local. A deployment requires the entire MVP to be complete and the founder's explicit approval, in addition to security/auth/backup gates.
 

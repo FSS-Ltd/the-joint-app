@@ -103,3 +103,6 @@ export * from "./transfers.js";
 export * from "./exports.js";
 export * from "./privacy.js";
 export * from "./entitlements.js";
+export * from "./wealth.js";
+export * from "./goals.js";
+export * from "./projections.js";
