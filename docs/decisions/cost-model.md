@@ -1,6 +1,6 @@
 # CSV-first cost model and spend authority
 
-Task 0.5, 23 October 2026. No supplier quote, cloud resource, customer revenue or actual fee rate is claimed. No new paid commitment is authorised. Production budget is awaiting a founder decision; local development can continue independently.
+Task 0.5, 23 October 2026. No supplier quote, cloud resource, customer revenue or actual fee rate is claimed. No new paid commitment is authorised. The founder confirmed an existing Vercel Pro subscription and a £0 additional monthly hosting budget. Treat the existing subscription as already covered, rather than a new project charge; do not claim infrastructure is costless.
 
 ## Cost inventory
 
@@ -37,4 +37,18 @@ No actual bank/broker quote exists and none is required for the current CSV/manu
 
 ## Spend ceiling and controls
 
-Current authorised new recurring spend: £0 until a concrete deployment/service purchase is approved. This is an authority boundary, not the estimated operating cost of the app. Production target budget is not selected. Record the founder's eventual ceiling and separate that planning limit from explicit purchase/deployment permission. Do not upgrade subscriptions or provision infrastructure based on a planning estimate.
+Current authorised new recurring spend: £0 until a concrete deployment/service purchase is approved. This is an authority boundary, not the estimated operating cost of the app. Production target: £0 additional monthly hosting cost, using the existing Vercel Pro subscription and a free database. Separate that planning limit from explicit purchase/deployment permission. Do not upgrade subscriptions or provision infrastructure based on a planning estimate.
+
+## Existing Vercel Pro and free database — 23 October 2026
+
+The founder reports an existing Vercel Pro plan. Plan Next.js and NestJS hosting within that subscription's remaining included allocation; no additional subscription, seat, add-on or usage charge is authorised. Actual team entitlement, remaining shared credits, usage and billing controls are unverified. The existing subscription is excluded from incremental project spend but should still appear in any future fully allocated commercial cost model. The sensitivity figures above remain hypothetical stress scenarios, not the selected launch budget.
+
+[Vercel supports NestJS as a Function](https://vercel.com/docs/frameworks/backend/nestjs). [Pro cron scheduling](https://vercel.com/docs/cron-jobs/usage-and-pricing) supports intervals down to one minute; invocations consume Function usage. Keep the independent local worker, but use a bounded invocation of shared job logic for eventual hosted execution. Do not deploy its polling loop as a permanent Function or introduce a paid worker host.
+
+[Spend Management](https://vercel.com/docs/spend-management) applies to metered usage across the team beyond included credit. Notifications alone do not stop usage. Automatic production pausing affects all team projects, runs with a delay, and excludes some continuing charges, so it cannot prove a strict £0 overage guarantee. Inspect remaining allocation, workload budgets and project-specific controls before deployment; do not change shared team billing settings or pause other projects without explicit approval. No billing settings changed here.
+
+Target Supabase Free for PostgreSQL/Auth, subject to actual account capacity, London availability and launch checks. [Current Free limits](https://supabase.com/pricing) include 500 MB database storage and pausing after one week of inactivity. Do not promise always-on availability. Free-tier [backup guidance](https://supabase.com/docs/guides/platform/backups) requires a separate export/recovery process: verify encrypted database, object and configuration recovery before real data; never put financial backups in public Git or public CI artifacts. Paid upgrades remain unauthorised.
+
+This is a deployment planning amendment. No cloud resources, production deployment, vendor contract, billing change or real-data approval is implied. Local synthetic implementation can proceed after this amendment's PR/CI/merge gate.
+
+Deployment hold: the founder requires all application execution and data to remain local until the MVP is complete and explicit deployment approval is given. Do not create hosted previews, staging or production deployments, connect automatic deployment hooks, or provision hosted app/database resources before then. Authorised public source delivery and synthetic GitHub Actions CI continue; they do not authorise application hosting.
