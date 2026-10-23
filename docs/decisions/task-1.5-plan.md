@@ -67,7 +67,7 @@ Real restricted-role tests cover household isolation, NONE/TOTALS detail and bud
 
 Run all root checks, fresh committed-source frozen install/build/types, fresh disposable database migrations/runtime setup and full integration tests. Real browser golden journey: import/create records, classify/split/confirm, budget, monthly review, partner visibility/downgrade and offline shell. Inspect actual 390/1280px images, 320px overflow, keyboard, 200% zoom, reduced motion and chart tables. Self-review and a fresh independent whole-step review precede PR creation. Merge only after current head/actual test-merge CI and repository requirements pass.
 
-State: implementation locally verified and independently reviewed. Exact committed-source/fresh-database verification and PR/CI/merge remain pending. No next step has started.
+State: implementation locally verified and independently reviewed; exact committed-source/fresh-database verification passed. PR #12 is open: https://github.com/FSS-Ltd/the-joint-app/pull/12. Current CI and verified merge remain pending. No next step has started.
 
 ## Verification rulings and review
 
