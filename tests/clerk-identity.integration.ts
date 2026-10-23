@@ -29,7 +29,9 @@ function credential(): ClerkCredential {
     email: randomUUID() + "@example.test",
     expiresAt: Date.now() + 60_000,
     sessionExpiresAt: Date.now() + 3_600_000,
+    sessionCreatedAt: Date.now() - 120_000,
     mfaEnrolled: true,
+    totpEnrolled: true,
     authenticatedAt: Date.now() - 60_000,
     mfaAuthenticatedAt: Date.now() - 60_000,
   };

@@ -895,6 +895,7 @@ model FundingEvidence {
 }
 
 model ClerkIdentity {
+  revokedBeforeAt DateTime? @db.Timestamptz(3)
   issuer String @db.VarChar(255)
   subject String @db.VarChar(128)
   userId String @db.Uuid

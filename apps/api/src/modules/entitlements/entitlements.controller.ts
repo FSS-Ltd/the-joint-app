@@ -1,3 +1,4 @@
+import { readIdentityToken } from "../../identity-header.js";
 import {
   BadRequestException,
   Controller,
@@ -7,7 +8,6 @@ import {
   Param,
   Query,
   ServiceUnavailableException,
-  UnauthorizedException,
   type Type,
 } from "@nestjs/common";
 import {
@@ -15,11 +15,11 @@ import {
   idempotencyKeySchema,
   type EntitlementResponse,
 } from "@joint/contracts";
-import type { IdentityService } from "../identity/identity.service.js";
+import type { IdentityAccess } from "../identity/identity.service.js";
 import type { EntitlementService } from "./entitlement.service.js";
 
 interface EntitlementServices {
-  identity: IdentityService;
+  identity: IdentityAccess;
   entitlements: EntitlementService;
 }
 export function createEntitlementsController(
@@ -34,14 +34,12 @@ export function createEntitlementsController(
       @Param("householdId") householdId: string,
       @Query() query: unknown,
     ): Promise<EntitlementResponse> {
-      if (!auth?.match(/^Session [A-Za-z0-9_-]{43}$/))
-        throw new UnauthorizedException();
       const id = idempotencyKeySchema.safeParse(householdId);
       if (!id.success || !emptyObjectSchema.safeParse(query).success)
         throw new BadRequestException();
       if (!services) throw new ServiceUnavailableException();
       const context = await services.identity.financeContext(
-        auth.slice(8),
+        readIdentityToken(auth),
         id.data,
       );
       return services.entitlements.read(context);

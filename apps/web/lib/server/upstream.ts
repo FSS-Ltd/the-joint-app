@@ -1,3 +1,4 @@
+import { sessionAuthorization } from "./clerk-session";
 import { readEnvironment, webEnvironmentSchema } from "@joint/contracts";
 import { BffError } from "./responses";
 
@@ -54,6 +55,8 @@ const safeErrors: Record<string, string> = {
     "Verify a fresh authenticator code before sharing more access.",
   VERSION_CONFLICT:
     "This record changed in another tab. Reload it and try again.",
+  IDENTITY_MIGRATION_REQUIRED:
+    "Verify your existing account before linking this sign-in.",
   MFA_REQUIRED: "Verify your authenticator code to continue.",
   IMPORT_REVIEW_REQUIRED:
     "Choose Keep or Skip for every overlap before committing.",
@@ -113,7 +116,8 @@ export async function upstream(
     headers["X-Account-Id"] = options.csv.accountId;
     if (options.csv.mapping) headers["X-Import-Mapping"] = options.csv.mapping;
   }
-  if (options.token) headers.Authorization = `Session ${options.token}`;
+  if (options.token)
+    headers.Authorization = sessionAuthorization(options.token);
   if (options.idempotencyKey)
     headers["Idempotency-Key"] = options.idempotencyKey;
   if (options.ifMatch) headers["If-Match"] = options.ifMatch;

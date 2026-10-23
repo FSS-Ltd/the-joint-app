@@ -1,3 +1,4 @@
+import { ClerkSessionRejected } from "./rejected-session.js";
 import { createPublicKey } from "node:crypto";
 import { verifyToken } from "@clerk/backend";
 import {
@@ -7,6 +8,7 @@ import {
 import {
   clerkSessionClaimsSchema,
   type ClerkServerEnvironment,
+  type ClerkSessionClaims,
 } from "@joint/contracts";
 import {
   ClerkProviderNotFound,
@@ -22,7 +24,9 @@ export interface ClerkCredential {
   email: string;
   expiresAt: number;
   sessionExpiresAt: number;
+  sessionCreatedAt: number;
   mfaEnrolled: boolean;
+  totpEnrolled: boolean;
   authenticatedAt: number | null;
   mfaAuthenticatedAt: number | null;
 }
@@ -45,7 +49,7 @@ export class ClerkCredentialVerifier {
     }
   }
 
-  async verify(token: string): Promise<ClerkCredential> {
+  async verifyClaims(token: string): Promise<ClerkSessionClaims> {
     if (token.length > 16384 || token.split(".").length !== 3)
       throw new UnauthorizedException();
     let claims;
@@ -67,6 +71,11 @@ export class ClerkCredentialVerifier {
     } catch {
       throw new UnauthorizedException();
     }
+    return claims;
+  }
+
+  async verify(token: string): Promise<ClerkCredential> {
+    const claims = await this.verifyClaims(token);
     const controller = new AbortController();
     const signal = controller.signal;
     const timer = setTimeout(
@@ -85,7 +94,26 @@ export class ClerkCredentialVerifier {
     try {
       const [session, user] = await Promise.race([
         Promise.all([
-          this.gateway.session(claims.sid, signal),
+          this.gateway
+            .session(claims.sid, signal)
+            .then((session) => {
+              if (
+                [
+                  "revoked",
+                  "ended",
+                  "abandoned",
+                  "expired",
+                  "removed",
+                ].includes(session.status)
+              )
+                throw new ClerkSessionRejected(claims);
+              return session;
+            })
+            .catch((error) => {
+              if (error instanceof ClerkProviderNotFound)
+                throw new ClerkSessionRejected(claims);
+              throw error;
+            }),
           this.gateway.user(claims.sub, signal),
         ]),
         deadline,
@@ -104,7 +132,8 @@ export class ClerkCredentialVerifier {
         user.blocked
       )
         throw new UnauthorizedException();
-      const mfaEnrolled = user.mfaEnabled && user.totpEnabled;
+      const mfaEnrolled = user.mfaEnabled || user.totpEnabled;
+      const totpEnrolled = user.mfaEnabled && user.totpEnabled;
       // fva is rounded down in minutes. Use the oldest possible verification instant.
       const factorTime = (age: number | undefined): number | null =>
         age === undefined || age < 0
@@ -117,14 +146,17 @@ export class ClerkCredentialVerifier {
         email: user.email,
         expiresAt: Math.min(claims.exp * 1000, session.expiresAt),
         sessionExpiresAt: session.expiresAt,
+        sessionCreatedAt: session.createdAt,
         mfaEnrolled,
+        totpEnrolled,
         authenticatedAt: factorTime(claims.fva?.[0]),
         mfaAuthenticatedAt:
-          mfaEnrolled && !user.otherSecondFactorsEnabled
+          totpEnrolled && !user.otherSecondFactorsEnabled
             ? factorTime(claims.fva?.[1])
             : null,
       };
     } catch (error) {
+      if (error instanceof ClerkSessionRejected) throw error;
       if (
         error instanceof UnauthorizedException ||
         error instanceof ClerkProviderNotFound

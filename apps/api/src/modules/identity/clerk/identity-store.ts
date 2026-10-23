@@ -1,3 +1,4 @@
+import type { ClerkSessionRejected } from "./rejected-session.js";
 import {
   ConflictException,
   ForbiddenException,
@@ -39,7 +40,7 @@ export class ClerkIdentityStore {
           MappingRow[]
         >`SELECT * FROM app.resolve_clerk_identity(
           ${credential.issuer},${credential.subject},${credential.sessionId},${this.vault.emailHash(credential.email)},
-          ${new Date(credential.expiresAt)}::timestamptz,${new Date(credential.sessionExpiresAt)}::timestamptz)`;
+          ${new Date(credential.expiresAt)}::timestamptz,${new Date(credential.sessionExpiresAt)}::timestamptz,${new Date(credential.sessionCreatedAt)}::timestamptz)`;
         if (!row) throw new UnauthorizedException();
         return apply({
           credential,
@@ -58,6 +59,12 @@ export class ClerkIdentityStore {
     } catch (error) {
       throw mapError(error);
     }
+  }
+
+  async revokeRejectedSession(error: ClerkSessionRejected): Promise<void> {
+    const claims = error.claims;
+    await this.database
+      .$executeRaw`SELECT app.revoke_clerk_session(${claims.iss},${claims.sub},${claims.sid},false,${new Date(claims.exp * 1000)}::timestamptz,'PROVIDER_SESSION_REVOKED')`;
   }
 
   async bindLegacy(

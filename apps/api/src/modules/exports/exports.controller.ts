@@ -18,13 +18,13 @@ import {
   ownerArchiveContext,
   validateInput,
 } from "../../http-input.js";
-import type { IdentityService } from "../identity/identity.service.js";
+import type { IdentityAccess } from "../identity/identity.service.js";
 import type { ExportService } from "./export.service.js";
 
 import { streamDownload } from "./export-stream.js";
 
 interface Services {
-  identity: IdentityService;
+  identity: IdentityAccess;
   exports: ExportService;
 }
 function required(services: Services | undefined): Services {

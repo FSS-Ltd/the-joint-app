@@ -73,6 +73,7 @@ export const authResultSchema = z
       "PASSWORD_RESET_REQUIRED",
       "SIGNED_OUT",
     ]),
+    providerCleanupPending: z.boolean().optional(),
     browserToken: z
       .string()
       .regex(/^[A-Za-z0-9_-]{43}$/)
@@ -121,7 +122,7 @@ export const meResponseSchema = z
     factors: z.array(
       z
         .object({
-          id: z.uuid(),
+          id: z.union([z.uuid(), z.literal("clerk_totp")]),
           friendlyName: z.string(),
           status: z.enum(["verified", "unverified"]),
         })

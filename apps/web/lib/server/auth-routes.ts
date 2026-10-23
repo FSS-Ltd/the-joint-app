@@ -86,7 +86,9 @@ export function authPost(
   return route(async () => {
     assertMutation(request);
     const definition = operations[operation];
-    const token = definition.authenticated ? sessionToken(request) : undefined;
+    const token = definition.authenticated
+      ? await sessionToken(request)
+      : undefined;
     const body = await requestBody(request, definition.input);
     const value = await upstream(`/v1/auth/${operation}`, {
       body,
@@ -107,7 +109,12 @@ export function authPost(
         "This service is unavailable. Please try again shortly.",
       );
     }
-    const response = json({ state: result.state });
+    const response = json({
+      state: result.state,
+      ...(result.providerCleanupPending
+        ? { providerCleanupPending: true }
+        : {}),
+    });
     if (result.browserToken)
       setCookie(
         response,

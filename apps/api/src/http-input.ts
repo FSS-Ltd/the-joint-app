@@ -1,21 +1,19 @@
+import { readIdentityToken } from "./identity-header.js";
 import {
   BadRequestException,
   ServiceUnavailableException,
-  UnauthorizedException,
 } from "@nestjs/common";
 import { idempotencyKeySchema, type AuthContext } from "@joint/contracts";
-import type { IdentityService } from "./modules/identity/identity.service.js";
+import type { IdentityAccess } from "./modules/identity/identity.service.js";
 import { randomUUID } from "node:crypto";
 import type { OwnerArchiveContext } from "@joint/database/archive";
 
 export async function ownerArchiveContext(
-  identity: IdentityService,
+  identity: IdentityAccess,
   header: string | undefined,
 ): Promise<OwnerArchiveContext> {
-  if (!header || !/^Session [A-Za-z0-9_-]{43}$/.test(header))
-    throw new UnauthorizedException();
   return {
-    ...(await identity.actor(header.slice(8))),
+    ...(await identity.actor(readIdentityToken(header))),
     requestId: randomUUID(),
   };
 }
@@ -31,15 +29,13 @@ export function validateInput<T>(
   return result.data;
 }
 export function financeContext(
-  identity: IdentityService | undefined,
+  identity: IdentityAccess | undefined,
   header: string | undefined,
   householdId: string,
 ): Promise<AuthContext> {
   if (!identity) throw new ServiceUnavailableException();
-  if (!header || !/^Session [A-Za-z0-9_-]{43}$/.test(header))
-    throw new UnauthorizedException();
   return identity.financeContext(
-    header.slice(8),
+    readIdentityToken(header),
     validateInput(idempotencyKeySchema, householdId),
   );
 }

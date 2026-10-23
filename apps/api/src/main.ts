@@ -1,6 +1,8 @@
 import "reflect-metadata";
 import {
   apiEnvironmentSchema,
+  clerkIdentityEnvironmentSchema,
+  readAuthProvider,
   authServerEnvironmentSchema,
   identityEnvironmentSchema,
   importEnvironmentSchema,
@@ -9,18 +11,25 @@ import {
 } from "@joint/contracts";
 import { createOrm } from "@joint/database/client";
 import { createDatabase } from "@joint/database";
+import type { AuthOptions } from "./modules/identity/identity.module.js";
 import { createApplication } from "./application.js";
 async function main(): Promise<void> {
   const env = readEnvironment(apiEnvironmentSchema, process.env);
-  const identity = readEnvironment(identityEnvironmentSchema, process.env);
-  const auth = [
-    "SUPABASE_AUTH_URL",
-    "SUPABASE_PUBLISHABLE_KEY",
-    "AUTH_TOKEN_KEY",
-    "AUTH_EMAIL_HASH_KEY",
-  ].some((key) => process.env[key] !== undefined)
-    ? readEnvironment(authServerEnvironmentSchema, process.env)
-    : undefined;
+  const mode = readAuthProvider(process.env);
+  const identity =
+    mode === "local"
+      ? readEnvironment(identityEnvironmentSchema, process.env)
+      : {};
+  const auth =
+    mode === "local" &&
+    [
+      "SUPABASE_AUTH_URL",
+      "SUPABASE_PUBLISHABLE_KEY",
+      "AUTH_TOKEN_KEY",
+      "AUTH_EMAIL_HASH_KEY",
+    ].some((key) => process.env[key] !== undefined)
+      ? readEnvironment(authServerEnvironmentSchema, process.env)
+      : undefined;
   const imports =
     process.env.IMPORT_DATA_KEY === undefined
       ? undefined
@@ -29,22 +38,38 @@ async function main(): Promise<void> {
     process.env.PRIVACY_JOURNAL_PATH === undefined
       ? undefined
       : readEnvironment(privacyEnvironmentSchema, process.env);
+  const clerk =
+    mode === "clerk"
+      ? readEnvironment(clerkIdentityEnvironmentSchema, process.env)
+      : undefined;
   const orm =
-    identity.AUTH_ISSUER || auth ? createOrm(env.DATABASE_URL) : undefined;
+    identity.AUTH_ISSUER || auth || clerk
+      ? createOrm(env.DATABASE_URL)
+      : undefined;
   const database = createDatabase(env.DATABASE_URL, env.DATABASE_TIMEOUT_MS);
+  const options: AuthOptions | undefined =
+    orm && clerk
+      ? {
+          provider: "clerk",
+          database: orm,
+          environment: clerk,
+          importKey: imports?.IMPORT_DATA_KEY,
+          privacyJournalPath: privacy?.PRIVACY_JOURNAL_PATH,
+        }
+      : orm && auth
+        ? {
+            database: orm,
+            environment: auth,
+            importKey: imports?.IMPORT_DATA_KEY,
+            privacyJournalPath: privacy?.PRIVACY_JOURNAL_PATH,
+          }
+        : undefined;
   const app = await createApplication(
     database,
     orm && identity.AUTH_ISSUER
       ? { database: orm, issuer: identity.AUTH_ISSUER }
       : undefined,
-    orm && auth
-      ? {
-          database: orm,
-          environment: auth,
-          importKey: imports?.IMPORT_DATA_KEY,
-          privacyJournalPath: privacy?.PRIVACY_JOURNAL_PATH,
-        }
-      : undefined,
+    options,
   );
   app.getHttpAdapter().getInstance().disable("x-powered-by");
   // Nest closes the listener before releasing its database pool.

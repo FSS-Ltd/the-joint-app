@@ -1,3 +1,4 @@
+import { createClerkRequest } from "./provider-request.js";
 import {
   clerkProviderSessionSchema,
   clerkProviderUserSchema,
@@ -9,6 +10,7 @@ export interface ClerkSessionState {
   userId: string;
   status: string;
   expiresAt: number;
+  createdAt: number;
   hasPendingTask: boolean;
   impersonating: boolean;
 }
@@ -25,70 +27,34 @@ export interface ClerkGateway {
   session(id: string, signal: AbortSignal): Promise<ClerkSessionState>;
   user(id: string, signal: AbortSignal): Promise<ClerkUserState>;
 }
-export class ClerkProviderUnavailable extends Error {}
-export class ClerkProviderNotFound extends Error {}
+export {
+  ClerkProviderUnavailable,
+  ClerkProviderNotFound,
+} from "./provider-request.js";
 
 /** Fixed provider origin and abortable requests; the SDK lacks per-call cancellation. */
 export function createClerkGateway(
   environment: ClerkServerEnvironment,
 ): ClerkGateway {
-  async function get(
-    resource: "sessions" | "users",
-    id: string,
-    signal: AbortSignal,
-  ): Promise<unknown> {
-    const response = await fetch(
-      `https://api.clerk.com/v1/${resource}/${encodeURIComponent(id)}`,
-      {
-        headers: {
-          Authorization: `Bearer ${environment.CLERK_SECRET_KEY}`,
-          Accept: "application/json",
-        },
-        signal,
-        redirect: "error",
-        cache: "no-store",
-      },
-    );
-    if (!response.ok) {
-      await response.body?.cancel();
-      if (response.status === 404) throw new ClerkProviderNotFound();
-      throw new ClerkProviderUnavailable();
-    }
-    const reader = response.body?.getReader();
-    if (!reader) throw new ClerkProviderUnavailable();
-    const chunks: Uint8Array[] = [];
-    let size = 0;
-    try {
-      for (;;) {
-        const next = await reader.read();
-        if (next.done) break;
-        size += next.value.byteLength;
-        if (size > 65536) throw new ClerkProviderUnavailable();
-        chunks.push(next.value);
-      }
-      return JSON.parse(Buffer.concat(chunks).toString("utf8"));
-    } finally {
-      await reader.cancel();
-      reader.releaseLock();
-    }
-  }
+  const request = createClerkRequest(environment);
   return {
     async session(id, signal) {
       const session = clerkProviderSessionSchema.parse(
-        await get("sessions", id, signal),
+        await request(`/sessions/${encodeURIComponent(id)}`, "GET", signal),
       );
       return {
         id: session.id,
         userId: session.user_id,
         status: session.status,
         expiresAt: session.expire_at,
+        createdAt: session.created_at,
         hasPendingTask: (session.tasks?.length ?? 0) > 0,
         impersonating: session.actor !== null,
       };
     },
     async user(id, signal) {
       const user = clerkProviderUserSchema.parse(
-        await get("users", id, signal),
+        await request(`/users/${encodeURIComponent(id)}`, "GET", signal),
       );
       const email = user.email_addresses.find(
         (value) => value.id === user.primary_email_address_id,

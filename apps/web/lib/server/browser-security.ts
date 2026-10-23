@@ -1,3 +1,5 @@
+import { readAuthProvider } from "@joint/contracts";
+import { resolveClerkSessionToken } from "./clerk-session";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { BffError } from "./responses";
 
@@ -87,7 +89,18 @@ export function assertMutation(request: Request): void {
   }
 }
 
-export function sessionToken(request: Request): string {
+export async function sessionToken(request: Request): Promise<string> {
+  let mode: "local" | "clerk";
+  try {
+    mode = readAuthProvider(process.env);
+  } catch {
+    throw new BffError(
+      503,
+      "UNAVAILABLE",
+      "Sign-in configuration is unavailable.",
+    );
+  }
+  if (mode === "clerk") return resolveClerkSessionToken();
   const token = readCookie(request, SESSION_COOKIE);
   if (!token)
     throw new BffError(401, "SIGN_IN_REQUIRED", "Please sign in to continue.");

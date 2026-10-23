@@ -68,6 +68,7 @@ export const clerkProviderSessionSchema = z.object({
   user_id: z.string(),
   status: z.string(),
   expire_at: z.number().int().positive(),
+  created_at: z.number().int().positive(),
   actor: z.record(z.string(), z.unknown()).nullable(),
   tasks: z.array(z.unknown()).optional(),
 });
@@ -101,3 +102,43 @@ export const clerkSessionClaimsSchema = z.object({
   sts: z.literal("active").optional(),
   act: z.never().optional(),
 });
+
+export const authProviderSchema = z.enum(["local", "clerk"]);
+export function readAuthProvider(
+  values: Record<string, string | undefined>,
+): "local" | "clerk" {
+  if (values.AUTH_PROVIDER === undefined) {
+    if (
+      [
+        "CLERK_ISSUER",
+        "CLERK_SECRET_KEY",
+        "CLERK_JWT_KEY",
+        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+      ].some((key) => values[key] !== undefined)
+    )
+      throw new Error("Invalid environment fields: AUTH_PROVIDER");
+    return "local";
+  }
+  const result = authProviderSchema.safeParse(values.AUTH_PROVIDER);
+  if (!result.success)
+    throw new Error("Invalid environment fields: AUTH_PROVIDER");
+  return result.data;
+}
+export const clerkProviderSessionListSchema = z.object({
+  data: z
+    .array(
+      z.object({
+        id: z.string().regex(/^sess_[A-Za-z0-9]+$/),
+        user_id: z.string().regex(/^user_[A-Za-z0-9]+$/),
+      }),
+    )
+    .max(20),
+  total_count: z.number().int().nonnegative(),
+});
+
+export type ClerkSessionClaims = z.infer<typeof clerkSessionClaimsSchema>;
+export const clerkIdentityEnvironmentSchema =
+  clerkServerEnvironmentSchema.extend({
+    AUTH_TOKEN_KEY: z.string().regex(/^[A-Za-z0-9+/]{43}=$/),
+    AUTH_EMAIL_HASH_KEY: z.string().regex(/^[A-Za-z0-9+/]{43}=$/),
+  });

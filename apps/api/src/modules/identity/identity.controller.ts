@@ -1,3 +1,4 @@
+import { readIdentityToken } from "../../identity-header.js";
 import {
   BadRequestException,
   Body,
@@ -9,7 +10,6 @@ import {
   Param,
   Post,
   ServiceUnavailableException,
-  UnauthorizedException,
   type Type,
 } from "@nestjs/common";
 import {
@@ -26,7 +26,7 @@ import {
   signUpSchema,
   verifyEmailSchema,
 } from "@joint/contracts";
-import type { IdentityService } from "./identity.service.js";
+import type { IdentityAccess } from "./identity.service.js";
 import type { HouseholdService } from "../households/households.service.js";
 
 function validate<T>(
@@ -45,17 +45,11 @@ function validate<T>(
     });
   return result.data;
 }
-function sessionToken(header: string | undefined): string {
-  if (!header?.startsWith("Session ")) throw new UnauthorizedException();
-  const token = header.slice(8);
-  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw new UnauthorizedException();
-  return token;
-}
 export function createIdentityController(
-  service?: IdentityService,
+  service?: IdentityAccess,
   households?: HouseholdService,
 ): Type<unknown> {
-  function identity(): IdentityService {
+  function identity(): IdentityAccess {
     if (!service) throw new ServiceUnavailableException();
     return service;
   }
@@ -96,7 +90,7 @@ export function createIdentityController(
     @Get("me")
     @Header("Cache-Control", "no-store")
     me(@Headers("authorization") authorization: string | undefined) {
-      return identity().me(sessionToken(authorization));
+      return identity().me(readIdentityToken(authorization));
     }
     @Post("auth/password")
     @HttpCode(200)
@@ -106,7 +100,10 @@ export function createIdentityController(
       @Headers("authorization") authorization: string | undefined,
     ) {
       const value = validate(passwordResetSchema, body);
-      return identity().password(sessionToken(authorization), value.password);
+      return identity().password(
+        readIdentityToken(authorization),
+        value.password,
+      );
     }
     @Post("auth/mfa/enroll")
     @HttpCode(200)
@@ -116,7 +113,7 @@ export function createIdentityController(
       @Headers("authorization") authorization: string | undefined,
     ) {
       validate(emptyObjectSchema, body);
-      return identity().enroll(sessionToken(authorization));
+      return identity().enroll(readIdentityToken(authorization));
     }
     @Post("auth/mfa/verify")
     @HttpCode(200)
@@ -127,7 +124,7 @@ export function createIdentityController(
     ) {
       const value = validate(mfaCodeSchema, body);
       return identity().verifyMfa(
-        sessionToken(authorization),
+        readIdentityToken(authorization),
         value.factorId,
         value.code,
       );
@@ -140,7 +137,7 @@ export function createIdentityController(
       @Headers("authorization") authorization: string | undefined,
     ) {
       const value = validate(logoutSchema, body);
-      return identity().logout(sessionToken(authorization), value.scope);
+      return identity().logout(readIdentityToken(authorization), value.scope);
     }
     @Post("households")
     @HttpCode(200)
@@ -153,7 +150,7 @@ export function createIdentityController(
       const value = validate(householdCreateSchema, body);
       const requestKey = validate(idempotencyKeySchema, key);
       return householdService().create(
-        await identity().actor(sessionToken(authorization)),
+        await identity().actor(readIdentityToken(authorization)),
         value,
         requestKey,
       );
@@ -171,7 +168,7 @@ export function createIdentityController(
       const requestKey = validate(idempotencyKeySchema, key);
       const id = validate(idempotencyKeySchema, householdId);
       return householdService().invite(
-        await identity().actor(sessionToken(authorization)),
+        await identity().actor(readIdentityToken(authorization)),
         id,
         value.email,
         requestKey,
@@ -186,7 +183,7 @@ export function createIdentityController(
     ) {
       const value = validate(acceptInviteSchema, body);
       return householdService().acceptInvite(
-        await identity().actor(sessionToken(authorization)),
+        await identity().actor(readIdentityToken(authorization)),
         value.token,
       );
     }

@@ -1,3 +1,4 @@
+import { readIdentityToken } from "../../identity-header.js";
 import {
   BadRequestException,
   Body,
@@ -12,7 +13,6 @@ import {
   Put,
   Query,
   ServiceUnavailableException,
-  UnauthorizedException,
   type Type,
 } from "@nestjs/common";
 import {
@@ -25,7 +25,7 @@ import {
   valuationInputSchema,
   type AuthContext,
 } from "@joint/contracts";
-import type { IdentityService } from "../identity/identity.service.js";
+import type { IdentityAccess } from "../identity/identity.service.js";
 import type { AccountQueries } from "./account-queries.js";
 import type { AccountMutations } from "./account-mutations.js";
 import type { AccountGrants } from "./account-grants.js";
@@ -41,7 +41,7 @@ function validate<T>(
   return result.data;
 }
 interface AccountServices {
-  identity: IdentityService;
+  identity: IdentityAccess;
   queries: AccountQueries;
   mutations: AccountMutations;
   grants: AccountGrants;
@@ -57,10 +57,8 @@ export function createAccountsController(
     header: string | undefined,
     householdId: string,
   ): Promise<AuthContext> {
-    if (!header?.match(/^Session [A-Za-z0-9_-]{43}$/))
-      throw new UnauthorizedException();
     return useServices().identity.financeContext(
-      header.slice(8),
+      readIdentityToken(header),
       validate(idempotencyKeySchema, householdId),
     );
   }

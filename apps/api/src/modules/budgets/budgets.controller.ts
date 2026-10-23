@@ -17,11 +17,11 @@ import {
   quotedVersionSchema,
 } from "@joint/contracts";
 import { financeContext, validateInput as valid } from "../../http-input.js";
-import type { IdentityService } from "../identity/identity.service.js";
+import type { IdentityAccess } from "../identity/identity.service.js";
 import type { ReportService } from "../reports/report.service.js";
 import type { BudgetMutations } from "./budget-mutations.js";
 interface Services {
-  identity: IdentityService;
+  identity: IdentityAccess;
   reports: ReportService;
   budgets: BudgetMutations;
 }

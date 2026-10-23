@@ -10,11 +10,11 @@ import {
 } from "@nestjs/common";
 import { spendingQuerySchema, categoryQuerySchema } from "@joint/contracts";
 import { financeContext, validateInput as valid } from "../../http-input.js";
-import type { IdentityService } from "../identity/identity.service.js";
+import type { IdentityAccess } from "../identity/identity.service.js";
 import type { CategoriesService } from "../categories/category.service.js";
 import type { ReportService } from "./report.service.js";
 interface Services {
-  identity: IdentityService;
+  identity: IdentityAccess;
   reports: ReportService;
   categories: CategoriesService;
 }

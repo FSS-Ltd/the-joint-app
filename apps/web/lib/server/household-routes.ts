@@ -40,7 +40,7 @@ function idempotencyKey(request: Request): string {
 export function createHousehold(request: Request): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const key = idempotencyKey(request);
     const body = await requestBody(request, householdCreateSchema);
     return json(
@@ -58,7 +58,7 @@ export function inviteToHousehold(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const id = idempotencyKeySchema.safeParse(householdId);
     if (!id.success)
       throw new BffError(
@@ -94,7 +94,7 @@ export function captureInvitation(request: Request): Promise<Response> {
 export function acceptInvitation(request: Request): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     await requestBody(request, emptyObjectSchema);
     const invitationToken = readCookie(request, INVITATION_COOKIE);
     if (!invitationToken)

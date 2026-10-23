@@ -36,6 +36,7 @@ function gateway(): ClerkGateway {
       userId: "user_synthetic123",
       status: "active",
       expiresAt: Date.now() + 3_600_000,
+      createdAt: Date.now() - 120_000,
       hasPendingTask: false,
       impersonating: false,
     })),
@@ -330,6 +331,7 @@ it("projects bounded provider responses using a fixed origin and abort signal", 
       user_id: "user_synthetic123",
       status: "active",
       expire_at: Date.now() + 60000,
+      created_at: Date.now() - 120000,
       actor: null,
       private_profile: "DISCARDED_SENTINEL",
     }),
@@ -382,4 +384,20 @@ it("rejects unusable configured verification keys with a safe configuration erro
         gateway(),
       ),
   ).toThrow("Invalid environment fields: CLERK_JWT_KEY");
+});
+it("does not ignore an enrolled second factor when TOTP is absent", async () => {
+  const provider = gateway();
+  const original = await provider.user(
+    "user_synthetic123",
+    new AbortController().signal,
+  );
+  provider.user = vi.fn(async () => ({
+    ...original,
+    mfaEnabled: true,
+    totpEnabled: false,
+    otherSecondFactorsEnabled: true,
+  }));
+  const verified = await verifier(provider).verify(await token());
+  expect(verified.mfaEnrolled).toBe(true);
+  expect(verified.mfaAuthenticatedAt).toBeNull();
 });

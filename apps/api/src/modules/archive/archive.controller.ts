@@ -10,11 +10,11 @@ import {
 } from "@nestjs/common";
 import { accountListQuerySchema, idempotencyKeySchema } from "@joint/contracts";
 import { ownerArchiveContext, validateInput } from "../../http-input.js";
-import type { IdentityService } from "../identity/identity.service.js";
+import type { IdentityAccess } from "../identity/identity.service.js";
 import type { ArchiveService } from "./archive.service.js";
 
 interface Services {
-  identity: IdentityService;
+  identity: IdentityAccess;
   archive: ArchiveService;
 }
 export function createArchiveController(services?: Services): Type<unknown> {

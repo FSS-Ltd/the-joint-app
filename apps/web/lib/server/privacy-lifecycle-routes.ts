@@ -1,3 +1,4 @@
+import { sessionAuthorization } from "./clerk-session";
 import {
   deletionPublicReceiptSchema,
   deletionReceiptSchema,
@@ -79,14 +80,14 @@ export function leaveHousehold(
 ): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const body = await requestBody(request, leaveHouseholdSchema);
     const response = json(
       parseResponse(
         leaveHouseholdResponseSchema,
         await lifecycleFetch(
           `/v1/households/${financeId(householdId)}/memberships/me`,
-          `Session ${token}`,
+          sessionAuthorization(token),
           body,
           "DELETE",
         ),
@@ -99,13 +100,13 @@ export function leaveHousehold(
 export function requestDeletion(request: Request): Promise<Response> {
   return route(async () => {
     assertMutation(request);
-    const token = sessionToken(request);
+    const token = await sessionToken(request);
     const body = await requestBody(request, deletionRequestSchema);
     const receipt = parseResponse(
       deletionReceiptSchema,
       await lifecycleFetch(
         "/v1/privacy/deletion-requests",
-        `Session ${token}`,
+        sessionAuthorization(token),
         body,
       ),
     );
