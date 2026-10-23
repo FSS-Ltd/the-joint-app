@@ -94,7 +94,7 @@ export class GoalService {
     id: string,
     cursor?: string,
   ): Promise<GoalPageDto> {
-    const key = `${binding(context, false)}:${id}:history`,
+    const key = `${binding(context, false)}:${id.toLowerCase()}:history`,
       after = this.cursors.version(cursor, key);
     const { nextAfterVersion, ...page } = await safeGoalQuery(() =>
       this.database.withScope(context, (tx) => readGoal(tx, id, after)),
@@ -124,7 +124,7 @@ export class GoalService {
     id: string,
     cursor?: string,
   ): Promise<GoalPageDto> {
-    const key = `${binding(context, true)}:${id}:history`,
+    const key = `${binding(context, true)}:${id.toLowerCase()}:history`,
       after = this.cursors.version(cursor, key);
     const { nextAfterVersion, ...page } = await safeGoalQuery(() =>
       this.archive.withScope(context, (tx) => readGoal(tx, id, after)),

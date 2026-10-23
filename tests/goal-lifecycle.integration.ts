@@ -230,7 +230,7 @@ it("bounds and resumes history and list pages without duplicates", async () => {
   const last = await scoped.withScope(a, (tx) => page(tx, id, 50));
   expect(last?.revisions.map((r) => r.goal.version)).toEqual([51, 52]);
   expect(last?.nextAfterVersion).toBeNull();
-  const publicPage = await service.read(a, id);
+  const publicPage = await service.read(a, id.toUpperCase());
   expect(publicPage.revisions).toHaveLength(50);
   expect(publicPage.nextCursor).toBeTypeOf("string");
   const publicNext = await service.export(
