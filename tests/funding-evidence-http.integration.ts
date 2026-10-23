@@ -12,7 +12,7 @@ it("serves owner evidence, exact replay, bounded encrypted pages and free MFA ex
     const account = await f.maintenance.account.findUniqueOrThrow({
         where: { id: f.accountId },
       }),
-      vid = randomUUID();
+      vid = "abcdefab-1234-4abc-8def-" + randomUUID().slice(-12);
     await f.maintenance.balanceSnapshot.create({
       data: {
         id: vid,
@@ -32,7 +32,7 @@ it("serves owner evidence, exact replay, bounded encrypted pages and free MFA ex
         settledAdultMoney: { amountMinor: "9007199254740993", currency: "GBP" },
         billReserves: { amountMinor: "0", currency: "GBP" },
       },
-      key = randomUUID(),
+      key = "ABCDEFAB-1234-4ABC-8DEF-" + randomUUID().slice(-12).toUpperCase(),
       headers = { "If-Match": '"0"', "Idempotency-Key": key };
     expect((await f.request(path, "GET", undefined, "")).status).toBe(401);
     expect(
@@ -52,6 +52,24 @@ it("serves owner evidence, exact replay, bounded encrypted pages and free MFA ex
         await (await f.request(path, "POST", data, undefined, headers)).json(),
       ),
     ).toEqual(made);
+    const sameKey = await f.request(path, "POST", data, undefined, {
+      ...headers,
+      "Idempotency-Key": key.toLowerCase(),
+    });
+    expect(sameKey.status).toBe(201);
+    expect(fundingEvidenceDtoSchema.parse(await sameKey.json())).toEqual(made);
+    const equivalent = await f.request(
+      path,
+      "POST",
+      { ...data, valuationId: vid.toUpperCase() },
+      undefined,
+      { ...headers, "Idempotency-Key": key.toLowerCase() },
+    );
+    expect(equivalent.status).toBe(201);
+    expect(fundingEvidenceDtoSchema.parse(await equivalent.json())).toEqual(
+      made,
+    );
+
     expect(
       (
         await f.request(
@@ -143,6 +161,44 @@ it("serves owner evidence, exact replay, bounded encrypted pages and free MFA ex
       baseline.version,
       baseline.totalsVersion,
     ]);
+
+    await f.maintenance
+      .$queryRaw`SELECT app.exit_household_member(${account.creatorUserId}::uuid,${account.householdId}::uuid,${account.creatorMembershipId}::uuid)`;
+    const revokedReplay = await f.request(
+      path,
+      "POST",
+      data,
+      f.actorToken,
+      headers,
+    );
+    expect(revokedReplay.status).toBe(401);
+    expect(JSON.stringify(await revokedReplay.json())).not.toContain(
+      made.settledAdultMoney.amountMinor,
+    );
+    const archiveToken = await f.reauthenticateActor(),
+      archivePath = `/me/archive/accounts/${account.id}/funding-evidence`;
+    const frozen = await f.request(archivePath, "GET", undefined, archiveToken);
+    expect(frozen.status).toBe(200);
+    expect(frozen.headers.get("cache-control")).toBe("no-store");
+    expect(
+      fundingEvidencePageSchema.parse(await frozen.json()).current?.version,
+    ).toBe(52);
+    const frozenExport = await f.request(
+      archivePath + "/export",
+      "GET",
+      undefined,
+      archiveToken,
+    );
+    expect(frozenExport.status).toBe(200);
+    expect(frozenExport.headers.get("content-disposition")).toContain(
+      "attachment",
+    );
+    expect(
+      fundingEvidencePageSchema.parse(await frozenExport.json()).history,
+    ).toHaveLength(50);
+    expect(
+      (await f.request(path, "POST", data, archiveToken, headers)).status,
+    ).toBe(404);
   } finally {
     await f.close();
   }

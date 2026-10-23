@@ -50,7 +50,9 @@ export class FundingEvidenceService {
     input: FundingEvidenceWrite,
     key: string,
   ): Promise<FundingEvidenceDto> {
-    const data = validateInput(fundingEvidenceWriteSchema, input),
+    const parsed = validateInput(fundingEvidenceWriteSchema, input),
+      data = { ...parsed, valuationId: parsed.valuationId.toLowerCase() },
+      replayKey = key.toLowerCase(),
       route = `funding:${context.householdId}:${id.toLowerCase()}`,
       digest = hashToken(JSON.stringify({ version, data }));
     return safeFundingQuery(() =>
@@ -61,7 +63,7 @@ export class FundingEvidenceService {
           tx,
           context.userId,
           route,
-          key,
+          replayKey,
           digest,
           fundingEvidenceDtoSchema,
         );
@@ -70,7 +72,14 @@ export class FundingEvidenceService {
           { data: unknown }[]
         >`SELECT app.write_funding_evidence(${id}::uuid,${version}::integer,${JSON.stringify(data)}::jsonb) AS data`;
         const result = fundingEvidenceDtoSchema.parse(row?.data);
-        await this.replay.save(tx, context.userId, route, key, digest, result);
+        await this.replay.save(
+          tx,
+          context.userId,
+          route,
+          replayKey,
+          digest,
+          result,
+        );
         return result;
       }),
     );

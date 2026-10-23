@@ -172,6 +172,9 @@ export function createFundingEvidenceFixture() {
     await owner.sessionRegistry.deleteMany({
       where: { userId: { in: [a.userId, b.userId] } },
     });
+    await owner.requestKey.deleteMany({
+      where: { userId: { in: [a.userId, b.userId] } },
+    });
     await owner.user.deleteMany({
       where: { id: { in: [a.userId, b.userId] } },
     });
