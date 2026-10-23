@@ -106,3 +106,5 @@ export * from "./entitlements.js";
 export * from "./wealth.js";
 export * from "./goals.js";
 export * from "./projections.js";
+
+export { bookedDateSchema } from "./financial-input.js";

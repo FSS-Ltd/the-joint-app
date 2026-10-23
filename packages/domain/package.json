@@ -23,6 +23,10 @@
     "./wealth": {
       "types": "./dist/wealth/value-accounts.d.ts",
       "import": "./dist/wealth/value-accounts.js"
+    },
+    "./goals": {
+      "types": "./dist/goals/index.d.ts",
+      "import": "./dist/goals/index.js"
     }
   },
   "scripts": {
