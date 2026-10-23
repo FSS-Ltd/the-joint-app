@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
+  moduleFormat = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas = ["app"]
+}
+
+enum JobState {
+  QUEUED
+  LEASED
+  SUCCEEDED
+  RETRY_WAIT
+  FAILED
+  CANCELLED
+  @@schema("app")
+}
+
+model Household {
+  id String @id @default(uuid()) @db.Uuid
+  revision Int @default(0)
+  jobs Job[]
+  events OutboxEvent[]
+  memberships Membership[]
+  @@schema("app")
+}
+
+model Job {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  type String
+  resourceId String @db.Uuid
+  idempotencyKey String
+  payload Json
+  state JobState @default(QUEUED)
+  attempt Int @default(0)
+  maxAttempts Int @default(5)
+  runAfter DateTime @default(now()) @db.Timestamptz(3)
+  leaseOwner String?
+  leaseToken String? @db.Uuid
+  leaseUntil DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  events OutboxEvent[]
+  @@unique([householdId, type, idempotencyKey])
+  @@unique([id, householdId])
+  @@index([state, runAfter])
+  @@schema("app")
+}
+
+model OutboxEvent {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @db.Uuid
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  jobId String @db.Uuid
+  job Job @relation(fields: [jobId, householdId], references: [id, householdId], onDelete: Cascade)
+  type String
+  payload Json
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([jobId, type])
+  @@index([householdId, createdAt])
+  @@schema("app")
+}
+
+model Membership {
+  userId String @db.Uuid
+  householdId String @db.Uuid
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  sessions SessionRegistry[]
+  @@id([userId, householdId])
+  @@schema("app")
+}
+
+model SessionRegistry {
+  id String @id @db.Uuid
+  userId String @db.Uuid
+  householdId String @db.Uuid
+  membership Membership @relation(fields: [userId, householdId], references: [userId, householdId], onDelete: Cascade)
+  expiresAt DateTime @db.Timestamptz(3)
+  revokedAt DateTime? @db.Timestamptz(3)
+  @@index([userId])
+  @@schema("app")
+}

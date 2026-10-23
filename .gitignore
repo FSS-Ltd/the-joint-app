@@ -15,3 +15,6 @@ the-joint-app-plan/
 # Local household discovery and third-party visual references
 docs/private/
 Design/
+
+# Reproducible Prisma client output
+packages/database/src/generated/

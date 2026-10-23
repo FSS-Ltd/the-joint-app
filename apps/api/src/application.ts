@@ -9,8 +9,14 @@ import { NestFactory } from "@nestjs/core";
 import type { INestApplication } from "@nestjs/common";
 import type { DatabaseConnection } from "@joint/database";
 import type { HealthResponse } from "@joint/contracts";
+import {
+  BootstrapService,
+  type BootstrapOptions,
+} from "./modules/bootstrap/bootstrap.service.js";
+import { createBootstrapController } from "./modules/bootstrap/bootstrap.controller.js";
 export async function createApplication(
   database: DatabaseConnection,
+  bootstrap?: BootstrapOptions,
 ): Promise<INestApplication> {
   @Controller("health")
   class HealthController {
@@ -23,7 +29,14 @@ export async function createApplication(
       return { status: "ok" };
     }
   }
-  @Module({ controllers: [HealthController] })
+  @Module({
+    controllers: [
+      HealthController,
+      createBootstrapController(
+        bootstrap ? new BootstrapService(bootstrap) : undefined,
+      ),
+    ],
+  })
   class ApplicationModule {}
   const app = await NestFactory.create(ApplicationModule, { logger: false });
   return app;

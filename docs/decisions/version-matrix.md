@@ -57,3 +57,7 @@ The candidate pins are a researched baseline, not a tested native/auth/ORM insta
 - [Gemma 4 model card](https://ai.google.dev/gemma/docs/core/model_card_4).
 
 Exact candidate engine/peer/licence metadata was read with npm view at the stated versions. Retain third-party notices when distributing dependencies/models; no model is redistributed here.
+
+## Task 1.1 installed additions
+
+Prisma, @prisma/client and @prisma/adapter-pg are installed at 7.10.1 (Apache-2.0), verified with strict TypeScript 6/Node ESM, generated client, additive local migrations and PostgreSQL integration tests. jose 6.2.13 (MIT) supplies maintained asymmetric JWT/JWKS verification; the same exact version is a test dependency for ephemeral synthetic signatures. No hand-written cryptography or production test issuer is included. Supabase SDK/native candidates above remain uninstalled.
