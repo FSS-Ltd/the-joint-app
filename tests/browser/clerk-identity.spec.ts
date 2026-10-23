@@ -329,8 +329,13 @@ for (const scenario of ["login", "device", "google", "recovery"] as const)
         : "/sign-in?next=archive",
     );
     if (scenario === "google") {
-      await page.getByRole("button", { name: "Continue with Google" }).click();
-      await expect(page).toHaveURL(/auth\/callback\?next=archive/);
+      // The callback can immediately return to sign-in for the MFA challenge.
+      await Promise.all([
+        page.waitForRequest(`${origin}/auth/callback?next=archive`, {
+          timeout: 5000,
+        }),
+        page.getByRole("button", { name: "Continue with Google" }).click(),
+      ]);
     } else {
       await page.getByLabel("Email address").fill("synthetic@example.test");
       if (scenario !== "recovery")
@@ -349,6 +354,8 @@ for (const scenario of ["login", "device", "google", "recovery"] as const)
         ? "Email verification code"
         : "Authenticator code";
     await page.getByLabel(label).fill("000000");
+    if (scenario === "google")
+      await expect(page).toHaveURL(`${origin}/sign-in?next=archive`);
     await page
       .getByRole("button", { name: "Verify code", exact: true })
       .click();
