@@ -1,5 +1,7 @@
 # Phase 3 — Wealth and goal projections
 
+> **Current execution order, 23 October 2026:** The CSV-first baseline follows Phase 0 → Phase 1 → Phase 3 from manual/imported evidence → Phase 4 → Phase 5. Phase 2 bank/direct-source work and child profiles are deferred; live-source prerequisites below do not block the manual MVP. Retain source activation gates, local-AI/security/device requirements and the per-step PR/CI/merge gate. See [release scope](../../decisions/release-scope.md).
+
 > **Scope revision, 23 October 2026:** Child profiles and child-specific UI/projections are post-MVP, per the [canonical product revision](../01-product-specification.md). Treat child-specific tasks below as deferred; retain the safeguards against double counting and including verified child-earmarked funds in adult spendable totals. All MVP UI is mobile first.
 
 **Goal:** Produce permission-aware wealth totals and reproducible goal dates, including a useful free contribution-only baseline.
