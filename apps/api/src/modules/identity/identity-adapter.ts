@@ -13,6 +13,7 @@ import { ClerkCredentialVerifier } from "./clerk/credential-verifier.js";
 import type { ClerkGateway } from "./clerk/provider-gateway.js";
 import { ClerkIdentityStore } from "./clerk/identity-store.js";
 import { ClerkIdentityService } from "./clerk/identity.service.js";
+import { ClerkLogoutTicket } from "./clerk/logout-ticket.js";
 import { ClerkLogout } from "./clerk/logout.service.js";
 import {
   createClerkTotpVerifier,
@@ -39,6 +40,7 @@ export function createIdentityAdapter(options: IdentityAdapterOptions): {
   identity: IdentityAccess;
   vault: IdentityVault;
   legacyLinker?: ClerkLegacyLinker;
+  clerkLogout?: ClerkLogout;
 } {
   const vault = new IdentityVault(
     options.environment.AUTH_TOKEN_KEY,
@@ -55,6 +57,7 @@ export function createIdentityAdapter(options: IdentityAdapterOptions): {
       verifier,
       options.clerkRevoker ?? createClerkRevoker(options.environment),
       options.environment.CLERK_TIMEOUT_MS,
+      new ClerkLogoutTicket(vault, options.environment.CLERK_ISSUER),
     );
     const totp =
       options.clerkTotp ?? createClerkTotpVerifier(options.environment);
@@ -83,6 +86,7 @@ export function createIdentityAdapter(options: IdentityAdapterOptions): {
       : undefined;
     return {
       legacyLinker,
+      clerkLogout: logout,
       identity: new ClerkIdentityService(verifier, store, logout, totp),
       vault,
     };

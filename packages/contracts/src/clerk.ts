@@ -134,6 +134,7 @@ export const clerkProviderSessionListSchema = z.object({
       z.object({
         id: z.string().regex(/^sess_[A-Za-z0-9]+$/),
         user_id: z.string().regex(/^user_[A-Za-z0-9]+$/),
+        created_at: z.number().int().positive(),
       }),
     )
     .max(20),
@@ -160,3 +161,20 @@ export const clerkIdentityEnvironmentSchema =
     AUTH_TOKEN_KEY: z.string().regex(/^[A-Za-z0-9+/]{43}=$/),
     AUTH_EMAIL_HASH_KEY: z.string().regex(/^[A-Za-z0-9+/]{43}=$/),
   });
+
+export const clerkLogoutContextSchema = z
+  .object({
+    issuer: z.url().max(255),
+    subject: z.string().regex(/^user_[A-Za-z0-9]{1,123}$/),
+    sessionId: z.string().regex(/^sess_[A-Za-z0-9]{1,123}$/),
+    scope: z.enum(["local", "global"]),
+    cutoffAt: z.number().int().positive(),
+  })
+  .strict();
+export type ClerkLogoutContext = z.infer<typeof clerkLogoutContextSchema>;
+
+export const clerkRevokedSessionSchema = z.object({
+  id: z.string().regex(/^sess_[A-Za-z0-9]+$/),
+  user_id: z.string().regex(/^user_[A-Za-z0-9]+$/),
+  status: z.enum(["revoked", "ended", "abandoned", "expired", "removed"]),
+});

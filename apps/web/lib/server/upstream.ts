@@ -10,6 +10,7 @@ type Path =
   | "/v1/auth/password"
   | "/v1/auth/mfa/enroll"
   | "/v1/auth/mfa/verify"
+  | "/v1/auth/logout/retry"
   | "/v1/auth/logout"
   | "/v1/auth/link-legacy"
   | "/v1/me"
@@ -27,7 +28,7 @@ type Path =
   | `/v1/households/${string}/budgets/${string}`
   | `/v1/households/${string}/transfers/${string}`;
 const allowedPath =
-  /^\/v1\/(?:auth\/(?:signup|login|verify|recovery|password|logout|link-legacy|mfa\/(?:enroll|verify))|me|households(?:\/[0-9a-f-]{36}\/(?:invitations|accounts(?:\/[0-9a-f-]{36}(?:\/(?:valuations|coverage\/\d{4}-\d{2}|grants\/[0-9a-f-]{36}))?)?|imports(?:\/(?:inspect|preview|[0-9a-f-]{36}(?:\/(?:rows|review|commit|original))?))?|reports\/spending|categories|budgets\/\d{4}-\d{2}|transfers\/(?:confirm|[0-9a-f-]{36})|transactions(?:\/[0-9a-f-]{36}(?:\/(?:annotation|splits))?)?))?|invitations\/accept)$/i;
+  /^\/v1\/(?:auth\/(?:signup|login|verify|recovery|password|logout(?:\/retry)?|link-legacy|mfa\/(?:enroll|verify))|me|households(?:\/[0-9a-f-]{36}\/(?:invitations|accounts(?:\/[0-9a-f-]{36}(?:\/(?:valuations|coverage\/\d{4}-\d{2}|grants\/[0-9a-f-]{36}))?)?|imports(?:\/(?:inspect|preview|[0-9a-f-]{36}(?:\/(?:rows|review|commit|original))?))?|reports\/spending|categories|budgets\/\d{4}-\d{2}|transfers\/(?:confirm|[0-9a-f-]{36})|transactions(?:\/[0-9a-f-]{36}(?:\/(?:annotation|splits))?)?))?|invitations\/accept)$/i;
 const safeErrors: Record<string, string> = {
   INVALID_SCOPE: "Choose between one and fifty available accounts.",
   SCOPE_SELECTION_REQUIRED: "Choose up to fifty accounts for this report.",
@@ -97,6 +98,7 @@ export async function upstream(
     body?: object;
     token?: string;
     legacyToken?: string;
+    logoutCleanup?: string;
     idempotencyKey?: string;
     method?: "PATCH" | "PUT" | "DELETE";
     csv?: { bytes: ArrayBuffer; accountId: string; mapping?: string };
@@ -112,6 +114,8 @@ export async function upstream(
     );
   const environment = readEnvironment(webEnvironmentSchema, process.env);
   const headers: Record<string, string> = { Accept: "application/json" };
+  if (options.logoutCleanup)
+    headers["X-Logout-Cleanup"] = options.logoutCleanup;
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
   if (options.csv) {
     headers["Content-Type"] = "text/csv; charset=UTF-8";

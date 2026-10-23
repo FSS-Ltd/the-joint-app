@@ -77,6 +77,11 @@ export const authResultSchema = z
       "SIGNED_OUT",
     ]),
     providerCleanupPending: z.boolean().optional(),
+    providerCleanupToken: z
+      .string()
+      .max(4096)
+      .regex(/^v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/)
+      .optional(),
     browserToken: z
       .string()
       .regex(/^[A-Za-z0-9_-]{43}$/)

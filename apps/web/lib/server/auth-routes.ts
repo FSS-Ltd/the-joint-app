@@ -1,5 +1,6 @@
 import {
   authResultSchema,
+  readAuthProvider,
   emptyObjectSchema,
   logoutSchema,
   mfaCodeSchema,
@@ -12,6 +13,7 @@ import {
 } from "@joint/contracts";
 import {
   assertMutation,
+  LOGOUT_CLEANUP_COOKIE,
   CSRF_COOKIE,
   INVITATION_COOKIE,
   SESSION_COOKIE,
@@ -124,6 +126,21 @@ export function authPost(
         "Lax",
       );
     if (operation === "logout") {
+      if (readAuthProvider(process.env) === "clerk") {
+        if (result.providerCleanupPending && !result.providerCleanupToken)
+          throw new BffError(
+            503,
+            "INVALID_RESPONSE",
+            "Sign-out cleanup could not be prepared. Retry sign-out.",
+          );
+        setCookie(
+          response,
+          LOGOUT_CLEANUP_COOKIE,
+          result.providerCleanupToken ?? "",
+          result.providerCleanupPending ? 1800 : 0,
+          "Strict",
+        );
+      }
       setCookie(response, SESSION_COOKIE, "", 0, "Lax");
       setCookie(response, CSRF_COOKIE, "", 0, "Strict");
       setCookie(response, INVITATION_COOKIE, "", 0, "Lax");

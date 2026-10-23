@@ -43,7 +43,13 @@ export class ClerkIdentityService implements IdentityAccess {
   me(token: string): Promise<MeResponse> {
     return this.withIdentity(
       token,
-      async ({ principal, credential, transaction, expiresAt }) => {
+      async ({
+        principal,
+        credential,
+        transaction,
+        expiresAt,
+        mfaRequired,
+      }) => {
         const member = await transaction.membership.findFirst({
           where: { userId: principal.userId, status: "ACTIVE" },
           include: {
@@ -81,7 +87,7 @@ export class ClerkIdentityService implements IdentityAccess {
                 : new Date(principal.mfaAuthenticatedAt).toISOString(),
             expiresAt: expiresAt.toISOString(),
             purpose: "NORMAL",
-            needsMfa: credential.mfaEnrolled && principal.aal !== "aal2",
+            needsMfa: mfaRequired && principal.aal !== "aal2",
           },
           factors: credential.totpEnrolled
             ? [
@@ -169,7 +175,7 @@ export class ClerkIdentityService implements IdentityAccess {
   }
 }
 function requireMfa(identity: ClerkIdentityContext): void {
-  if (identity.credential.mfaEnrolled && identity.principal.aal !== "aal2")
+  if (identity.mfaRequired && identity.principal.aal !== "aal2")
     throw new ForbiddenException({
       error: {
         code: "MFA_REQUIRED",

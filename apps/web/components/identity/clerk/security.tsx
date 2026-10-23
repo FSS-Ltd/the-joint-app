@@ -7,6 +7,8 @@ import {
   useUser,
   useReverification,
 } from "@clerk/nextjs";
+import { useSearchParams } from "next/navigation";
+import { authContinuation } from "../../../lib/auth-continuation";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Feedback, IdentityFrame } from "../frame";
 import {
@@ -15,6 +17,7 @@ import {
   nextDestination,
   request,
 } from "../client";
+import { AuthenticatorEnrollment } from "./authenticator-enrollment";
 import { clerkFlowError } from "./flow";
 
 const appearance = {
@@ -27,6 +30,7 @@ const appearance = {
   },
 };
 export function ClerkPasswordTask(): ReactNode {
+  const search = useSearchParams().toString();
   return (
     <IdentityFrame
       eyebrow="Your account, protected"
@@ -34,7 +38,7 @@ export function ClerkPasswordTask(): ReactNode {
       description="Complete this security check before returning to your household."
     >
       <TaskResetPassword
-        redirectUrlComplete="/auth/complete"
+        redirectUrlComplete={authContinuation("/auth/complete", search)}
         appearance={appearance}
       />
     </IdentityFrame>
@@ -42,8 +46,15 @@ export function ClerkPasswordTask(): ReactNode {
 }
 export function ClerkSecurity(): ReactNode {
   const clerk = useClerk();
+  const parameters = useSearchParams();
+  const search = parameters.toString();
+  const recovering = parameters.get("recover") === "1";
   const { user, isLoaded } = useUser();
-  const [secret, setSecret] = useState("");
+  const [enrollment, setEnrollment] = useState<{
+    secret: string;
+    uri: string | null;
+  } | null>(null);
+  const secret = enrollment?.secret ?? "";
   const [code, setCode] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -53,6 +64,29 @@ export function ClerkSecurity(): ReactNode {
     if (!user) throw new Error();
     return user.createBackupCode();
   });
+  const disableAuthenticator = useReverification(async () => {
+    if (!user) throw new Error();
+    return user.disableTOTP();
+  });
+  async function replaceAuthenticator() {
+    if (!user || pending) return;
+    setPending(true);
+    setError("");
+    try {
+      // Record the MFA requirement before removal. Provider recovery never grants finance access.
+      await request("/api/me");
+      await disableAuthenticator();
+      await user.reload();
+      setBackupCodes([]);
+      setNotice(
+        "Old authenticator removed. Set up a replacement and verify it to regain app access.",
+      );
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setPending(false);
+    }
+  }
   async function enroll() {
     if (!user || pending) return;
     setPending(true);
@@ -60,7 +94,7 @@ export function ClerkSecurity(): ReactNode {
     try {
       const result = await user.createTOTP();
       if (!result.secret) throw new Error();
-      setSecret(result.secret);
+      setEnrollment({ secret: result.secret, uri: result.uri ?? null });
     } catch (cause) {
       setError(clerkFlowError(cause));
     } finally {
@@ -76,7 +110,7 @@ export function ClerkSecurity(): ReactNode {
       if (secret) {
         await user.verifyTOTP({ code });
         await user.reload();
-        setSecret("");
+        setEnrollment(null);
         setCode("");
         setNotice(
           "Authenticator enabled. Wait for the next code, then verify this session.",
@@ -85,7 +119,7 @@ export function ClerkSecurity(): ReactNode {
       }
       await clerk.session?.getToken({ skipCache: true });
       await request("/api/auth/mfa/verify", { factorId: "clerk_totp", code });
-      setSecret("");
+      setEnrollment(null);
       setCode("");
       announceSessionChange();
       window.location.assign(nextDestination());
@@ -119,7 +153,7 @@ export function ClerkSecurity(): ReactNode {
       </nav>
       {clerk.session?.currentTask?.key === "setup-mfa" ? (
         <TaskSetupMFA
-          redirectUrlComplete="/auth/complete"
+          redirectUrlComplete={authContinuation("/auth/complete", search)}
           appearance={appearance}
         />
       ) : (
@@ -140,6 +174,24 @@ export function ClerkSecurity(): ReactNode {
                 Use your authenticator app to verify this session. Sensitive
                 actions require a recent code.
               </p>
+              {recovering && user.totpEnabled && (
+                <section aria-label="Lost authenticator recovery">
+                  <p>
+                    Replacing your authenticator removes the old factor.
+                    Household access stays blocked until you set up a
+                    replacement and verify a fresh code. Clerk may ask you to
+                    verify a backup code again.
+                  </p>
+                  <button
+                    type="button"
+                    className="button secondary"
+                    disabled={pending}
+                    onClick={() => void replaceAuthenticator()}
+                  >
+                    Replace lost authenticator
+                  </button>
+                </section>
+              )}
               {!user.totpEnabled && !secret && (
                 <button
                   className="button primary"
@@ -150,17 +202,12 @@ export function ClerkSecurity(): ReactNode {
                   Set up authenticator
                 </button>
               )}
-              {secret && (
-                <div className="enrollment">
-                  <p className="privacy-label">
-                    Private setup · Do not share this key.
-                  </p>
-                  <p>
-                    Choose manual setup in your authenticator app. Add The
-                    Family Fund App and enter this key.
-                  </p>
-                  <code className="setup-secret">{secret}</code>
-                </div>
+              {enrollment && (
+                <AuthenticatorEnrollment
+                  key={enrollment.secret}
+                  secret={enrollment.secret}
+                  uri={enrollment.uri}
+                />
               )}
               {(user.totpEnabled || secret) && (
                 <form

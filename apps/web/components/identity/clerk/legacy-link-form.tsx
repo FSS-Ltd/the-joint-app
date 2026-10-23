@@ -1,9 +1,12 @@
 "use client";
+import { useSearchParams } from "next/navigation";
+import { authContinuation } from "../../../lib/auth-continuation";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Feedback } from "../frame";
 import { errorMessage, request, announceSessionChange } from "../client";
 
 export function LegacyLinkForm(): ReactNode {
+  const search = useSearchParams().toString();
   const [code, setCode] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -31,8 +34,10 @@ export function LegacyLinkForm(): ReactNode {
         authenticator check on this browser.
       </p>
       <p>
-        <a href="/security">Set up your new authenticator</a> before linking, if
-        needed.
+        <a href={authContinuation("/security", search)}>
+          Set up your new authenticator
+        </a>{" "}
+        before linking, if needed.
       </p>
       <label htmlFor="link-code">New account’s authenticator code</label>
       <input

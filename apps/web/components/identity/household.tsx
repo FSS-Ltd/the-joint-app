@@ -5,10 +5,11 @@ import { errorMessage, request } from "./client";
 import { Feedback, IdentityFrame } from "./frame";
 import { InvitationForm } from "./invitation-form";
 import { useIdentity } from "./use-identity";
-import { useAuthRuntime } from "./auth-runtime";
+import { LogoutCompletion } from "./logout-completion";
+import { useLogout } from "./use-logout";
 
 export function Household(): ReactNode {
-  const { finishSignOut } = useAuthRuntime();
+  const signout = useLogout();
   const { identity, error: loadError, loading, refresh } = useIdentity();
   const [name, setName] = useState("");
   const [key, setKey] = useState("");
@@ -29,19 +30,8 @@ export function Household(): ReactNode {
       setPending(false);
     }
   }
-  async function logout(scope: "local" | "global") {
-    setPending(true);
-    setError("");
-    try {
-      await request("/api/auth/logout", { scope });
-      await finishSignOut();
-      window.location.assign("/sign-in");
-    } catch (cause) {
-      setError(errorMessage(cause));
-      setPending(false);
-    }
-  }
   const membership = identity?.membership;
+  if (signout.started) return <LogoutCompletion signout={signout} />;
   return (
     <IdentityFrame
       eyebrow="Your household"
@@ -53,7 +43,7 @@ export function Household(): ReactNode {
           Loading your household…
         </p>
       )}
-      <Feedback error={loadError || error} />
+      <Feedback error={loadError || error || signout.error} />
       {loadError && (
         <button
           className="button secondary"
@@ -73,8 +63,8 @@ export function Household(): ReactNode {
             <button
               type="button"
               className="text-button"
-              disabled={pending}
-              onClick={() => void logout("local")}
+              disabled={pending || signout.pending}
+              onClick={() => void signout.logout("local")}
             >
               Sign out
             </button>
@@ -180,9 +170,9 @@ export function Household(): ReactNode {
           </p>
           <button
             className="text-button"
-            disabled={pending}
+            disabled={pending || signout.pending}
             type="button"
-            onClick={() => void logout("global")}
+            onClick={() => void signout.logout("global")}
           >
             Sign out on all devices
           </button>

@@ -1,3 +1,6 @@
+import { ClerkCredentialVerifier } from "../apps/api/src/modules/identity/clerk/credential-verifier.js";
+import { ClerkIdentityStore } from "../apps/api/src/modules/identity/clerk/identity-store.js";
+import { IdentityVault } from "../apps/api/src/modules/identity/identity-vault.js";
 import { meResponseSchema } from "../packages/contracts/src/identity.js";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
@@ -157,7 +160,18 @@ it("local logout remains effective even when remote cleanup fails", async () => 
     body: JSON.stringify({ scope: "local" }),
   });
   expect(response.status).toBe(200);
-  expect((await response.json()).providerCleanupPending).toBe(true);
+  fixture.setUnavailable(false);
+  const cleanup = await response.json();
+  expect(cleanup.providerCleanupPending).toBe(true);
+  expect(cleanup.providerCleanupToken).toMatch(/^v1\./);
+  revoke.mockClear();
+  const retry = await fetch(origin + "/v1/auth/logout/retry", {
+    method: "POST",
+    headers: { "X-Logout-Cleanup": cleanup.providerCleanupToken },
+  });
+  expect(retry.status).toBe(200);
+  expect((await retry.json()).providerCleanupPending).not.toBe(true);
+  expect(revoke).toHaveBeenCalledOnce();
   fixture.setUnavailable(false);
   expect((await me(person.userId, person.sessionId)).status).toBe(401);
 });
@@ -198,6 +212,15 @@ it("replaying global logout cannot revoke a later genuine provider sign-in", asy
       })
     ).status,
   ).toBe(200);
+  expect(
+    (
+      await fetch(origin + "/v1/auth/logout", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ scope: "local" }),
+      })
+    ).status,
+  ).toBe(401);
   const binding = await owner.clerkIdentity.findUniqueOrThrow({
     where: {
       issuer_subject: {
@@ -312,4 +335,77 @@ it("cannot grant TOTP proof from a failed verification or a locally revoked sess
     body: JSON.stringify({ scope: "local" }),
   });
   expect((await verify()).status).toBe(401);
+});
+
+it.each([false, true])(
+  "provider-observed terminal session blocks an earlier in-flight JIT snapshot (existing identity=%s)",
+  async (existingIdentity) => {
+    const person = fixture.account(true);
+    if (existingIdentity)
+      expect((await me(person.userId, person.sessionId)).status).toBe(200);
+    const state = fixture.sessions.get(person.sessionId);
+    if (!state) throw new Error("Missing synthetic session");
+    const sessionId = existingIdentity
+      ? "sess_" + randomUUID().replaceAll("-", "")
+      : person.sessionId;
+    fixture.sessions.set(sessionId, {
+      ...state,
+      id: sessionId,
+      status: "active",
+    });
+    const verifier = new ClerkCredentialVerifier(
+      fixture.environment,
+      fixture.gateway,
+    );
+    // A finished its provider read before B observed the terminal status, but has not registered locally.
+    const earlier = await verifier.verify(
+      await fixture.token(person.userId, sessionId),
+    );
+    const current = fixture.sessions.get(sessionId);
+    if (!current) throw new Error("Missing synthetic session");
+    current.status = "revoked";
+    expect((await me(person.userId, sessionId)).status).toBe(401);
+    const store = new ClerkIdentityStore(
+      runtime,
+      new IdentityVault(
+        fixture.environment.AUTH_TOKEN_KEY,
+        fixture.environment.AUTH_EMAIL_HASH_KEY,
+      ),
+    );
+    await expect(
+      store.withCredential(earlier, async ({ principal }) => {
+        internalUsers.add(principal.userId);
+        return principal;
+      }),
+    ).rejects.toMatchObject({ status: 401 });
+  },
+);
+
+it("removing an authenticator during recovery cannot bypass an already established MFA requirement", async () => {
+  const person = fixture.account(true);
+  const user = fixture.users.get(person.userId);
+  if (!user) throw new Error("Missing synthetic user");
+  user.otherSecondFactorsEnabled = true;
+  const meBefore = meResponseSchema.parse(
+    await (await me(person.userId, person.sessionId)).json(),
+  );
+  expect(meBefore.session.needsMfa).toBe(true);
+  user.mfaEnabled = false;
+  user.totpEnabled = false;
+  user.otherSecondFactorsEnabled = false;
+  const meAfter = meResponseSchema.parse(
+    await (await me(person.userId, person.sessionId)).json(),
+  );
+  expect(meAfter.session.needsMfa).toBe(true);
+  const response = await fetch(origin + "/v1/households", {
+    method: "POST",
+    headers: {
+      Authorization:
+        "Bearer " + (await fixture.token(person.userId, person.sessionId)),
+      "Content-Type": "application/json",
+      "Idempotency-Key": randomUUID(),
+    },
+    body: JSON.stringify({ name: "Synthetic recovery fence" }),
+  });
+  expect(response.status).toBe(403);
 });

@@ -1,21 +1,31 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+import { authContinuation } from "../../../lib/auth-continuation";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { authContent, type AuthMode } from "../auth-content";
 import { Feedback, IdentityFrame } from "../frame";
 import { PasswordField } from "../password-field";
 import { useClerkAuthFlow } from "./use-auth-flow";
 
-export function ClerkAuthForm({ mode }: { mode: AuthMode }): ReactNode {
+export function ClerkAuthForm({
+  mode,
+  cleanupPending = false,
+}: {
+  mode: AuthMode;
+  cleanupPending?: boolean;
+}): ReactNode {
   const flow = useClerkAuthFlow(mode);
+  const search = useSearchParams().toString();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
+  const [backupCode, setBackupCode] = useState(false);
   const text = authContent[mode];
   const stage = flow.stage.step;
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (await flow.submit(email, password, code)) {
+    if (await flow.submit(email, password, code, backupCode)) {
       setPassword("");
       setCode("");
     }
@@ -40,6 +50,26 @@ export function ClerkAuthForm({ mode }: { mode: AuthMode }): ReactNode {
                 ? "Choose a new password"
                 : text.heading}
         </h2>
+        {flow.hasExistingSession && (
+          <p role="status">
+            You are already signed in.{" "}
+            <button
+              type="button"
+              className="text-button"
+              disabled={flow.pending}
+              onClick={() => void flow.signOutExisting()}
+            >
+              Sign out of this browser
+            </button>{" "}
+            before starting another sign-in.
+          </p>
+        )}
+        {cleanupPending && (
+          <p role="status">
+            A previous provider sign-out still needs cleanup.{" "}
+            <a href="/sign-out">Finish previous sign-out</a>
+          </p>
+        )}
         {stage === "email" && (
           <p>
             Enter the code sent to{" "}
@@ -54,13 +84,36 @@ export function ClerkAuthForm({ mode }: { mode: AuthMode }): ReactNode {
             type="button"
             className="text-button"
             disabled={flow.pending}
-            onClick={() => void flow.restart()}
+            onClick={() => {
+              setBackupCode(false);
+              setCode("");
+              void flow.restart();
+            }}
           >
             Start again
           </button>
         )}
         {stage === "mfa" && (
-          <p>Enter the six-digit code from your authenticator app.</p>
+          <>
+            <p>
+              {backupCode
+                ? "Enter a private one-time backup code. This opens security recovery; it does not grant access to household finances."
+                : "Enter the six-digit code from your authenticator app."}
+            </p>
+            {flow.backupAvailable && (
+              <button
+                type="button"
+                className="text-button"
+                disabled={flow.pending}
+                onClick={() => {
+                  setBackupCode(!backupCode);
+                  setCode("");
+                }}
+              >
+                {backupCode ? "Use an authenticator code" : "Use a backup code"}
+              </button>
+            )}
+          </>
         )}
         <form className="form-stack" onSubmit={submit} aria-busy={flow.pending}>
           {stage === "credentials" && (
@@ -100,15 +153,17 @@ export function ClerkAuthForm({ mode }: { mode: AuthMode }): ReactNode {
           {verification && (
             <label>
               {stage === "mfa"
-                ? "Authenticator code"
+                ? backupCode
+                  ? "Backup code"
+                  : "Authenticator code"
                 : "Email verification code"}
               <input
-                inputMode="numeric"
+                inputMode={stage === "mfa" && backupCode ? "text" : "numeric"}
                 autoComplete="one-time-code"
-                pattern="[0-9]{6}"
+                pattern={stage === "mfa" && backupCode ? undefined : "[0-9]{6}"}
                 required
-                minLength={6}
-                maxLength={6}
+                minLength={stage === "mfa" && backupCode ? 1 : 6}
+                maxLength={stage === "mfa" && backupCode ? 128 : 6}
                 disabled={flow.pending}
                 value={code}
                 onChange={(event) => setCode(event.target.value.trim())}
@@ -136,10 +191,12 @@ export function ClerkAuthForm({ mode }: { mode: AuthMode }): ReactNode {
           <button
             type="button"
             className="text-button"
-            disabled={flow.pending}
+            disabled={flow.pending || flow.resendSeconds > 0}
             onClick={() => void flow.resend()}
           >
-            Send a new code
+            {flow.resendSeconds > 0
+              ? `Send a new code in ${flow.resendSeconds}s`
+              : "Send a new code"}
           </button>
         )}
         {stage === "credentials" && mode !== "recovery" && (
@@ -154,14 +211,21 @@ export function ClerkAuthForm({ mode }: { mode: AuthMode }): ReactNode {
         )}
         {mode === "sign-in" && (
           <p>
-            <a href="/recovery">Forgot your password?</a>
+            <a href={authContinuation("/recovery", search)}>
+              Forgot your password?
+            </a>
           </p>
         )}
         <p>
           {mode === "sign-up"
             ? "Already have an account?"
             : "New to The Family Fund App?"}{" "}
-          <a href={mode === "sign-up" ? "/sign-in" : "/sign-up"}>
+          <a
+            href={authContinuation(
+              mode === "sign-up" ? "/sign-in" : "/sign-up",
+              search,
+            )}
+          >
             {mode === "sign-up" ? "Sign in" : "Create an account"}
           </a>
         </p>

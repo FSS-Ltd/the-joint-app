@@ -3,6 +3,14 @@ import { resolveClerkSessionToken } from "./clerk-session";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { BffError } from "./responses";
 
+export const LOGOUT_CLEANUP_COOKIE = "joint-logout-cleanup";
+const cleanupPattern = /^v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
+function validCookie(name: string, value: string): boolean {
+  return name === LOGOUT_CLEANUP_COOKIE
+    ? value.length <= 4096 && cleanupPattern.test(value)
+    : tokenPattern.test(value);
+}
+
 export const SESSION_COOKIE = "joint-session";
 export const CSRF_COOKIE = "joint-csrf";
 export const INVITATION_COOKIE = "joint-pending-invite";
@@ -39,7 +47,7 @@ export function readCookie(request: Request, name: string): string | null {
     .filter((value) => value.startsWith(`${name}=`));
   if (matches.length !== 1) return null;
   const value = matches[0]?.slice(name.length + 1) ?? "";
-  return tokenPattern.test(value) ? value : null;
+  return validCookie(name, value) ? value : null;
 }
 
 export function setCookie(
@@ -49,7 +57,7 @@ export function setCookie(
   maxAge: number,
   sameSite: "Lax" | "Strict",
 ): void {
-  if (value && !tokenPattern.test(value))
+  if (value && !validCookie(name, value))
     throw new BffError(
       503,
       "INVALID_RESPONSE",

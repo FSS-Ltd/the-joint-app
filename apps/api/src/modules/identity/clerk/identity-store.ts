@@ -15,6 +15,7 @@ export interface ClerkIdentityContext {
   credential: ClerkCredential;
   transaction: Prisma.TransactionClient;
   expiresAt: Date;
+  mfaRequired: boolean;
 }
 interface MappingRow {
   userId: string;
@@ -36,6 +37,9 @@ export class ClerkIdentityStore {
   ): Promise<T> {
     if (credential.expiresAt <= Date.now()) throw new UnauthorizedException();
     try {
+      // Keep an observed MFA requirement even if the later protected operation is denied.
+      await this.database
+        .$queryRaw`SELECT app.clerk_mfa_requirement(${credential.issuer},${credential.subject},${credential.mfaEnrolled})`;
       return await this.database.$transaction(async (transaction) => {
         const [row] = await transaction.$queryRaw<
           MappingRow[]
@@ -43,6 +47,10 @@ export class ClerkIdentityStore {
           ${credential.issuer},${credential.subject},${credential.sessionId},${this.vault.emailHash(credential.email)},
           ${new Date(credential.expiresAt)}::timestamptz,${new Date(credential.sessionExpiresAt)}::timestamptz,${new Date(credential.sessionCreatedAt)}::timestamptz) mapped`;
         if (!row) throw new UnauthorizedException();
+        const [requirement] = await transaction.$queryRaw<
+          { required: boolean }[]
+        >`SELECT app.clerk_mfa_requirement(${credential.issuer},${credential.subject},${credential.mfaEnrolled}) AS required`;
+        if (!requirement) throw new UnauthorizedException();
         const localProof = credential.totpEnrolled
           ? (row.totpVerifiedAt?.getTime() ?? null)
           : null;
@@ -59,6 +67,7 @@ export class ClerkIdentityStore {
         );
         return apply({
           credential,
+          mfaRequired: requirement.required,
           transaction,
           expiresAt: row.expiresAt,
           principal: {

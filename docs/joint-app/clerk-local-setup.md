@@ -46,3 +46,11 @@ Clerk handles email, passwords, authenticator secrets and Google authentication.
 Actual vendor data region, retention/deletion commitments and Google consent configuration still need review before production. This repository does not claim UK/EU residency or compliance from selecting Clerk. Production MFA pricing conflicts with the current £0 incremental budget and remains a release decision; do not disable required MFA or make a paid commitment to resolve it.
 
 No deployment, tunnel or paid resource has been created. Deployment remains prohibited until MVP is complete and separately approved.
+
+## Sign-out and authenticator recovery
+
+A failed provider logout does not restore app access. Keep the pending-cleanup screen open and retry, or use **Finish previous sign-out** on the sign-in page after a refresh. The HttpOnly encrypted cleanup capability expires thirty minutes after the original logout cutoff and never revokes a later sign-in. If it expires, sign in again to manage sessions; pending remote sessions are not represented as successfully cleaned up. A browser session that still exists can be cleared with **Sign out of this browser**.
+
+Use **Use a backup code** during an authenticator challenge if the device is lost. Recovery opens account security, where replacing the old authenticator may require Clerk reverification. Set up a replacement, then verify a fresh code. Once the app has observed MFA enrollment, removing the factor cannot remove its MFA access requirement. Backup codes and Device Trust never establish fresh TOTP authority for financial actions.
+
+QR setup is generated locally using the pinned `qrcode` encoder. The private URI/key is held only in the enrollment UI; no external QR image service receives it. Manual setup remains available if QR generation fails. Email-code resend is limited by a thirty-second UI cooldown as well as Clerk's provider-side limits.

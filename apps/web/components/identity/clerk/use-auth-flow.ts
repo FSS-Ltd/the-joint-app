@@ -1,8 +1,12 @@
 "use client";
 
-import { useSignIn, useSignUp } from "@clerk/nextjs";
+import { useClerk, useSignIn, useSignUp } from "@clerk/nextjs";
 import { useEffect, useRef, useState } from "react";
-import { announceSessionChange, nextDestination } from "../client";
+import { announceSessionChange } from "../client";
+import {
+  authContinuation,
+  type AuthTransition,
+} from "../../../lib/auth-continuation";
 import {
   advanceSignIn,
   advanceSignUp,
@@ -14,17 +18,14 @@ import {
   type ClerkStage,
 } from "./flow";
 
+import { useResendCooldown } from "./use-resend-cooldown";
+
 import type { AuthMode } from "../auth-content";
-export function continuation(path: string): string {
-  const next = nextDestination();
-  return (
-    path +
-    (next === "/household"
-      ? ""
-      : `?next=${next === "/settings/privacy" ? "privacy" : next.slice(1)}`)
-  );
+export function continuation(path: AuthTransition): string {
+  return authContinuation(path, window.location.search);
 }
 export function useClerkAuthFlow(mode: AuthMode) {
+  const clerk = useClerk();
   const { signIn, fetchStatus: signingIn } = useSignIn();
   const { signUp, fetchStatus: signingUp } = useSignUp();
   const [stage, setStage] = useState<ClerkStage>({ step: "credentials" });
@@ -32,6 +33,9 @@ export function useClerkAuthFlow(mode: AuthMode) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const resumed = useRef(false);
+  const running = useRef(false);
+  const recoveringAuthenticator = useRef(false);
+  const resendCooldown = useResendCooldown();
   async function finalize() {
     const navigate = ({
       session,
@@ -41,8 +45,16 @@ export function useClerkAuthFlow(mode: AuthMode) {
       decorateUrl: (url: string) => string;
     }) => {
       announceSessionChange();
+      const task = taskPath(session.currentTask?.key);
+      const path =
+        recoveringAuthenticator.current && task === "/auth/complete"
+          ? "/security"
+          : task;
+      const destination = new URL(continuation(path), window.location.origin);
+      if (recoveringAuthenticator.current)
+        destination.searchParams.set("recover", "1");
       window.location.assign(
-        decorateUrl(continuation(taskPath(session.currentTask?.key))),
+        decorateUrl(destination.pathname + destination.search),
       );
     };
     checked(
@@ -56,10 +68,12 @@ export function useClerkAuthFlow(mode: AuthMode) {
       ? advanceSignUp(signUp)
       : advanceSignIn(signIn));
     setStage(next);
+    if (next.step === "email") resendCooldown.start();
     if (next.step === "complete") await finalize();
   }
   async function run(action: () => Promise<void>) {
-    if (pending) return false;
+    if (running.current) return false;
+    running.current = true;
     setPending(true);
     setError("");
     setNotice("");
@@ -74,6 +88,7 @@ export function useClerkAuthFlow(mode: AuthMode) {
       );
       return false;
     } finally {
+      running.current = false;
       setPending(false);
     }
   }
@@ -88,15 +103,32 @@ export function useClerkAuthFlow(mode: AuthMode) {
   }, []);
   return {
     stage,
+    hasExistingSession: Boolean(clerk.session),
+    signOutExisting: () =>
+      run(async () => {
+        if (clerk.session) await clerk.signOut({ sessionId: clerk.session.id });
+        announceSessionChange();
+        window.location.replace(continuation("/sign-in"));
+      }),
     pending: pending || signingIn === "fetching" || signingUp === "fetching",
     error,
     notice,
+    resendSeconds: resendCooldown.seconds,
+    backupAvailable: signIn.supportedSecondFactors.some(
+      (factor) => factor.strategy === "backup_code",
+    ),
     restart: () =>
       run(async () => {
         checked(await (mode === "sign-up" ? signUp.reset() : signIn.reset()));
+        recoveringAuthenticator.current = false;
         setStage({ step: "credentials" });
       }),
-    submit: (email: string, password: string, code: string) =>
+    submit: (
+      email: string,
+      password: string,
+      code: string,
+      backupCode = false,
+    ) =>
       run(async () => {
         if (stage.step === "credentials") {
           if (mode === "sign-up")
@@ -104,6 +136,7 @@ export function useClerkAuthFlow(mode: AuthMode) {
           else if (mode === "recovery") {
             checked(await signIn.create({ identifier: email }));
             checked(await signIn.resetPasswordEmailCode.sendCode());
+            resendCooldown.start();
             setStage({ step: "email", kind: "recovery" });
             return;
           } else
@@ -115,9 +148,14 @@ export function useClerkAuthFlow(mode: AuthMode) {
             checked(await signIn.mfa.verifyEmailCode({ code }));
           else
             checked(await signIn.resetPasswordEmailCode.verifyCode({ code }));
-        } else if (stage.step === "mfa")
-          checked(await signIn.mfa.verifyTOTP({ code }));
-        else if (stage.step === "password") {
+        } else if (stage.step === "mfa") {
+          checked(
+            await (backupCode
+              ? signIn.mfa.verifyBackupCode({ code })
+              : signIn.mfa.verifyTOTP({ code })),
+          );
+          recoveringAuthenticator.current = backupCode;
+        } else if (stage.step === "password") {
           if (mode === "sign-up") checked(await signUp.password({ password }));
           else
             checked(
@@ -131,12 +169,13 @@ export function useClerkAuthFlow(mode: AuthMode) {
       }),
     resend: () =>
       run(async () => {
-        if (stage.step !== "email") return;
+        if (stage.step !== "email" || !resendCooldown.canResend()) return;
         if (stage.kind === "signup")
           checked(await signUp.verifications.sendEmailCode());
         else if (stage.kind === "device")
           checked(await signIn.mfa.sendEmailCode());
         else checked(await signIn.resetPasswordEmailCode.sendCode());
+        resendCooldown.start();
         setNotice(
           "A new verification code was sent. Use the most recent email.",
         );
