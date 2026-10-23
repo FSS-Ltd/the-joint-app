@@ -1,6 +1,6 @@
-# Bank provider evidence gates
+# Provider evidence gates
 
-Task 0.2 register. Checked 23 October 2026. Public evidence references are research, not approval. Owner “founder” means the human operator; engineering owns technical verification after approval. Store supplier contracts/quotes and private product matrices through a private channel, never in this public repo.
+Task 0.2 bank register and Task 0.3 brokerage boundary. Checked 23 October 2026. Public evidence references are research, not approval. Owner “founder” means the human operator; engineering owns technical verification after approval. Store supplier contracts/quotes and private product matrices through a private channel, never in this public repo.
 
 | id  | status  | owner                                   | evidenceRef                                                                              | checkedAt  | recheckAt                            | permittedScope                                                        | blockedTasks                                                             |
 | --- | ------- | --------------------------------------- | ---------------------------------------------------------------------------------------- | ---------- | ------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -25,3 +25,12 @@ Brokerage permissions belong to Task 0.3; they remain unresolved under the exist
 The founder explicitly deferred direct bank connections until post-MVP. B1–B3 remain missing and must not be marked approved. Their downstream block applies to future live bank work, not to the CSV/manual MVP. Recheck when post-MVP bank work is scheduled or supplier conditions change; the table's earlier reminder dates do not schedule procurement or automation.
 
 Task 0.2's current deliverable is the recorded deferral, retained comparison/brief and explicit future gate. This replaces its previous requirement to obtain supplier evidence before manual development may proceed. No enquiry is sent and no production provider is selected. After this revision passes CI and is confirmed merged, proceed to the next planned step. Other source permissions remain governed by their own gates.
+
+## Brokerage gates — Task 0.3
+
+| id  | status  | owner                                | evidenceRef                                                                        | checkedAt  | recheckAt                                    | permittedScope                                                                               | blockedTasks                                                                          |
+| --- | ------- | ------------------------------------ | ---------------------------------------------------------------------------------- | ---------- | -------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| T1  | missing | Founder / provider                   | trading212-scope.md; no written app-specific API permission supplied               | 2026-10-23 | Before any provider-specific API development | Generic CSV/manual records and synthetic fixtures only, subject to ordinary data permissions | Provider-specific API implementation, credential handling and live/shared API display |
+| T2  | missing | Founder / source owner / engineering | Private source inventory; exact wrapper/entity and API reconciliation not verified | 2026-10-23 | Before approved direct-broker testing        | Source discovery; no live test implied                                                       | Direct-broker scope verification, live reconciliation and connected-source claims     |
+
+T1 evidence must cover intended shared/other-user/commercial scope and relevant display/hosting/retention restrictions. T2 requires an actual supported account and permitted read-only scopes after T1 approval; keep credentials out of this register. Both gates remain missing. Task 0.3's CSV-first boundary permits generic manual development, not a provider-specific API bypass.
