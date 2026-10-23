@@ -16,6 +16,8 @@ the-joint-app-plan/
 docs/private/
 Design/
 .local/
+.superpowers/
+.playwright-mcp/
 
 # Reproducible Prisma client output
 packages/database/src/generated/
