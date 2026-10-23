@@ -1,5 +1,7 @@
 # The Joint App — Delivery, Testing, Operations and Costs
 
+> **Current execution order, 23 October 2026:** The CSV-first baseline follows Phase 0 → Phase 1 → Phase 3 from manual/imported evidence → Phase 4 → Phase 5. Phase 2 bank/direct-source work and child profiles are deferred; live-source prerequisites below do not block the manual MVP. Retain source activation gates, local-AI/security/device requirements and the per-step PR/CI/merge gate. See [release scope](../decisions/release-scope.md).
+
 **As of:** 22 October 2026. Cost and schedule ranges are planning estimates, not supplier quotes or work already completed.
 
 ## 1. Delivery plan and effort

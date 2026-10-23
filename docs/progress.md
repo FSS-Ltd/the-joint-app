@@ -97,3 +97,11 @@ Three bounded synthetic-only loopback model requests completed with digest verif
 No product code/schema/dependencies or cloud resources changed. Current step will be locally checked and reviewed before its PR. Task 0.5 cannot begin until current CI and verified merge pass.
 
 Task 0.4 PR: https://github.com/FSS-Ltd/the-joint-app/pull/5. Locally checked baseline revision: `0ba8bb75fa8b525075f4dd91f22ed6b4b3ce14c0`. Pre-PR verification passed: frozen install, exact installed version/licence metadata, formatting, lint, 4 unit tests, links/disclosure/diff review, three synthetic model runs and JSON/fact/limit checks. No app code changed; full runtime CI remains required on the final PR head. Final head/test-merge/check evidence is recorded on the PR. Merge pending; no Task 0.5 work started.
+
+## Task 0.5 — CSV-first release gates and cost baseline
+
+Predecessor Task 0.4 PR #5 verified merged at `bf332fa6433220303ca49d62e4c28c0cf38f2200`. Final head `0cd3d08cbe7510883b560b4733a5d00ba50fe2cd`, test-merge `73f193d1dbcd27c32a29cefbba76e42dae0f786d`, Foundation checks SUCCESS (run 39876961008). This supersedes historical Task 0.4 pending-merge entries.
+
+Branch: build/0.5-csv-release-gates. Release scope maps R01–R16 and the revised phase order; launch gates have explicit owners/evidence. Cost model separates known vendor headlines, hypothetical sensitivity inputs, missing actual costs and spend authority. New recurring-spend authority remains £0 until an explicit concrete purchase/deployment approval; production planning budget is undecided. No paid services provisioned or quotes invented.
+
+Current baseline acceptance: accurate CSV-first/manual versus future-source/child scope, no false production/quality/commercial claims, explicit gates/owners, checked cost arithmetic and repository links, local formatting/self-review before PR. No product code changed. Phase 1 Task 1.1 starts only after current CI and verified merge of this final Phase 0 baseline unit. Real-data/production/public gates remain open; baseline handoff does not complete the product.
