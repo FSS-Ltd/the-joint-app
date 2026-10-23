@@ -156,6 +156,34 @@ must be checked in the progress record before implementation/delegation.
 - Set performance budgets against real user journeys and expected traffic.
   Measure affected hot paths and validate caching/invalidation when changed.
 
+## Event-driven updates
+
+Subscriptions and events are the default for every build. Do not repeatedly
+query a database or status API merely to discover whether something changed.
+Use provider/SDK subscriptions, scoped application events and worker wakeup
+notifications. Select the transport for the actual runtime; do not introduce a
+paid broker or deployment as part of this standard.
+
+Keep durable state authoritative. Commit the job or change before notifying,
+handle duplicate events idempotently, and reconcile once at startup and after
+reconnection so missed notifications cannot lose work. Schedule retries and
+expiry work for their due times rather than repeatedly scanning idle tables.
+Notifications must not carry financial data or credentials. Authenticate event
+subscriptions, enforce tenant and permission boundaries, and recheck authority
+when reading data or executing work; an event is not an access grant.
+
+On-demand health checks, active job-lease heartbeats and bounded reconnect
+backoff have distinct purposes. Any necessary periodic reconciliation fallback
+must document its reason, frequency and query budget; it must not become the
+normal update mechanism. UI countdown timers do not need database queries.
+
+Verification must cover idle query/request counts, prompt updates after a
+committed change, reconnect catch-up, duplicate handling, permission revocation,
+tenant isolation, unsubscribe cleanup and graceful shutdown. For PostgreSQL
+notifications, follow the documented transaction and initial-listener rules:
+[NOTIFY](https://www.postgresql.org/docs/17/sql-notify.html) and
+[LISTEN](https://www.postgresql.org/docs/17/sql-listen.html).
+
 ## Security, data and delivery
 
 - Enforce server-side authentication and authorization on protected operations,

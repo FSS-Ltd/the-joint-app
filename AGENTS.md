@@ -79,6 +79,9 @@ See [BUILD.md](BUILD.md) for the delivery procedure and repository enforcement.
 
 ## Engineering quality
 
+- Use subscriptions and events by default for state updates and worker wakeups;
+  do not add recurring database/API polling to detect changes. Follow the
+  event-driven update standard in [BUILD.md](BUILD.md).
 - Prioritize correctness, maintainability, strict types, accessibility and secure
   data boundaries. Keep modules focused and routes/controllers thin. Extract
   components or helpers when they improve clarity or remove real duplication.
