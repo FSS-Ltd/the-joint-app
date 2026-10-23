@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>The Family Fund App — wireframe review</title>
+    <link rel="stylesheet" href="review.css" />
+  </head>
+  <body>
+    <a class="skip" href="#frames">Skip to wireframes</a>
+    <header>
+      <p class="eyebrow">The Family Fund App · design review</p>
+      <h1>A clearer view, together.</h1>
+      <p>
+        Proposed visual baseline. These are static wireframes with synthetic
+        figures, not working finance screens. The running app remains separate.
+      </p>
+      <nav aria-label="Wireframe screens">
+        <a href="#home">Home</a>
+        <a href="#desktop">Desktop</a>
+        <a href="#accounts">Accounts</a>
+        <a href="#caps">Spending caps</a>
+        <a href="#activity">CSV review</a>
+        <a href="#setup">Setup</a>
+        <a href="../DESIGN.md">Design contract</a>
+      </nav>
+    </header>
+    <main id="frames" tabindex="-1">
+      <section id="home">
+        <div class="caption">
+          <p class="eyebrow">01 · Mobile</p>
+          <h2>Home overview</h2>
+          <p>
+            A forest backdrop, layered framing and an opaque financial summary.
+            Scope and CSV freshness stay visible beside the figures.
+          </p>
+        </div>
+        <img
+          class="mobile"
+          src="home-mobile.png"
+          alt="Proposed mobile Home screen with available amount, eating-out allowance, saving plan and recent sample activity."
+          width="780"
+          loading="eager"
+        />
+      </section>
+      <section id="desktop" class="wide">
+        <div class="caption">
+          <p class="eyebrow">02 · Desktop</p>
+          <h2>A purposeful workspace</h2>
+          <p>
+            Dark navigation, visible account scope and compact finance panels
+            adapt the reference composition to wider screens.
+          </p>
+        </div>
+        <img
+          src="home-desktop.png"
+          alt="Proposed desktop workspace with forest navigation rail, account scope and compact overview panels."
+          loading="lazy"
+        />
+      </section>
+      <section id="accounts">
+        <div class="caption">
+          <p class="eyebrow">03 · Mobile</p>
+          <h2>Accounts and permissions</h2>
+          <p>
+            Ownership and sharing labels explain which accounts contribute to
+            the visible total. Restricted accounts reveal no financial details.
+          </p>
+        </div>
+        <img
+          class="mobile"
+          src="accounts-mobile.png"
+          alt="Proposed Accounts screen with synthetic private and shared account labels and CSV import actions."
+          loading="lazy"
+        />
+      </section>
+      <section id="caps">
+        <div class="caption">
+          <p class="eyebrow">04 · Mobile</p>
+          <h2>Spending caps and saving impact</h2>
+          <p>
+            £58 spent against a £50 cap means £8 over. If the £200 saving plan
+            assumes caps are met, the resulting amount is £192. No money moves.
+          </p>
+          <p>
+            A brief pulse may mark a new overspend. Reduced motion keeps a
+            static red warning. Remaining allowance prompts a review at month
+            end.
+          </p>
+        </div>
+        <img
+          class="mobile"
+          src="caps-mobile.png"
+          alt="Proposed spending-cap screen showing £8 overspend, £192 remaining for a £200 saving plan, and labelled within-limit and zero-left states."
+          loading="lazy"
+        />
+      </section>
+      <section id="activity">
+        <div class="caption">
+          <p class="eyebrow">05 · Mobile</p>
+          <h2>Activity and CSV review</h2>
+          <p>
+            Compact rows lead into an explicit review before an import is
+            committed. Validation examples remain clearly separate.
+          </p>
+        </div>
+        <img
+          class="mobile"
+          src="activity-mobile.png"
+          alt="Proposed Activity screen with sample transactions, CSV import review and a separate date-validation example."
+          loading="lazy"
+        />
+      </section>
+      <section id="setup">
+        <div class="caption">
+          <p class="eyebrow">06 · Mobile</p>
+          <h2>Setup at your pace</h2>
+          <p>
+            Partner invitation is optional. Verification and MFA retain their
+            existing security requirements within the same visual family.
+          </p>
+        </div>
+        <img
+          class="mobile"
+          src="setup-mobile.png"
+          alt="Proposed household setup with invitation form, visible Invite later action and a separate verification pattern."
+          loading="lazy"
+        />
+      </section>
+    </main>
+    <footer>
+      <p>
+        Proposal only · Original visual references remain private · No
+        deployment
+      </p>
+      <a href="#">Back to top</a>
+    </footer>
+  </body>
+</html>

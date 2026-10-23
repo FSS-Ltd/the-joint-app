@@ -14,7 +14,7 @@ the-joint-app-plan/
 
 # Local household discovery and third-party visual references
 docs/private/
-Design/
+/Design/
 .local/
 .superpowers/
 .playwright-mcp/

@@ -1,0 +1,88 @@
+{
+  "project": "projects/16873688144152014118",
+  "visibilityAtCreation": "PRIVATE",
+  "designSystem": "assets/3d9cb4dde5ff486cbbf38f3735905a3b",
+  "canonicalGeometry": "geometry.css",
+  "geometrySha256": "2cdc8cb8d8640448010ef8c4660c4a010e2a0a5cab1131dcde870d1124c048a2",
+  "humanApproval": "not recorded",
+  "screens": [
+    {
+      "key": "home",
+      "stitchScreen": "projects/16873688144152014118/screens/94cdf9d2b43741b7aa44a3d48c79fd80",
+      "source": "sources/home.html",
+      "image": "home-mobile.png",
+      "status": "self-reviewed proposal",
+      "imagePixels": {
+        "width": 780,
+        "height": 2410
+      },
+      "imageSha256": "39cc2637d245d84d6e7267f74da0228a6bfa3d29a50470fd106ed34f3f84f9aa",
+      "sourceSha256": "f11c0da4e77b3b5dc32f06ec862c24af2cceb60ccb7a3ac9da6d3b45a949ec11"
+    },
+    {
+      "key": "accounts",
+      "stitchScreen": "projects/16873688144152014118/screens/f77d8d40ad0343c1a6c7bbbf387cbd6c",
+      "source": "sources/accounts.html",
+      "image": "accounts-mobile.png",
+      "status": "self-reviewed proposal",
+      "imagePixels": {
+        "width": 780,
+        "height": 2512
+      },
+      "imageSha256": "559eb789fad357491a15aba6ceef9b74dc3fa50ba4eda5ef7747fe2f1268767a",
+      "sourceSha256": "11358f8d7b8c9f2fb426c48dbd992d15fcd280c6d32adc70ef7c1001a4ac45ec"
+    },
+    {
+      "key": "caps",
+      "stitchScreen": "projects/16873688144152014118/screens/3aa7083acf8a4ad3a33646180eb4497f",
+      "source": "sources/caps.html",
+      "image": "caps-mobile.png",
+      "status": "self-reviewed proposal",
+      "imagePixels": {
+        "width": 780,
+        "height": 3090
+      },
+      "imageSha256": "63c20b5bfb76fcb41282afcf43a843c6f116b4b2c6e49fdd4264ddf5b92a62f4",
+      "sourceSha256": "7697195171d8b07342e84a0ce64a550dfc1d085b7df501df4a28ef6e087c1837"
+    },
+    {
+      "key": "activity",
+      "stitchScreen": "projects/16873688144152014118/screens/9057451de7f24d1eb9a29ce929192498",
+      "source": "sources/activity.html",
+      "image": "activity-mobile.png",
+      "status": "self-reviewed proposal",
+      "imagePixels": {
+        "width": 780,
+        "height": 2492
+      },
+      "imageSha256": "7ce75c47adfc910048522cc440e9ca28ad39c2eb1d7b950b2017a2d26e8b5c65",
+      "sourceSha256": "c1406ac6e275f40489c3c53202e29581afa1a431e292ceb97c7a9978913c6f5c"
+    },
+    {
+      "key": "setup",
+      "stitchScreen": "projects/16873688144152014118/screens/b4be8abe5c4a48059066d60aebc999f6",
+      "source": "sources/setup.html",
+      "image": "setup-mobile.png",
+      "status": "self-reviewed proposal",
+      "imagePixels": {
+        "width": 780,
+        "height": 2246
+      },
+      "imageSha256": "7b48198212d6bef9871f630b6de9f7161421927f52df5ac41b702b026378edda",
+      "sourceSha256": "03a0999e22bd8a03302ebc138f31fcb05609f125ecdd41913eddc1ed5ee2313b"
+    },
+    {
+      "key": "desktop",
+      "stitchScreen": "projects/16873688144152014118/screens/9401f0b7728c4ed69bd5741855e43216",
+      "source": "sources/desktop.html",
+      "image": "home-desktop.png",
+      "status": "self-reviewed proposal",
+      "imagePixels": {
+        "width": 2880,
+        "height": 2200
+      },
+      "imageSha256": "79474e0e2c44b9e59b0428959a24474928891dfd247681c9fdfc43ece686eae4",
+      "sourceSha256": "e888fd6d368865c9d290a273e94c761c89b70b851138eb4f9043f91054681b66"
+    }
+  ]
+}

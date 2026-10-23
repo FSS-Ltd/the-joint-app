@@ -1,0 +1,1532 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>The Family Fund App — caps wireframe</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .tabular {
+        font-variant-numeric: tabular-nums;
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 450,
+          "GRAD" 0,
+          "opsz" 24;
+        display: inline-block;
+        vertical-align: middle;
+        line-height: 1;
+      }
+      .material-symbols-outlined.fill {
+        font-variation-settings:
+          "FILL" 1,
+          "wght" 450,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+    </style>
+    <style>
+      *,
+      ::before,
+      ::after {
+        --tw-border-spacing-x: 0;
+        --tw-border-spacing-y: 0;
+        --tw-translate-x: 0;
+        --tw-translate-y: 0;
+        --tw-rotate: 0;
+        --tw-skew-x: 0;
+        --tw-skew-y: 0;
+        --tw-scale-x: 1;
+        --tw-scale-y: 1;
+        --tw-pan-x: ;
+        --tw-pan-y: ;
+        --tw-pinch-zoom: ;
+        --tw-scroll-snap-strictness: proximity;
+        --tw-gradient-from-position: ;
+        --tw-gradient-via-position: ;
+        --tw-gradient-to-position: ;
+        --tw-ordinal: ;
+        --tw-slashed-zero: ;
+        --tw-numeric-figure: ;
+        --tw-numeric-spacing: ;
+        --tw-numeric-fraction: ;
+        --tw-ring-inset: ;
+        --tw-ring-offset-width: 0px;
+        --tw-ring-offset-color: #fff;
+        --tw-ring-color: rgb(59 130 246 / 0.5);
+        --tw-ring-offset-shadow: 0 0 #0000;
+        --tw-ring-shadow: 0 0 #0000;
+        --tw-shadow: 0 0 #0000;
+        --tw-shadow-colored: 0 0 #0000;
+        --tw-blur: ;
+        --tw-brightness: ;
+        --tw-contrast: ;
+        --tw-grayscale: ;
+        --tw-hue-rotate: ;
+        --tw-invert: ;
+        --tw-saturate: ;
+        --tw-sepia: ;
+        --tw-drop-shadow: ;
+        --tw-backdrop-blur: ;
+        --tw-backdrop-brightness: ;
+        --tw-backdrop-contrast: ;
+        --tw-backdrop-grayscale: ;
+        --tw-backdrop-hue-rotate: ;
+        --tw-backdrop-invert: ;
+        --tw-backdrop-opacity: ;
+        --tw-backdrop-saturate: ;
+        --tw-backdrop-sepia: ;
+        --tw-contain-size: ;
+        --tw-contain-layout: ;
+        --tw-contain-paint: ;
+        --tw-contain-style: ;
+      }
+      ::backdrop {
+        --tw-border-spacing-x: 0;
+        --tw-border-spacing-y: 0;
+        --tw-translate-x: 0;
+        --tw-translate-y: 0;
+        --tw-rotate: 0;
+        --tw-skew-x: 0;
+        --tw-skew-y: 0;
+        --tw-scale-x: 1;
+        --tw-scale-y: 1;
+        --tw-pan-x: ;
+        --tw-pan-y: ;
+        --tw-pinch-zoom: ;
+        --tw-scroll-snap-strictness: proximity;
+        --tw-gradient-from-position: ;
+        --tw-gradient-via-position: ;
+        --tw-gradient-to-position: ;
+        --tw-ordinal: ;
+        --tw-slashed-zero: ;
+        --tw-numeric-figure: ;
+        --tw-numeric-spacing: ;
+        --tw-numeric-fraction: ;
+        --tw-ring-inset: ;
+        --tw-ring-offset-width: 0px;
+        --tw-ring-offset-color: #fff;
+        --tw-ring-color: rgb(59 130 246 / 0.5);
+        --tw-ring-offset-shadow: 0 0 #0000;
+        --tw-ring-shadow: 0 0 #0000;
+        --tw-shadow: 0 0 #0000;
+        --tw-shadow-colored: 0 0 #0000;
+        --tw-blur: ;
+        --tw-brightness: ;
+        --tw-contrast: ;
+        --tw-grayscale: ;
+        --tw-hue-rotate: ;
+        --tw-invert: ;
+        --tw-saturate: ;
+        --tw-sepia: ;
+        --tw-drop-shadow: ;
+        --tw-backdrop-blur: ;
+        --tw-backdrop-brightness: ;
+        --tw-backdrop-contrast: ;
+        --tw-backdrop-grayscale: ;
+        --tw-backdrop-hue-rotate: ;
+        --tw-backdrop-invert: ;
+        --tw-backdrop-opacity: ;
+        --tw-backdrop-saturate: ;
+        --tw-backdrop-sepia: ;
+        --tw-contain-size: ;
+        --tw-contain-layout: ;
+        --tw-contain-paint: ;
+        --tw-contain-style: ;
+      } /* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */
+      *,
+      ::after,
+      ::before {
+        box-sizing: border-box;
+        border-width: 0;
+        border-style: solid;
+        border-color: #e5e7eb;
+      }
+      ::after,
+      ::before {
+        --tw-content: "";
+      }
+      :host,
+      html {
+        line-height: 1.5;
+        -webkit-text-size-adjust: 100%;
+        -moz-tab-size: 4;
+        tab-size: 4;
+        font-family:
+          ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+          "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        font-feature-settings: normal;
+        font-variation-settings: normal;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body {
+        margin: 0;
+        line-height: inherit;
+      }
+      hr {
+        height: 0;
+        color: inherit;
+        border-top-width: 1px;
+      }
+      abbr:where([title]) {
+        -webkit-text-decoration: underline dotted;
+        text-decoration: underline dotted;
+      }
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-size: inherit;
+        font-weight: inherit;
+      }
+      a {
+        color: inherit;
+        text-decoration: inherit;
+      }
+      b,
+      strong {
+        font-weight: bolder;
+      }
+      code,
+      kbd,
+      pre,
+      samp {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        font-feature-settings: normal;
+        font-variation-settings: normal;
+        font-size: 1em;
+      }
+      small {
+        font-size: 80%;
+      }
+      sub,
+      sup {
+        font-size: 75%;
+        line-height: 0;
+        position: relative;
+        vertical-align: baseline;
+      }
+      sub {
+        bottom: -0.25em;
+      }
+      sup {
+        top: -0.5em;
+      }
+      table {
+        text-indent: 0;
+        border-color: inherit;
+        border-collapse: collapse;
+      }
+      button,
+      input,
+      optgroup,
+      select,
+      textarea {
+        font-family: inherit;
+        font-feature-settings: inherit;
+        font-variation-settings: inherit;
+        font-size: 100%;
+        font-weight: inherit;
+        line-height: inherit;
+        letter-spacing: inherit;
+        color: inherit;
+        margin: 0;
+        padding: 0;
+      }
+      button,
+      select {
+        text-transform: none;
+      }
+      button,
+      input:where([type="button"]),
+      input:where([type="reset"]),
+      input:where([type="submit"]) {
+        -webkit-appearance: button;
+        background-color: transparent;
+        background-image: none;
+      }
+      :-moz-focusring {
+        outline: auto;
+      }
+      :-moz-ui-invalid {
+        box-shadow: none;
+      }
+      progress {
+        vertical-align: baseline;
+      }
+      ::-webkit-inner-spin-button,
+      ::-webkit-outer-spin-button {
+        height: auto;
+      }
+      [type="search"] {
+        -webkit-appearance: textfield;
+        outline-offset: -2px;
+      }
+      ::-webkit-search-decoration {
+        -webkit-appearance: none;
+      }
+      ::-webkit-file-upload-button {
+        -webkit-appearance: button;
+        font: inherit;
+      }
+      summary {
+        display: list-item;
+      }
+      blockquote,
+      dd,
+      dl,
+      figure,
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6,
+      hr,
+      p,
+      pre {
+        margin: 0;
+      }
+      fieldset {
+        margin: 0;
+        padding: 0;
+      }
+      legend {
+        padding: 0;
+      }
+      menu,
+      ol,
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      dialog {
+        padding: 0;
+      }
+      textarea {
+        resize: vertical;
+      }
+      input::placeholder,
+      textarea::placeholder {
+        opacity: 1;
+        color: #9ca3af;
+      }
+      [role="button"],
+      button {
+        cursor: pointer;
+      }
+      :disabled {
+        cursor: default;
+      }
+      audio,
+      canvas,
+      embed,
+      iframe,
+      img,
+      object,
+      svg,
+      video {
+        display: block;
+        vertical-align: middle;
+      }
+      img,
+      video {
+        max-width: 100%;
+        height: auto;
+      }
+      [hidden]:where(:not([hidden="until-found"])) {
+        display: none;
+      }
+      .pointer-events-none {
+        pointer-events: none;
+      }
+      .fixed {
+        position: fixed;
+      }
+      .absolute {
+        position: absolute;
+      }
+      .relative {
+        position: relative;
+      }
+      .inset-0 {
+        inset: 0px;
+      }
+      .-left-20 {
+        left: -5rem;
+      }
+      .-right-24 {
+        right: -6rem;
+      }
+      .-top-12 {
+        top: -3rem;
+      }
+      .bottom-0 {
+        bottom: 0px;
+      }
+      .left-0 {
+        left: 0px;
+      }
+      .right-2\.5 {
+        right: 0.625rem;
+      }
+      .top-2\.5 {
+        top: 0.625rem;
+      }
+      .top-44 {
+        top: 11rem;
+      }
+      .z-0 {
+        z-index: 0;
+      }
+      .z-10 {
+        z-index: 10;
+      }
+      .z-50 {
+        z-index: 50;
+      }
+      .m-0 {
+        margin: 0px;
+      }
+      .mb-1 {
+        margin-bottom: 0.25rem;
+      }
+      .mb-1\.5 {
+        margin-bottom: 0.375rem;
+      }
+      .mb-2 {
+        margin-bottom: 0.5rem;
+      }
+      .mb-2\.5 {
+        margin-bottom: 0.625rem;
+      }
+      .mb-3 {
+        margin-bottom: 0.75rem;
+      }
+      .mb-4 {
+        margin-bottom: 1rem;
+      }
+      .mt-0\.5 {
+        margin-top: 0.125rem;
+      }
+      .mt-1 {
+        margin-top: 0.25rem;
+      }
+      .mt-2 {
+        margin-top: 0.5rem;
+      }
+      .mt-3 {
+        margin-top: 0.75rem;
+      }
+      .mt-3\.5 {
+        margin-top: 0.875rem;
+      }
+      .mt-4 {
+        margin-top: 1rem;
+      }
+      .block {
+        display: block;
+      }
+      .flex {
+        display: flex;
+      }
+      .inline-flex {
+        display: inline-flex;
+      }
+      .h-1\.5 {
+        height: 0.375rem;
+      }
+      .h-10 {
+        height: 2.5rem;
+      }
+      .h-11 {
+        height: 2.75rem;
+      }
+      .h-3 {
+        height: 0.75rem;
+      }
+      .h-8 {
+        height: 2rem;
+      }
+      .h-9 {
+        height: 2.25rem;
+      }
+      .h-\[420px\] {
+        height: 420px;
+      }
+      .h-\[460px\] {
+        height: 460px;
+      }
+      .h-full {
+        height: 100%;
+      }
+      .min-h-\[44px\] {
+        min-height: 44px;
+      }
+      .min-h-screen {
+        min-height: 100vh;
+      }
+      .w-1\.5 {
+        width: 0.375rem;
+      }
+      .w-10 {
+        width: 2.5rem;
+      }
+      .w-11 {
+        width: 2.75rem;
+      }
+      .w-8 {
+        width: 2rem;
+      }
+      .w-9 {
+        width: 2.25rem;
+      }
+      .w-\[420px\] {
+        width: 420px;
+      }
+      .w-\[480px\] {
+        width: 480px;
+      }
+      .w-full {
+        width: 100%;
+      }
+      .min-w-\[48px\] {
+        min-width: 48px;
+      }
+      .min-w-\[54px\] {
+        min-width: 54px;
+      }
+      .max-w-\[358px\] {
+        max-width: 358px;
+      }
+      .max-w-\[390px\] {
+        max-width: 390px;
+      }
+      .flex-1 {
+        flex: 1 1 0%;
+      }
+      .shrink-0 {
+        flex-shrink: 0;
+      }
+      @keyframes pulse {
+        50% {
+          opacity: 0.5;
+        }
+      }
+      .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      .flex-col {
+        flex-direction: column;
+      }
+      .flex-wrap {
+        flex-wrap: wrap;
+      }
+      .items-start {
+        align-items: flex-start;
+      }
+      .items-center {
+        align-items: center;
+      }
+      .items-baseline {
+        align-items: baseline;
+      }
+      .justify-center {
+        justify-content: center;
+      }
+      .justify-between {
+        justify-content: space-between;
+      }
+      .gap-1 {
+        gap: 0.25rem;
+      }
+      .gap-1\.5 {
+        gap: 0.375rem;
+      }
+      .gap-2 {
+        gap: 0.5rem;
+      }
+      .gap-2\.5 {
+        gap: 0.625rem;
+      }
+      .gap-3 {
+        gap: 0.75rem;
+      }
+      .space-y-2\.5 > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-y-reverse: 0;
+        margin-top: calc(0.625rem * calc(1 - var(--tw-space-y-reverse)));
+        margin-bottom: calc(0.625rem * var(--tw-space-y-reverse));
+      }
+      .overflow-hidden {
+        overflow: hidden;
+      }
+      .rounded-\[10px\] {
+        border-radius: 10px;
+      }
+      .rounded-\[6px\] {
+        border-radius: 6px;
+      }
+      .rounded-\[8px\] {
+        border-radius: 8px;
+      }
+      .rounded-full {
+        border-radius: 9999px;
+      }
+      .border {
+        border-width: 1px;
+      }
+      .border-b {
+        border-bottom-width: 1px;
+      }
+      .border-t {
+        border-top-width: 1px;
+      }
+      .border-\[\#203B32\]\/10 {
+        border-color: rgb(32 59 50 / 0.1);
+      }
+      .border-\[\#203B32\]\/15 {
+        border-color: rgb(32 59 50 / 0.15);
+      }
+      .border-\[\#9C3838\]\/20 {
+        border-color: rgb(156 56 56 / 0.2);
+      }
+      .border-\[\#9C3838\]\/30 {
+        border-color: rgb(156 56 56 / 0.3);
+      }
+      .border-\[\#DDE7DD\]\/10 {
+        border-color: rgb(221 231 221 / 0.1);
+      }
+      .border-\[\#DDE7DD\]\/20 {
+        border-color: rgb(221 231 221 / 0.2);
+      }
+      .border-\[\#F0D6BC\]\/25 {
+        border-color: rgb(240 214 188 / 0.25);
+      }
+      .border-\[\#c9d8c9\] {
+        --tw-border-opacity: 1;
+        border-color: rgb(201 216 201 / var(--tw-border-opacity, 1));
+      }
+      .border-\[\#e5c3a3\] {
+        --tw-border-opacity: 1;
+        border-color: rgb(229 195 163 / var(--tw-border-opacity, 1));
+      }
+      .border-\[\#e8e4d8\] {
+        --tw-border-opacity: 1;
+        border-color: rgb(232 228 216 / var(--tw-border-opacity, 1));
+      }
+      .border-white\/20 {
+        border-color: rgb(255 255 255 / 0.2);
+      }
+      .bg-\[\#203B32\] {
+        --tw-bg-opacity: 1;
+        background-color: rgb(32 59 50 / var(--tw-bg-opacity, 1));
+      }
+      .bg-\[\#203B32\]\/10 {
+        background-color: rgb(32 59 50 / 0.1);
+      }
+      .bg-\[\#244F42\] {
+        --tw-bg-opacity: 1;
+        background-color: rgb(36 79 66 / var(--tw-bg-opacity, 1));
+      }
+      .bg-\[\#244F42\]\/15 {
+        background-color: rgb(36 79 66 / 0.15);
+      }
+      .bg-\[\#244F42\]\/85 {
+        background-color: rgb(36 79 66 / 0.85);
+      }
+      .bg-\[\#9C3838\] {
+        --tw-bg-opacity: 1;
+        background-color: rgb(156 56 56 / var(--tw-bg-opacity, 1));
+      }
+      .bg-\[\#9C3838\]\/10 {
+        background-color: rgb(156 56 56 / 0.1);
+      }
+      .bg-\[\#DDE7DD\] {
+        --tw-bg-opacity: 1;
+        background-color: rgb(221 231 221 / var(--tw-bg-opacity, 1));
+      }
+      .bg-\[\#F0D6BC\] {
+        --tw-bg-opacity: 1;
+        background-color: rgb(240 214 188 / var(--tw-bg-opacity, 1));
+      }
+      .bg-\[\#F0D6BC\]\/10 {
+        background-color: rgb(240 214 188 / 0.1);
+      }
+      .bg-\[\#F0D6BC\]\/70 {
+        background-color: rgb(240 214 188 / 0.7);
+      }
+      .bg-\[\#F7F5EF\] {
+        --tw-bg-opacity: 1;
+        background-color: rgb(247 245 239 / var(--tw-bg-opacity, 1));
+      }
+      .bg-\[\#afcdc0\] {
+        --tw-bg-opacity: 1;
+        background-color: rgb(175 205 192 / var(--tw-bg-opacity, 1));
+      }
+      .bg-\[\#e3ded2\] {
+        --tw-bg-opacity: 1;
+        background-color: rgb(227 222 210 / var(--tw-bg-opacity, 1));
+      }
+      .bg-white\/10 {
+        background-color: rgb(255 255 255 / 0.1);
+      }
+      .bg-white\/80 {
+        background-color: rgb(255 255 255 / 0.8);
+      }
+      .p-0 {
+        padding: 0px;
+      }
+      .p-2 {
+        padding: 0.5rem;
+      }
+      .p-3\.5 {
+        padding: 0.875rem;
+      }
+      .p-4 {
+        padding: 1rem;
+      }
+      .px-0\.5 {
+        padding-left: 0.125rem;
+        padding-right: 0.125rem;
+      }
+      .px-1 {
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+      }
+      .px-2 {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+      }
+      .px-2\.5 {
+        padding-left: 0.625rem;
+        padding-right: 0.625rem;
+      }
+      .px-3 {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+      }
+      .px-3\.5 {
+        padding-left: 0.875rem;
+        padding-right: 0.875rem;
+      }
+      .px-4 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+      .py-0\.5 {
+        padding-top: 0.125rem;
+        padding-bottom: 0.125rem;
+      }
+      .py-1 {
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+      }
+      .py-1\.5 {
+        padding-top: 0.375rem;
+        padding-bottom: 0.375rem;
+      }
+      .pb-2 {
+        padding-bottom: 0.5rem;
+      }
+      .pb-28 {
+        padding-bottom: 7rem;
+      }
+      .pb-4 {
+        padding-bottom: 1rem;
+      }
+      .pt-1 {
+        padding-top: 0.25rem;
+      }
+      .pt-3 {
+        padding-top: 0.75rem;
+      }
+      .text-center {
+        text-align: center;
+      }
+      .text-right {
+        text-align: right;
+      }
+      .text-\[10px\] {
+        font-size: 10px;
+      }
+      .text-\[11px\] {
+        font-size: 11px;
+      }
+      .text-\[12px\] {
+        font-size: 12px;
+      }
+      .text-\[13px\] {
+        font-size: 13px;
+      }
+      .text-\[14px\] {
+        font-size: 14px;
+      }
+      .text-\[15px\] {
+        font-size: 15px;
+      }
+      .text-\[16px\] {
+        font-size: 16px;
+      }
+      .text-\[17px\] {
+        font-size: 17px;
+      }
+      .text-\[18px\] {
+        font-size: 18px;
+      }
+      .text-\[20px\] {
+        font-size: 20px;
+      }
+      .text-\[22px\] {
+        font-size: 22px;
+      }
+      .text-\[28px\] {
+        font-size: 28px;
+      }
+      .text-\[34px\] {
+        font-size: 34px;
+      }
+      .font-bold {
+        font-weight: 700;
+      }
+      .font-medium {
+        font-weight: 500;
+      }
+      .font-normal {
+        font-weight: 400;
+      }
+      .font-semibold {
+        font-weight: 600;
+      }
+      .uppercase {
+        text-transform: uppercase;
+      }
+      .tabular-nums {
+        --tw-numeric-spacing: tabular-nums;
+        font-variant-numeric: var(--tw-ordinal) var(--tw-slashed-zero)
+          var(--tw-numeric-figure) var(--tw-numeric-spacing)
+          var(--tw-numeric-fraction);
+      }
+      .leading-none {
+        line-height: 1;
+      }
+      .leading-relaxed {
+        line-height: 1.625;
+      }
+      .leading-snug {
+        line-height: 1.375;
+      }
+      .leading-tight {
+        line-height: 1.25;
+      }
+      .tracking-tight {
+        letter-spacing: -0.025em;
+      }
+      .tracking-wide {
+        letter-spacing: 0.025em;
+      }
+      .tracking-wider {
+        letter-spacing: 0.05em;
+      }
+      .tracking-widest {
+        letter-spacing: 0.1em;
+      }
+      .text-\[\#203B32\] {
+        --tw-text-opacity: 1;
+        color: rgb(32 59 50 / var(--tw-text-opacity, 1));
+      }
+      .text-\[\#203B32\]\/90 {
+        color: rgb(32 59 50 / 0.9);
+      }
+      .text-\[\#244F42\] {
+        --tw-text-opacity: 1;
+        color: rgb(36 79 66 / var(--tw-text-opacity, 1));
+      }
+      .text-\[\#52665C\] {
+        --tw-text-opacity: 1;
+        color: rgb(82 102 92 / var(--tw-text-opacity, 1));
+      }
+      .text-\[\#9C3838\] {
+        --tw-text-opacity: 1;
+        color: rgb(156 56 56 / var(--tw-text-opacity, 1));
+      }
+      .text-\[\#9C3838\]\/80 {
+        color: rgb(156 56 56 / 0.8);
+      }
+      .text-\[\#DDE7DD\] {
+        --tw-text-opacity: 1;
+        color: rgb(221 231 221 / var(--tw-text-opacity, 1));
+      }
+      .text-\[\#DDE7DD\]\/70 {
+        color: rgb(221 231 221 / 0.7);
+      }
+      .text-\[\#DDE7DD\]\/80 {
+        color: rgb(221 231 221 / 0.8);
+      }
+      .text-\[\#DDE7DD\]\/90 {
+        color: rgb(221 231 221 / 0.9);
+      }
+      .text-\[\#E4E2DD\] {
+        --tw-text-opacity: 1;
+        color: rgb(228 226 221 / var(--tw-text-opacity, 1));
+      }
+      .text-\[\#F0D6BC\] {
+        --tw-text-opacity: 1;
+        color: rgb(240 214 188 / var(--tw-text-opacity, 1));
+      }
+      .text-\[\#afcdc0\] {
+        --tw-text-opacity: 1;
+        color: rgb(175 205 192 / var(--tw-text-opacity, 1));
+      }
+      .text-white {
+        --tw-text-opacity: 1;
+        color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+      }
+      .opacity-15 {
+        opacity: 0.15;
+      }
+      .opacity-20 {
+        opacity: 0.2;
+      }
+      .shadow-2xl {
+        --tw-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+        --tw-shadow-colored: 0 25px 50px -12px var(--tw-shadow-color);
+        box-shadow:
+          var(--tw-ring-offset-shadow, 0 0 #0000),
+          var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+      }
+      .shadow-md {
+        --tw-shadow:
+          0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --tw-shadow-colored:
+          0 4px 6px -1px var(--tw-shadow-color),
+          0 2px 4px -2px var(--tw-shadow-color);
+        box-shadow:
+          var(--tw-ring-offset-shadow, 0 0 #0000),
+          var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+      }
+      .shadow-sm {
+        --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
+        box-shadow:
+          var(--tw-ring-offset-shadow, 0 0 #0000),
+          var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+      }
+      .backdrop-blur-sm {
+        --tw-backdrop-blur: blur(4px);
+        -webkit-backdrop-filter: var(--tw-backdrop-blur)
+          var(--tw-backdrop-brightness) var(--tw-backdrop-contrast)
+          var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate)
+          var(--tw-backdrop-invert) var(--tw-backdrop-opacity)
+          var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+        backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
+          var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale)
+          var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
+          var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
+          var(--tw-backdrop-sepia);
+      }
+      .backdrop-blur-xl {
+        --tw-backdrop-blur: blur(24px);
+        -webkit-backdrop-filter: var(--tw-backdrop-blur)
+          var(--tw-backdrop-brightness) var(--tw-backdrop-contrast)
+          var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate)
+          var(--tw-backdrop-invert) var(--tw-backdrop-opacity)
+          var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+        backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
+          var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale)
+          var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
+          var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
+          var(--tw-backdrop-sepia);
+      }
+      .transition-all {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+      .transition-colors {
+        transition-property:
+          color,
+          background-color,
+          border-color,
+          fill,
+          stroke,
+          -webkit-text-decoration-color;
+        transition-property:
+          color, background-color, border-color, text-decoration-color, fill,
+          stroke;
+        transition-property:
+          color,
+          background-color,
+          border-color,
+          text-decoration-color,
+          fill,
+          stroke,
+          -webkit-text-decoration-color;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+      .transition-transform {
+        transition-property: transform;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+      .duration-150 {
+        transition-duration: 150ms;
+      }
+      .selection\:bg-\[\#DDE7DD\] *::selection {
+        --tw-bg-opacity: 1;
+        background-color: rgb(221 231 221 / var(--tw-bg-opacity, 1));
+      }
+      .selection\:text-\[\#203B32\] *::selection {
+        --tw-text-opacity: 1;
+        color: rgb(32 59 50 / var(--tw-text-opacity, 1));
+      }
+      .selection\:bg-\[\#DDE7DD\]::selection {
+        --tw-bg-opacity: 1;
+        background-color: rgb(221 231 221 / var(--tw-bg-opacity, 1));
+      }
+      .selection\:text-\[\#203B32\]::selection {
+        --tw-text-opacity: 1;
+        color: rgb(32 59 50 / var(--tw-text-opacity, 1));
+      }
+      .hover\:bg-\[\#203B32\]:hover {
+        --tw-bg-opacity: 1;
+        background-color: rgb(32 59 50 / var(--tw-bg-opacity, 1));
+      }
+      .hover\:bg-\[\#203B32\]\/15:hover {
+        background-color: rgb(32 59 50 / 0.15);
+      }
+      .hover\:text-white:hover {
+        --tw-text-opacity: 1;
+        color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+      }
+      .active\:scale-95:active {
+        --tw-scale-x: 0.95;
+        --tw-scale-y: 0.95;
+        transform: translate(var(--tw-translate-x), var(--tw-translate-y))
+          rotate(var(--tw-rotate)) skewX(var(--tw-skew-x))
+          skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x))
+          scaleY(var(--tw-scale-y));
+      }
+      .\[\&\>\*\]\:pointer-events-auto > * {
+        pointer-events: auto;
+      }
+    </style>
+    <link rel="stylesheet" href="../geometry.css" data-wf-geometry="true" />
+  </head>
+  <body
+    class="min-h-screen bg-[#203B32] flex justify-center selection:bg-[#DDE7DD] selection:text-[#203B32] p-0 m-0"
+  >
+    <!-- Mobile Device Frame (390px) -->
+    <div
+      class="relative w-full max-w-[390px] min-h-screen bg-[#203B32] text-white overflow-hidden pb-28 flex flex-col shadow-2xl"
+    >
+      <!-- Background Sweeping Ribbon Curves (Sage & Warm Apricot) -->
+      <div class="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <svg
+          class="absolute -top-12 -left-20 w-[480px] h-[420px] opacity-20"
+          fill="none"
+          viewBox="0 0 400 350"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M-20 60 C120 -10, 240 180, 420 80 C360 220, 180 280, -20 220 Z"
+            fill="#DDE7DD"
+          ></path></svg
+        ><svg
+          class="absolute top-44 -right-24 w-[420px] h-[460px] opacity-15"
+          fill="none"
+          viewBox="0 0 400 400"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M60 40 C220 30, 360 140, 390 280 C260 340, 140 260, 40 180 Z"
+            fill="#F8E0CF"
+          ></path>
+        </svg>
+      </div>
+      <!-- Content Container -->
+      <div class="relative z-10 flex flex-col w-full px-4 pt-3">
+        <!-- Top Meta Banner -->
+        <div
+          class="w-full flex items-center justify-between pb-2 pt-1 border-b border-[#DDE7DD]/10 mb-2"
+        >
+          <div class="flex items-center gap-1.5">
+            <span
+              class="w-1.5 h-1.5 rounded-full bg-[#afcdc0] animate-pulse"
+            ></span
+            ><span
+              class="text-[11px] font-semibold text-[#afcdc0] tracking-widest"
+              >• WIREFRAME • SAMPLE DATA</span
+            >
+          </div>
+          <span class="tabular-nums text-[11px] text-[#DDE7DD]/70 font-medium"
+            >390 × 844</span
+          >
+        </div>
+        <!-- App Header Bar -->
+        <header class="flex justify-between items-center w-full pt-1 pb-2">
+          <div class="flex items-center gap-2.5">
+            <button
+              aria-label="Go back"
+              class="w-11 h-11 flex items-center justify-center rounded-full bg-[#244F42] border border-[#DDE7DD]/20 text-[#E4E2DD] active:scale-95 transition-transform duration-150"
+              type="button"
+            >
+              <span class="material-symbols-outlined text-[20px]"
+                >arrow_back</span
+              >
+            </button>
+            <div>
+              <h1
+                class="text-[18px] font-bold text-[#E4E2DD] tracking-tight leading-tight"
+              >
+                The Family Fund App
+              </h1>
+              <span
+                class="text-[12px] text-[#DDE7DD]/80 font-medium block leading-none"
+                >Shared household ledger</span
+              >
+            </div>
+          </div>
+          <button
+            aria-label="Notifications"
+            class="w-11 h-11 rounded-full bg-[#244F42] flex items-center justify-center text-[#E4E2DD] border border-[#DDE7DD]/20 active:scale-95 transition-transform duration-150 relative"
+            type="button"
+          >
+            <span class="material-symbols-outlined text-[20px]"
+              >notifications</span
+            ><span
+              class="absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full bg-[#F0D6BC]"
+            ></span>
+          </button>
+        </header>
+        <!-- Scope & Privacy Badges -->
+        <div class="flex items-center gap-2 flex-wrap mb-2.5 mt-1">
+          <div
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#244F42] text-[#DDE7DD] text-[14px] font-medium border border-[#DDE7DD]/20"
+          >
+            <span class="material-symbols-outlined text-[16px]">group</span
+            ><span>Shared household view</span>
+          </div>
+          <div
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F0D6BC]/10 text-[#F0D6BC] text-[14px] font-medium border border-[#F0D6BC]/25"
+          >
+            <span class="material-symbols-outlined text-[16px]"
+              >calendar_today</span
+            ><span>October cycle</span>
+          </div>
+        </div>
+        <div
+          class="flex items-center gap-1.5 text-[14px] text-[#DDE7DD]/80 mb-3 px-1 font-medium"
+        >
+          <span class="material-symbols-outlined text-[16px] text-[#DDE7DD]"
+            >lock</span
+          ><span>Only activity from accounts opted into sharing</span>
+        </div>
+        <!-- Screen Title / Heading -->
+        <div class="mb-3 px-0.5">
+          <div
+            class="text-[13px] font-bold uppercase tracking-wider text-[#F0D6BC] mb-1"
+          >
+            Category Caps
+          </div>
+          <h2
+            class="text-[28px] font-bold tracking-tight text-white leading-tight"
+          >
+            Your spending plan
+          </h2>
+          <p class="text-[15px] text-[#DDE7DD]/90 mt-1 leading-snug">
+            Shared limits for domestic balance and joint peace of mind.
+          </p>
+        </div>
+        <!-- Primary Financial Panel: Opaque Ivory with Translucent Layered Frame -->
+        <div
+          class="p-2 bg-white/10 backdrop-blur-sm border border-white/20 mb-3"
+          data-wf-shape="frame"
+        >
+          <div
+            class="bg-[#F7F5EF] p-4 text-[#203B32] shadow-md border border-[#e8e4d8]"
+            data-wf-shape="card"
+          >
+            <!-- Category Header -->
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-2.5">
+                <div
+                  class="w-10 h-10 rounded-full bg-[#F0D6BC]/70 text-[#203B32] flex items-center justify-center font-bold"
+                >
+                  <span class="material-symbols-outlined text-[22px]"
+                    >restaurant</span
+                  >
+                </div>
+                <div>
+                  <div
+                    class="text-[17px] font-semibold text-[#203B32] leading-snug"
+                  >
+                    Eating out
+                  </div>
+                  <div class="text-[13px] text-[#52665C]">
+                    Shared household dining · October
+                  </div>
+                </div>
+              </div>
+              <!-- Warning Badge: Limit Exceeded (keeps rounded pill) -->
+              <div
+                class="inline-flex items-center gap-1 px-2.5 py-1 bg-[#9C3838]/10 text-[#9C3838] border border-[#9C3838]/30"
+                data-wf-shape="card"
+              >
+                <span class="material-symbols-outlined fill text-[16px]"
+                  >warning</span
+                >
+                <span class="text-[12px] font-bold tracking-tight"
+                  >Limit exceeded</span
+                >
+              </div>
+            </div>
+            <!-- Numbers / Status -->
+            <div
+              class="mt-4 pt-1 flex items-baseline justify-between border-t border-[#203B32]/10"
+            >
+              <div>
+                <div
+                  class="text-[12px] font-semibold tracking-wider uppercase text-[#9C3838]"
+                >
+                  Over limit
+                </div>
+                <div
+                  class="text-[34px] font-semibold text-[#9C3838] tabular tracking-tight leading-none mt-1"
+                >
+                  £8
+                  <span class="text-[18px] font-medium text-[#9C3838]/80"
+                    >over</span
+                  >
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-[13px] text-[#52665C]">
+                  Cap:
+                  <span class="font-semibold text-[#203B32] tabular"
+                    >£50.00</span
+                  >
+                </div>
+                <div
+                  class="text-[15px] font-semibold text-[#203B32] tabular mt-0.5"
+                >
+                  £58 spent
+                  <span class="text-[12px] font-normal text-[#52665C]"
+                    >(116%)</span
+                  >
+                </div>
+              </div>
+            </div>
+            <!-- Cap Ruler Visualization with 8 Overshoot -->
+            <div class="mt-4">
+              <div
+                class="relative w-full h-3 rounded-[6px] bg-[#e3ded2] overflow-hidden flex"
+              >
+                <!-- Base 100% cap portion (straight rectangular progress bar) -->
+                <div class="h-full bg-[#203B32]" style="width: 86%"></div>
+                <!-- Overshoot portion highlighted in red -->
+                <div class="h-full bg-[#9C3838]" style="width: 14%"></div>
+              </div>
+              <!-- Ruler Ticks & Labels -->
+              <div
+                class="flex justify-between items-center text-[11px] text-[#52665C] mt-2 tabular font-medium"
+              >
+                <span>£0</span>
+                <span class="text-[#203B32] font-semibold">£50 cap (100%)</span>
+                <span class="text-[#9C3838] font-bold">+£8 overshoot</span>
+              </div>
+            </div>
+            <!-- Subtext inside card with 8px rounded action button -->
+            <div
+              class="mt-3.5 pt-3 border-t border-[#203B32]/10 flex items-center justify-between text-[13px]"
+            >
+              <span
+                class="text-[#52665C] flex items-center gap-1.5 text-[14px] font-medium"
+                ><span
+                  class="material-symbols-outlined text-[18px] text-[#52665C]"
+                  >receipt_long</span
+                >4 logged transactions</span
+              ><button
+                class="min-h-[44px] px-3.5 bg-[#203B32]/10 hover:bg-[#203B32]/15 text-[#203B32] font-semibold text-[14px] border border-[#203B32]/15 flex items-center gap-1 active:scale-95 transition-all"
+                type="button"
+                data-wf-shape="action"
+              >
+                <span>View entries</span
+                ><span class="material-symbols-outlined text-[16px]"
+                  >arrow_forward</span
+                >
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- Design Annotation (Static Note outside panel) -->
+        <div
+          class="flex items-center gap-1.5 text-[14px] text-[#DDE7DD]/80 mb-3 px-1 font-medium"
+        >
+          <span class="material-symbols-outlined text-[16px] text-[#DDE7DD]"
+            >lock</span
+          ><span>Only activity from accounts opted into sharing</span>
+        </div>
+        <!-- Explanatory Fully Opaque SAGE Panel (#DDE7DD) -->
+        <div
+          class="bg-[#DDE7DD] p-4 text-[#203B32] mb-3 shadow-md border border-[#c9d8c9]"
+          data-wf-shape="card"
+        >
+          <div class="flex items-center gap-2 mb-2.5">
+            <div
+              class="w-8 h-8 rounded-full bg-[#203B32]/10 flex items-center justify-center shrink-0"
+            >
+              <span class="material-symbols-outlined text-[#203B32] text-[18px]"
+                >calculate</span
+              >
+            </div>
+            <span class="text-[16px] font-bold tracking-tight text-[#203B32]"
+              >Saving plan impact</span
+            >
+          </div>
+          <div
+            class="bg-white/80 p-3.5 border border-[#203B32]/10 mb-3 shadow-sm"
+            data-wf-shape="card"
+          >
+            <div
+              class="text-[13px] font-semibold text-[#52665C] mb-1.5 uppercase tracking-wide"
+            >
+              Monthly joint allocation calculation
+            </div>
+            <div
+              class="text-[14px] font-medium text-[#203B32] flex items-center justify-between flex-wrap gap-1 tabular-nums"
+            >
+              <span
+                >Saving plan
+                <strong class="font-bold text-[#203B32]">£200</strong></span
+              ><span class="text-[#9C3838] font-bold">− £8 overspend</span
+              ><span
+                >=
+                <strong class="font-bold text-[#203B32] text-[17px]"
+                  >£192</strong
+                >
+                available</span
+              >
+            </div>
+            <div
+              class="text-[13px] font-semibold text-[#9C3838] mt-2 tabular-nums flex items-center gap-1"
+            >
+              <span class="material-symbols-outlined text-[16px]"
+                >trending_down</span
+              ><span>£8 below planned saving target</span>
+            </div>
+          </div>
+          <div
+            class="text-[13px] text-[#52665C] leading-snug flex items-start gap-1.5 font-medium"
+          >
+            <span
+              class="material-symbols-outlined text-[16px] text-[#203B32] shrink-0 mt-0.5"
+              >info</span
+            ><span
+              >Assumption: saving plan assumes all caps met and impacts applied
+              once. No actual money moved or live bank transfer initiated.</span
+            >
+          </div>
+        </div>
+        <!-- Apricot Month-End Prompt Card (#F0D6BC) -->
+        <div
+          class="bg-[#F0D6BC] p-4 text-[#203B32] mb-3 shadow-md border border-[#e5c3a3]"
+          data-wf-shape="card"
+        >
+          <div class="flex items-start gap-3">
+            <div
+              class="w-9 h-9 rounded-full bg-[#203B32] text-[#F0D6BC] flex items-center justify-center shrink-0"
+            >
+              <span class="material-symbols-outlined text-[20px]"
+                >event_repeat</span
+              >
+            </div>
+            <div class="flex-1">
+              <div class="text-[16px] font-bold text-[#203B32] leading-tight">
+                Month-end review prompt
+              </div>
+              <p
+                class="text-[14px] text-[#203B32]/90 mt-1 leading-snug font-medium"
+              >
+                “Anything left? Review a saving or investment allocation.”
+              </p>
+              <div class="mt-3 flex items-center gap-2.5 flex-wrap">
+                <button
+                  class="min-h-[44px] px-4 bg-[#244F42] hover:bg-[#203B32] text-white text-[14px] font-semibold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
+                  type="button"
+                  data-wf-shape="action"
+                >
+                  <span class="material-symbols-outlined text-[18px]">tune</span
+                  ><span>Review allocation</span></button
+                ><span class="text-[13px] text-[#52665C] font-medium"
+                  >No transfer executed</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Component-State Examples: Other States (Compact) -->
+        <div class="mb-4">
+          <div class="flex items-center justify-between px-1 mb-2.5">
+            <span
+              class="text-[13px] font-bold uppercase tracking-wider text-[#DDE7DD]/90"
+              >Other states · sample</span
+            ><span class="text-[13px] text-[#DDE7DD]/70 font-medium"
+              >Reference variations</span
+            >
+          </div>
+          <div class="space-y-2.5">
+            <div
+              class="bg-[#F7F5EF] p-3.5 text-[#203B32] border border-[#e8e4d8] flex items-center justify-between shadow-sm"
+              data-wf-shape="card"
+            >
+              <div class="flex items-center gap-2.5">
+                <div
+                  class="w-9 h-9 rounded-full bg-[#203B32]/10 flex items-center justify-center text-[#203B32]"
+                >
+                  <span class="material-symbols-outlined text-[20px]"
+                    >check_circle</span
+                  >
+                </div>
+                <div>
+                  <div class="text-[14px] font-bold text-[#203B32]">
+                    On track state
+                  </div>
+                  <div
+                    class="text-[13px] text-[#52665C] tabular-nums font-medium"
+                  >
+                    £32 spent of £50 cap
+                  </div>
+                </div>
+              </div>
+              <div class="text-right">
+                <span
+                  class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#244F42]/15 text-[#244F42] text-[11px] font-bold tracking-wide uppercase"
+                  ><span class="w-1.5 h-1.5 rounded-full bg-[#244F42]"></span>ON
+                  TRACK</span
+                >
+                <div
+                  class="text-[15px] font-bold text-[#203B32] tabular-nums mt-0.5"
+                >
+                  £18 left
+                </div>
+              </div>
+            </div>
+            <div
+              class="bg-[#F7F5EF] p-3.5 text-[#203B32] border border-[#e8e4d8] flex items-center justify-between shadow-sm"
+              data-wf-shape="card"
+            >
+              <div class="flex items-center gap-2.5">
+                <div
+                  class="w-9 h-9 rounded-full bg-[#9C3838]/10 flex items-center justify-center text-[#9C3838]"
+                >
+                  <span
+                    class="material-symbols-outlined text-[20px] text-[#9C3838]"
+                    >lock_clock</span
+                  >
+                </div>
+                <div>
+                  <div class="text-[14px] font-bold text-[#203B32]">
+                    Limit reached state
+                  </div>
+                  <div
+                    class="text-[13px] text-[#52665C] tabular-nums font-medium"
+                  >
+                    £50 spent of £50 cap (100%)
+                  </div>
+                </div>
+              </div>
+              <div class="text-right">
+                <span
+                  class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#9C3838]/10 text-[#9C3838] border border-[#9C3838]/20 text-[11px] font-bold tracking-wide uppercase"
+                  >LIMIT REACHED</span
+                >
+                <div
+                  class="text-[15px] font-bold text-[#9C3838] tabular-nums mt-0.5"
+                >
+                  £0 left
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Legal / Illustrative Notice -->
+        <div
+          class="text-center text-[12px] text-[#DDE7DD]/70 px-4 mt-2 mb-2 font-medium leading-relaxed"
+        >
+          Financial values are illustrative only, not advice or live statuses.
+          Amounts entirely synthetic.
+        </div>
+      </div>
+      <!-- Floating Forest Capsule Bottom Navigation (Activity Selected) -->
+      <div
+        class="fixed bottom-0 left-0 w-full z-50 px-4 pb-4 pointer-events-none [&amp;&gt;*]:pointer-events-auto flex justify-center"
+      >
+        <nav
+          aria-label="Bottom Navigation"
+          class="w-full max-w-[358px] bg-[#244F42]/85 backdrop-blur-xl border border-[#DDE7DD]/20 shadow-2xl rounded-full px-2 py-1.5 flex justify-between items-center"
+        >
+          <a
+            class="flex flex-col items-center justify-center text-[#DDE7DD]/70 px-2 py-1.5 hover:text-white transition-colors duration-150 active:scale-95 min-w-[48px] min-h-[44px]"
+            href="#home"
+            ><span class="material-symbols-outlined text-[20px]">home</span
+            ><span class="text-[10px] font-medium tracking-tight mt-0.5"
+              >Home</span
+            ></a
+          ><a
+            aria-current="page"
+            class="flex flex-col items-center justify-center bg-[#F7F5EF] text-[#203B32] rounded-full px-3.5 py-1.5 active:scale-95 transition-transform duration-150 min-w-[54px] min-h-[44px] shadow-md"
+            href="#activity"
+            ><span
+              class="material-symbols-outlined text-[20px]"
+              style="font-variation-settings: &quot;FILL&quot; 1"
+              >receipt_long</span
+            ><span class="text-[10px] font-bold tracking-tight mt-0.5"
+              >Activity</span
+            ></a
+          ><a
+            class="flex flex-col items-center justify-center text-[#DDE7DD]/70 px-2 py-1.5 hover:text-white transition-colors duration-150 active:scale-95 min-w-[48px] min-h-[44px]"
+            href="#goals"
+            ><span class="material-symbols-outlined text-[20px]">savings</span
+            ><span class="text-[10px] font-medium tracking-tight mt-0.5"
+              >Goals</span
+            ></a
+          ><a
+            class="flex flex-col items-center justify-center text-[#DDE7DD]/70 px-2 py-1.5 hover:text-white transition-colors duration-150 active:scale-95 min-w-[48px] min-h-[44px]"
+            href="#wealth"
+            ><span class="material-symbols-outlined text-[20px]"
+              >trending_up</span
+            ><span class="text-[10px] font-medium tracking-tight mt-0.5"
+              >Wealth</span
+            ></a
+          ><a
+            class="flex flex-col items-center justify-center text-[#DDE7DD]/70 px-2 py-1.5 hover:text-white transition-colors duration-150 active:scale-95 min-w-[48px] min-h-[44px]"
+            href="#more"
+            ><span class="material-symbols-outlined text-[20px]"
+              >more_horiz</span
+            ><span class="text-[10px] font-medium tracking-tight mt-0.5"
+              >More</span
+            ></a
+          >
+        </nav>
+      </div>
+    </div>
+  </body>
+</html>
