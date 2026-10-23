@@ -1,10 +1,10 @@
 # Task 0.2 — Bank provider comparison
 
-Checked: 23 October 2026. Status: research verified; procurement unresolved. No supplier contacted, account opened, contract signed, key obtained or real-data request performed.
+Checked: 23 October 2026. Status: research retained; bank procurement deferred post-MVP by founder instruction. No supplier contacted, account opened, contract signed, key obtained or real-data request performed.
 
 ## Decision
 
-Evaluate TrueLayer Data v3 first, Plaid Custom second. Enable Banking remains conditional on written UK coverage/use-rights confirmation. No production provider is selected: B1–B3 in [the gate register](provider-gates.md) lack evidence. The manual/CSV path remains planned; this document is not an approved connector or a claim that Task 0.2 is complete.
+Evaluate TrueLayer Data v3 first, Plaid Custom second. Enable Banking remains conditional on written UK coverage/use-rights confirmation. No production provider is selected: B1–B3 in [the gate register](provider-gates.md) lack evidence. The MVP uses CSV/manual records. This document does not approve a connector. Task 0.2 now records the explicit procurement deferral rather than requiring supplier approval before the manual build.
 
 ## Evidence and trade-offs
 
@@ -35,4 +35,6 @@ Reviewed on 23 October 2026; recheck at supplier selection and before live activ
 
 ## Acceptance and next action
 
-Task 0.2 passes only with a documented production path, permitted scope, actual product coverage and quoted billing units. Public docs and sandbox access do not satisfy that criterion. The founder can supply existing supplier evidence or authorise a reviewed enquiry through an agreed channel. Do not send the brief or disclose the private institution list without that authorization. No payments, applications or contracts are authorised by permission to merge code PRs.
+Current Task 0.2 acceptance: preserve research, record direct bank connections as post-MVP and retain B1–B3 as unmet future activation gates. No supplier approval, outreach or quote is required to build the CSV/manual MVP. The founder's 23 October scope instruction supersedes the previous current-step procurement requirement.
+
+Before future bank work begins, reopen procurement and require the actual production path, permitted scope, exact product coverage and quoted billing units. Public docs/sandbox access are insufficient. Obtain authorization for any supplier communication, application or spend. Do not publish household institution-to-owner mappings.

@@ -1,5 +1,7 @@
 # Phase 2 — Approved connected accounts
 
+> **CSV-first MVP revision, 23 October 2026:** Direct bank connections and bank procurement are post-MVP by founder instruction. The current MVP uses CSV/manual records; historical live-bank prerequisites and live-refresh paywall promises below are deferred. Provider evidence remains required before future live work. No live broker connector is included in the CSV-first build; its separate permission gate remains. See the [canonical scope revision](../01-product-specification.md).
+
 **Goal:** connect one supported UK bank and one owned Trading 212 Invest/Stocks ISA account through approved read-only integrations, with accurate ingestion and independent partner permissions.
 
 **Architecture:** Next.js PWA → NestJS `ConnectionsModule` → PostgreSQL Job/Outbox → worker → approved provider. Supabase Auth/Postgres are in London; financial tables remain in the unexposed `app` schema. KMS envelopes protect provider secrets; the web/API and worker hosts use distinct EC2 instance profiles as specified in 02. No local-agent access to provider credentials.

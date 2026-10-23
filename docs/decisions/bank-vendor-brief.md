@@ -1,6 +1,6 @@
 # Bank data vendor enquiry brief
 
-Prepared 23 October 2026. Draft for founder review; not sent. No household institutions, financial values or credentials appear here. Confirm the contracting legal entity and authorised sender privately before sending.
+Prepared 23 October 2026. Retained for post-MVP procurement; inactive and not sent. No household institutions, financial values or credentials appear here. Confirm the contracting legal entity and authorised sender privately before sending.
 
 ## Product and intended use
 

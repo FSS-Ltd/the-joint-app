@@ -69,3 +69,9 @@ Branch: build/0.2-bank-provider-feasibility. Current state: research and unsent 
 Acceptance remains the actual approved production path, permitted scope, exact coverage and quoted units. The public research does not meet that supplier-dependent criterion. A draft PR will preserve the reviewed work; no later step may start until the current step meets its evidence/CI/merge gate. Next action: founder supplies existing provider evidence or authorises the concrete enquiry through an agreed channel.
 
 Task 0.2 draft PR: https://github.com/FSS-Ltd/the-joint-app/pull/3. Research revision: `ccdc742d098b8e5a8049b90b83f51860dc4ac629`. Before PR creation, formatting, diff checks, relative links, public disclosure and source/evidence self-review passed. Full current CI evidence is recorded on the linked PR. Merge evidence: none; the supplier-dependent task remains incomplete regardless of code CI. No later step started.
+
+### Task 0.2 revised disposition — 23 October 2026
+
+Founder explicitly requested CSV/manual records now and direct bank connections post-MVP. This supersedes the previous supplier-evidence blocker for current MVP development. B1–B3 remain missing future live-bank gates, not approved or waived. No live broker connector is included in the CSV-first build; provider-specific work retains its own approval gate.
+
+Task 0.2's revised acceptance is the documented bank-procurement deferral, retained evidence/brief and aligned canonical release scope. PR #3 will be made ready and merged only after local review and successful current-revision CI. No supplier enquiry, contract, spend or deployment performed. No next step started before verified merge.

@@ -31,3 +31,13 @@ Child profiles, child-specific screens and child-specific projections move to po
 Non-crypto investing is intended. Support remains source/product-specific and read-only; this is not an instruction to add every asset adapter, derivatives, leveraged trading or money movement. Account wrappers and permissions are verified before the relevant source activates. An empty investment account must not display invented holdings/history.
 
 Task 0.1 records reported owner/operator categories and candidate manual/import routes. Remaining currency/wrapper/export facts are explicit onboarding gates, rather than an artificial requirement for live verification during initial discovery. Up to 12 months is a proposed import default, not a founder-confirmed history requirement. The step still requires current-revision CI, review and merge before progression.
+
+## CSV-first MVP revision — 23 October 2026
+
+The founder explicitly deferred direct bank connections until post-MVP. MVP account details and financial records use CSV uploads and manual entry/valuations. CSV input still needs preview/mapping, validation, source provenance, duplicate protection, privacy and safe corrections; it must never be called a live connection.
+
+No live bank connection, provider procurement, bank authorisation count or bank-production reconciliation is a condition of the manual founder/public MVP. Existing integration architecture remains future material. Source permissions still gate any actual provider-specific API work. Direct broker functionality is not implemented by the CSV-first scope and retains its separate approval gate.
+
+The current Task 0.2 is resolved by this scope disposition after its PR/CI/merge gate passes. Bank supplier evidence stays missing for future activation, not as an obstacle to the CSV/manual build. Children remain post-MVP and mobile-first direction remains unchanged.
+
+When presenting or pricing the MVP, show only delivered capabilities. Do not advertise or charge for bank-refresh benefits that do not exist. Existing tentative prices and paid live-sync allowances are future hypotheses, not MVP launch promises.

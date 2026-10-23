@@ -1,5 +1,7 @@
 # Phase 4 — Local AI and founder MVP
 
+> **CSV-first MVP revision, 23 October 2026:** Direct bank connections and bank procurement are post-MVP by founder instruction. The current MVP uses CSV/manual records; historical live-bank prerequisites and live-refresh paywall promises below are deferred. Provider evidence remains required before future live work. No live broker connector is included in the CSV-first build; its separate permission gate remains. See the [canonical scope revision](../01-product-specification.md).
+
 **Goal:** Give the pilot household evidence-backed local explanations and complete a real monthly review with dependable connected finances.
 
 **Effort:** 8–13 engineer-days, plus one full calendar month of observation; observation can overlap ordinary use and defect fixes.

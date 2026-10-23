@@ -20,6 +20,8 @@ Use missing, under-review, approved, rejected or expired. Only mark approved whe
 
 Brokerage permissions belong to Task 0.3; they remain unresolved under the existing integration specification. This step does not implement or approve a broker adapter.
 
-## Current delivery constraint
+## CSV-first MVP disposition — 23 October 2026
 
-No gate is approved. Task 0.2 research/brief preparation can be reviewed, but its supplier-dependent acceptance remains incomplete. Under AGENTS.md, a draft PR with green code CI is not a completed/merged build step and does not permit beginning Task 0.3 or later implementation while procurement evidence is absent.
+The founder explicitly deferred direct bank connections until post-MVP. B1–B3 remain missing and must not be marked approved. Their downstream block applies to future live bank work, not to the CSV/manual MVP. Recheck when post-MVP bank work is scheduled or supplier conditions change; the table's earlier reminder dates do not schedule procurement or automation.
+
+Task 0.2's current deliverable is the recorded deferral, retained comparison/brief and explicit future gate. This replaces its previous requirement to obtain supplier evidence before manual development may proceed. No enquiry is sent and no production provider is selected. After this revision passes CI and is confirmed merged, proceed to the next planned step. Other source permissions remain governed by their own gates.
