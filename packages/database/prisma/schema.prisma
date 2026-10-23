@@ -133,6 +133,7 @@ model Membership {
   createdBudgetScopes BudgetScope[]
   createdBudgets Budget[]
   budgetRevisions BudgetRevision[]
+  goalParticipations GoalParticipant[]
   @@unique([householdId, id])
   @@unique([householdId, id, userId])
   @@unique([userId, householdId])
@@ -334,6 +335,8 @@ model Goal {
   version Int @default(1)
   targetMinor BigInt
   targetDate DateTime? @db.Date
+  participants GoalParticipant[]
+  revisions GoalRevision[]
   allocations GoalAllocation[]
   contributionPlan ContributionPlan?
   scenarios Scenario[]
@@ -842,5 +845,28 @@ model ExportNoteRevision {
   userId String @db.Uuid
   version BigInt @default(0)
   @@id([accountId, userId])
+  @@schema("app")
+}
+
+model GoalParticipant {
+  householdId String @db.Uuid
+  goalId String @db.Uuid
+  membershipId String @db.Uuid
+  cutoffVersion Int?
+  goal Goal @relation(fields: [householdId, goalId], references: [householdId, id], onDelete: Cascade)
+  membership Membership @relation(fields: [householdId, membershipId], references: [householdId, id], onDelete: Cascade)
+  @@id([goalId, membershipId])
+  @@index([membershipId, goalId])
+  @@schema("app")
+}
+
+model GoalRevision {
+  householdId String @db.Uuid
+  goalId String @db.Uuid
+  version Int
+  data Json
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(3)
+  goal Goal @relation(fields: [householdId, goalId], references: [householdId, id], onDelete: Cascade)
+  @@id([goalId, version])
   @@schema("app")
 }
