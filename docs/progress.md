@@ -107,3 +107,13 @@ Branch: build/0.5-csv-release-gates. Release scope maps R01–R16 and the revise
 Current baseline acceptance: accurate CSV-first/manual versus future-source/child scope, no false production/quality/commercial claims, explicit gates/owners, checked cost arithmetic and repository links, local formatting/self-review before PR. No product code changed. Phase 1 Task 1.1 starts only after current CI and verified merge of this final Phase 0 baseline unit. Real-data/production/public gates remain open; baseline handoff does not complete the product.
 
 Task 0.5 PR: https://github.com/FSS-Ltd/the-joint-app/pull/6. Locally verified baseline revision: `752cbb72b9d3973be0f473dfc0020ccf03d6f98c`. Before raising the PR, formatting, diff checks, links/disclosure, R01–R16 mapping, independent cost arithmetic and scope/evidence self-review passed. No code/schema/dependency changes; full existing runtime CI remains required on the latest head. Final head/test-merge/merge evidence is recorded on the PR. No Phase 1 implementation begins before this step is confirmed merged.
+
+## Task 0.5a — Existing Vercel Pro hosting amendment
+
+Predecessor Task 0.5 PR #6 verified merged at `20cc678417d437fbb8a5813a1ec330e678574ebb`. Its final head `ae76e021f4f8d670c01b803ba194199e44d5ed50` had successful Foundation checks (run 39877468984). This supersedes the historical pending-merge entry above.
+
+The founder set £0 additional monthly production hosting spend, then confirmed Vercel Pro is already paid for. Use that existing subscription's included allocation and a free database as the deployment target. This supersedes the earlier undecided production budget; no new subscription, upgrade, overage or deployment is authorised. Actual account allocation and billing controls are unverified. No team billing settings or other projects changed.
+
+Branch: build/0.5a-existing-vercel-pro. Documentation-only amendment: preserve Next.js/NestJS and local worker processes; hosted jobs need bounded, authenticated execution with durable recovery instead of a permanent polling loop. Task 1.1 has not started. Acceptance: aligned cost/architecture/launch records, primary-source verification, formatting/link/diff/self-review before PR, successful current CI and verified merge. No new runtime tests are justified by a prose-only change; existing full CI remains required.
+
+Founder deployment instruction: everything remains local until the MVP is complete and explicit deployment approval is given. No previews/staging/production, deployment hooks or hosted app/database provisioning before that gate. GitHub PRs and synthetic CI continue under existing authorisation. This supersedes any implication that intermediate build steps may deploy.

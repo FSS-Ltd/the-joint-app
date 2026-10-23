@@ -22,8 +22,12 @@ For every gate record status, owner, checked date, non-secret evidence reference
 
 No bank supplier evidence is needed for CSV/manual implementation; this does not settle the legal/privacy duties of the actual deployed CSV service. Get the appropriate review before real-data/external launch. A provider outage must not disable deterministic manual functionality. A companion offline state must not silently send evidence to cloud AI.
 
+## Local-only deployment gate
+
+The founder explicitly requires the MVP to be complete before any deployment, followed by explicit deployment approval. Until both conditions hold, run the application and keep its data locally. Do not deploy previews, staging or production, connect automatic deployment hooks, or provision hosted app/database resources. GitHub source publication and synthetic CI remain authorised. An approved merge does not satisfy deployment approval.
+
 ## Budget/production defaults
 
-No new paid commitment is authorised by these gates. Production budget remains undecided until the Founder provides a ceiling and approves the concrete deployment. Development uses existing local resources and public GitHub CI; this is not a claim that hardware/electricity/time are free. Set spend alerts at 50%, 80% and 100% of the eventual approved ceiling, not an invented budget.
+No new paid commitment is authorised by these gates. The founder set a £0 additional monthly hosting target and reports an existing Vercel Pro subscription; use its included allocation plus a free database. Actual allocation/limits and the concrete deployment still need verification and approval. Development uses existing local resources and public GitHub CI; this is not a claim that hardware/electricity/time are free. A £0 ceiling has no useful percentage-alert ladder. Verify remaining included usage and workload limits before deployment; do not infer a hard zero-overage guarantee or alter shared team billing controls. See [cost controls](cost-model.md#existing-vercel-pro-and-free-database--23-october-2026).
 
 Unresolved operational/legal/budget gates hold the corresponding launch, not safe synthetic development. They never justify starting the next numbered step before its predecessor's PR/CI/merge gate passes.
