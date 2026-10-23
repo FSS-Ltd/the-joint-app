@@ -1,5 +1,6 @@
 .privacy-layout {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
   gap: 24px;
   align-items: start;
 }
@@ -80,11 +81,6 @@
   padding-block: 12px;
   border-bottom: 1px solid var(--sage);
   overflow-wrap: anywhere;
-}
-@media (min-width: 1000px) {
-  .privacy-layout {
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  }
 }
 @media (max-width: 480px) {
   .privacy-layout .form-card {

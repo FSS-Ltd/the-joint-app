@@ -193,11 +193,45 @@ export async function capture(page: Page, name: string): Promise<void> {
   await page.evaluate(() => {
     document.body.style.zoom = "2";
   });
+  const zoomLayout = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    overflowing: Array.from(document.querySelectorAll("body *"))
+      .flatMap((element) => {
+        const rect = element.getBoundingClientRect();
+        if (
+          rect.right <= window.innerWidth + 1 &&
+          rect.left >= -1 &&
+          element.scrollWidth <= element.clientWidth + 1
+        )
+          return [];
+        const style = getComputedStyle(element);
+        return [
+          {
+            tag: element.tagName,
+            className: element.className,
+            left: rect.left,
+            right: rect.right,
+            width: rect.width,
+            clientWidth: element.clientWidth,
+            scrollWidth: element.scrollWidth,
+            minWidth: style.minWidth,
+            display: style.display,
+            whiteSpace: style.whiteSpace,
+            overflowWrap: style.overflowWrap,
+          },
+        ];
+      })
+      .slice(0, 25),
+  }));
+  await page.screenshot({
+    path: `/tmp/joint-live-${name}-zoom.png`,
+    fullPage: true,
+  });
   expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth > window.innerWidth,
-    ),
-  ).toBe(false);
+    zoomLayout.scrollWidth,
+    JSON.stringify(zoomLayout),
+  ).toBeLessThanOrEqual(zoomLayout.viewport);
   await page.evaluate(() => {
     document.body.style.zoom = "";
   });

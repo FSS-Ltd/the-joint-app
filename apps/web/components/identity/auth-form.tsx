@@ -43,9 +43,12 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [ready, setReady] = useState(false);
   const [next, setNext] = useState<"join" | "accounts" | null>(null);
   const text = content[mode];
   useEffect(() => {
+    let current = true;
+    setReady(false);
     const destination = nextDestination();
     setNext(
       destination === "/join"
@@ -54,23 +57,35 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
           ? "accounts"
           : null,
     );
-    if (mode === "recovery") {
-      void request<Identity>("/api/me")
-        .then((me) => {
-          if (me.session.purpose !== "RECOVERY") return;
-          if (me.session.needsMfa)
+    if (mode !== "recovery") {
+      setReady(true);
+      return;
+    }
+    void request<Identity>("/api/me")
+      .then((me) => {
+        if (!current) return;
+        if (me.session.purpose === "RECOVERY") {
+          if (me.session.needsMfa) {
             window.location.replace(
               `/security?recovery=1${nextDestination() === "/household" ? "" : `&next=${nextDestination().slice(1)}`}`,
             );
-          else setStage("password");
-        })
-        .catch(() => {
-          /* A signed-out recovery begins with an email address. */
-        });
-    }
+            return;
+          }
+          setStage("password");
+        }
+        setReady(true);
+      })
+      .catch(() => {
+        /* A signed-out recovery begins with an email address. */
+        if (current) setReady(true);
+      });
+    return () => {
+      current = false;
+    };
   }, [mode]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!ready || pending) return;
     setPending(true);
     setError("");
     try {
@@ -112,6 +127,7 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
       setPending(false);
     }
   }
+  const disabled = !ready || pending;
   const suffix = next ? `?next=${next}` : "";
   return (
     <IdentityFrame {...text}>
@@ -137,12 +153,12 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
             in the development mail inbox.
           </p>
         )}
-        <form onSubmit={submit} className="form-stack" aria-busy={pending}>
+        <form onSubmit={submit} className="form-stack" aria-busy={disabled}>
           {stage === "credentials" && (
             <label>
               Email address
               <input
-                disabled={pending}
+                disabled={disabled}
                 type="email"
                 autoComplete="email"
                 required
@@ -157,7 +173,7 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
             <label>
               {stage === "password" ? "New password" : "Password"}
               <input
-                disabled={pending}
+                disabled={disabled}
                 type="password"
                 autoComplete={
                   mode === "sign-in" && stage === "credentials"
@@ -182,7 +198,7 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
             <label>
               Email verification code
               <input
-                disabled={pending}
+                disabled={disabled}
                 autoComplete="one-time-code"
                 required
                 maxLength={20}
@@ -192,14 +208,16 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
             </label>
           )}
           <Feedback error={error} />
-          <button className="button primary" disabled={pending} type="submit">
-            {pending
-              ? "Please wait…"
-              : stage === "verify"
-                ? "Verify email"
-                : stage === "password"
-                  ? "Save new password"
-                  : text.action}
+          <button className="button primary" disabled={disabled} type="submit">
+            {!ready
+              ? "Preparing your account…"
+              : pending
+                ? "Please wait…"
+                : stage === "verify"
+                  ? "Verify email"
+                  : stage === "password"
+                    ? "Save new password"
+                    : text.action}
             <span aria-hidden="true">↗</span>
           </button>
         </form>
@@ -207,7 +225,7 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
           <button
             className="text-button"
             type="button"
-            disabled={pending}
+            disabled={disabled}
             onClick={() => {
               setStage("credentials");
               setCode("");
@@ -218,7 +236,11 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
           </button>
         )}
         {mode === "sign-in" && stage === "credentials" && (
-          <a className="form-link" href={`/recovery${suffix}`}>
+          <a
+            className="form-link"
+            href={ready ? `/recovery${suffix}` : undefined}
+            aria-disabled={!ready}
+          >
             Forgot your password?
           </a>
         )}
@@ -227,12 +249,23 @@ export function AuthForm({ mode }: { mode: Mode }): ReactNode {
           {mode === "sign-up"
             ? "Already have an account?"
             : "New to The Joint App?"}{" "}
-          <a href={`/${mode === "sign-up" ? "sign-in" : "sign-up"}${suffix}`}>
+          <a
+            href={
+              ready
+                ? `/${mode === "sign-up" ? "sign-in" : "sign-up"}${suffix}`
+                : undefined
+            }
+            aria-disabled={!ready}
+          >
             {mode === "sign-up" ? "Sign in" : "Create an account"}
           </a>
         </p>
         {mode === "recovery" && (
-          <a className="form-link" href={`/sign-in${suffix}`}>
+          <a
+            className="form-link"
+            href={ready ? `/sign-in${suffix}` : undefined}
+            aria-disabled={!ready}
+          >
             Back to sign in
           </a>
         )}

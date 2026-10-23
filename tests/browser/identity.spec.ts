@@ -126,6 +126,49 @@ test.afterAll(async () => {
   if (health) await health.close();
 });
 
+test("auth controls wait for delayed hydration and preserve continuation", async ({
+  page,
+  context,
+}) => {
+  const hydrationUser = await auth.createConfirmedUser();
+  users.push(hydrationUser.session.user.id);
+  for (const mode of ["sign-in", "sign-up", "recovery"] as const) {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const chunks = (url: URL) =>
+      url.pathname.startsWith("/_next/static/") && url.pathname.endsWith(".js");
+    await page.route(chunks, async (route) => {
+      await gate;
+      await route.continue();
+    });
+    try {
+      await page.goto(`${origin}/${mode}?next=join`, { waitUntil: "commit" });
+      await expect(page.getByLabel("Email address")).toBeVisible();
+      await expect(page.getByLabel("Email address")).toBeDisabled();
+      if (mode !== "recovery")
+        await expect(page.getByLabel(/^Password/)).toBeDisabled();
+      await expect(page.locator('form button[type="submit"]')).toBeDisabled();
+      release();
+      await expect(page.getByLabel("Email address")).toBeEnabled();
+      await expect(page.locator('form button[type="submit"]')).toBeEnabled();
+      if (mode === "sign-in") {
+        await page.getByLabel("Email address").fill(hydrationUser.email);
+        await page.getByLabel(/^Password/).fill(hydrationUser.password);
+        await page
+          .getByRole("button", { name: "Sign in", exact: true })
+          .click();
+        await expect(page).toHaveURL(`${origin}/join`);
+        expect((await context.request.get("/api/me")).status()).toBe(200);
+      }
+    } finally {
+      release();
+      await page.unrouteAll({ behavior: "wait" });
+    }
+  }
+});
+
 test("real local identity, two-tab refresh, MFA and invitations preserve session boundaries", async ({
   page,
   context,

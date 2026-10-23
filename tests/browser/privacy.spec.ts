@@ -93,9 +93,19 @@ test("two adults import, budget, downgrade, export, leave and regain an owner-on
       await page.getByLabel("Private invitation link").inputValue(),
     );
     await other.getByRole("link", { name: "Sign in to continue" }).click();
+    await expect(
+      other.getByRole("link", { name: "Forgot your password?" }),
+    ).toHaveAttribute("href", "/recovery?next=join");
     await other.getByLabel("Email address").fill(privacyUsers().member.email);
     await other.getByLabel(/^Password/).fill(privacyUsers().member.password);
+    const partnerSignIn = other.waitForResponse(
+      (result) =>
+        result.url() === `${origin}/api/auth/login` &&
+        result.request().method() === "POST",
+    );
     await other.getByRole("button", { name: "Sign in" }).click();
+    expect((await partnerSignIn).status()).toBe(200);
+    await expect(other).toHaveURL(`${origin}/join`);
     await other.getByRole("button", { name: "Accept invitation" }).click();
     await expect(
       other.getByRole("heading", { name: "You're part of the household" }),
