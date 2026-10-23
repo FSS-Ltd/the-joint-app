@@ -1,0 +1,53 @@
+{
+  "fixtureVersion": "joint-ai-feasibility-v1",
+  "contextLimit": 4096,
+  "runtime": "Ollama 0.40.8",
+  "digest": "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb",
+  "downloadSizeBytes": 9608350718,
+  "details": {
+    "parent_model": "",
+    "format": "gguf",
+    "family": "gemma4",
+    "families": ["gemma4"],
+    "parameter_size": "8.0B",
+    "quantization_level": "Q4_K_M",
+    "context_length": 131072,
+    "embedding_length": 2560,
+    "runner": "ggml"
+  },
+  "samples": [
+    {
+      "sample": 1,
+      "wallSeconds": 8.749,
+      "loadSeconds": 7.184,
+      "promptTokens": 55,
+      "outputTokens": 37,
+      "tokensPerSecond": 40.69,
+      "response": "{\n\"summary\": \"This synthetic record contains complete data for one synthetic account, showing grocery spending of GBP 120 in January 2026.\"\n}",
+      "doneReason": "stop"
+    },
+    {
+      "sample": 2,
+      "wallSeconds": 0.975,
+      "loadSeconds": 0.005,
+      "promptTokens": 55,
+      "outputTokens": 37,
+      "tokensPerSecond": 42.2,
+      "response": "{\n\"summary\": \"This synthetic record contains complete data for one synthetic account, showing grocery spending of GBP 120 in January 2026.\"\n}",
+      "doneReason": "stop"
+    },
+    {
+      "sample": 3,
+      "wallSeconds": 1.131,
+      "loadSeconds": 0.002,
+      "promptTokens": 55,
+      "outputTokens": 37,
+      "tokensPerSecond": 36.5,
+      "response": "{\n\"summary\": \"This synthetic record contains complete data for one synthetic account, showing grocery spending of GBP 120 in January 2026.\"\n}",
+      "doneReason": "stop"
+    }
+  ],
+  "peakRamMeasured": false,
+  "readinessOrQualityApproval": false,
+  "modelReference": "Installed Gemma GGUF, digest-pinned; mutable local tag not a release pin"
+}
