@@ -1,3 +1,4 @@
+import { createLegacyLinkController } from "./clerk/legacy-link.controller.js";
 import {
   createIdentityAdapter,
   type IdentityAdapterOptions,
@@ -88,7 +89,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       createLeaveController(),
     ];
   const { database } = options;
-  const { identity, vault } = createIdentityAdapter(options);
+  const { identity, vault, legacyLinker } = createIdentityAdapter(options);
   const scoped = new ScopedDatabase(database);
   const reports = new ReportService(scoped);
   const archive = new ArchiveDatabase(database);
@@ -158,6 +159,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       coverage: new AccountCoverage(scoped),
     }),
     createIdentityController(identity, new HouseholdService(database, vault)),
+    createLegacyLinkController(legacyLinker),
     createAccountsController({
       identity,
       queries: new AccountQueries(scoped, vault),

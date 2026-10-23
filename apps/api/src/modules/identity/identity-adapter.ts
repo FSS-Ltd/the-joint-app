@@ -1,3 +1,4 @@
+import { ClerkLegacyLinker } from "./clerk/legacy-linker.js";
 import type {
   AuthServerEnvironment,
   ClerkServerEnvironment,
@@ -31,11 +32,13 @@ export type IdentityAdapterOptions = { database: PrismaClient } & (
       clerkGateway?: ClerkGateway;
       clerkRevoker?: ClerkRevoker;
       clerkTotp?: ClerkTotpVerifier;
+      legacyEnvironment?: AuthServerEnvironment;
     }
 );
 export function createIdentityAdapter(options: IdentityAdapterOptions): {
   identity: IdentityAccess;
   vault: IdentityVault;
+  legacyLinker?: ClerkLegacyLinker;
 } {
   const vault = new IdentityVault(
     options.environment.AUTH_TOKEN_KEY,
@@ -53,13 +56,34 @@ export function createIdentityAdapter(options: IdentityAdapterOptions): {
       options.clerkRevoker ?? createClerkRevoker(options.environment),
       options.environment.CLERK_TIMEOUT_MS,
     );
+    const totp =
+      options.clerkTotp ?? createClerkTotpVerifier(options.environment);
+    const legacy = options.legacyEnvironment;
+    if (
+      legacy &&
+      (legacy.AUTH_TOKEN_KEY !== options.environment.AUTH_TOKEN_KEY ||
+        legacy.AUTH_EMAIL_HASH_KEY !== options.environment.AUTH_EMAIL_HASH_KEY)
+    )
+      throw new Error("Legacy identity keys must remain unchanged");
+    const legacyLinker = legacy
+      ? new ClerkLegacyLinker(
+          verifier,
+          totp,
+          new SessionStore(
+            options.database,
+            vault,
+            new IdentityVerifier(legacy.AUTH_ISSUER),
+            new AuthProvider(
+              legacy.SUPABASE_AUTH_URL,
+              legacy.SUPABASE_PUBLISHABLE_KEY,
+            ),
+          ),
+          store,
+        )
+      : undefined;
     return {
-      identity: new ClerkIdentityService(
-        verifier,
-        store,
-        logout,
-        options.clerkTotp ?? createClerkTotpVerifier(options.environment),
-      ),
+      legacyLinker,
+      identity: new ClerkIdentityService(verifier, store, logout, totp),
       vault,
     };
   }

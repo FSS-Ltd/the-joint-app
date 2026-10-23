@@ -65,6 +65,8 @@ async function replayLeave(client, entry) {
   }
 }
 async function replayDeletion(client, entry, provider) {
+  if (entry.providerIdentities?.length && !provider.supportsClerk)
+    throw new Error("Clerk restore reconciliation unavailable");
   let requestId, leaseToken;
   await client.query("BEGIN");
   try {
@@ -72,6 +74,26 @@ async function replayDeletion(client, entry, provider) {
       "INSERT INTO app.\"User\"(id,status) VALUES($1,'DISABLED') ON CONFLICT(id) DO UPDATE SET status='DISABLED'",
       [entry.userId],
     );
+    for (const identity of entry.providerIdentities ?? []) {
+      // The journal may be newer than the backup, including its identity mapping.
+      // Keep a terminal provider tombstone even when no binding existed in that backup.
+      const eventId = `restore_${entry.eventId.replaceAll("-", "")}_${createHash(
+        "sha256",
+      )
+        .update(identity.issuer + identity.subject)
+        .digest("hex")
+        .slice(0, 24)}`;
+      await client.query(
+        "SELECT app.apply_clerk_webhook($1,$2,$3,'user.deleted',$4,$4,$5::timestamptz,'DELETED')",
+        [
+          identity.issuer,
+          eventId,
+          createHash("sha256").update(JSON.stringify(entry)).digest("hex"),
+          identity.subject,
+          entry.recordedAt,
+        ],
+      );
+    }
     const { rows: members } = await client.query(
       'SELECT id,"householdId" FROM app."Membership" WHERE "userId"=$1 AND status=\'ACTIVE\' ORDER BY "householdId" FOR UPDATE',
       [entry.userId],
@@ -100,7 +122,13 @@ async function replayDeletion(client, entry, provider) {
     await client.query("ROLLBACK");
     throw error;
   }
-  if (!(await provider.deleteUser(entry.userId)))
+  if (
+    !(await provider.deleteUser(
+      entry.userId,
+      undefined,
+      entry.providerIdentities,
+    ))
+  )
     throw new Error("Restore provider reconciliation pending");
   await client.query(
     "SELECT app.finish_deletion_request($1::uuid,$2::uuid,true)",

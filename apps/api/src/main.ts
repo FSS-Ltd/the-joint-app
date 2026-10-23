@@ -43,6 +43,10 @@ async function main(): Promise<void> {
     mode === "clerk"
       ? readEnvironment(clerkIdentityEnvironmentSchema, process.env)
       : undefined;
+  const legacyEnvironment =
+    clerk && process.env.SUPABASE_AUTH_URL !== undefined
+      ? readEnvironment(authServerEnvironmentSchema, process.env)
+      : undefined;
   const webhook =
     clerk &&
     (process.env.CLERK_WEBHOOK_SIGNING_SECRET !== undefined ||
@@ -60,6 +64,7 @@ async function main(): Promise<void> {
           provider: "clerk",
           database: orm,
           environment: clerk,
+          legacyEnvironment,
           clerkWebhook: webhook
             ? {
                 signingSecret: webhook.CLERK_WEBHOOK_SIGNING_SECRET,

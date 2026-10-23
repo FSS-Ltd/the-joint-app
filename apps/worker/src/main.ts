@@ -2,7 +2,6 @@ import {
   workerEnvironmentSchema,
   importEnvironmentSchema,
   privacyEnvironmentSchema,
-  privacyWorkerEnvironmentSchema,
   readEnvironment,
 } from "@joint/contracts";
 import { randomUUID } from "node:crypto";
@@ -16,31 +15,25 @@ import { createExportHandlers } from "./handlers/export.handler.js";
 import { maintainExports } from "@joint/database/export-maintenance";
 import { DeletionRepository } from "@joint/database/deletion";
 import { PrivacyJournal } from "@joint/database/privacy-journal";
-import { LocalAuthAdmin } from "./privacy/local-auth-admin.js";
+import { createDeletionProvider } from "./privacy/provider.js";
 import { processDeletion } from "./privacy/process-deletion.js";
 async function main(): Promise<void> {
   const env = readEnvironment(workerEnvironmentSchema, process.env);
   const database = createDatabase(env.DATABASE_URL, env.DATABASE_TIMEOUT_MS);
   const orm = createOrm(env.DATABASE_URL);
   const jobs = new JobsRepository(orm);
-  const privacy =
-    process.env.PRIVACY_AUTH_URL === undefined &&
-    process.env.PRIVACY_AUTH_ADMIN_KEY === undefined
-      ? undefined
-      : {
-          ...readEnvironment(privacyWorkerEnvironmentSchema, process.env),
-          ...readEnvironment(privacyEnvironmentSchema, process.env),
-        };
-  const deletion = privacy
-    ? {
-        repository: new DeletionRepository(orm),
-        provider: new LocalAuthAdmin(
-          privacy.PRIVACY_AUTH_URL,
-          privacy.PRIVACY_AUTH_ADMIN_KEY,
-        ),
-        journal: new PrivacyJournal(privacy.PRIVACY_JOURNAL_PATH),
-      }
+  const provider = createDeletionProvider(process.env);
+  const privacy = provider
+    ? readEnvironment(privacyEnvironmentSchema, process.env)
     : undefined;
+  const deletion =
+    privacy && provider
+      ? {
+          repository: new DeletionRepository(orm),
+          provider,
+          journal: new PrivacyJournal(privacy.PRIVACY_JOURNAL_PATH),
+        }
+      : undefined;
   const handlers =
     process.env.IMPORT_DATA_KEY === undefined
       ? {}

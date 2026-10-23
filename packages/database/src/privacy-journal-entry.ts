@@ -5,9 +5,18 @@ interface JournalBase {
   userId: string;
   recordedAt: string;
 }
+export interface ClerkPrivacyIdentity {
+  provider: "clerk";
+  issuer: string;
+  subject: string;
+}
 export type PrivacyJournalEntry = JournalBase &
   (
-    | { kind: "DELETE_USER"; householdId?: never }
+    | {
+        kind: "DELETE_USER";
+        householdId?: never;
+        providerIdentities?: readonly ClerkPrivacyIdentity[];
+      }
     | { kind: "LEAVE_HOUSEHOLD"; householdId: string }
   );
 
@@ -43,8 +52,17 @@ export function parseJournalEntry(value: unknown): PrivacyJournalEntry {
     userId: value.userId,
     recordedAt: value.recordedAt,
   };
-  if (value.kind === "DELETE_USER" && Object.keys(value).length === 6)
-    return { ...base, kind: "DELETE_USER" };
+  if (value.kind === "DELETE_USER") {
+    if (Object.keys(value).length === 6)
+      return { ...base, kind: "DELETE_USER" };
+    if (Object.keys(value).length === 7 && "providerIdentities" in value) {
+      return {
+        ...base,
+        kind: "DELETE_USER",
+        providerIdentities: parseProviderIdentities(value.providerIdentities),
+      };
+    }
+  }
   if (
     value.kind === "LEAVE_HOUSEHOLD" &&
     "householdId" in value &&
@@ -54,4 +72,44 @@ export function parseJournalEntry(value: unknown): PrivacyJournalEntry {
   )
     return { ...base, kind: "LEAVE_HOUSEHOLD", householdId: value.householdId };
   throw new Error("Invalid privacy journal entry");
+}
+
+export function parseProviderIdentities(
+  value: unknown,
+): ClerkPrivacyIdentity[] {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 5)
+    throw new Error("Invalid privacy journal entry");
+  const seen = new Set<string>();
+  return value.map((identity: unknown) => {
+    if (
+      !identity ||
+      typeof identity !== "object" ||
+      Object.keys(identity).length !== 3 ||
+      !("provider" in identity) ||
+      identity.provider !== "clerk" ||
+      !("issuer" in identity) ||
+      typeof identity.issuer !== "string" ||
+      identity.issuer.length > 255 ||
+      !("subject" in identity) ||
+      typeof identity.subject !== "string" ||
+      !/^user_[A-Za-z0-9]{1,123}$/.test(identity.subject)
+    )
+      throw new Error("Invalid privacy journal entry");
+    const url = new URL(identity.issuer);
+    if (
+      url.origin !== identity.issuer ||
+      url.protocol !== "https:" ||
+      url.username ||
+      url.password
+    )
+      throw new Error("Invalid privacy journal entry");
+    const key = `${identity.issuer}:${identity.subject}`;
+    if (seen.has(key)) throw new Error("Invalid privacy journal entry");
+    seen.add(key);
+    return {
+      provider: "clerk",
+      issuer: identity.issuer,
+      subject: identity.subject,
+    };
+  });
 }

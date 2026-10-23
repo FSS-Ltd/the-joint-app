@@ -1,9 +1,11 @@
 "use client";
 
+import { LegacyLinkForm } from "./legacy-link-form";
 import { HandleSSOCallback, useClerk } from "@clerk/nextjs";
 import { useEffect, useState, type ReactNode } from "react";
 import { Feedback, IdentityFrame } from "../frame";
 import {
+  RequestError,
   announceSessionChange,
   errorMessage,
   finishAuth,
@@ -50,6 +52,7 @@ export function ClerkCallback(): ReactNode {
 export function ClerkCompletion(): ReactNode {
   const clerk = useClerk();
   const [error, setError] = useState("");
+  const [needsLink, setNeedsLink] = useState(false);
   useEffect(() => {
     let current = true;
     async function complete() {
@@ -64,12 +67,17 @@ export function ClerkCompletion(): ReactNode {
         announceSessionChange();
         finishAuth(me.session.needsMfa ? "MFA_REQUIRED" : "AUTHENTICATED");
       } catch (cause) {
-        if (current)
+        if (current) {
+          setNeedsLink(
+            cause instanceof RequestError &&
+              cause.code === "IDENTITY_MIGRATION_REQUIRED",
+          );
           setError(
             cause instanceof ClerkFlowFailure
               ? cause.message
               : errorMessage(cause),
           );
+        }
       }
     }
     void complete();
@@ -86,7 +94,8 @@ export function ClerkCompletion(): ReactNode {
       <section className="surface form-card">
         {!error && <p role="status">Finishing sign-in…</p>}
         <Feedback error={error} />
-        {error && (
+        {needsLink && <LegacyLinkForm />}
+        {error && !needsLink && (
           <>
             <p>
               Your sign-in does not change existing data or permissions.
