@@ -3,6 +3,7 @@ import {
   accountSchema,
   type AuthContext,
   type AccountResponse,
+  type ValuationInput,
 } from "@joint/contracts";
 import type { Prisma } from "@joint/database/client";
 import type { ScopedDatabase } from "@joint/database/scoped";
@@ -23,10 +24,6 @@ export interface CreateAccountInput {
   kind: Prisma.AccountCreateInput["kind"];
   currency: "GBP";
   liquidity: Prisma.AccountCreateInput["liquidity"];
-}
-export interface ValuationInput {
-  money: { amountMinor: string; currency: "GBP" };
-  asOfDate: string;
 }
 
 export class AccountMutations {
@@ -136,9 +133,14 @@ export class AccountMutations {
       const part = (type: Intl.DateTimeFormatPartTypes) =>
         parts.find((entry) => entry.type === type)?.value;
       const today = `${part("year")}-${part("month")}-${part("day")}`;
+      const amount = BigInt(input.money.amountMinor);
+      const adultAmount = input.adultMoney
+        ? BigInt(input.adultMoney.amountMinor)
+        : null;
       if (
         input.asOfDate > today ||
-        (isLiabilityKind(account.kind) && BigInt(input.money.amountMinor) < 0n)
+        (isLiabilityKind(account.kind) &&
+          (amount < 0n || (adultAmount !== null && adultAmount !== amount)))
       )
         throw new BadRequestException();
       await tx.balanceSnapshot.create({
@@ -146,7 +148,8 @@ export class AccountMutations {
           householdId: context.householdId,
           accountId,
           authorMembershipId: context.membershipId,
-          amountMinor: BigInt(input.money.amountMinor),
+          amountMinor: amount,
+          adultAmountMinor: adultAmount,
           currency: input.money.currency,
           asOfDate: new Date(`${input.asOfDate}T00:00:00.000Z`),
         },

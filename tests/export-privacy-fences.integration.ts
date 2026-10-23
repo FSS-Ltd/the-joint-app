@@ -279,6 +279,29 @@ it("fences only projected totals, ledger data and the requester's own private no
     expect((await accounts.read(viewer, accountId)).version).toBe(
       totalsProjection.version + 1,
     );
+    const beforeAttestation = await ready(viewer);
+    expect(await csv(beforeAttestation, viewer)).toContain(
+      '""adultAmountMinor"": null',
+    );
+    const beforeAttestationAccount = await accounts.read(actor, accountId);
+    await accountMutations.value(
+      actor,
+      accountId,
+      {
+        money: { amountMinor: "1000", currency: "GBP" },
+        adultMoney: { amountMinor: "0", currency: "GBP" },
+        asOfDate: "2026-10-01",
+      },
+      beforeAttestationAccount.version,
+      randomUUID(),
+    );
+    expect((await service.status(viewer, beforeAttestation)).state).toBe(
+      "INVALIDATED",
+    );
+    await expect(csv(beforeAttestation, viewer)).rejects.toThrow();
+    expect(await csv(await ready(viewer), viewer)).toContain(
+      '""adultAmountMinor"": ""0""',
+    );
     const beforeMetadata = await ready(viewer);
     const ownerBeforeMetadata = await accounts.read(actor, accountId);
     const updatedMetadata = await accountMutations.patch(
@@ -289,7 +312,7 @@ it("fences only projected totals, ledger data and the requester's own private no
     );
     expect(updatedMetadata.version).toBe(ownerBeforeMetadata.version + 1);
     expect((await accounts.read(viewer, accountId)).version).toBe(
-      totalsProjection.version + 2,
+      totalsProjection.version + 3,
     );
     expect((await service.status(viewer, beforeMetadata)).state).toBe(
       "INVALIDATED",
@@ -466,6 +489,7 @@ it("fences only projected totals, ledger data and the requester's own private no
     const ids = [actor.userId, viewer.userId];
     await owner.sessionRegistry.deleteMany({ where: { userId: { in: ids } } });
     await owner.auditEvent.deleteMany({ where: { userId: { in: ids } } });
+    await owner.requestKey.deleteMany({ where: { userId: { in: ids } } });
     await owner.user.deleteMany({ where: { id: { in: ids } } });
     await Promise.all([owner.$disconnect(), runtime.$disconnect()]);
   }

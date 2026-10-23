@@ -51,6 +51,8 @@ import {
   createLeaveController,
   createPrivacyController,
 } from "../privacy/privacy.controller.js";
+import { createWealthController } from "../wealth/wealth.controller.js";
+import { WealthService } from "../wealth/wealth.service.js";
 export interface AuthOptions {
   database: PrismaClient;
   environment: AuthServerEnvironment;
@@ -65,6 +67,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       createImportsController(),
       createTransactionsController(),
       createReportsController(),
+      createWealthController(),
       createBudgetsController(),
       createCoverageController(),
       createTransfersController(),
@@ -98,6 +101,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
     ? new ExportService(scoped, archive, new DataVault(options.importKey))
     : undefined;
   return [
+    createWealthController({ identity, wealth: new WealthService(scoped) }),
     createPrivacyController({
       identity,
       privacy: new PrivacyService(new DeletionRepository(database), journal),

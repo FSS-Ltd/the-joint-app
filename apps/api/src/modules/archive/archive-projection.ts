@@ -2,6 +2,8 @@ import { NotFoundException } from "@nestjs/common";
 import { accountSchema, type AccountResponse } from "@joint/contracts";
 import type { Prisma } from "@joint/database/client";
 
+import { projectValuation } from "../accounts/valuation-projection.js";
+
 export const archiveAccountInclude = {
   balances: {
     take: 1,
@@ -25,19 +27,7 @@ export function projectArchiveAccount(
     source: "MANUAL",
     ownership: "OWNED",
     access: "TRANSACTIONS",
-    latestValuation: snapshot
-      ? {
-          id: snapshot.id,
-          money: {
-            amountMinor: snapshot.amountMinor.toString(),
-            currency: snapshot.currency,
-          },
-          asOfDate: snapshot.asOfDate.toISOString().slice(0, 10),
-          recordedAt: snapshot.createdAt.toISOString(),
-          complete: snapshot.complete,
-          source: snapshot.source,
-        }
-      : null,
+    latestValuation: snapshot ? projectValuation(snapshot) : null,
     sharing: null,
     permissions: { canEdit: false, canValue: false, canShare: false },
   });

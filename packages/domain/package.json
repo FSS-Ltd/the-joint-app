@@ -19,6 +19,10 @@
     "./cash-flow": {
       "types": "./dist/cash-flow.d.ts",
       "import": "./dist/cash-flow.js"
+    },
+    "./wealth": {
+      "types": "./dist/wealth/value-accounts.d.ts",
+      "import": "./dist/wealth/value-accounts.js"
     }
   },
   "scripts": {
