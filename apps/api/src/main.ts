@@ -2,6 +2,7 @@ import "reflect-metadata";
 import {
   apiEnvironmentSchema,
   clerkIdentityEnvironmentSchema,
+  clerkWebhookEndpointEnvironmentSchema,
   readAuthProvider,
   authServerEnvironmentSchema,
   identityEnvironmentSchema,
@@ -42,6 +43,12 @@ async function main(): Promise<void> {
     mode === "clerk"
       ? readEnvironment(clerkIdentityEnvironmentSchema, process.env)
       : undefined;
+  const webhook =
+    clerk &&
+    (process.env.CLERK_WEBHOOK_SIGNING_SECRET !== undefined ||
+      process.env.CLERK_WEBHOOK_INSTANCE_ID !== undefined)
+      ? readEnvironment(clerkWebhookEndpointEnvironmentSchema, process.env)
+      : undefined;
   const orm =
     identity.AUTH_ISSUER || auth || clerk
       ? createOrm(env.DATABASE_URL)
@@ -53,6 +60,12 @@ async function main(): Promise<void> {
           provider: "clerk",
           database: orm,
           environment: clerk,
+          clerkWebhook: webhook
+            ? {
+                signingSecret: webhook.CLERK_WEBHOOK_SIGNING_SECRET,
+                instanceId: webhook.CLERK_WEBHOOK_INSTANCE_ID,
+              }
+            : undefined,
           importKey: imports?.IMPORT_DATA_KEY,
           privacyJournalPath: privacy?.PRIVACY_JOURNAL_PATH,
         }

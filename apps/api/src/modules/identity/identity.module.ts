@@ -3,6 +3,9 @@ import {
   type IdentityAdapterOptions,
 } from "./identity-adapter.js";
 import type { Type } from "@nestjs/common";
+import { createClerkGateway } from "./clerk/provider-gateway.js";
+import { ClerkWebhookService } from "./clerk/webhook-service.js";
+import { createClerkWebhookController } from "./clerk/webhook.controller.js";
 import { createIdentityController } from "./identity.controller.js";
 import { HouseholdService } from "../households/households.service.js";
 import { ScopedDatabase } from "@joint/database/scoped";
@@ -57,6 +60,7 @@ import { FundingEvidenceService } from "../funding-evidence/funding-evidence.ser
 import { createFundingEvidenceController } from "../funding-evidence/funding-evidence.controller.js";
 import { createFundingArchiveController } from "../funding-evidence/funding-archive.controller.js";
 export type AuthOptions = IdentityAdapterOptions & {
+  clerkWebhook?: { signingSecret: string; instanceId: string };
   importKey?: string;
   privacyJournalPath?: string;
 };
@@ -100,6 +104,17 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   };
   const goals = { identity, goals: new GoalService(scoped, archive, vault) };
   return [
+    createClerkWebhookController(
+      options.provider === "clerk" && options.clerkWebhook
+        ? new ClerkWebhookService(
+            database,
+            options.environment.CLERK_ISSUER,
+            options.clerkGateway ?? createClerkGateway(options.environment),
+            options.environment.CLERK_TIMEOUT_MS,
+          )
+        : undefined,
+      options.clerkWebhook,
+    ),
     createFundingEvidenceController(funding),
     createFundingArchiveController(funding),
     createGoalsController(goals),

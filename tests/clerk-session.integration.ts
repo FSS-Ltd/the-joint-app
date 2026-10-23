@@ -210,10 +210,15 @@ it("replaying global logout cannot revoke a later genuine provider sign-in", asy
   const previous = fixture.sessions.get(person.sessionId);
   if (!previous) throw Error("Missing fixture");
   const fresh = "sess_" + randomUUID().replaceAll("-", "");
+  // Use the database clock for this synthetic post-cutoff session; Docker and host clocks can differ.
+  const [clock] = await owner.$queryRaw<
+    { now: Date }[]
+  >`SELECT clock_timestamp() AS now`;
+  if (!clock) throw Error("Missing synthetic clock");
   fixture.sessions.set(fresh, {
     ...previous,
     id: fresh,
-    createdAt: Date.now(),
+    createdAt: clock.now.getTime(),
   });
   expect((await me(person.userId, fresh)).status).toBe(200);
   expect(

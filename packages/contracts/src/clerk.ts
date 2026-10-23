@@ -61,6 +61,10 @@ export const clerkWebEnvironmentSchema = z
 export const clerkWebhookEnvironmentSchema = z.object({
   CLERK_WEBHOOK_SIGNING_SECRET: z.string().regex(/^whsec_[A-Za-z0-9+/]{43}=$/),
 });
+export const clerkWebhookEndpointEnvironmentSchema =
+  clerkWebhookEnvironmentSchema.extend({
+    CLERK_WEBHOOK_INSTANCE_ID: z.string().regex(/^ins_[A-Za-z0-9]{1,124}$/),
+  });
 
 // Provider payloads are projected at the server boundary; unknown profile fields are discarded.
 export const clerkProviderSessionSchema = z.object({
@@ -137,6 +141,16 @@ export const clerkProviderSessionListSchema = z.object({
 });
 
 export type ClerkSessionClaims = z.infer<typeof clerkSessionClaimsSchema>;
+export const clerkWebhookEnvelopeSchema = z.object({
+  object: z.literal("event"),
+  instance_id: z.string(),
+  type: z.string().min(1).max(100),
+  timestamp: z.number().int().positive(),
+  data: z.object({
+    id: z.string().min(1).max(128),
+    user_id: z.string().optional(),
+  }),
+});
 export const clerkIdentityEnvironmentSchema =
   clerkServerEnvironmentSchema.extend({
     AUTH_TOKEN_KEY: z.string().regex(/^[A-Za-z0-9+/]{43}=$/),
