@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import type { AuthContext } from "../packages/contracts/dist/index.js";
-import { createOrm } from "../packages/database/dist/client.js";
+import { createOrm, type Prisma } from "../packages/database/dist/client.js";
 import { PrismaPg } from "../packages/database/node_modules/@prisma/adapter-pg/dist/index.js";
 import { PrismaClient } from "../packages/database/dist/generated/prisma/client.js";
 import {
@@ -256,6 +256,177 @@ it("resolves worker authority only from a live matching lease, without browser i
       withImportJobScope(tx, lease, async () => undefined),
     ),
   ).rejects.toThrow();
+});
+
+it("fences batched job writes by account, batch, actor, operation and current commit state", async () => {
+  const otherBatchId = randomUUID();
+  const otherTransactionId = randomUUID();
+  const positiveTransactionId = randomUUID();
+  await owner.importBatch.create({
+    data: {
+      id: otherBatchId,
+      householdId,
+      accountId,
+      requestedByUserId: alice.userId,
+      requestedByMembershipId: alice.membershipId,
+      fileChecksum: "b".repeat(64),
+      mappingHash: hash,
+      mapping: {},
+      parserVersion: "test",
+      state: "COMMITTING",
+      previewExpiresAt: new Date(Date.now() + 600000),
+    },
+  });
+  function sourceRow(
+    originImportBatchId: string,
+  ): Prisma.TransactionCreateManyInput {
+    return {
+      id: randomUUID(),
+      householdId,
+      accountId,
+      sourceNamespace: "CSV",
+      sourceId: randomUUID(),
+      sourceHash: hash,
+      fingerprint: hash,
+      amountMinor: -100n,
+      bookedDate: date,
+      description: "Synthetic write-policy row",
+      originImportBatchId,
+      csvRowNumber: 2,
+    };
+  }
+  function revisionRow(
+    transactionId: string,
+  ): Prisma.TransactionRevisionCreateManyInput {
+    return {
+      id: randomUUID(),
+      householdId,
+      accountId,
+      transactionId,
+      actorMembershipId: alice.membershipId,
+      kind: "CREATED",
+      version: 1,
+      data: {},
+    };
+  }
+  await owner.transaction.create({
+    data: { ...sourceRow(otherBatchId), id: otherTransactionId },
+  });
+  const job = await jobs.enqueue({
+    householdId,
+    type: "csv.commit",
+    resourceId: batchId,
+    idempotencyKey: randomUUID(),
+    payload: { offset: 0 },
+  });
+  const lease = await jobs.claim(
+    "synthetic-write-policy",
+    ["csv.commit"],
+    30000,
+    job.id,
+  );
+  if (!lease) throw new Error("Expected synthetic write-policy lease");
+  const insertSource = (data: Prisma.TransactionCreateManyInput) =>
+    runtime.$transaction((tx) =>
+      withImportJobScope(tx, lease, (jobTx) =>
+        jobTx.transaction.createMany({ data: [data] }),
+      ),
+    );
+  const insertRevision = (data: Prisma.TransactionRevisionCreateManyInput) =>
+    runtime.$transaction((tx) =>
+      withImportJobScope(tx, lease, (jobTx) =>
+        jobTx.transactionRevision.createMany({ data: [data] }),
+      ),
+    );
+  try {
+    await expect(insertSource(sourceRow(otherBatchId))).rejects.toThrow(
+      /row-level security/,
+    );
+    await expect(
+      insertRevision(revisionRow(otherTransactionId)),
+    ).rejects.toThrow(/row-level security/);
+    await expect(
+      insertRevision({
+        ...revisionRow(transactionId),
+        actorMembershipId: bob.membershipId,
+      }),
+    ).rejects.toThrow(/row-level security/);
+    await expect(
+      insertRevision({
+        ...revisionRow(transactionId),
+        kind: "CLASSIFICATION",
+        version: 2,
+      }),
+    ).rejects.toThrow(/row-level security/);
+    await expect(
+      insertSource({
+        ...sourceRow(batchId),
+        sourceNamespace: "MANUAL",
+        originImportBatchId: null,
+        csvRowNumber: null,
+      }),
+    ).rejects.toThrow(/row-level security/);
+    // The same actual lease may stage its own source and initial revision.
+    expect(
+      (await insertSource({ ...sourceRow(batchId), id: positiveTransactionId }))
+        .count,
+    ).toBe(1);
+    expect(
+      (await insertRevision(revisionRow(positiveTransactionId))).count,
+    ).toBe(1);
+    for (const state of [
+      "COMMITTED",
+      "ROLLED_BACK",
+      "FAILED",
+      "EXPIRED",
+      "READY",
+    ] as const) {
+      await owner.importBatch.update({
+        where: { id: batchId },
+        data: { state },
+      });
+      await expect(insertSource(sourceRow(batchId))).rejects.toThrow(
+        /row-level security/,
+      );
+      await expect(
+        insertRevision(revisionRow(positiveTransactionId)),
+      ).rejects.toThrow(/row-level security/);
+    }
+    await owner.importBatch.update({
+      where: { id: batchId },
+      data: { state: "COMMITTING" },
+    });
+    const previewJob = await jobs.enqueue({
+      householdId,
+      type: "csv.preview",
+      resourceId: batchId,
+      idempotencyKey: randomUUID(),
+      payload: {},
+    });
+    const previewLease = await jobs.claim(
+      "synthetic-preview-write",
+      ["csv.preview"],
+      30000,
+      previewJob.id,
+    );
+    if (!previewLease) throw new Error("Expected synthetic preview lease");
+    await expect(
+      runtime.$transaction((tx) =>
+        withImportJobScope(tx, previewLease, (jobTx) =>
+          jobTx.transaction.createMany({ data: [sourceRow(batchId)] }),
+        ),
+      ),
+    ).rejects.toThrow(/row-level security/);
+  } finally {
+    await owner.importBatch.update({
+      where: { id: batchId },
+      data: { state: "COMMITTING" },
+    });
+    await owner.transaction.deleteMany({
+      where: { id: { in: [otherTransactionId, positiveTransactionId] } },
+    });
+    await owner.importBatch.delete({ where: { id: otherBatchId } });
+  }
 });
 
 it("keeps 50,000 staged rows hidden and publishes them within the real runtime statement bound", async () => {

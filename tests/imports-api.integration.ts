@@ -527,3 +527,48 @@ it("validates upload metadata/bounds, persists safe worker errors and revisions,
     await fixture.close();
   }
 }, 60000);
+
+it("persists unsupported CSV cells as row rejects and rejects invalid manual input at HTTP boundaries", async () => {
+  const fixture = await createImportsHttpFixture();
+  const { root, actorToken, manualAccountId, request, preview } = fixture;
+  try {
+    const result = await preview(
+      "date,description,amount\n0000-01-01,Old row,-1.00\n2026-01-01,Bad\u0000cell,-1.00\n2026-01-01,Valid family 💚,-1.00",
+    );
+    expect(result).toMatchObject({
+      state: "READY",
+      validRows: 1,
+      rejectedRows: 2,
+    });
+    const response = await request(`${root}/imports/${result.id}/rows`);
+    expect(response.status).toBe(200);
+    expect(importRowsSchema.parse(await response.json()).items).toMatchObject([
+      { status: "REJECTED", reason: "INVALID_DATE" },
+      { status: "REJECTED", reason: "INVALID_DESCRIPTION" },
+      { status: "VALID", description: "Valid family 💚" },
+    ]);
+    const valid = {
+      accountId: manualAccountId,
+      bookedDate: "2026-01-01",
+      money: { amountMinor: "-100", currency: "GBP" },
+      description: "Synthetic",
+    };
+    for (const input of [
+      { ...valid, bookedDate: "0000-01-01" },
+      { ...valid, description: "Bad\u0000cell" },
+      { ...valid, description: "Bad\ud800cell" },
+    ]) {
+      const invalid = await request(
+        `${root}/transactions`,
+        "POST",
+        input,
+        actorToken,
+        { "Idempotency-Key": randomUUID() },
+      );
+      expect(invalid.status).toBe(400);
+      expect(JSON.stringify(await invalid.json())).not.toContain("Bad");
+    }
+  } finally {
+    await fixture.close();
+  }
+}, 30000);

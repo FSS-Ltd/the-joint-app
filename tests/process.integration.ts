@@ -3,9 +3,12 @@ import { once } from "node:events";
 import { expect, it } from "vitest";
 
 it("worker releases database handles on SIGTERM", async () => {
+  const environment = { ...process.env };
+  // This lifecycle probe must not claim CSV jobs owned by parallel import fixtures.
+  delete environment.IMPORT_DATA_KEY;
   const child = spawn(process.execPath, ["apps/worker/dist/main.js"], {
     env: {
-      ...process.env,
+      ...environment,
       DATABASE_URL:
         process.env.DATABASE_URL ??
         "postgresql://joint:local-development-only@127.0.0.1:5432/joint",

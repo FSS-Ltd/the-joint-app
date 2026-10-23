@@ -1,5 +1,5 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { afterAll, beforeAll, expect, it } from "vitest";
+import { afterAll, beforeAll, expect, it, onTestFinished } from "vitest";
 import { normalizedCsvRowSchema } from "../packages/contracts/dist/index.js";
 import type {
   AuthContext,
@@ -135,7 +135,15 @@ async function leaseFor(jobId: string, type: string): Promise<JobLease> {
     5000,
     jobId,
   );
-  if (!lease) throw new Error("Expected live import lease");
+  if (!lease) {
+    const existing = await owner.job.findUnique({
+      where: { id: jobId },
+      select: { state: true, leaseOwner: true },
+    });
+    throw new Error(
+      `Expected this fixture's queued import job; state=${existing?.state ?? "MISSING"}, claimedByAnotherWorker=${existing?.leaseOwner !== null && existing?.leaseOwner !== undefined && existing.leaseOwner !== "synthetic-import-worker"}`,
+    );
+  }
   return lease;
 }
 async function execute(jobId: string, type: string): Promise<void> {
@@ -346,6 +354,13 @@ it("revalidates live ownership per chunk and reconciles exhausted jobs without e
 });
 
 it("processes the full 50,000-row path in fenced 500-row chunks without early publication", async () => {
+  const stopped = new AbortController();
+  let activeChunk: Promise<void> | undefined;
+  onTestFinished(async () => {
+    stopped.abort();
+    // A timed-out test must settle its bounded in-flight chunk before fixture cleanup.
+    await activeChunk?.catch(() => undefined);
+  });
   const started = performance.now();
   const csv = `date,description,amount\n${Array.from({ length: 50_000 }, (_, index) => `2026-04-05,Synthetic capacity ${index},-0.01`).join("\n")}`;
   const { batchId, jobId } = await batchFor(csv);
@@ -356,7 +371,10 @@ it("processes the full 50,000-row path in fenced 500-row chunks without early pu
   ).toBe(50_000);
   let next = await beginCommit(batchId);
   for (let chunk = 0; chunk < 100; chunk++) {
-    await execute(next, "csv.commit");
+    stopped.signal.throwIfAborted();
+    activeChunk = execute(next, "csv.commit");
+    await activeChunk;
+    stopped.signal.throwIfAborted();
     if (chunk === 0 || chunk === 98)
       expect(await visibleCount(batchId)).toBe(0);
     if (chunk < 99) next = await continuation(batchId);
