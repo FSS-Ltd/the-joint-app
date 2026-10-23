@@ -53,6 +53,9 @@ import {
 } from "../privacy/privacy.controller.js";
 import { createWealthController } from "../wealth/wealth.controller.js";
 import { WealthService } from "../wealth/wealth.service.js";
+import { GoalService } from "../goals/goals.service.js";
+import { createGoalsController } from "../goals/goals.controller.js";
+import { createGoalArchiveController } from "../goals/goal-archive.controller.js";
 export interface AuthOptions {
   database: PrismaClient;
   environment: AuthServerEnvironment;
@@ -68,6 +71,8 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       createTransactionsController(),
       createReportsController(),
       createWealthController(),
+      createGoalsController(),
+      createGoalArchiveController(),
       createBudgetsController(),
       createCoverageController(),
       createTransfersController(),
@@ -100,7 +105,10 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   const exports = options.importKey
     ? new ExportService(scoped, archive, new DataVault(options.importKey))
     : undefined;
+  const goals = { identity, goals: new GoalService(scoped, archive, vault) };
   return [
+    createGoalsController(goals),
+    createGoalArchiveController(goals),
     createWealthController({ identity, wealth: new WealthService(scoped) }),
     createPrivacyController({
       identity,

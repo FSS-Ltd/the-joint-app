@@ -101,24 +101,24 @@ Joint legal ownership is distinct from household UI sharing. Two provider connec
 
 ## 5. Core capabilities and success criteria
 
-| ID  | Capability               | Required outcome                                                                                          |
-| --- | ------------------------ | --------------------------------------------------------------------------------------------------------- |
-| R01 | Identity and household   | Two individual accounts, explicit invitation/acceptance, owner-safe exit and deletion                     |
-| R02 | Direct banks             | One approved UK provider, real consent journey, accurate booked transactions, revocation and reconnection |
-| R03 | Investments              | Read-only supported brokerage balances, cash and holdings; Trading 212 permission gate                    |
-| R04 | Imports                  | CSV preview, mapping, duplicate review, rollback and provenance                                           |
-| R05 | Spending                 | Calendar-month categories, trends, recurring-payment candidates, corrected classifications                |
-| R06 | Budgets                  | Monthly category budgets and remaining amounts; clear “incomplete data” state                             |
-| R07 | Net worth                | Assets less liabilities, account-level freshness, no double counting                                      |
-| R08 | Goals                    | Target amount/date, allocations, planned contributions and priority                                       |
-| R09 | Projections              | Reproducible timelines, assumptions, optimistic/base/cautious labels only when rates supplied             |
-| R10 | Children's records       | Separate ownership and liquidity; family combined view is opt-in                                          |
-| R11 | Local assistant          | Evidence-backed explanations and cost-cutting scenarios using a paired Mac                                |
-| R12 | Shared review            | Common dashboard and monthly review notes containing only mutually authorised data                        |
-| R13 | Monetisation             | Server-enforced plan capabilities; founder entitlement; graceful downgrade                                |
-| R14 | Mobile                   | Native login, reliable provider redirects, secure credentials, privacy-aware notifications                |
-| R15 | Portability and deletion | Export, revoke connections, leave household and delete account without payment                            |
-| R16 | Reliability              | Backups restored successfully, stale feeds identified, duplicate jobs safe to retry                       |
+| ID  | Capability               | Required outcome                                                                                                                                             |
+| --- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R01 | Identity and household   | Two individual accounts, explicit invitation/acceptance, owner-safe exit and deletion                                                                        |
+| R02 | Direct banks             | One approved UK provider, real consent journey, accurate booked transactions, revocation and reconnection                                                    |
+| R03 | Investments              | Read-only supported brokerage balances, cash and holdings; Trading 212 permission gate                                                                       |
+| R04 | Imports                  | CSV preview, mapping, duplicate review, rollback and provenance                                                                                              |
+| R05 | Spending                 | Calendar-month categories, trends, recurring-payment candidates, corrected classifications                                                                   |
+| R06 | Budgets                  | Monthly category caps, remaining countdown, accessible limit/overspend feedback, qualified savings impact and month-end encouragement; incomplete-data state |
+| R07 | Net worth                | Assets less liabilities, account-level freshness, no double counting                                                                                         |
+| R08 | Goals                    | Target amount/date, allocations, planned contributions and priority                                                                                          |
+| R09 | Projections              | Reproducible timelines, assumptions, optimistic/base/cautious labels only when rates supplied                                                                |
+| R10 | Children's records       | Separate ownership and liquidity; family combined view is opt-in                                                                                             |
+| R11 | Local assistant          | Evidence-backed explanations and cost-cutting scenarios using a paired Mac                                                                                   |
+| R12 | Shared review            | Common dashboard and monthly review notes containing only mutually authorised data                                                                           |
+| R13 | Monetisation             | Server-enforced plan capabilities; founder entitlement; graceful downgrade                                                                                   |
+| R14 | Mobile                   | Native login, reliable provider redirects, secure credentials, privacy-aware notifications                                                                   |
+| R15 | Portability and deletion | Export, revoke connections, leave household and delete account without payment                                                                               |
+| R16 | Reliability              | Backups restored successfully, stale feeds identified, duplicate jobs safe to retry                                                                          |
 
 Founder success measures: both adults complete onboarding; imported balances reconcile against source statements; a complete month can be explained; known transfers are excluded from spending; each displayed forecast can be reproduced; assistant evidence is inspectable; no real security incident or critical permission defect remains open. These are acceptance goals, not claimed results.
 
@@ -139,6 +139,8 @@ Founder success measures: both adults complete onboarding; imported balances rec
 Select a calendar month and authorised account scope. Show posted income, spending, transfers, debt service and net cash movement separately. Drill into category totals; fix misclassifications without altering the provider's original row. Exclude pending transactions from booked reports while showing an optional pending preview.
 
 Compare with the previous complete month and the rolling baseline. Flag missing history and unusual one-off items rather than presenting partial totals as complete. A recurring payment is a candidate for review, not proof that a service is unused.
+
+Category-cap enhancement (planned): show a visible remaining allowance, red at zero and a brief reduced-motion-safe overspend pulse. Link the net budget variance to a confirmed savings plan and offer explicit month-end savings/investment-goal encouragement. This extends existing category budgets; it does not claim that new feedback or savings actions are implemented. See [category caps and savings requirements](../decisions/category-caps-and-savings-plan.md) for examples, permissions and acceptance criteria.
 
 ### Plan a goal
 

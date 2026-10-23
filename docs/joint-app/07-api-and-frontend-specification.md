@@ -268,3 +268,24 @@ Use verified Universal Links/App Links for auth and provider returns with explic
 Blur sensitive views when backgrounded; default push text to “Your account update is ready”. Do not include amounts, account labels or child data in push payloads. Show last-sync time and internet/provider/device state distinctly.
 
 Test on physical iPhone and Android devices, including bank-app redirects, cancellation, MFA, interrupted linking, subscription restore and background/foreground. Simulator success alone is insufficient for the public gate.
+
+## Implemented Task 3C.2 — shared goal metadata
+
+Shared adult goal details are independent of funding permissions. A goal snapshots the active adult memberships present at creation; a later invitation does not expose an existing goal. This step offers no participant widening, child profile, allocation, contribution-plan or projection writer. Original unclassified goal rows receive no fabricated participants.
+
+| Route                                      | Behavior                                                                                                                               |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST H/goals`                             | Create ACTIVE adult GBP metadata with `Idempotency-Key`. Identical retries resolve the same permitted goal; changed input returns 409. |
+| `PUT H/goals/{goalId}`                     | Edit exact metadata or archive using positive quoted `If-Match`; stale versions and archived edits return 409.                         |
+| `GET H/goals`                              | Fifty permitted goals per page.                                                                                                        |
+| `GET H/goals/{goalId}`                     | Latest metadata and up to fifty immutable history entries.                                                                             |
+| `GET H/goals/{goalId}/export`              | Free JSON attachment of the same authorized page; fresh MFA required.                                                                  |
+| `GET /v1/me/archive/goals`                 | List goals in which this adult participated before leaving.                                                                            |
+| `GET /v1/me/archive/goals/{goalId}`        | Metadata/history frozen at this adult's exit version.                                                                                  |
+| `GET /v1/me/archive/goals/{goalId}/export` | Free frozen-history JSON attachment; fresh MFA required.                                                                               |
+
+Metadata is exactly `name`, `status`, `beneficiary: ADULT`, `priority` (1–1000), nonnegative GBP `target`, and nullable canonical `targetDate`. IDs, household and version come from the server. No account IDs, source values, private notes or funded totals appear. Archive is read-only and retains previous revisions. Existing funding claims prevent this metadata-only archive operation until the later funding lifecycle is implemented.
+
+List/detail/export accept only an optional `cursor`; use returned `nextCursor` until null. Cursors are encrypted and bound to actor, session, active membership/grant scope, goal and operation. Every page revalidates live authority. Active exports are successive current-authorized pages, not a claim of a database-wide point-in-time snapshot. Goal metadata JSON does not alter account-selected CSV exports or create retained export objects/tokens. No subscription gate applies.
+
+Leaving freezes participation through the common membership transition, including privacy restore replay. Subsequent remaining-member edits cannot appear in the departing adult's archive. Deletion removes that adult's participant links and exclusively retained goals/history. Other participants retain only justified records: when every survivor is frozen, later revisions are removed and the goal head is restored to the exact surviving immutable revision, preserving its original timestamp. Independently shared live records remain available. No cross-household copy or new-partner inheritance is created. These backend interfaces have no goal UI yet; all execution remains local.
