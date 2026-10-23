@@ -5,6 +5,8 @@ import { errorMessage, request } from "../identity/client";
 import { Feedback } from "../identity/frame";
 import { useIdentity } from "../identity/use-identity";
 import { AccountCard } from "./card";
+import { AccountSelector } from "./account-selector";
+import "./workspace.css";
 import { AccountsFrame } from "./frame";
 import { MetadataForm } from "./metadata-form";
 import { accountPath, liquidityLabels } from "./presentation";
@@ -68,78 +70,85 @@ export function AccountDetail({ accountId }: { accountId: string }): ReactNode {
           Go to household
         </a>
       )}
-      {account && !loading && (
-        <>
-          <div className="finance-actions">
-            {account.access === "TRANSACTIONS" && (
-              <a
-                className="button secondary compact-button"
-                href={`/activity?account=${account.id}`}
-              >
-                View activity
-              </a>
-            )}
-            {account.ownership === "OWNED" && (
-              <a
-                className="button secondary compact-button"
-                href={`/imports?account=${account.id}`}
-              >
-                Import CSV
-              </a>
-            )}
-          </div>
-          <div className="account-detail-summary">
-            <AccountCard account={account} linked={false} />
-            <aside className="accounts-private-note">
-              <p className="step-label">Clear boundaries</p>
-              <h2>
-                {account.ownership === "OWNED"
-                  ? "Your account. Your choice."
-                  : "Shared access, clearly set."}
-              </h2>
-              <p>Availability: {liquidityLabels[account.liquidity]}.</p>
-              <p>
-                {account.ownership === "OWNED"
-                  ? "Only an owner can change this account or its sharing permissions."
-                  : account.access === "TRANSACTIONS"
-                    ? "You can view the shared value and booked activity, and keep your own private notes. The owner controls account changes and sharing."
-                    : "You can view the value shared with you. Account changes, activity and sharing controls belong to the owner."}
-              </p>
-            </aside>
-          </div>
-          <div className="account-detail-forms">
-            <div className="account-form-column">
-              {account.permissions.canValue && (
-                <ValuationForm
-                  key={`value-${account.id}`}
-                  account={account}
-                  saved={setAccount}
-                  reload={reload}
-                />
+      {account && householdId && !loading && (
+        <div className="account-workspace">
+          <AccountSelector
+            key={householdId}
+            householdId={householdId}
+            current={account}
+          />
+          <div className="account-detail-body">
+            <div className="finance-actions">
+              {account.access === "TRANSACTIONS" && (
+                <a
+                  className="button secondary compact-button"
+                  href={`/activity?account=${account.id}`}
+                >
+                  View activity
+                </a>
               )}
-              {account.permissions.canEdit && (
-                <MetadataForm
-                  key={`metadata-${account.id}`}
-                  account={account}
-                  saved={setAccount}
-                  reload={reload}
-                />
+              {account.ownership === "OWNED" && (
+                <a
+                  className="button secondary compact-button"
+                  href={`/imports?account=${account.id}`}
+                >
+                  Import CSV
+                </a>
               )}
             </div>
-            <div className="account-form-column">
-              {(account.permissions.canShare ||
-                (account.ownership === "OWNED" &&
-                  account.sharing?.membershipId === null)) && (
-                <SharingForm
-                  key={`sharing-${account.id}`}
-                  account={account}
-                  saved={setAccount}
-                  reload={reload}
-                />
-              )}
+            <div className="account-detail-summary">
+              <AccountCard account={account} linked={false} />
+              <aside className="accounts-private-note">
+                <p className="step-label">Clear boundaries</p>
+                <h2>
+                  {account.ownership === "OWNED"
+                    ? "Your account. Your choice."
+                    : "Shared access, clearly set."}
+                </h2>
+                <p>Availability: {liquidityLabels[account.liquidity]}.</p>
+                <p>
+                  {account.ownership === "OWNED"
+                    ? "Only an owner can change this account or its sharing permissions."
+                    : account.access === "TRANSACTIONS"
+                      ? "You can view the shared value and booked activity, and keep your own private notes. The owner controls account changes and sharing."
+                      : "You can view the value shared with you. Account changes, activity and sharing controls belong to the owner."}
+                </p>
+              </aside>
+            </div>
+            <div className="account-detail-forms">
+              <div className="account-form-column">
+                {account.permissions.canValue && (
+                  <ValuationForm
+                    key={`value-${account.id}`}
+                    account={account}
+                    saved={setAccount}
+                    reload={reload}
+                  />
+                )}
+                {account.permissions.canEdit && (
+                  <MetadataForm
+                    key={`metadata-${account.id}`}
+                    account={account}
+                    saved={setAccount}
+                    reload={reload}
+                  />
+                )}
+              </div>
+              <div className="account-form-column">
+                {(account.permissions.canShare ||
+                  (account.ownership === "OWNED" &&
+                    account.sharing?.membershipId === null)) && (
+                  <SharingForm
+                    key={`sharing-${account.id}`}
+                    account={account}
+                    saved={setAccount}
+                    reload={reload}
+                  />
+                )}
+              </div>
             </div>
           </div>
-        </>
+        </div>
       )}
     </AccountsFrame>
   );

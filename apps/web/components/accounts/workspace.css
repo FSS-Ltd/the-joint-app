@@ -1,0 +1,193 @@
+.accounts-main:has(.account-workspace),
+.accounts-main:has(.accounts-layout) {
+  container: account-main / inline-size;
+}
+.account-overview {
+  margin-bottom: 32px;
+  padding: 8px;
+  border: 1px solid #dde7dd66;
+  border-radius: var(--radius-frame);
+  background: #dde7dd24;
+}
+.account-overview-panel {
+  padding: 24px;
+}
+.account-overview-panel h2 {
+  margin: 8px 0 12px;
+  font-size: clamp(28px, 4vw, 36px);
+  letter-spacing: -0.04em;
+}
+.account-overview-panel p {
+  max-width: 580px;
+}
+.account-overview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+.account-overview-actions .button {
+  flex: 1 1 150px;
+  min-width: 0;
+  max-width: 240px;
+}
+.account-source-note {
+  margin: 16px 16px 8px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.accounts-main .accounts-layout {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}
+.account-card.account-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 20px;
+  align-items: start;
+}
+.account-row-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+.account-row-identity > div {
+  min-width: 0;
+}
+.account-row .account-kind-mark {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+}
+.account-row h4 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.account-row h4 a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-underline-offset: 4px;
+}
+.account-row-value {
+  min-width: 0;
+  text-align: right;
+}
+.account-row .account-value {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+.account-row .unknown-value {
+  font-size: 17px;
+}
+.account-row .account-provenance {
+  margin: 0;
+  line-height: 1.5;
+}
+.account-row .account-card-foot {
+  grid-column: 1 / -1;
+  padding-top: 12px;
+  gap: 8px;
+}
+.account-workspace,
+.account-detail-body {
+  display: grid;
+  min-width: 0;
+  gap: 24px;
+  align-items: start;
+}
+.account-detail-body {
+  gap: 0;
+}
+.account-workspace .account-detail-summary,
+.account-workspace .account-detail-forms {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+}
+.account-workspace .account-detail-summary {
+  margin-top: 0;
+}
+.account-selector {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-frame);
+  background: var(--canvas);
+  color: var(--ink);
+  --muted: #52665c;
+  --focus-ring: var(--focus);
+}
+.account-selector h2 {
+  margin: 0;
+  padding: 20px 20px 0;
+  font-size: 18px;
+}
+.account-selector summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 16px 20px;
+  cursor: pointer;
+}
+.account-selector-content {
+  display: grid;
+  gap: 8px;
+  padding: 8px 16px 16px;
+}
+.account-selector-content > a {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-card);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.account-selector-content > a:hover {
+  background: var(--sage);
+}
+.account-selector-content > a[aria-current="page"] {
+  background: var(--sage);
+  border-color: var(--primary);
+  font-weight: 600;
+}
+.account-selector small {
+  color: var(--muted);
+}
+.account-selector-content > .account-selector-back {
+  display: flex;
+  justify-content: space-between;
+  border-top-color: var(--border);
+  margin-top: 12px;
+}
+.account-selector-desktop {
+  display: none;
+}
+@container account-main (min-width: 720px) {
+  .account-workspace {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+  .account-selector-mobile {
+    display: none;
+  }
+  .account-selector-desktop {
+    display: block;
+  }
+}
+@container account-main (max-width: 300px) {
+  .account-card.account-row {
+    gap: 12px;
+    padding: 16px;
+  }
+  .account-row-identity {
+    display: block;
+  }
+  .account-row .account-kind-mark {
+    display: none;
+  }
+}
