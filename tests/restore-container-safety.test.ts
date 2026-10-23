@@ -27,6 +27,7 @@ const fs=require('node:fs');
 const args=process.argv.slice(2),mode=process.env.DOCKER_TEST_SCENARIO;
 if(mode==='ERROR') process.exit(1);
 if(mode==='SOURCE') {
+ if(args[0]==='ps'&&!args.includes('expose=5432')) process.exit(0);
  if(args[0]==='ps') process.stdout.write('sourceCandidate\\nunrelatedCandidate');
  else process.stdout.write(JSON.stringify(args.at(-1)==='sourceCandidate'?[{HostIp:'127.0.0.1',HostPort:'15432'}]:[{HostIp:'127.0.0.1',HostPort:'15433'}]));
  process.exit(0);

@@ -35,7 +35,8 @@ export async function sourceContainer(url) {
     await docker([
       "ps",
       "--filter",
-      `publish=${url.port || "5432"}`,
+      // Discover PostgreSQL by container port, then verify its exact host binding.
+      "expose=5432",
       "--format",
       "{{.ID}}",
     ])
