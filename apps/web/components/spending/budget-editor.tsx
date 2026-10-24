@@ -2,10 +2,9 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import type { SpendingReport } from "@joint/contracts";
 import { parseMoneyInput } from "@joint/domain";
-import { formatAggregateMoney } from "@joint/domain/cash-flow";
+import { formatAggregateMoney, formatGbpMinor } from "@joint/domain/cash-flow";
 import { request, errorMessage } from "../identity/client";
 import { isAccessError } from "../finance/access-error";
-import { BudgetChart } from "./budget-chart";
 import { categoryActual } from "./budget-presentation";
 import { Feedback } from "../identity/frame";
 function decimal(value: string): string {
@@ -150,8 +149,13 @@ export function BudgetEditor({
         </div>
         <Feedback error={error} />
       </form>
-      <BudgetChart report={report} />
-      {report.budget && (
+      {report.budget && !report.summary && (
+        <p role="status">
+          Spending figures are unavailable. Remaining allowances cannot be
+          calculated yet.
+        </p>
+      )}
+      {report.budget && report.summary && (
         <div className="report-table-wrap">
           <table className="report-table">
             <caption>
@@ -174,13 +178,10 @@ export function BudgetEditor({
                     <td>{formatAggregateMoney(l.limit)}</td>
                     <td>{formatAggregateMoney(actual)}</td>
                     <td>
-                      {formatAggregateMoney({
-                        amountMinor: (
-                          BigInt(l.limit.amountMinor) -
-                          BigInt(actual.amountMinor)
-                        ).toString(),
-                        currency: "GBP",
-                      })}
+                      {formatGbpMinor(
+                        BigInt(l.limit.amountMinor) -
+                          BigInt(actual.amountMinor),
+                      )}
                     </td>
                   </tr>
                 );

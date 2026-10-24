@@ -237,7 +237,10 @@ export function validateSplits(
 export function formatAggregateMoney(money: AggregateMoney): string {
   if (money.currency !== "GBP")
     throw new Error("Only GBP amounts are supported.");
-  const value = aggregateValue(money.amountMinor);
+  return formatGbpMinor(aggregateValue(money.amountMinor));
+}
+/** Computed differences can be wider than their validated wire-money inputs. */
+export function formatGbpMinor(value: bigint): string {
   const magnitude = value < 0n ? -value : value;
   return `${value < 0n ? "-" : ""}£${new Intl.NumberFormat("en-GB").format(magnitude / 100n)}.${(magnitude % 100n).toString().padStart(2, "0")}`;
 }

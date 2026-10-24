@@ -42,6 +42,9 @@ test("CSV overview distinguishes source, valid, rejected, overlap, duplicate and
       exact: true,
     }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Rejected row", exact: true }),
+  ).toHaveCSS("color", "rgb(156, 56, 56)");
   await expect(page.getByText("+£100.00", { exact: true })).toBeVisible();
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.screenshot({

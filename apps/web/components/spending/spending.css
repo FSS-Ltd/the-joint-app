@@ -25,15 +25,10 @@
   min-height: 44px;
   font-weight: 400;
 }
-.check-line input {
+.report-scope .check-line input {
   width: 20px;
   height: 20px;
   flex: none;
-}
-.report-freshness {
-  font-size: 13px;
-  color: var(--muted);
-  margin: 0;
 }
 .report-hero {
   padding: 32px;
@@ -47,7 +42,7 @@
   --focus-ring: var(--apricot);
 }
 .report-hero h2 {
-  font-size: clamp(32px, 6vw, 52px);
+  font-size: clamp(32px, 5cqi, 48px);
   letter-spacing: -0.045em;
   margin: 8px 0;
   overflow-wrap: anywhere;
@@ -225,9 +220,9 @@
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
-@media (min-width: 768px) {
+@container spending-workspace (min-width: 720px) {
   .report-scope {
-    grid-template-columns: 180px minmax(0, 1fr) auto;
+    grid-template-columns: 160px minmax(0, 1fr) auto;
   }
   .report-hero {
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
@@ -271,36 +266,67 @@
   }
 }
 
-.budget-charts {
-  display: grid;
-  gap: 16px;
-  margin-top: 32px;
+.spending-workspace {
+  container: spending-workspace / inline-size;
 }
-.budget-charts > h3 {
-  margin: 0;
+.spending-workspace > *,
+.report-grid > *,
+.report-hero > *,
+.report-scope > * {
+  min-width: 0;
 }
-.budget-chart {
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-}
-.budget-chart h4 {
-  margin: 0;
+.report-source {
+  padding: 0 8px;
   overflow-wrap: anywhere;
 }
-.budget-chart p {
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
+.report-source p {
+  margin: 4px 0;
 }
-.budget-chart-row {
+.report-summary-frame,
+.cap-grid {
+  padding: 8px;
+  background: #dde7dd24;
+  border: 1px solid #dde7dd66;
+  border-radius: var(--radius-frame);
+}
+.report-hero {
+  border: 1px solid #dde7dd66;
+}
+.report-hero dl > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.report-hero p {
+  margin: 8px 0 16px;
+}
+.report-scope summary {
+  overflow-wrap: anywhere;
+}
+.report-review-actions {
+  max-width: 720px;
+}
+.cash-bridge > div {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
-  gap: 12px;
-  align-items: center;
-  margin-top: 8px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
-.budget-chart-row > span {
-  font-size: 12px;
+.cash-bridge dd {
+  text-align: right;
+  overflow-wrap: anywhere;
 }
-.report-track i.actual {
-  background: #52665c;
+@container spending-workspace (max-width: 340px) {
+  .spending-workspace .form-card,
+  .report-scope,
+  .report-hero {
+    padding: 16px;
+  }
+}
+
+.coverage-list li > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  flex: 1 1 200px;
+}
+.report-scope .check-line,
+.report-review-actions a {
+  overflow-wrap: anywhere;
 }

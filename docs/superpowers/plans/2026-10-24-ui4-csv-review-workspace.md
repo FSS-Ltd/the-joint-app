@@ -49,4 +49,4 @@ Files: modify `review-row.tsx`, `review.tsx`, `batch-actions.tsx`, scoped `impor
 
 - [x] Inspect every changed file/diff; pass formatting, lint, all strict types, all package builds/unit tests and full browser acceptance in the secret-free archive. Required CI runs full database integration for this frontend-only step.
 - [x] Obtain one independent whole-branch review; fix material findings with regressions in one pass. Scan public source for private paths/exact local secret matches.
-- [ ] Commit/push/open/attach UI4 PR only after local verification. Require successful current-head/test-merge CI and actual authorised merge. Record exact evidence; no next unit or deployment before merge.
+- [x] Commit/push/open/attach UI4 PR only after local verification. Require successful current-head/test-merge CI and actual authorised merge. Record exact evidence; no next unit or deployment before merge.
