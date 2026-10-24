@@ -5,6 +5,7 @@ import {
 } from "./fixtures/status-streams.js";
 import { setTimeout as delay } from "node:timers/promises";
 import { randomUUID } from "node:crypto";
+import { JobsRepository } from "../packages/database/dist/jobs.repository.js";
 import { StatusResources } from "../apps/api/src/modules/events/status-resources.js";
 
 let fixture: Awaited<ReturnType<typeof createStatusFixture>>;
@@ -273,10 +274,11 @@ it("preserves requester and owner-archive boundaries for export streams", async 
         frames = statusSignals(response);
       expect(response.status).toBe(200);
       expect(await frames.next()).toBe("event: change\ndata: {}");
-      await active.owner.exportRequest.update({
-        where: { id },
-        data: { state: "FAILED" },
+      const job = await active.owner.job.findFirstOrThrow({
+        where: { resourceId: id, type: "csv.export" },
       });
+      const jobs = new JobsRepository(active.owner);
+      expect(await jobs.cancel(active.householdId, job.id)).toBe(true);
       expect(await frames.next()).toBe("event: change\ndata: {}");
     } finally {
       abort.abort();

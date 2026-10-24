@@ -1,6 +1,8 @@
-import { expect, it, vi } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { StatusResources } from "../apps/api/src/modules/events/status-resources.js";
 import { statusSubscriptionSchema } from "../packages/contracts/src/events.js";
+
+afterEach(() => vi.useRealTimers());
 
 it("rejects ambiguous selectors and never accepts credentials or arbitrary topics", () => {
   const id = "e237d3d7-236f-4ec3-8454-c4e5504d397f";
@@ -88,4 +90,45 @@ it("rechecks live authority and expiry, but ignores request IDs in private finge
   expect(imports.observe).toHaveBeenCalledTimes(3);
   expect(identity.subscriptionExpiry).toHaveBeenCalledTimes(3);
   expect(first.fingerprint).not.toContain("household");
+});
+
+it("retains an export deadline crossed while its status read is resolving", async () => {
+  vi.useFakeTimers();
+  const now = Date.now();
+  const context = {
+    userId: "user",
+    sessionId: "session",
+    householdId: "household",
+    membershipId: "member",
+    grantVersion: 0,
+    requestId: "request",
+    aal: "aal2" as const,
+    mfaAuthenticatedAt: now,
+    authenticatedAt: now,
+  };
+  const identity = {
+    financeContext: vi.fn(async () => context),
+    actor: vi.fn(async () => ({ ...context, emailHash: "opaque" })),
+    subscriptionExpiry: vi.fn(async () => now + 100000),
+  };
+  const status = {
+    id: "e237d3d7-236f-4ec3-8454-c4e5504d397f",
+    state: "READY" as const,
+    createdAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + 10000).toISOString(),
+    downloadExpiresAt: new Date(now + 20).toISOString(),
+  };
+  const exports = {
+    status: vi.fn(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      return status;
+    }),
+    archiveStatus: vi.fn(async () => status),
+  };
+  const reading = new StatusResources({ identity, exports }).read(
+    { kind: "export", id: status.id, householdId: status.id },
+    `Session ${"a".repeat(43)}`,
+  );
+  await vi.advanceTimersByTimeAsync(50);
+  expect((await reading).resourceExpiresAt).toBe(now + 20);
 });

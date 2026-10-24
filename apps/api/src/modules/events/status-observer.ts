@@ -27,7 +27,9 @@ export async function authorizeStatusObserver(options: {
   let started = false;
   let pending = false;
   let active: Promise<void> | undefined;
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  let credentialTimer: ReturnType<typeof setTimeout> | undefined;
+  let resourceTimer: ReturnType<typeof setTimeout> | undefined;
+  let observedAt: number;
   let snapshot: StatusSnapshot;
   const unsubscribe = options.source.subscribe(wake, () => close("reconnect"));
   const abort = (): void => close();
@@ -37,7 +39,8 @@ export async function authorizeStatusObserver(options: {
     if (closed) return;
     closed = true;
     pending = false;
-    clearTimeout(timer);
+    clearTimeout(credentialTimer);
+    clearTimeout(resourceTimer);
     unsubscribe();
     options.signal?.removeEventListener("abort", abort);
     if (started && event) options.send(event);
@@ -47,25 +50,37 @@ export async function authorizeStatusObserver(options: {
     if (!closed && !options.send(event)) close();
   }
   function schedule(): void {
-    clearTimeout(timer);
+    clearTimeout(credentialTimer);
+    clearTimeout(resourceTimer);
     if (closed) return;
-    const now = Date.now();
-    const deadline = Math.min(
-      snapshot.credentialExpiresAt,
-      snapshot.resourceExpiresAt !== null && snapshot.resourceExpiresAt > now
-        ? snapshot.resourceExpiresAt
-        : Infinity,
-    );
-    const arm = (): void => {
+    const credentialDeadline = snapshot.credentialExpiresAt;
+    const armCredential = (): void => {
       if (closed) return;
-      const remaining = deadline - Date.now();
+      const remaining = credentialDeadline - Date.now();
       if (remaining > 0)
-        timer = setTimeout(arm, Math.min(remaining, 2147483647));
-      else if (snapshot.credentialExpiresAt <= Date.now())
-        close(snapshot.expiryEvent);
+        credentialTimer = setTimeout(
+          armCredential,
+          Math.min(remaining, 2147483647),
+        );
+      else close(snapshot.expiryEvent);
+    };
+    armCredential();
+    const resourceDeadline = snapshot.resourceExpiresAt;
+    // A deadline crossed during this read needs one catch-up read. A read
+    // started after that deadline has already reconciled it, even if unchanged.
+    if (closed || resourceDeadline === null || resourceDeadline <= observedAt)
+      return;
+    const armResource = (): void => {
+      if (closed) return;
+      const remaining = resourceDeadline - Date.now();
+      if (remaining > 0)
+        resourceTimer = setTimeout(
+          armResource,
+          Math.min(remaining, 2147483647),
+        );
       else wake();
     };
-    arm();
+    armResource();
   }
   function validate(value: StatusSnapshot): void {
     if (
@@ -79,6 +94,7 @@ export async function authorizeStatusObserver(options: {
     while (pending && !closed) {
       pending = false;
       try {
+        const readStartedAt = Date.now();
         const next = await options.read();
         if (closed) return;
         validate(next);
@@ -88,6 +104,7 @@ export async function authorizeStatusObserver(options: {
         }
         const changed = next.fingerprint !== snapshot.fingerprint;
         snapshot = next;
+        observedAt = readStartedAt;
         if (changed) emit("change");
         schedule();
       } catch (error) {
@@ -108,6 +125,7 @@ export async function authorizeStatusObserver(options: {
   try {
     if (options.signal?.aborted) close();
     if (closed) throw new DOMException("Subscription closed", "AbortError");
+    observedAt = Date.now();
     snapshot = await options.read();
     validate(snapshot);
     if (closed || snapshot.credentialExpiresAt <= Date.now())

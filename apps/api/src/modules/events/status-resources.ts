@@ -27,11 +27,14 @@ interface Services {
 function fingerprint(value: unknown): string {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
-function future(...values: (string | null)[]): number | null {
+function future(
+  observedAt: number,
+  ...values: (string | null)[]
+): number | null {
   const times = values
     .filter((value): value is string => value !== null)
     .map(Date.parse)
-    .filter((value) => Number.isFinite(value) && value > Date.now());
+    .filter((value) => Number.isFinite(value) && value > observedAt);
   return times.length ? Math.min(...times) : null;
 }
 
@@ -65,6 +68,7 @@ export class StatusResources {
     if (selector.kind === "archive-export") {
       if (!this.services.exports) throw new ServiceUnavailableException();
       const context = await ownerArchiveContext(identity, auth);
+      const observedAt = Date.now();
       const status = await this.services.exports.archiveStatus(
         context,
         selector.id,
@@ -73,7 +77,7 @@ export class StatusResources {
         token,
         context,
         status,
-        future(status.expiresAt, status.downloadExpiresAt),
+        future(observedAt, status.expiresAt, status.downloadExpiresAt),
       );
     }
     const context = await financeContext(identity, auth, selector.householdId);
@@ -86,12 +90,13 @@ export class StatusResources {
       return this.snapshot(token, context, snapshot.status, snapshot.expiresAt);
     }
     if (!this.services.exports) throw new ServiceUnavailableException();
+    const observedAt = Date.now();
     const status = await this.services.exports.status(context, selector.id);
     return this.snapshot(
       token,
       context,
       status,
-      future(status.expiresAt, status.downloadExpiresAt),
+      future(observedAt, status.expiresAt, status.downloadExpiresAt),
     );
   }
 

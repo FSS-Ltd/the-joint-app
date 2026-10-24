@@ -22,6 +22,13 @@ BEGIN
  END LOOP;
 END $$;
 
+-- Export status projects terminal job failure even before any request-row write.
+-- Lease heartbeats, attempts and scheduling bookkeeping must remain silent.
+CREATE TRIGGER status_export_job_terminal AFTER UPDATE OF state ON app."Job"
+ FOR EACH ROW WHEN (NEW.type = 'csv.export' AND OLD.state IS DISTINCT FROM NEW.state
+  AND NEW.state IN ('FAILED', 'CANCELLED'))
+ EXECUTE FUNCTION app.notify_status_wakeup();
+
 CREATE TRIGGER status_object_insert_delete AFTER INSERT OR DELETE ON app."ImportObject"
  FOR EACH ROW EXECUTE FUNCTION app.notify_status_wakeup();
 CREATE TRIGGER status_object_update AFTER UPDATE OF "expiresAt", "deletedAt" ON app."ImportObject"

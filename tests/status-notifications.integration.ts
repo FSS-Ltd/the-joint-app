@@ -3,6 +3,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 import { createOrm } from "../packages/database/dist/client.js";
 import { createDatabaseNotifications } from "../packages/database/src/notifications.js";
+import { JobsRepository } from "../packages/database/dist/jobs.repository.js";
 import { createFixtureOwner } from "./fixtures/database.js";
 
 if (!process.env.DATABASE_URL)
@@ -54,6 +55,7 @@ beforeAll(async () => {
   });
 });
 afterAll(async () => {
+  await owner.job.deleteMany({ where: { householdId } });
   await owner.deletionRequest.deleteMany({ where: { userId } });
   await owner.account.deleteMany({ where: { householdId } });
   await owner.household.delete({ where: { id: householdId } });
@@ -141,4 +143,63 @@ it("returns a receipt deadline only for the matching unexpired opaque receipt ha
   await expect(
     runtime.$queryRaw`SELECT "statusExpiresAt" FROM app."DeletionRequest" WHERE id=${receiptId}::uuid`,
   ).rejects.toThrow();
+});
+
+it("notifies terminal export job failures, cancellations and exhaustion without heartbeat wakeups", async () => {
+  const jobs = new JobsRepository(owner);
+  const ids: string[] = [];
+  for (const mode of ["failure", "cancellation", "exhaustion"]) {
+    const job = await jobs.enqueue({
+      householdId,
+      type: "csv.export",
+      resourceId: randomUUID(),
+      idempotencyKey: `${mode}:${randomUUID()}`,
+      payload: {},
+      maxAttempts: 1,
+    });
+    ids.push(job.id);
+  }
+  const ready = vi.fn(),
+    wake = vi.fn();
+  const subscription = createDatabaseNotifications({
+    topic: "status",
+    connectionString: process.env.DATABASE_URL ?? "",
+    timeoutMs: 1000,
+    retryMaxMs: 1000,
+    onReady: ready,
+    onWake: wake,
+  });
+  try {
+    await vi.waitFor(() => expect(ready).toHaveBeenCalledTimes(1));
+    const failed = await jobs.claim(
+      "status-test",
+      ["csv.export"],
+      5000,
+      ids[0],
+    );
+    if (!failed) throw new Error("Fixture lease unavailable");
+    expect(await jobs.heartbeat(failed, 5000)).toBe(true);
+    await delay(100);
+    expect(wake).not.toHaveBeenCalled();
+    expect(await jobs.fail(failed, 0)).toBe(true);
+    await vi.waitFor(() => expect(wake).toHaveBeenCalledTimes(1));
+    if (!ids[1]) throw new Error("Fixture job unavailable");
+    expect(await jobs.cancel(householdId, ids[1])).toBe(true);
+    await vi.waitFor(() => expect(wake).toHaveBeenCalledTimes(2));
+    const exhausted = await jobs.claim(
+      "status-test",
+      ["csv.export"],
+      10,
+      ids[2],
+    );
+    if (!exhausted) throw new Error("Fixture lease unavailable");
+    await delay(30);
+    expect(
+      await jobs.claim("status-test", ["csv.export"], 10, exhausted.id),
+    ).toBeNull();
+    await vi.waitFor(() => expect(wake).toHaveBeenCalledTimes(3));
+    expect(wake.mock.calls).toEqual([[], [], []]);
+  } finally {
+    await subscription.close();
+  }
 });

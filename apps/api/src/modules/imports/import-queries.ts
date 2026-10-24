@@ -22,6 +22,7 @@ export class ImportQueries {
   }
   observe(context: AuthContext, id: string) {
     return this.database.withScope(context, async (tx) => {
+      const observedAt = Date.now();
       const row = await findBatch(tx, context, id);
       const status = await projectBatch(tx, row);
       const deadlines = [
@@ -30,7 +31,7 @@ export class ImportQueries {
           ? (row.object?.expiresAt.getTime() ?? null)
           : null,
       ].filter(
-        (value): value is number => value !== null && value > Date.now(),
+        (value): value is number => value !== null && value > observedAt,
       );
       return {
         status,

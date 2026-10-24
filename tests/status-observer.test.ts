@@ -192,3 +192,76 @@ it("unsubscribes if cancelled during authorization and never emits late data", a
   expect(send).not.toHaveBeenCalled();
   expect(close).toHaveBeenCalledTimes(1);
 });
+
+it("keeps credential expiry armed while resource reconciliation is unresolved", async () => {
+  vi.useFakeTimers();
+  const f = fixture(),
+    now = Date.now();
+  let finish: ((snapshot: StatusSnapshot) => void) | undefined;
+  const read = vi
+    .fn<() => Promise<StatusSnapshot>>()
+    .mockResolvedValueOnce({
+      ...f.snapshot("ready", now + 100),
+      resourceExpiresAt: now + 20,
+    })
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+  const send = vi.fn(() => true),
+    close = vi.fn();
+  const observer = await authorizeStatusObserver({
+    source: f.source,
+    read,
+    send,
+    close,
+  });
+  observer.start();
+  await vi.advanceTimersByTimeAsync(160);
+  expect(read).toHaveBeenCalledTimes(2);
+  expect(close).toHaveBeenCalledTimes(1);
+  expect(f.listeners.size).toBe(0);
+  expect(send.mock.calls).toEqual([["change"], ["renew"]]);
+  finish?.(f.snapshot("late", now + 1000));
+  await vi.advanceTimersByTimeAsync(0);
+  expect(send.mock.calls).toHaveLength(2);
+  expect(vi.getTimerCount()).toBe(0);
+});
+
+it("catches deadlines crossed during authorization once without looping on an elapsed deadline", async () => {
+  vi.useFakeTimers();
+  const f = fixture(),
+    now = Date.now();
+  let finish: ((snapshot: StatusSnapshot) => void) | undefined;
+  const read = vi
+    .fn<() => Promise<StatusSnapshot>>()
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    )
+    .mockResolvedValue({
+      ...f.snapshot("expired", now + 2000),
+      resourceExpiresAt: now + 20,
+    });
+  const send = vi.fn(() => true),
+    close = vi.fn();
+  const opening = authorizeStatusObserver({
+    source: f.source,
+    read,
+    send,
+    close,
+  });
+  await vi.advanceTimersByTimeAsync(50);
+  finish?.({ ...f.snapshot("stale", now + 2000), resourceExpiresAt: now + 20 });
+  const observer = await opening;
+  observer.start();
+  await vi.advanceTimersByTimeAsync(100);
+  expect(read).toHaveBeenCalledTimes(2);
+  expect(send.mock.calls).toEqual([["change"], ["change"]]);
+  observer.close();
+  expect(vi.getTimerCount()).toBe(0);
+});

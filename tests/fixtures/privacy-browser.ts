@@ -184,6 +184,8 @@ export async function stopPrivacyBrowser(): Promise<void> {
     await database.$disconnect();
   }
   if (auth) for (const id of users) await auth.deleteUser(id);
+  users.length = 0;
+  households.length = 0;
   if (health) await health.close();
   if (journalDirectory) await rm(journalDirectory, { recursive: true });
 }
