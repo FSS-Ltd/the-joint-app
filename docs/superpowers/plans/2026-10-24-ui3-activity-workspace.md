@@ -45,10 +45,10 @@ Interface: `TransactionSourceSummary({transaction, reload})` receives the existi
 
 - [x] Add a failing layout regression for amount-led source summary at 320/390/1280px, long descriptions, extreme amounts and 200% zoom. Preserve CSV immutability/shared note boundaries in assertions.
 - [x] Extract and compose the summary with source/date metadata and explicit reviewed/split state. Retain all existing forms and source warnings.
-- [ ] Inspect real 390/1280 renders against both references and verify focused tests.
+- [x] Inspect real 390/1280 renders against both references and verify focused tests.
 
 ## Task 3 — Verify and deliver
 
-- [ ] Inspect every changed file and diff; pass formatting, lint, full strict types, all builds/unit tests and full browser acceptance in the secret-free archive. CI runs full database integration for this frontend-only step.
-- [ ] Obtain one fresh whole-branch review; address material findings with regression evidence. Scan public source for private paths and exact local secret matches.
+- [x] Inspect every changed file and diff; pass formatting, lint, full strict types, all builds/unit tests and full browser acceptance in the secret-free archive. CI runs full database integration for this frontend-only step.
+- [x] Obtain one fresh whole-branch review; address material findings with regression evidence. Scan public source for private paths and exact local secret matches.
 - [ ] Commit, push, open and attach UI3 PR after local verification. Require current-head/test-merge CI, comply with reviews/protection, merge under existing authorization and record exact host evidence. No subsequent step before verified merge.

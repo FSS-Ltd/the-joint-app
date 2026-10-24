@@ -75,6 +75,9 @@ test("activity filters restore URL values and submit every existing field throug
   await page
     .getByRole("combobox", { name: "Financial type", exact: true })
     .selectOption("INCOME");
+  await summary.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByLabel("Category", { exact: true })).not.toBeVisible();
   await page
     .getByRole("button", { name: "Apply activity filters", exact: true })
     .click();
@@ -265,11 +268,40 @@ test("extreme signed transaction amount and long description wrap without hiding
     await page.evaluate(() => {
       document.body.style.zoom = "2";
     });
+    await expect(
+      page.getByText("-£92,233,720,368,547,758.08", { exact: true }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: transaction.description, exact: true }),
+    ).toBeVisible();
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
+    if (path.includes("?")) {
+      const link = page.getByRole("link").filter({
+        has: page.getByRole("heading", {
+          name: transaction.description,
+          exact: true,
+        }),
+      });
+      await link.focus();
+      await Promise.all([
+        page.waitForResponse((response) =>
+          response
+            .url()
+            .endsWith(
+              `/api/households/${householdId}/transactions/${firstTransaction.id}`,
+            ),
+        ),
+        page.waitForURL(`**/activity/${firstTransaction.id}`),
+        page.keyboard.press("Enter"),
+      ]);
+      await expect(
+        page.getByRole("region", { name: "Transaction source", exact: true }),
+      ).toBeVisible();
+    }
     await page.evaluate(() => {
       document.body.style.zoom = "";
     });
