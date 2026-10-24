@@ -1,6 +1,8 @@
+.accounts-main:has(.privacy-workspace) {
+  container: privacy-main / inline-size;
+}
 .privacy-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
   gap: 24px;
   align-items: start;
 }
@@ -57,10 +59,10 @@
   padding-top: 12px;
 }
 .privacy-danger {
-  border-color: #a15b46;
+  border-color: var(--error);
 }
-.privacy-danger .button {
-  background: #793b2f;
+.privacy-danger .primary {
+  background: var(--error);
   color: white;
 }
 .privacy-connections {
@@ -85,5 +87,151 @@
 @media (max-width: 480px) {
   .privacy-layout .form-card {
     padding: 24px 20px;
+  }
+}
+
+.privacy-workspace {
+  container: privacy-workspace / inline-size;
+}
+.privacy-export-frame,
+.archive-introduction-frame {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid #dde7dd66;
+  border-radius: var(--radius-frame);
+  background: #dde7dd24;
+}
+.privacy-scope-count {
+  padding: 12px 16px;
+  background: var(--sage);
+  border-radius: var(--radius-card);
+  font-variant-numeric: tabular-nums;
+}
+.privacy-actions-area {
+  min-width: 0;
+}
+.privacy-action-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.privacy-action-choices > .button {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.privacy-danger .form-stack {
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.privacy-danger .form-stack h3 {
+  margin: 0;
+}
+.archive-introduction-frame {
+  margin-bottom: 24px;
+}
+.archive-introduction-frame .privacy-readonly {
+  margin: 0;
+  border: 1px solid var(--border);
+}
+.archive-layout {
+  display: grid;
+  gap: 24px;
+  align-items: start;
+}
+.archive-selector {
+  padding: 20px;
+  min-width: 0;
+}
+.archive-selector h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.archive-account-choice {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 16px 12px;
+  margin-block: 8px;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.archive-account-choice[aria-pressed="true"] {
+  background: var(--sage);
+  border-color: var(--primary);
+  font-weight: 600;
+}
+.archive-history {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.archive-history .archive-balance {
+  font-size: clamp(20px, 8cqi, 36px);
+  color: var(--ink);
+  margin-block: 24px 8px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.privacy-activity li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+.privacy-activity p {
+  margin: 4px 0 0;
+}
+.archive-record-description {
+  min-width: 0;
+}
+.privacy-activity .archive-record-amount {
+  color: var(--ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.archive-record-note {
+  grid-column: 1 / -1;
+  border-left: 2px solid var(--border);
+  padding-left: 12px;
+}
+.archive-amount-group {
+  display: inline-block;
+  white-space: nowrap;
+}
+@container privacy-workspace (min-width: 520px) {
+  .privacy-activity li {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .archive-record-amount {
+    text-align: right;
+  }
+}
+@container privacy-main (min-width: 720px) {
+  .privacy-layout {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  }
+  .privacy-export-area {
+    grid-column: 1;
+  }
+  .privacy-context {
+    grid-column: 2;
+  }
+  .privacy-actions-area {
+    grid-column: 1 / -1;
+  }
+  .archive-layout {
+    grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  }
+}
+@container privacy-workspace (max-width: 300px) {
+  .privacy-export-frame .form-card,
+  .archive-history {
+    padding: 20px 16px;
   }
 }

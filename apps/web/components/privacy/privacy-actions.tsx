@@ -107,7 +107,7 @@ export function PrivacyActions({
         You can leave without exporting first. After leaving, sign in again to
         read and export accounts you legally own.
       </p>
-      <div className="privacy-stack">
+      <div className="privacy-action-choices">
         {householdId && (
           <button
             className="button secondary"

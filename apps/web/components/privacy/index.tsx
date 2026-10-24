@@ -7,6 +7,7 @@ import { errorMessage, request } from "../identity/client";
 import { useIdentity } from "../identity/use-identity";
 import { ExportPanel } from "./export-panel";
 import { usePrivacyAccounts } from "./use-privacy-accounts";
+import { PrivacyContext } from "./privacy-context";
 import { PrivacyActions } from "./privacy-actions";
 import "./privacy.css";
 
@@ -59,8 +60,8 @@ export function Privacy(): ReactNode {
         </button>
       )}
       {identity && (
-        <div className="privacy-layout">
-          <div className="privacy-stack">
+        <div className="privacy-workspace privacy-layout">
+          <div className="privacy-stack privacy-export-area">
             {householdId ? (
               <>
                 <ExportPanel
@@ -93,43 +94,11 @@ export function Privacy(): ReactNode {
                 </a>
               </section>
             )}
+          </div>
+          <PrivacyContext entitlements={entitlements} error={planError} />
+          <div className="privacy-actions-area">
             <PrivacyActions householdId={householdId} />
           </div>
-          <aside className="privacy-stack">
-            <section className="surface form-card">
-              <p className="step-label">Your plan</p>
-              <h2>
-                {entitlements
-                  ? entitlements.plan === "PLUS"
-                    ? "Plus access"
-                    : "Free essentials"
-                  : "Privacy stays available"}
-              </h2>
-              <Feedback error={planError} />
-              <p>
-                Export, revoke sharing, leave and delete your account remain
-                available on Free. Plan access never changes account ownership
-                or sharing permission.
-              </p>
-              <p className="field-hint">
-                Plus capabilities are entitlements only. Connected banking,
-                advanced projections and automation are not available in this
-                build.
-              </p>
-              <a href="/accounts">Manage account sharing</a>
-            </section>
-            <section className="surface form-card privacy-connections">
-              <p className="step-label">Connections</p>
-              <h2>No bank connections</h2>
-              <p>
-                Direct bank and broker connections are not available. Manual
-                accounts and CSV imports do not create a bank authorisation.
-              </p>
-              <button className="button secondary" disabled>
-                Disconnect bank · unavailable
-              </button>
-            </section>
-          </aside>
         </div>
       )}
     </AccountsFrame>
