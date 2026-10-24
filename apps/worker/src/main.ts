@@ -8,7 +8,9 @@ import { randomUUID } from "node:crypto";
 import { createOrm } from "@joint/database/client";
 import { JobsRepository } from "@joint/database/jobs";
 import { runJobs } from "./job-runner.js";
-import { createDatabase } from "@joint/database";
+import { createWorkerNotifications } from "@joint/database/worker-notifications";
+import { workerNextDelay } from "@joint/database/worker-deadlines";
+import { createWorkerScheduler } from "./scheduler.js";
 import { createImportHandlers } from "./imports/handlers.js";
 import { maintainImports } from "./import-maintenance.js";
 import { createExportHandlers } from "./handlers/export.handler.js";
@@ -19,7 +21,6 @@ import { createDeletionProvider } from "./privacy/provider.js";
 import { processDeletion } from "./privacy/process-deletion.js";
 async function main(): Promise<void> {
   const env = readEnvironment(workerEnvironmentSchema, process.env);
-  const database = createDatabase(env.DATABASE_URL, env.DATABASE_TIMEOUT_MS);
   const orm = createOrm(env.DATABASE_URL);
   const jobs = new JobsRepository(orm);
   const provider = createDeletionProvider(process.env);
@@ -49,58 +50,75 @@ async function main(): Promise<void> {
         };
   const owner = randomUUID();
   const abort = new AbortController();
-  let active: Promise<void> = Promise.resolve();
-  let stopping = false;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const check = async (): Promise<void> => {
-    try {
-      const ready = await database.ready();
-      if (ready && !stopping) {
-        await maintainImports(orm);
-        await maintainExports(orm);
-        if (deletion && !abort.signal.aborted)
-          await processDeletion(
-            deletion.repository,
-            deletion.provider,
-            deletion.journal,
-            abort.signal,
-          );
-        await runJobs(jobs, handlers, {
-          owner,
-          maxJobs: 10,
-          budgetMs: 5000,
-          signal: abort.signal,
-        });
-      }
-      process.stdout.write(
-        `Worker database ${ready ? "ready" : "unavailable"}\n`,
+  const scheduler = createWorkerScheduler(
+    async () => {
+      await maintainImports(orm);
+      await maintainExports(orm);
+      if (deletion && !abort.signal.aborted)
+        await processDeletion(
+          deletion.repository,
+          deletion.provider,
+          deletion.journal,
+          abort.signal,
+        );
+      if (abort.signal.aborted) return null;
+      await runJobs(jobs, handlers, {
+        owner,
+        maxJobs: 10,
+        budgetMs: 5000,
+        signal: abort.signal,
+      });
+      return workerNextDelay(
+        orm,
+        Object.keys(handlers),
+        deletion !== undefined,
       );
-    } catch {
-      process.stderr.write("Worker cycle unavailable\n");
-    } finally {
-      if (!stopping)
-        timer = setTimeout(() => {
-          active = check();
-        }, env.WORKER_INTERVAL_MS);
-    }
+    },
+    {
+      retryMaxMs: env.WORKER_RETRY_MAX_MS,
+      onUnavailable: () => {
+        process.stderr.write("Worker cycle unavailable\n");
+      },
+    },
+  );
+  const notifications = createWorkerNotifications({
+    connectionString: env.DATABASE_URL,
+    timeoutMs: env.DATABASE_TIMEOUT_MS,
+    retryMaxMs: env.WORKER_RETRY_MAX_MS,
+    onReady: () => {
+      process.stdout.write("Worker database ready\n");
+      scheduler.wake();
+    },
+    onWake: scheduler.wake,
+    onUnavailable: () => {
+      process.stderr.write("Worker database unavailable\n");
+    },
+  });
+  let closing: Promise<void> | undefined;
+  const close = (): Promise<void> => {
+    closing ??= (async () => {
+      abort.abort();
+      try {
+        await notifications.close();
+        await scheduler.close();
+      } finally {
+        await orm.$disconnect();
+      }
+    })();
+    return closing;
   };
-  const close = async (): Promise<void> => {
-    if (stopping) return;
-    stopping = true;
-    abort.abort();
-    clearTimeout(timer);
-    await active;
-    await database.close();
-    await orm.$disconnect();
+  const stop = (): void => {
+    void close().catch(() => {
+      process.stderr.write("Worker shutdown failed\n");
+      process.exitCode = 1;
+    });
   };
   process.once("SIGINT", () => {
-    void close();
+    stop();
   });
   process.once("SIGTERM", () => {
-    void close();
+    stop();
   });
-  active = check();
-  await active;
 }
 main().catch((error) => {
   process.stderr.write(

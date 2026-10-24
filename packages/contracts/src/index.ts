@@ -23,12 +23,12 @@ export const apiEnvironmentSchema = databaseEnvironmentSchema.extend({
   API_PORT: z.coerce.number().int().min(1).max(65535).default(3001),
 });
 export const workerEnvironmentSchema = databaseEnvironmentSchema.extend({
-  WORKER_INTERVAL_MS: z.coerce
+  WORKER_RETRY_MAX_MS: z.coerce
     .number()
     .int()
     .min(1000)
     .max(60000)
-    .default(10000),
+    .default(30000),
 });
 export function readEnvironment<T>(
   schema: z.ZodType<T>,

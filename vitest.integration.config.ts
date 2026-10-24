@@ -1,6 +1,9 @@
 import { defineConfig } from "vitest/config";
 
 const capacityFiles = [
+  // Global worker deadlines must be observed without concurrent fixture writes.
+  "tests/worker-events.integration.ts",
+  "tests/worker-lifecycle.integration.ts",
   "tests/imports-isolation.integration.ts",
   "tests/import-worker.integration.ts",
   "tests/spending-reports.integration.ts",

@@ -23,11 +23,23 @@ describe("public contracts and environment", () => {
     expect(
       workerEnvironmentSchema.safeParse({
         DATABASE_URL: "https://example.com",
-        WORKER_INTERVAL_MS: "0",
+        WORKER_RETRY_MAX_MS: "0",
       }).success,
     ).toBe(false);
   });
   it("sets bounded defaults", () => {
+    expect(
+      readEnvironment(workerEnvironmentSchema, {
+        DATABASE_URL: "postgresql://localhost/joint",
+      }).WORKER_RETRY_MAX_MS,
+    ).toBe(30000);
+    for (const value of ["0", "60001", "unsafe-secret"])
+      expect(() =>
+        readEnvironment(workerEnvironmentSchema, {
+          DATABASE_URL: "postgresql://localhost/joint",
+          WORKER_RETRY_MAX_MS: value,
+        }),
+      ).toThrow("Invalid environment fields: WORKER_RETRY_MAX_MS");
     expect(
       readEnvironment(apiEnvironmentSchema, {
         DATABASE_URL: "postgresql://localhost/joint",
