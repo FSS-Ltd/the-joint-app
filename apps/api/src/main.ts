@@ -12,6 +12,8 @@ import {
 } from "@joint/contracts";
 import { createOrm } from "@joint/database/client";
 import { createDatabase } from "@joint/database";
+import { createDatabaseNotifications } from "@joint/database/notifications";
+import { StatusEventHub } from "./modules/events/status-hub.js";
 import type { AuthOptions } from "./modules/identity/identity.module.js";
 import { createApplication } from "./application.js";
 async function main(): Promise<void> {
@@ -82,26 +84,64 @@ async function main(): Promise<void> {
             privacyJournalPath: privacy?.PRIVACY_JOURNAL_PATH,
           }
         : undefined;
-  const app = await createApplication(
-    database,
-    orm && identity.AUTH_ISSUER
-      ? { database: orm, issuer: identity.AUTH_ISSUER }
-      : undefined,
-    options,
-  );
-  app.getHttpAdapter().getInstance().disable("x-powered-by");
-  // Nest closes the listener before releasing its database pool.
-  await app.listen(env.API_PORT, "127.0.0.1");
-  const close = async (): Promise<void> => {
-    await app.close();
-    await database.close();
-    await orm?.$disconnect();
+  if (options)
+    options.events = new StatusEventHub((callbacks) =>
+      createDatabaseNotifications({
+        topic: "status",
+        connectionString: env.DATABASE_URL,
+        timeoutMs: env.DATABASE_TIMEOUT_MS,
+        retryMaxMs: 30000,
+        ...callbacks,
+      }),
+    );
+  let app: Awaited<ReturnType<typeof createApplication>> | undefined;
+  let closing: Promise<void> | undefined;
+  const close = (): Promise<void> => {
+    closing ??= (async () => {
+      // End event streams before waiting for the HTTP listener to close.
+      const stopped = await Promise.allSettled([
+        options?.events?.close(),
+        app?.close(),
+      ]);
+      // Nest closes the listener before releasing its database pool.
+      const released = await Promise.allSettled([
+        database.close(),
+        orm?.$disconnect(),
+      ]);
+      if (
+        [...stopped, ...released].some((result) => result.status === "rejected")
+      )
+        throw new Error("API shutdown failed");
+    })();
+    return closing;
+  };
+  try {
+    app = await createApplication(
+      database,
+      orm && identity.AUTH_ISSUER
+        ? { database: orm, issuer: identity.AUTH_ISSUER }
+        : undefined,
+      options,
+    );
+    app.getHttpAdapter().getInstance().disable("x-powered-by");
+    await app.listen(env.API_PORT, "127.0.0.1");
+  } catch (error) {
+    await close().catch(() => {
+      process.stderr.write("API cleanup failed\n");
+    });
+    throw error;
+  }
+  const stop = (): void => {
+    void close().catch(() => {
+      process.stderr.write("API shutdown failed\n");
+      process.exitCode = 1;
+    });
   };
   process.once("SIGINT", () => {
-    void close();
+    stop();
   });
   process.once("SIGTERM", () => {
-    void close();
+    stop();
   });
 }
 main().catch((error) => {

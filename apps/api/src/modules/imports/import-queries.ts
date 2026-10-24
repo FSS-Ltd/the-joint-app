@@ -18,9 +18,25 @@ export class ImportQueries {
     private readonly vault: IdentityVault,
   ) {}
   read(context: AuthContext, id: string) {
-    return this.database.withScope(context, async (tx) =>
-      projectBatch(tx, await findBatch(tx, context, id)),
-    );
+    return this.observe(context, id).then((snapshot) => snapshot.status);
+  }
+  observe(context: AuthContext, id: string) {
+    return this.database.withScope(context, async (tx) => {
+      const row = await findBatch(tx, context, id);
+      const status = await projectBatch(tx, row);
+      const deadlines = [
+        status.permissions.canCommit ? row.previewExpiresAt.getTime() : null,
+        status.originalAvailable
+          ? (row.object?.expiresAt.getTime() ?? null)
+          : null,
+      ].filter(
+        (value): value is number => value !== null && value > Date.now(),
+      );
+      return {
+        status,
+        expiresAt: deadlines.length ? Math.min(...deadlines) : null,
+      };
+    });
   }
   async list(
     context: AuthContext,

@@ -97,6 +97,23 @@ export function assertMutation(request: Request): void {
   }
 }
 
+/** Read-only streams use cookies, but must not be opened by another site. */
+export function assertSubscriptionRequest(request: Request): void {
+  const expected = webOrigin().origin;
+  const origin = request.headers.get("origin");
+  const site = request.headers.get("sec-fetch-site");
+  if (
+    new URL(request.url).origin !== expected ||
+    (origin !== null && origin !== expected) ||
+    (site !== null && !["same-origin", "none"].includes(site))
+  )
+    throw new BffError(
+      403,
+      "ORIGIN_REJECTED",
+      "This request could not be verified. Reload the page and try again.",
+    );
+}
+
 export async function sessionToken(request: Request): Promise<string> {
   let mode: "local" | "clerk";
   try {

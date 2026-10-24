@@ -107,6 +107,17 @@ export class DeletionRepository {
       return row ? projectStatus(row) : null;
     });
   }
+  async statusDeadline(
+    id: string,
+    statusTokenHash: string,
+  ): Promise<Date | null> {
+    return this.withRuntime(async (tx) => {
+      const [row] = await tx.$queryRaw<{ expiresAt: Date | null }[]>`
+        SELECT app.deletion_receipt_deadline(${id}::uuid, ${statusTokenHash}) AS "expiresAt"
+      `;
+      return row?.expiresAt ?? null;
+    });
+  }
 
   private async withRuntime<T>(
     apply: (tx: Prisma.TransactionClient) => Promise<T>,

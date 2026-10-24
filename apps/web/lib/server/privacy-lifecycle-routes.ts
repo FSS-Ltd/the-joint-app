@@ -21,7 +21,10 @@ import { financeId } from "./finance-boundary";
 import { requestBody } from "./request-body";
 import { BffError, json, parseResponse, route } from "./responses";
 
-const RECEIPT = "joint-deletion-receipt";
+import {
+  DELETION_RECEIPT_COOKIE as RECEIPT,
+  deletionAuthorization,
+} from "./privacy-receipt";
 function clearSession(response: Response): void {
   setCookie(response, SESSION_COOKIE, "", 0, "Lax");
   setCookie(response, CSRF_COOKIE, "", 0, "Strict");
@@ -135,32 +138,13 @@ export function deletionStatus(
   id: string,
 ): Promise<Response> {
   return route(async () => {
-    const valid = financeId(id);
-    const matches = (request.headers.get("cookie") ?? "")
-      .split(";")
-      .map((part) => part.trim())
-      .filter((part) => part.startsWith(`${RECEIPT}=`));
-    const receipt =
-      matches.length === 1 ? matches[0]?.slice(RECEIPT.length + 1) : undefined;
-    const parsed = receipt?.match(/^([0-9a-f-]{36})\.([A-Za-z0-9_-]{43})$/i);
-    if (!parsed || parsed[1] !== valid)
-      throw new BffError(
-        401,
-        "RECEIPT_REQUIRED",
-        "This deletion receipt is unavailable in this browser or has expired.",
-      );
-    if (new URL(request.url).search)
-      throw new BffError(
-        400,
-        "INVALID_INPUT",
-        "This receipt could not be read.",
-      );
+    const receipt = deletionAuthorization(request, id);
     return json(
       parseResponse(
         deletionStatusSchema,
         await lifecycleFetch(
-          `/v1/privacy/deletion-requests/${valid}`,
-          `Deletion ${parsed[2]}`,
+          `/v1/privacy/deletion-requests/${receipt.id}`,
+          receipt.authorization,
         ),
       ),
     );

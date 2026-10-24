@@ -10,6 +10,8 @@ import { authServerEnvironmentSchema } from "../../packages/contracts/dist/index
 import { createApplication } from "../../apps/api/dist/application.js";
 import { createDatabase } from "../../packages/database/dist/index.js";
 import { createOrm } from "../../packages/database/dist/client.js";
+import { createDatabaseNotifications } from "../../packages/database/dist/notifications.js";
+import { StatusEventHub } from "../../apps/api/dist/modules/events/status-hub.js";
 import { createLocalAuthFixture } from "./local-auth.js";
 
 export const importKey = randomBytes(32).toString("base64");
@@ -82,6 +84,12 @@ export async function expectMutation(
   expect((await response).status()).toBe(200);
 }
 export async function startPrivacyBrowser(): Promise<void> {
+  return startPrivacyBrowserInstance(false);
+}
+export async function startStatusBrowser(): Promise<void> {
+  return startPrivacyBrowserInstance(true);
+}
+async function startPrivacyBrowserInstance(withEvents: boolean): Promise<void> {
   if (!process.env.DATABASE_URL || !process.env.MIGRATION_DATABASE_URL)
     throw new Error(
       "Privacy browser integration requires local runtime and migration-owner database settings",
@@ -103,6 +111,17 @@ export async function startPrivacyBrowser(): Promise<void> {
     environment: authServerEnvironmentSchema.parse(process.env),
     importKey,
     privacyJournalPath,
+    events: withEvents
+      ? new StatusEventHub((callbacks) =>
+          createDatabaseNotifications({
+            topic: "status",
+            connectionString: process.env.DATABASE_URL ?? "",
+            timeoutMs: 1000,
+            retryMaxMs: 1000,
+            ...callbacks,
+          }),
+        )
+      : undefined,
   });
   await application.listen(3702, "127.0.0.1");
   web = spawn(

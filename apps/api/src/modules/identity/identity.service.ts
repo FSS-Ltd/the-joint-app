@@ -56,6 +56,11 @@ export class IdentityService {
       readIdentity(identity, this.provider),
     );
   }
+  subscriptionExpiry(token: string): Promise<number> {
+    return this.sessions.withSession(token, async (identity) =>
+      identity.expiresAt.getTime(),
+    );
+  }
   async financeContext(
     token: string,
     householdId: string,
