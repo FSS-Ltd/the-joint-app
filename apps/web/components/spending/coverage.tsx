@@ -43,7 +43,10 @@ export function Coverage({
     }
   }
   return (
-    <section className="surface form-card coverage-card">
+    <section
+      className="surface form-card coverage-card"
+      aria-label="History coverage"
+    >
       <p className="step-label">How complete is this picture?</p>
       <h2>
         {report.coverage.complete

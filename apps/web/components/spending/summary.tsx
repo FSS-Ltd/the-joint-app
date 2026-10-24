@@ -10,27 +10,29 @@ export function Summary({ report }: { report: SpendingReport }): ReactNode {
   if (!s) return null;
   return (
     <>
-      <section className="report-hero surface">
-        <div>
-          <p className="step-label">Spending · {report.month}</p>
-          <h2>{formatAggregateMoney(s.spending)}</h2>
-          <p>Purchases less refunds booked in this month.</p>
-          <span className="report-badge">
-            {report.coverage.complete
-              ? "Reviewed period"
-              : "Incomplete picture"}
-          </span>
+      <section className="report-summary-frame" aria-label="Spending summary">
+        <div className="report-hero surface">
+          <div>
+            <p className="step-label">Spending · {report.month}</p>
+            <h2>{formatAggregateMoney(s.spending)}</h2>
+            <p>Purchases less refunds booked in this month.</p>
+            <span className="report-badge">
+              {report.coverage.complete
+                ? "Reviewed period"
+                : "Incomplete picture"}
+            </span>
+          </div>
+          <dl>
+            <div>
+              <dt>Confirmed income</dt>
+              <dd>{formatAggregateMoney(s.income)}</dd>
+            </div>
+            <div>
+              <dt>Net cash movement</dt>
+              <dd>{formatAggregateMoney(s.netCash)}</dd>
+            </div>
+          </dl>
         </div>
-        <dl>
-          <div>
-            <dt>Confirmed income</dt>
-            <dd>{formatAggregateMoney(s.income)}</dd>
-          </div>
-          <div>
-            <dt>Net cash movement</dt>
-            <dd>{formatAggregateMoney(s.netCash)}</dd>
-          </div>
-        </dl>
       </section>
     </>
   );

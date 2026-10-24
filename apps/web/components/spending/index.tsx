@@ -7,7 +7,10 @@ import { ReportScope } from "./scope-controls";
 import { Summary, Trend, CategoryBreakdown } from "./summary";
 import { Coverage } from "./coverage";
 import { BudgetEditor } from "./budget-editor";
-import { formatAggregateMoney } from "@joint/domain/cash-flow";
+import { CashBridge } from "./cash-bridge";
+import { ReviewActions } from "./review-actions";
+import { SourceStatus } from "./source-status";
+import { BudgetChart } from "./budget-chart";
 import "../finance/finance.css";
 import "./spending.css";
 export function SpendingScreen({
@@ -40,7 +43,7 @@ export function SpendingScreen({
       }
       household={state.identity?.membership?.household.name}
     >
-      <div className="finance-stack">
+      <div className="finance-stack spending-workspace">
         <ReportScope state={state} />
         <Feedback error={state.error} />
         {state.pending && <p role="status">Refreshing your selected month…</p>}
@@ -56,14 +59,9 @@ export function SpendingScreen({
               </section>
             ) : (
               <>
-                <p className="report-freshness">
-                  CSV and manual records · Calculated{" "}
-                  <time dateTime={r.calculatedAt}>
-                    {new Date(r.calculatedAt).toLocaleString("en-GB")}
-                  </time>{" "}
-                  · {r.scope.length} selected accounts
-                </p>
+                <SourceStatus report={r} />
                 {mode !== "budgets" && <Summary report={r} />}
+                <BudgetChart report={r} compact={mode === "dashboard"} />
                 {mode === "budgets" && (
                   <BudgetEditor
                     key={`${r.scopeKey}:${r.budget?.version ?? 0}`}
@@ -83,34 +81,7 @@ export function SpendingScreen({
                     <Trend report={r} />
                   </div>
                 )}
-                <div className="finance-stack">
-                  <section className="surface form-card">
-                    <h2>
-                      {mode === "review"
-                        ? "Review the details"
-                        : "Keep your picture current"}
-                    </h2>
-                    <p>
-                      {r.summary?.unreviewedCount ?? 0} unreviewed components ·{" "}
-                      {r.summary?.unclassifiedCount ?? 0} unclassified
-                      components
-                    </p>
-                    <ul className="review-actions">
-                      {r.scope.map((a) => (
-                        <li key={a.id}>
-                          <a
-                            href={`/activity?account=${a.id}&month=${r.month}`}
-                          >
-                            Review {a.label} activity
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                    <a className="form-link" href="/imports">
-                      Import a CSV
-                    </a>
-                  </section>
-                </div>
+                <ReviewActions report={r} mode={mode} />
                 {mode === "review" && (
                   <BudgetEditor
                     key={`${r.scopeKey}:${r.budget?.version ?? 0}`}
@@ -119,39 +90,7 @@ export function SpendingScreen({
                     refresh={state.refresh}
                   />
                 )}
-                {mode === "review" && r.summary && (
-                  <section className="surface form-card">
-                    <h2>Cash movement bridge</h2>
-                    <p>
-                      Spending is separate from movements between accounts, debt
-                      and investments.
-                    </p>
-                    <dl className="cash-bridge">
-                      {(
-                        [
-                          ["Transfer inflow", r.summary.transferIn],
-                          ["Transfer outflow", r.summary.transferOut],
-                          ["Debt service outflow", r.summary.debtServiceOut],
-                          [
-                            "Debt settlement inflow",
-                            r.summary.debtSettlementIn,
-                          ],
-                          ["Principal inflow", r.summary.principalIn],
-                          ["Principal outflow", r.summary.principalOut],
-                          ["Contribution inflow", r.summary.contributionIn],
-                          ["Contribution outflow", r.summary.contributionOut],
-                          ["Unclassified inflow", r.summary.unclassifiedIn],
-                          ["Unclassified outflow", r.summary.unclassifiedOut],
-                        ] as const
-                      ).map(([label, money]) => (
-                        <div key={label}>
-                          <dt>{label}</dt>
-                          <dd>{formatAggregateMoney(money)}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </section>
-                )}
+                {mode === "review" && <CashBridge report={r} />}
               </>
             )}
           </>

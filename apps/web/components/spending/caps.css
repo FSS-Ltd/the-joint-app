@@ -1,0 +1,120 @@
+.budget-charts {
+  display: grid;
+  gap: 16px;
+}
+.budget-charts .finance-section-title {
+  margin: 0;
+}
+.budget-charts .finance-section-title > * {
+  min-width: 0;
+}
+.budget-charts h2 {
+  margin: 0;
+}
+.budget-charts > .field-hint {
+  margin: 0;
+}
+.cap-grid {
+  display: grid;
+  gap: 8px;
+}
+.cap-card {
+  padding: 24px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.cap-card header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.cap-card h3 {
+  font-size: 20px;
+  line-height: 1.4;
+  margin: 0;
+  flex: 1 1 140px;
+  min-width: 0;
+}
+.cap-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+  background: var(--sage);
+  font-size: 12px;
+  font-weight: 650;
+}
+.cap-balance {
+  font-size: clamp(28px, 4cqi, 36px);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.3;
+  margin: 24px 0 8px;
+  font-variant-numeric: tabular-nums;
+}
+.cap-actual {
+  font-size: 14px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.cap-ruler {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--sage);
+  overflow: hidden;
+  margin: 20px 0;
+}
+.cap-within {
+  background: var(--primary);
+}
+.cap-excess {
+  background: var(--error);
+}
+.cap-over .cap-status,
+.cap-reached .cap-status {
+  border-color: var(--error);
+  color: var(--error);
+  background: var(--canvas);
+}
+.cap-over .cap-balance,
+.cap-reached .cap-balance {
+  color: var(--error);
+}
+.cap-reached .cap-within {
+  background: var(--error);
+}
+.cap-saving-impact {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--muted);
+}
+.cap-month-end {
+  padding: 24px;
+  background: var(--apricot);
+  color: var(--ink);
+  border-radius: var(--radius-card);
+}
+.cap-month-end h3 {
+  margin: 0;
+  font-size: 20px;
+}
+.cap-month-end p {
+  font-size: 14px;
+}
+@container spending-workspace (min-width: 640px) {
+  .cap-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container spending-workspace (max-width: 340px) {
+  .cap-card,
+  .cap-month-end {
+    padding: 16px;
+  }
+}
