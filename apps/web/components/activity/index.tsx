@@ -5,6 +5,7 @@ import { Feedback } from "../identity/frame";
 import { AccountPicker, useFinanceScope } from "../finance/scope";
 import { EntryForm } from "./entry-form";
 import { ActivityList } from "./list";
+import "./activity.css";
 
 export function Activity(): ReactNode {
   const scope = useFinanceScope();
@@ -16,31 +17,22 @@ export function Activity(): ReactNode {
       description="Your booked transactions, with the source and the choices kept clear."
       household={scope.identity?.membership?.household.name}
     >
-      <div className="finance-stack">
+      <div className="finance-stack activity-workspace">
         <Feedback error={scope.error} />
         {scope.loading && <p role="status">Loading accounts…</p>}
-        <AccountPicker
-          account={scope.account}
-          accounts={scope.accounts}
-          path="/activity"
-          loading={scope.loading}
-          more={Boolean(scope.nextCursor)}
-          onMore={() => void scope.moreAccounts()}
-        />
-        {!scope.loading && !scope.account && !scope.error && (
-          <section className="surface finance-empty">
-            <h2>Activity starts with an account</h2>
-            <p>
-              Choose an account you own or one shared with Values and details
-              access.
-            </p>
-            <a className="button primary" href="/accounts">
-              Go to accounts
-            </a>
-          </section>
-        )}
-        {scope.account && scope.householdId && (
-          <>
+        <section
+          className="surface activity-scope"
+          aria-label="Activity account"
+        >
+          <AccountPicker
+            account={scope.account}
+            accounts={scope.accounts}
+            path="/activity"
+            loading={scope.loading}
+            more={Boolean(scope.nextCursor)}
+            onMore={() => void scope.moreAccounts()}
+          />
+          {scope.account && (
             <div className="finance-section-title">
               <p>
                 {scope.account.ownership === "OWNED"
@@ -57,29 +49,39 @@ export function Activity(): ReactNode {
                 </a>
               )}
             </div>
-            <div
-              className={
-                scope.account.ownership === "OWNED"
-                  ? "activity-layout"
-                  : "finance-stack"
-              }
-            >
-              <ActivityList
-                key={scope.account.id}
-                householdId={scope.householdId}
-                accountId={scope.account.id}
-                revision={revision}
-              />
-              {scope.account.ownership === "OWNED" && (
+          )}
+        </section>
+        {!scope.loading && !scope.account && !scope.error && (
+          <section className="surface finance-empty">
+            <h2>Activity starts with an account</h2>
+            <p>
+              Choose an account you own or one shared with Values and details
+              access.
+            </p>
+            <a className="button primary" href="/accounts">
+              Go to accounts
+            </a>
+          </section>
+        )}
+        {scope.account && scope.householdId && (
+          <div className="finance-stack">
+            <ActivityList
+              key={scope.account.id}
+              householdId={scope.householdId}
+              accountId={scope.account.id}
+              revision={revision}
+            />
+            {scope.account.ownership === "OWNED" && (
+              <div className="activity-entry">
                 <EntryForm
                   key={scope.account.id}
                   householdId={scope.householdId}
                   accountId={scope.account.id}
                   saved={() => setRevision((value) => value + 1)}
                 />
-              )}
-            </div>
-          </>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </AccountsFrame>

@@ -1,18 +1,17 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
 import type { TransactionResponse } from "@joint/contracts";
-import { formatMoney } from "@joint/domain";
 import { useIdentity } from "../identity/use-identity";
 import { request, errorMessage } from "../identity/client";
 import { Feedback } from "../identity/frame";
 import { AccountsFrame } from "../accounts/frame";
-import { displayDate } from "../accounts/presentation";
 import { financePath } from "../finance/http";
 import { EntryForm } from "./entry-form";
 import { ClassificationForm, PrivateNoteForm } from "./annotations";
 import "../finance/finance.css";
 import "../spending/spending.css";
-import { kindLabels } from "./kinds";
+import { TransactionSourceSummary } from "./source-summary";
+import "./activity.css";
 import { SplitSummary } from "./split-summary";
 import { SplitForm } from "./split-form";
 import { TransferForm } from "./transfer-form";
@@ -95,53 +94,11 @@ export function TransactionDetail({
         </button>
       )}
       {transaction && householdId && !identityError && (
-        <div className="finance-stack">
-          <section className="surface form-card">
-            <p className="step-label">
-              {transaction.source === "CSV" ? "CSV import" : "Manual entry"} ·
-              Booked {displayDate(transaction.bookedDate)}
-            </p>
-            <h2>{transaction.description}</h2>
-            <button
-              className="text-button"
-              type="button"
-              onClick={() => setRevision((value) => value + 1)}
-            >
-              Reload transaction
-            </button>
-            <p>
-              {transaction.splits.length
-                ? `Split transaction · ${transaction.splits.length} components`
-                : `${kindLabels[transaction.effectiveKind ?? "UNCLASSIFIED"]} · ${transaction.classificationConfirmed ? "Reviewed" : "Unreviewed default"}`}
-              {transaction.transfer?.confirmed ? " · Confirmed transfer" : ""}
-            </p>
-            <p className="transaction-value">
-              {formatMoney(transaction.money)}
-            </p>
-            <p>
-              {[
-                transaction.splits.length ? null : transaction.category,
-                transaction.merchant,
-              ]
-                .filter(Boolean)
-                .join(" · ") ||
-                (transaction.splits.length
-                  ? "Categorized through split components."
-                  : "No classification yet.")}
-            </p>
-            {transaction.source === "CSV" && (
-              <p className="field-hint">
-                Imported date, amount and description preserve the source record
-                and cannot be edited.
-              </p>
-            )}
-            {!transaction.permissions.canClassify && (
-              <p className="field-hint">
-                The owner controls corrections and shared classification. Your
-                own note remains private.
-              </p>
-            )}
-          </section>
+        <div className="finance-stack activity-workspace">
+          <TransactionSourceSummary
+            transaction={transaction}
+            reload={() => setRevision((value) => value + 1)}
+          />
           <SplitSummary transaction={transaction} />
           <div className="finance-grid">
             <div className="finance-stack">
@@ -159,6 +116,14 @@ export function TransactionDetail({
                 )}
               {transaction.permissions.canClassify && (
                 <ClassificationForm
+                  householdId={householdId}
+                  transaction={transaction}
+                  saved={setTransaction}
+                  unavailable={unavailable}
+                />
+              )}
+              {transaction.permissions.canNote && (
+                <PrivateNoteForm
                   householdId={householdId}
                   transaction={transaction}
                   saved={setTransaction}
@@ -184,14 +149,6 @@ export function TransactionDetail({
                   unavailable={unavailable}
                 />
               </div>
-            )}
-            {transaction.permissions.canNote && (
-              <PrivateNoteForm
-                householdId={householdId}
-                transaction={transaction}
-                saved={setTransaction}
-                unavailable={unavailable}
-              />
             )}
           </div>
         </div>

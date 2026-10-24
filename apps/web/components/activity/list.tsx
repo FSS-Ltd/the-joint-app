@@ -7,12 +7,11 @@ import {
   type ReactNode,
 } from "react";
 import type { TransactionResponse } from "@joint/contracts";
-import { formatMoney } from "@joint/domain";
 import { request, errorMessage } from "../identity/client";
 import { Feedback } from "../identity/frame";
 import { financePath } from "../finance/http";
-import { KindOptions, kindLabels } from "./kinds";
-import { displayDate } from "../accounts/presentation";
+import { ActivityFilters, type ActivityFilterValues } from "./filters";
+import { ActivityRow } from "./row";
 
 export function ActivityList({
   householdId,
@@ -24,7 +23,7 @@ export function ActivityList({
   revision: number;
 }): ReactNode {
   const generation = useRef(0);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<ActivityFilterValues>({
     month: "",
     search: "",
     category: "",
@@ -89,9 +88,23 @@ export function ActivityList({
     return () => window.removeEventListener("focus", focus);
   }, [load]);
   return (
-    <section className="finance-stack">
+    <section
+      className="activity-ledger finance-stack"
+      aria-labelledby="booked-activity-title"
+    >
       <div className="finance-section-title">
-        <h2>Booked activity</h2>
+        <div>
+          <h2 id="booked-activity-title">Booked activity</h2>
+          {!pending && !error && (
+            <p className="activity-loaded-count">
+              <span>
+                {items.length} {items.length === 1 ? "record" : "records"}{" "}
+                loaded
+              </span>
+              {cursor ? " · More activity available" : ""}
+            </p>
+          )}
+        </div>
         <button
           className="text-button"
           type="button"
@@ -101,64 +114,11 @@ export function ActivityList({
           Refresh activity
         </button>
       </div>
-      <form
-        className="surface form-card form-stack"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const f = new FormData(e.currentTarget);
-          setFilters({
-            month: String(f.get("month") ?? ""),
-            search: String(f.get("search") ?? "").trim(),
-            category: String(f.get("category") ?? "").trim(),
-            classificationKind: String(f.get("classificationKind") ?? ""),
-            uncategorized: f.get("uncategorized") === "on",
-          });
-        }}
-      >
-        <h3>Find activity</h3>
-        <label>
-          Month
-          <input
-            type="month"
-            name="month"
-            defaultValue={filters.month}
-            key={filters.month}
-          />
-        </label>
-        <label>
-          Search description
-          <input name="search" maxLength={100} defaultValue={filters.search} />
-        </label>
-        <label>
-          Category
-          <input
-            name="category"
-            maxLength={80}
-            defaultValue={filters.category}
-          />
-        </label>
-        <label>
-          Financial type
-          <select
-            name="classificationKind"
-            defaultValue={filters.classificationKind}
-          >
-            <option value="">All financial types</option>
-            <KindOptions />
-          </select>
-        </label>
-        <label className="check-line">
-          <input
-            type="checkbox"
-            name="uncategorized"
-            defaultChecked={filters.uncategorized}
-          />
-          Uncategorized only
-        </label>
-        <button className="button secondary" type="submit" disabled={pending}>
-          Apply activity filters
-        </button>
-      </form>
+      <ActivityFilters
+        filters={filters}
+        pending={pending}
+        onApply={setFilters}
+      />
       <Feedback error={error} />
       {pending && <p role="status">Loading activity…</p>}
       {!pending && !items.length && !error && (
@@ -167,42 +127,15 @@ export function ActivityList({
           <p>Manual entries and completed CSV imports will appear here.</p>
         </div>
       )}
-      <ul className="surface finance-list">
-        {items.map((item) => (
-          <li key={item.id}>
-            <a
-              className="finance-row activity-link"
-              href={`/activity/${item.id}`}
-            >
-              <div>
-                <h3>{item.description}</h3>
-                <p>
-                  <time dateTime={item.bookedDate}>
-                    {displayDate(item.bookedDate)}
-                  </time>{" "}
-                  · {item.source === "MANUAL" ? "Manual entry" : "CSV import"}
-                </p>
-                {((!item.splits.length && item.category) || item.merchant) && (
-                  <p>
-                    {[item.splits.length ? null : item.category, item.merchant]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                )}
-              </div>
-              <p>
-                {item.splits.length
-                  ? `Split transaction · ${item.splits.length} components`
-                  : `${kindLabels[item.effectiveKind ?? "UNCLASSIFIED"]} · ${item.classificationConfirmed ? "Reviewed" : "Unreviewed"}`}
-              </p>
-              <strong className="finance-amount">
-                {formatMoney(item.money)}
-                <span aria-hidden="true"> ↗</span>
-              </strong>
-            </a>
-          </li>
-        ))}
-      </ul>
+      {items.length > 0 && (
+        <div className="activity-ledger-frame">
+          <ul className="activity-rows">
+            {items.map((transaction) => (
+              <ActivityRow key={transaction.id} transaction={transaction} />
+            ))}
+          </ul>
+        </div>
+      )}
       {cursor && (
         <button
           className="button secondary"
