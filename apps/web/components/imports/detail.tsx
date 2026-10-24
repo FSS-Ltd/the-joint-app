@@ -8,7 +8,8 @@ import { AccountsFrame } from "../accounts/frame";
 import { financePath } from "../finance/http";
 import { ImportReview } from "./review";
 import { BatchActions } from "./batch-actions";
-import { importStateLabel } from "./presentation";
+import { ImportBatchSummary } from "./batch-summary";
+import "./imports.css";
 import "../finance/finance.css";
 
 export function ImportDetail({ batchId }: { batchId: string }): ReactNode {
@@ -46,8 +47,6 @@ export function ImportDetail({ batchId }: { batchId: string }): ReactNode {
       if (timer) clearTimeout(timer);
     };
   }, [householdId, batchId, revision]);
-  const working =
-    batch && ["QUEUED", "PREVIEWING", "COMMITTING"].includes(batch.state);
   return (
     <AccountsFrame
       active="imports"
@@ -80,60 +79,12 @@ export function ImportDetail({ batchId }: { batchId: string }): ReactNode {
         </a>
       )}
       {batch && householdId && (
-        <div className="finance-stack">
-          <section className="surface form-card">
-            <p className="step-label">CSV · Local import</p>
-            <h2>{importStateLabel(batch.state)}</h2>
-            <button
-              className="text-button"
-              type="button"
-              disabled={dirty}
-              onClick={() => setRevision((value) => value + 1)}
-            >
-              Refresh import status
-            </button>
-            <p>
-              {batch.totalRows.toLocaleString("en-GB")} source rows ·{" "}
-              {batch.validRows} valid · {batch.rejectedRows} rejected ·{" "}
-              {batch.overlapRows} possible overlaps
-            </p>
-            {working && (
-              <div role="status">
-                <progress
-                  className="finance-progress"
-                  max={batch.totalRows || 1}
-                  {...(batch.totalRows ? { value: batch.processedRows } : {})}
-                />
-                <p>
-                  {batch.processedRows} of {batch.totalRows} rows processed.
-                  Transactions appear only after the whole commit succeeds.
-                </p>
-              </div>
-            )}
-            {batch.state === "COMMITTED" && (
-              <p role="status">
-                {batch.committedRows} transactions imported. {batch.skippedRows}{" "}
-                rows skipped.
-              </p>
-            )}
-            {batch.state === "FAILED" && (
-              <p role="alert">
-                This import could not complete. No partial commit is shown in
-                activity. Return to imports to inspect a new file.
-              </p>
-            )}
-            {batch.state === "EXPIRED" && (
-              <p>
-                This preview has expired. Inspect and upload the file again.
-              </p>
-            )}
-            <a
-              className="form-link"
-              href={`/activity?account=${batch.accountId}`}
-            >
-              View account activity
-            </a>
-          </section>
+        <div className="finance-stack import-workspace">
+          <ImportBatchSummary
+            batch={batch}
+            dirty={dirty}
+            refresh={() => setRevision((value) => value + 1)}
+          />
           {["READY", "COMMITTED", "ROLLED_BACK"].includes(batch.state) && (
             <ImportReview
               householdId={householdId}

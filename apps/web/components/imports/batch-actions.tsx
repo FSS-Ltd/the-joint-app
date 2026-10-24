@@ -66,7 +66,7 @@ export function BatchActions({
     }
   }
   return (
-    <section className="surface form-card finance-stack">
+    <section className="surface form-card finance-stack import-controls">
       <h2>Import controls</h2>
       <Feedback error={error} />
       {dirty && <p role="status">Save row choices before committing.</p>}

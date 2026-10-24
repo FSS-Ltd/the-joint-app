@@ -1,0 +1,191 @@
+.import-workspace {
+  container: import-workspace / inline-size;
+}
+.import-account-scope {
+  padding: 16px;
+}
+.import-account-scope .finance-account-picker {
+  margin: 0;
+  max-width: none;
+}
+.import-upload-layout {
+  display: grid;
+  gap: 24px;
+  align-items: start;
+}
+.import-upload-layout > *,
+.import-workspace .finance-section-title > * {
+  min-width: 0;
+}
+.import-workspace .finance-section-title {
+  margin: 0;
+}
+.import-history .finance-list > li {
+  padding: 16px;
+}
+.import-history .field-hint {
+  margin-bottom: 0;
+}
+.import-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 72px), 1fr));
+  gap: 8px;
+  padding: 0;
+  margin: 0 0 24px;
+  list-style-position: inside;
+  color: var(--muted);
+  font-size: 13px;
+}
+.import-steps li {
+  padding: 12px 8px;
+  border-bottom: 2px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.import-steps li[aria-current="step"] {
+  color: var(--ink);
+  background: var(--sage);
+  border-color: var(--primary);
+  font-weight: 650;
+}
+.import-batch-frame {
+  padding: 8px;
+  border: 1px solid #dde7dd66;
+  border-radius: var(--radius-frame);
+  background: #dde7dd24;
+}
+.import-batch-summary {
+  padding: 24px;
+}
+.import-summary-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px 24px;
+}
+.import-summary-heading > div {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.import-summary-heading h2 {
+  font-size: clamp(26px, 4cqi, 36px);
+  letter-spacing: -0.035em;
+  margin: 0;
+}
+.import-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 110px), 1fr));
+  gap: 8px;
+  margin: 24px 0 16px;
+}
+.import-counts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  overflow-wrap: anywhere;
+}
+.import-counts dt {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.import-counts dd {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.import-count-note {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+.import-review-list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  padding: 8px;
+  margin: 0;
+  background: #dde7dd24;
+  border: 1px solid #dde7dd66;
+  border-radius: var(--radius-frame);
+}
+.import-review-row {
+  padding: 20px;
+}
+.import-row-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.import-row-layout > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.import-row-layout h3 {
+  margin: 8px 0;
+  font-size: 17px;
+  line-height: 1.4;
+}
+.import-row-layout p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.import-row-amount {
+  font-size: 20px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+.import-row-rejected {
+  border-left: 3px solid var(--error);
+}
+.import-row-rejected h3 {
+  color: var(--error);
+}
+.import-controls {
+  max-width: 720px;
+}
+.import-source-review .finance-pagination {
+  flex-wrap: wrap;
+}
+.import-workspace .import-mapping .form-stack {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+}
+.import-mapping .import-amount-layout,
+.import-mapping .form-stack > p {
+  grid-column: 1 / -1;
+}
+@container import-workspace (min-width: 640px) {
+  .import-counts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .import-row-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 200px);
+  }
+  .import-row-amount {
+    text-align: right;
+  }
+}
+@container import-workspace (min-width: 800px) {
+  .import-upload-layout {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+}
+@container import-workspace (max-width: 340px) {
+  .import-workspace .form-card,
+  .import-batch-summary,
+  .import-review-row {
+    padding: 16px;
+  }
+  .import-counts > div {
+    padding: 12px;
+  }
+}

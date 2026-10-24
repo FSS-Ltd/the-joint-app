@@ -83,7 +83,10 @@ export function ImportReview({
     }
   }
   return (
-    <section className="finance-stack">
+    <section
+      className="finance-stack import-source-review"
+      aria-label="Source row review"
+    >
       <div className="finance-section-title">
         <h2>Source rows</h2>
         <label>
@@ -121,7 +124,7 @@ export function ImportReview({
       {!pending && !error && !rows.length && (
         <p className="finance-empty">No rows in this view.</p>
       )}
-      <ol className="surface finance-list import-rows">
+      <ol className="import-review-list">
         {rows.map((row) => (
           <ReviewRow
             key={row.rowNumber}
