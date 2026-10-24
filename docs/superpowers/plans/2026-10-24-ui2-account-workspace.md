@@ -50,4 +50,4 @@ Interface: `AccountSelector({householdId, current: AccountResponse})` uses `useA
 - [x] Inspect all changed files; run formatting, lint, package/test types, unit tests and builds in the secret-free archive.
 - [x] Compare actual synthetic 390/800/1280px renders against both approved references. Check 320px, 200% zoom, reduced motion, focus, loading/error/empty, pagination and permission states; run the full browser suite with owned disposable fixtures. CI runs full database integration; no production database code changes are planned.
 - [x] Obtain one fresh whole-branch review; fix material findings in one coordinated regression pass and rerun affected checks. Public scan must exclude private originals/settings/data.
-- [ ] Commit, push and open UI2 PR only after local verification. Attach it, verify current head/test-merge CI and compliant merge, and record exact evidence. No next build step before actual merge.
+- [x] Commit, push and open UI2 PR only after local verification. Attach it, verify current head/test-merge CI and compliant merge, and record exact evidence. No next build step before actual merge.
