@@ -172,7 +172,7 @@
   overflow-wrap: anywhere;
 }
 .archive-history .archive-balance {
-  font-size: clamp(28px, 4cqi, 36px);
+  font-size: clamp(20px, 8cqi, 36px);
   color: var(--ink);
   margin-block: 24px 8px;
   font-weight: 600;
@@ -199,6 +199,10 @@
   grid-column: 1 / -1;
   border-left: 2px solid var(--border);
   padding-left: 12px;
+}
+.archive-amount-group {
+  display: inline-block;
+  white-space: nowrap;
 }
 @container privacy-workspace (min-width: 520px) {
   .privacy-activity li {

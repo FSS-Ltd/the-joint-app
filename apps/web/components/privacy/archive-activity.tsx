@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
 import type { AccountResponse, TransactionResponse } from "@joint/contracts";
-import { formatMoney } from "@joint/domain";
+import { ArchiveAmount } from "./archive-amount";
 import { kinds, ownerLabel, displayDate } from "../accounts/presentation";
 import { Feedback } from "../identity/frame";
 import { errorMessage, request } from "../identity/client";
@@ -54,9 +54,11 @@ export function ArchiveActivity({
         {kinds[account.kind]} · {ownerLabel(account)}
       </p>
       <p className="archive-balance">
-        {account.latestValuation
-          ? formatMoney(account.latestValuation.money)
-          : "No recorded balance"}
+        {account.latestValuation ? (
+          <ArchiveAmount money={account.latestValuation.money} />
+        ) : (
+          "No recorded balance"
+        )}
       </p>
       <p className="field-hint">
         {account.latestValuation && (
@@ -85,7 +87,9 @@ export function ArchiveActivity({
                 · {item.source === "CSV" ? "CSV import" : "Manual record"}
               </p>
             </div>
-            <p className="archive-record-amount">{formatMoney(item.money)}</p>
+            <p className="archive-record-amount">
+              <ArchiveAmount money={item.money} />
+            </p>
             {item.note.body && (
               <p className="archive-record-note">Your note: {item.note.body}</p>
             )}

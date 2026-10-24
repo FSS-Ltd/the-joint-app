@@ -19,6 +19,7 @@ export async function privacyWorkspaceFixture(page: Page): Promise<{
 }> {
   await accountWorkspaceFixture(page);
   let failure = false;
+  let privacyRows = accounts;
   let rows = accounts.filter((account) => account.ownership === "OWNED");
   let history = transactions;
   const exportBodies: unknown[] = [];
@@ -43,6 +44,11 @@ export async function privacyWorkspaceFixture(page: Page): Promise<{
         effectiveUntil: null,
       },
     }),
+  );
+  await page.route(`**/api/households/${householdId}/accounts?*`, (route) =>
+    privacyRows === accounts
+      ? route.fallback()
+      : route.fulfill({ json: { items: privacyRows, nextCursor: null } }),
   );
   await page.route("**/api/me/archive/accounts**", (route) => {
     const url = new URL(route.request().url());
@@ -83,6 +89,7 @@ export async function privacyWorkspaceFixture(page: Page): Promise<{
     },
     setAccounts: (value) => {
       rows = value;
+      privacyRows = value;
     },
     setHistory: (value) => {
       history = value;

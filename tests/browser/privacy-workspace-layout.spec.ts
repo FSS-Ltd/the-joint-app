@@ -35,6 +35,9 @@ for (const width of [320, 390, 800, 1280]) {
       await page.emulateMedia({ reducedMotion: "reduce" });
       await page.goto(`/${route}`);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await expect(
+        page.getByRole("checkbox", { name: new RegExp(label) }),
+      ).toBeVisible();
       if (route === "archive") {
         await page
           .getByRole("button", { name: `${label} · Read history`, exact: true })
@@ -69,6 +72,35 @@ for (const width of [320, 390, 800, 1280]) {
           await expect(
             history.getByText("-£92,233,720,368,547,758.08", { exact: true }),
           ).toHaveCount(2);
+          for (const amount of [
+            history.locator(".archive-balance"),
+            history.locator(".archive-record-amount"),
+          ]) {
+            const groups = await amount.evaluate((element) => {
+              const walker = document.createTreeWalker(
+                element,
+                NodeFilter.SHOW_TEXT,
+              );
+              const nodes: Text[] = [];
+              for (let node = walker.nextNode(); node; node = walker.nextNode())
+                if (node instanceof Text && node.textContent?.trim())
+                  nodes.push(node);
+              const first = nodes[0],
+                last = nodes.at(-1);
+              if (!first || !last) throw Error("Missing displayed amount");
+              const sign = document.createRange();
+              sign.setStart(first, 0);
+              sign.setEnd(first, Math.min(3, first.length));
+              const fraction = document.createRange();
+              fraction.setStart(last, Math.max(0, last.length - 4));
+              fraction.setEnd(last, last.length);
+              return {
+                sign: sign.getClientRects().length,
+                fraction: fraction.getClientRects().length,
+              };
+            });
+            expect(groups).toEqual({ sign: 1, fraction: 1 });
+          }
         } else {
           await page
             .getByRole("button", { name: "Delete my account", exact: true })
