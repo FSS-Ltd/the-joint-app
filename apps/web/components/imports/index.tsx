@@ -5,6 +5,7 @@ import { Feedback } from "../identity/frame";
 import { AccountPicker, useFinanceScope } from "../finance/scope";
 import { UploadForm } from "./upload-form";
 import { ImportHistory } from "./history";
+import "./imports.css";
 
 export function Imports(): ReactNode {
   const scope = useFinanceScope(true);
@@ -37,38 +38,45 @@ export function Imports(): ReactNode {
           </a>
         </section>
       )}
-      <AccountPicker
-        account={scope.account}
-        accounts={scope.accounts}
-        path="/imports"
-        more={Boolean(scope.nextCursor)}
-        loading={scope.loading}
-        onMore={() => void scope.moreAccounts()}
-      />
-      {scope.account && scope.householdId && (
-        <div className="finance-grid">
-          <UploadForm
-            key={scope.account.id}
-            householdId={scope.householdId}
-            accountId={scope.account.id}
+      <div className="import-workspace finance-stack">
+        <section
+          className="surface import-account-scope"
+          aria-label="Import account"
+        >
+          <AccountPicker
+            account={scope.account}
+            accounts={scope.accounts}
+            path="/imports"
+            more={Boolean(scope.nextCursor)}
+            loading={scope.loading}
+            onMore={() => void scope.moreAccounts()}
           />
-          <div className="finance-stack">
-            <aside className="accounts-private-note">
-              <p className="step-label">Review with care</p>
-              <h2>Similar doesn't mean the same.</h2>
-              <p>
-                Equal purchases can both be real. Overlap warnings need an
-                explicit Keep or Skip choice. An exact-file replay reuses its
-                existing import.
-              </p>
-            </aside>
-            <ImportHistory
+        </section>
+        {scope.account && scope.householdId && (
+          <div className="import-upload-layout">
+            <UploadForm
+              key={scope.account.id}
               householdId={scope.householdId}
               accountId={scope.account.id}
             />
+            <div className="finance-stack">
+              <aside className="accounts-private-note">
+                <p className="step-label">Review with care</p>
+                <h2>Similar doesn't mean the same.</h2>
+                <p>
+                  Equal purchases can both be real. Overlap warnings need an
+                  explicit Keep or Skip choice. An exact-file replay reuses its
+                  existing import.
+                </p>
+              </aside>
+              <ImportHistory
+                householdId={scope.householdId}
+                accountId={scope.account.id}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </AccountsFrame>
   );
 }

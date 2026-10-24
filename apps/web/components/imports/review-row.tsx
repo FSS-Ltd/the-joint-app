@@ -17,8 +17,10 @@ export function ReviewRow({
   onChoose: (decision: "KEEP" | "SKIP") => void;
 }): ReactNode {
   return (
-    <li>
-      <div className="finance-row">
+    <li
+      className={`surface import-review-row${row.status === "REJECTED" ? " import-row-rejected" : ""}`}
+    >
+      <div className="import-row-layout">
         <div>
           <span className="step-label">Row {row.rowNumber}</span>
           {row.status === "REJECTED" ? (
@@ -76,7 +78,10 @@ export function ReviewRow({
           )}
         </div>
         {row.status === "VALID" && (
-          <strong className="finance-amount">{formatMoney(row.money)}</strong>
+          <strong className="import-row-amount">
+            {BigInt(row.money.amountMinor) > 0n ? "+" : ""}
+            {formatMoney(row.money)}
+          </strong>
         )}
       </div>
     </li>

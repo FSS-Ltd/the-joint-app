@@ -8,6 +8,7 @@ import {
   type CsvColumn,
 } from "@joint/contracts";
 import { MappingFields } from "./mapping-fields";
+import { ImportSteps } from "./steps";
 import { errorMessage } from "../identity/client";
 import { Feedback } from "../identity/frame";
 import { financePath, uploadCsv } from "../finance/http";
@@ -99,7 +100,8 @@ export function UploadForm({
     }
   }
   return (
-    <section className="surface form-card">
+    <section className="surface form-card import-upload">
+      <ImportSteps stage={inspection ? "map" : "inspect"} />
       <p className="step-label">Your file, your choices</p>
       <h2>Import a CSV</h2>
       <p>

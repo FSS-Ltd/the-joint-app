@@ -47,9 +47,19 @@ export function ImportHistory({
     void load();
   }, [load]);
   return (
-    <section>
+    <section
+      className="import-history finance-stack"
+      aria-labelledby="import-history-title"
+    >
       <div className="finance-section-title">
-        <h2>Import history</h2>
+        <div>
+          <h2 id="import-history-title">Import history</h2>
+          {!pending && !error && (
+            <p className="field-hint">
+              {items.length} {items.length === 1 ? "import" : "imports"} loaded
+            </p>
+          )}
+        </div>
         <button
           className="text-button"
           disabled={pending}

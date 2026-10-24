@@ -72,7 +72,7 @@ export function MappingFields({
             <option value="COMMA">Decimal comma: 12,34</option>
           </select>
         </label>
-        <label>
+        <label className="import-amount-layout">
           Amount columns
           <select
             required

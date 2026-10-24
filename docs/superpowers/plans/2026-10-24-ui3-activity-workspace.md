@@ -51,4 +51,4 @@ Interface: `TransactionSourceSummary({transaction, reload})` receives the existi
 
 - [x] Inspect every changed file and diff; pass formatting, lint, full strict types, all builds/unit tests and full browser acceptance in the secret-free archive. CI runs full database integration for this frontend-only step.
 - [x] Obtain one fresh whole-branch review; address material findings with regression evidence. Scan public source for private paths and exact local secret matches.
-- [ ] Commit, push, open and attach UI3 PR after local verification. Require current-head/test-merge CI, comply with reviews/protection, merge under existing authorization and record exact host evidence. No subsequent step before verified merge.
+- [x] Commit, push, open and attach UI3 PR after local verification. Require current-head/test-merge CI, comply with reviews/protection, merge under existing authorization and record exact host evidence. No subsequent step before verified merge.

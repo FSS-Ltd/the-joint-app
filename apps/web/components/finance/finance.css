@@ -211,10 +211,6 @@
   width: 20px;
   height: 20px;
 }
-.import-rows {
-  list-style: none;
-  padding: 0;
-}
 .identity-shell .finance-checkbox {
   display: flex;
   align-items: flex-start;

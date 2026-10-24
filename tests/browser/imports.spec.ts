@@ -612,11 +612,15 @@ test("real CSV review, replay, overlap choices, private notes, corrections and r
   expect((await ledger()).some((item) => item.id === before.id)).toBe(true);
   const pagedCsv = `Date,Description,Amount\n${Array.from({ length: 101 }, (_, index) => `2026-01-04,Synthetic page row ${index + 1},-1.00`).join("\n")}\n`;
   await inspectAndPreview(page, pagedCsv, accountId, householdId);
-  await expect(page.getByRole("listitem")).toHaveCount(100);
+  const sourceRows = page.getByRole("region", {
+    name: "Source row review",
+    exact: true,
+  });
+  await expect(sourceRows.getByRole("listitem")).toHaveCount(100);
   await page
     .getByRole("button", { name: "Next 100 rows", exact: true })
     .click();
-  await expect(page.getByRole("listitem")).toHaveCount(1);
+  await expect(sourceRows.getByRole("listitem")).toHaveCount(1);
   await expect(
     page.getByRole("heading", { name: "Synthetic page row 101", exact: true }),
   ).toBeVisible();
