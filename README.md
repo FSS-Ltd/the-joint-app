@@ -78,6 +78,15 @@ The seed creates two synthetic households without usable login sessions. The ear
 
 Run `pnpm db:runtime` after migrations and before starting the API/worker or tests. It creates a restricted local login and ignored `.env.database` with random runtime credentials plus the maintenance URL. Preserve this file with the development database. Re-running preserves credentials; it refuses a different database or an unsafe role. Product processes use the runtime URL; migrations and synthetic fixture cleanup use the separate owner URL. Never export an owner `DATABASE_URL` into app processes: exported variables override environment files, and finance queries reject a privileged connection.
 
+The worker uses a dedicated authenticated PostgreSQL session for `LISTEN`, then
+reconciles durable state at startup and after reconnect. Commit notifications carry
+no data. Idle workers make no database queries; one-shot timers schedule job retries,
+expired leases and retained-object expiry. Apply migrations before restarting the
+worker. A direct/session connection is required; transaction pooling cannot maintain
+the subscription. `WORKER_RETRY_MAX_MS` (1000–60000, default 30000) bounds failure
+backoff from an initial 1000ms; it replaces the old `WORKER_INTERVAL_MS` scan setting.
+Existing import/export/deletion browser status polling remains tracked for EVENT2.
+
 Open `/accounts` after joining a household. Enroll/verify an authenticator before creating an account. Creation records your self-declared sole adult ownership; a viewing grant does not make the other adult an owner. Accounts start private, even when another adult joins. An unknown value stays unknown until its owner records a dated manual GBP value. Liability values mean nonnegative outstanding debt. Account kinds and legal ownership cannot be changed through metadata edits.
 
 The manual valuation API accepts optional `adultMoney` alongside original `money` and `asOfDate`. This owner attestation records the household adults' portion, not spendable cash. Omitted or null ownership stays unknown, including historical valuations; legal title does not imply adult ownership. Owners correct evidence with a new valuation using the existing version/idempotency controls. Positive portions must be within the original amount; overdrafts and liabilities require the full obligation. Archive reads and CSV balance details preserve both amounts. The current form does not attest ownership; an explicit control belongs to the later wealth screen.
