@@ -51,8 +51,8 @@ Files: add the missing approved `--error` token in `apps/web/app/globals.css`; v
 
 ## Task 3 — Verify and deliver
 
-- [ ] Inspect every changed file/diff; pass formatting, lint, strict package/test types, all builds/units and complete browser acceptance in the secret-free archive. Required CI runs full database integration for this frontend-only step.
-- [ ] Obtain one independent whole-branch review; remediate material findings with observed regressions in one pass. Scan public source for private paths/exact local secret matches.
+- [x] Inspect every changed file/diff; pass formatting, lint, strict package/test types, all builds/units and complete browser acceptance in the secret-free archive. Required CI runs full database integration for this frontend-only step.
+- [x] Obtain one independent whole-branch review; remediate material findings with observed regressions in one pass. Scan public source for private paths/exact local secret matches.
 - [ ] Commit/push/open/attach UI5 PR only after local verification. Require successful current-head/test-merge CI, repository review/conversation requirements and actual authorised merge. Record exact evidence; no next unit or deployment before merge.
 
 ## Remaining goal scope

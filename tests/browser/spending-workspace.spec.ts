@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import {
   reportAccount,
+  spendingReport,
   spendingWorkspaceFixture,
 } from "../fixtures/spending-workspace.js";
 test.use({ serviceWorkers: "block" });
@@ -148,4 +149,53 @@ test("budget editing retains exact values and optimistic version while review na
   await expect(
     page.getByRole("link", { name: "Review this month", exact: true }),
   ).toHaveAttribute("href", `/review?${query}`);
+});
+
+test("home discloses its cap subset and the full scoped budget shows every cap", async ({
+  page,
+}) => {
+  const fixture = await spendingWorkspaceFixture(page);
+  const budget = spendingReport.budget;
+  if (!budget) throw Error("Missing synthetic budget");
+  fixture.setReport({
+    ...spendingReport,
+    budget: {
+      ...budget,
+      lines: [
+        ...budget.lines,
+        {
+          category: "Utilities",
+          limit: { amountMinor: "10000", currency: "GBP" },
+        },
+      ],
+    },
+  });
+  await page.goto(`/dashboard?${query}`);
+  const caps = page.getByRole("region", { name: "Category caps", exact: true });
+  await expect(caps.getByRole("article")).toHaveCount(3);
+  await expect(caps).toContainText("Showing 3 of 4 saved caps.");
+  await expect(
+    caps.getByRole("heading", { name: "Utilities", exact: true }),
+  ).toHaveCount(0);
+  await Promise.all([
+    page.waitForResponse((response) =>
+      new URL(response.url()).pathname.includes("/reports/spending"),
+    ),
+    page.waitForURL(
+      (url) =>
+        url.pathname === "/budgets" &&
+        url.searchParams.get("month") === "2026-01" &&
+        url.searchParams.get("accountIds") === reportAccount.id,
+    ),
+    page
+      .getByRole("link", { name: "View all category caps", exact: true })
+      .click(),
+  ]);
+  await expect(caps.getByRole("article")).toHaveCount(4);
+  await expect(
+    caps.getByRole("heading", { name: "Utilities", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Showing 3 of 4 saved caps.", { exact: false }),
+  ).toHaveCount(0);
 });
