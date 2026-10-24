@@ -89,17 +89,46 @@ test("household invitation stays explicit and its long private link remains usab
     page.getByRole("button", { name: "Copy invitation link" }),
   ).toBeEnabled();
   expect(fixture.invitationPosts()).toBe(1);
-  for (const width of [390, 1280]) {
+  const expectedLink = `${new URL(page.url()).origin}/join#invite=${"synthetic-private-invitation-".repeat(6)}`;
+  for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 900 });
+    for (const zoom of ["1", "2"]) {
+      await page.evaluate((value) => {
+        document.body.style.zoom = value;
+      }, zoom);
+      const link = page.getByLabel("Private invitation link");
+      await expect(link).toHaveValue(expectedLink);
+      await expect(link).toHaveAttribute("readonly", "");
+      const box = await link.boundingBox();
+      expect(box?.width).toBeGreaterThanOrEqual(120);
+      expect(box?.height).toBeGreaterThanOrEqual(44);
+      expect(
+        await link.evaluate(
+          (element) => element.scrollWidth <= element.clientWidth + 1,
+        ),
+      ).toBe(true);
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      await expect(
+        page.getByRole("button", { name: "Copy invitation link" }),
+      ).toBeEnabled();
+    }
+    await page.evaluate(() => {
+      document.body.style.zoom = "";
+    });
     await page.evaluate(() => {
       if (document.activeElement instanceof HTMLElement)
         document.activeElement.blur();
       window.scrollTo(0, 0);
     });
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
-    await page.screenshot({
-      path: `/tmp/joint-ui7-household-normal-${width}.png`,
-      fullPage: true,
-    });
+    if (width === 390 || width === 1280)
+      await page.screenshot({
+        path: `/tmp/joint-ui7-household-normal-${width}.png`,
+        fullPage: true,
+      });
   }
 });

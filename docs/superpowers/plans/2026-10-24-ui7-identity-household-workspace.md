@@ -48,8 +48,8 @@ Interfaces: HouseholdSummary({identity:MeResponse,membership:NonNullable<MeRespo
 
 ## Task3 — Verify and deliver
 
-- [ ] Inspect every changed file/diff; pass format/lint/strict package and test types/all8 builds/all309 units and complete browser suite. Required CI runs215 database integration.
-- [ ] Obtain one independent whole-branch review; reproduce/remediate material findings in one pass. Scan public files for private paths/exact local secrets.
+- [x] Inspect every changed file/diff; pass format/lint/strict package and test types/all8 builds/all309 units and complete browser suite. Required CI runs215 database integration.
+- [x] Obtain one independent whole-branch review; reproduce/remediate material findings in one pass. Scan public files for private paths/exact local secrets.
 - [ ] Commit/push/open/attach PR only after local verification. Require successful final-head/test-merge CI, required reviews/conversations and authorised actual merge; record proof and refresh clean main. No later unit or deployment before merge.
 
 ## Remaining goal scope
