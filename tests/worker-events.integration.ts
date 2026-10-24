@@ -3,12 +3,12 @@ import { setTimeout as delay } from "node:timers/promises";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 import { createOrm } from "../packages/database/dist/client.js";
 import { JobsRepository } from "../packages/database/dist/jobs.repository.js";
-import { createWorkerNotifications } from "../packages/database/src/worker-notifications.js";
-import { workerNextDelay } from "../packages/database/src/worker-deadlines.js";
+import { createWorkerNotifications } from "../packages/database/dist/worker-notifications.js";
+import { workerNextDelay } from "../packages/database/dist/worker-deadlines.js";
 import { createWorkerScheduler } from "../apps/worker/src/scheduler.js";
 import { runJobs } from "../apps/worker/src/job-runner.js";
 import { maintainImports } from "../apps/worker/src/import-maintenance.js";
-import { maintainExports } from "../packages/database/src/export-maintenance.js";
+import { maintainExports } from "../packages/database/dist/export-maintenance.js";
 import { createFixtureOwner } from "./fixtures/database.js";
 
 const owner = createFixtureOwner();
@@ -260,6 +260,54 @@ it("executes a scheduled retry and a crashed lease without another notification"
     );
     expect(attempts).toBe(2);
   } finally {
+    await scheduler.close();
+  }
+  await owner.job.deleteMany({ where: { householdId } });
+});
+
+it("bounds overdue lock contention and catches up when the lock is released", async () => {
+  const queued = await jobs.enqueue(job());
+  let release: (() => void) | undefined;
+  let locked: (() => void) | undefined;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const acquired = new Promise<void>((resolve) => {
+    locked = resolve;
+  });
+  const transaction = owner.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM app."Job" WHERE id = ${queued.id}::uuid FOR UPDATE`;
+    locked?.();
+    await held;
+  });
+  const cycle = vi.fn(async () => {
+    await runJobs(
+      jobs,
+      { [type]: async () => {} },
+      { owner: "lock-fixture", maxJobs: 10, budgetMs: 5000 },
+    );
+    return workerNextDelay(runtime, [type], false);
+  });
+  const scheduler = createWorkerScheduler(cycle, { retryMaxMs: 1000 });
+  try {
+    await acquired;
+    scheduler.wake();
+    await vi.waitFor(() => expect(cycle).toHaveBeenCalled());
+    await delay(200);
+    expect(cycle).toHaveBeenCalledTimes(1);
+    release?.();
+    await transaction;
+    await vi.waitFor(
+      async () =>
+        expect(
+          (await owner.job.findUniqueOrThrow({ where: { id: queued.id } }))
+            .state,
+        ).toBe("SUCCEEDED"),
+      { timeout: 3000 },
+    );
+  } finally {
+    release?.();
+    await transaction;
     await scheduler.close();
   }
   await owner.job.deleteMany({ where: { householdId } });

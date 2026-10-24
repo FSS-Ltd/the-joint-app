@@ -85,7 +85,10 @@ expired leases and retained-object expiry. Apply migrations before restarting th
 worker. A direct/session connection is required; transaction pooling cannot maintain
 the subscription. `WORKER_RETRY_MAX_MS` (1000–60000, default 30000) bounds failure
 backoff from an initial 1000ms; it replaces the old `WORKER_INTERVAL_MS` scan setting.
-Existing import/export/deletion browser status polling remains tracked for EVENT2.
+Failure cooldowns coalesce new hints until the retry deadline. Known overdue work
+without a pending hint retries after one second, avoiding rapid scans of locked
+rows; idle workers have no timer. Existing import/export/deletion browser status
+polling remains tracked for EVENT2.
 
 Open `/accounts` after joining a household. Enroll/verify an authenticator before creating an account. Creation records your self-declared sole adult ownership; a viewing grant does not make the other adult an owner. Accounts start private, even when another adult joins. An unknown value stays unknown until its owner records a dated manual GBP value. Liability values mean nonnegative outstanding debt. Account kinds and legal ownership cannot be changed through metadata edits.
 

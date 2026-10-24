@@ -14,6 +14,7 @@ it("starts independently, leaves idle connections untouched and releases them on
   const child = spawn(process.execPath, ["apps/worker/dist/main.js"], {
     env: {
       PATH: process.env.PATH,
+      NODE_ENV: "test",
       DATABASE_URL: connection.toString(),
       WORKER_INTERVAL_MS: "1000",
       WORKER_RETRY_MAX_MS: "1000",

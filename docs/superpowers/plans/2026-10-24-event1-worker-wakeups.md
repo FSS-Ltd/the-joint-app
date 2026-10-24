@@ -28,7 +28,12 @@ object/preview expiry, failed import reconciliation, export expiry/chunk cleanup
 and configured deletion retries. Disabled handler/provider work cannot cause a
 busy loop. Timers schedule actual deadlines; idle workers perform zero queries.
 Database failures use bounded exponential reconnect/retry backoff, separately from
-normal updates. Long timers are chunked without repeated database reads.
+normal updates. Hints received during failure cooldown coalesce until its deadline.
+If a settled cycle still sees overdue work without a pending hint, it waits one
+second before retrying: SKIP LOCKED may hide a currently locked candidate. Hints
+also coalesce during that cooldown. This caps that contention path at one bounded
+cycle/second; productive hint-driven drains continue immediately. This is known due
+work, not a periodic idle reconciliation fallback. Long timers are chunked without repeated database reads.
 
 The additive migration creates notification triggers, scheduling indexes and a
 read-only deadline function with fixed search path and runtime-only execution.

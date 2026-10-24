@@ -14,7 +14,6 @@ export function createWorkerNotifications(options: {
   onUnavailable?: () => void;
 }): WorkerNotifications {
   let stopped = false;
-  let client: pg.Client | undefined;
   let release: (() => void) | undefined;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -29,7 +28,6 @@ export function createWorkerNotifications(options: {
         statement_timeout: options.timeoutMs,
         keepAlive: true,
       });
-      client = connection;
       const ended = new Promise<void>((resolve) => {
         release = resolve;
       });
@@ -50,9 +48,21 @@ export function createWorkerNotifications(options: {
           options.onWake();
       });
       try {
-        await connection.connect();
-        if (!stopped) await connection.query("LISTEN joint_worker_wakeup");
-        if (!stopped && !disconnected) {
+        // pg can leave connect() pending when end() interrupts authentication.
+        // Cancel the wait first, then let finally close the transport.
+        const connected = await Promise.race([
+          connection.connect().then(() => true),
+          ended.then(() => false),
+        ]);
+        const subscribed =
+          connected &&
+          !stopped &&
+          !disconnected &&
+          (await Promise.race([
+            connection.query("LISTEN joint_worker_wakeup").then(() => true),
+            ended.then(() => false),
+          ]));
+        if (subscribed && !stopped && !disconnected) {
           retryMs = 1000;
           options.onReady();
           await ended;
@@ -61,7 +71,6 @@ export function createWorkerNotifications(options: {
         // Safe lifecycle signal only; never log connection/exception details.
       } finally {
         await connection.end().catch(() => {});
-        client = undefined;
       }
       if (stopped) break;
       options.onUnavailable?.();
@@ -78,8 +87,6 @@ export function createWorkerNotifications(options: {
       stopped = true;
       clearTimeout(retryTimer);
       release?.();
-      // Ending a connecting client also bounds shutdown during a failed connect.
-      await client?.end().catch(() => {});
       await active;
     },
   };

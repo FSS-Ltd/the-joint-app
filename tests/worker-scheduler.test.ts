@@ -3,6 +3,43 @@ import { createWorkerScheduler } from "../apps/worker/src/scheduler.js";
 
 afterEach(() => vi.useRealTimers());
 
+it("bounds repeated cycles when overdue work cannot yet be acquired", async () => {
+  vi.useFakeTimers();
+  const cycle = vi.fn<() => Promise<number | null>>().mockResolvedValue(0);
+  const scheduler = createWorkerScheduler(cycle, { retryMaxMs: 30000 });
+  scheduler.wake();
+  await vi.advanceTimersByTimeAsync(500);
+  expect(cycle).toHaveBeenCalledTimes(1);
+  await scheduler.close();
+});
+
+it("does not let later notifications bypass failure or overdue-work cooldowns", async () => {
+  vi.useFakeTimers();
+  const cycle = vi
+    .fn<() => Promise<number | null>>()
+    .mockRejectedValueOnce(new Error("synthetic unavailable"))
+    .mockResolvedValueOnce(0)
+    .mockResolvedValue(null);
+  const scheduler = createWorkerScheduler(cycle, { retryMaxMs: 30000 });
+  scheduler.wake();
+  await vi.advanceTimersByTimeAsync(0);
+  for (let i = 0; i < 10; i++) {
+    scheduler.wake();
+    await vi.advanceTimersByTimeAsync(50);
+  }
+  expect(cycle).toHaveBeenCalledTimes(1);
+  await vi.advanceTimersByTimeAsync(500);
+  expect(cycle).toHaveBeenCalledTimes(2);
+  for (let i = 0; i < 10; i++) {
+    scheduler.wake();
+    await vi.advanceTimersByTimeAsync(50);
+  }
+  expect(cycle).toHaveBeenCalledTimes(2);
+  await vi.advanceTimersByTimeAsync(500);
+  expect(cycle).toHaveBeenCalledTimes(3);
+  await scheduler.close();
+});
+
 it("reconciles once, then makes no idle reads until notified", async () => {
   vi.useFakeTimers();
   const cycle = vi.fn<() => Promise<number | null>>().mockResolvedValue(null);
