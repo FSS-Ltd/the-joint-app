@@ -7,6 +7,7 @@ import {
 import "./identity-controls.css";
 import "./identity-layout.css";
 import "./product-shell.css";
+import "./identity-workspace.css";
 
 export function IdentityFrame({
   eyebrow,
@@ -22,7 +23,9 @@ export function IdentityFrame({
   navigation?: AppDestination;
 }): ReactNode {
   return (
-    <div className={`identity-shell${navigation ? " has-app-navigation" : ""}`}>
+    <div
+      className={`identity-shell identity-screen${navigation ? " has-app-navigation" : ""}`}
+    >
       <a className="skip-link" href="#main">
         Skip to content
       </a>

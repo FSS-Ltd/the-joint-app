@@ -50,7 +50,7 @@ Interfaces: ArchiveActivity({account:AccountResponse}) renders selected read-onl
 
 - [x] Inspect all changed files; pass formatting/lint/strict package and test types/all8 builds/all309 units and full browser suite. Required CI runs215 database integration.
 - [x] Obtain one fresh whole-branch review; repair material findings with reproduced regressions. Scan public files for private paths and exact local secret matches.
-- [ ] Commit/push/open/attach UI6 PR; verify final-head/test-merge CI, required reviews/conversations and authorised actual merge. Record revisions/checks/merge, refresh clean main and preserve user data. No next step or deployment before merge.
+- [x] Commit/push/open/attach UI6 PR; verify final-head/test-merge CI, required reviews/conversations and authorised actual merge. Record revisions/checks/merge, refresh clean main and preserve user data. No next step or deployment before merge.
 
 ## Remaining goal scope
 

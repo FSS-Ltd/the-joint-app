@@ -25,7 +25,7 @@ const appearance = {
     colorPrimary: "#244F42",
     colorText: "#203B32",
     colorBackground: "#FFFFFF",
-    colorDanger: "#9A302A",
+    colorDanger: "#9C3838",
     borderRadius: "0.5rem",
   },
 };

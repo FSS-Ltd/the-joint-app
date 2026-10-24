@@ -52,7 +52,7 @@ export const accounts: AccountResponse[] = [
   { ...account(4, "Future saving"), kind: "SAVINGS", latestValuation: null },
 ];
 export const nextAccount = account(5, "Another visible account");
-const identity: MeResponse = {
+export const identity: MeResponse = {
   user: {
     id: "44444444-4444-4444-8444-444444444444",
     email: "workspace@example.test",
