@@ -1,0 +1,77 @@
+.identity-screen .identity-content {
+  container: identity-form / inline-size;
+}
+.household-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 24px;
+  min-width: 0;
+  align-items: start;
+}
+.household-panels > * {
+  min-width: 0;
+}
+.identity-screen .identity-content > .text-button {
+  min-height: 44px;
+}
+@container identity-form (max-width: 320px) {
+  .identity-content > .form-card,
+  .household-panels .form-card {
+    padding: 24px 16px;
+  }
+  .identity-content > .development-note {
+    padding: 24px 16px;
+  }
+}
+@media (max-width: 767px) {
+  .identity-screen .identity-intro h1 {
+    font-size: clamp(28px, 8vw, 36px);
+  }
+}
+@media (min-width: 1100px) {
+  .identity-screen.has-app-navigation > .identity-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .identity-screen.has-app-navigation .identity-intro,
+  .identity-screen.has-app-navigation .identity-content {
+    color: var(--ink);
+    --muted: #52665c;
+  }
+  .identity-screen.has-app-navigation .identity-intro {
+    padding: 0;
+  }
+  .identity-screen.has-app-navigation .identity-intro h1 {
+    max-width: 780px;
+    font-size: clamp(28px, 4vw, 48px);
+    line-height: 1.12;
+    margin-bottom: 16px;
+  }
+  .identity-screen.has-app-navigation .identity-description {
+    max-width: 680px;
+    font-size: 16px;
+    margin-bottom: 0;
+  }
+  .identity-screen.has-app-navigation .together-note {
+    display: none;
+  }
+  .identity-screen.has-app-navigation .identity-content > .privacy-note {
+    color: var(--muted);
+  }
+  .identity-screen.has-app-navigation
+    .identity-content
+    > .form-card
+    .form-stack {
+    max-width: 560px;
+  }
+  .identity-screen.has-app-navigation .identity-content > .button:focus-visible,
+  .identity-screen.has-app-navigation
+    .identity-content
+    > .session-actions
+    button:focus-visible,
+  .identity-screen.has-app-navigation
+    .identity-content
+    > .text-button:focus-visible {
+    outline-color: var(--focus);
+  }
+}

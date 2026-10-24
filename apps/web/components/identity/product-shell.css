@@ -163,7 +163,8 @@ html:has(.app-navigation) {
     padding: 32px;
     gap: 32px;
   }
-  .accounts-shell > .accounts-main {
+  .accounts-shell > .accounts-main,
+  .identity-screen.has-app-navigation > .identity-main {
     margin: 24px 16px 32px;
     width: calc(100% - 32px);
     padding: 28px;

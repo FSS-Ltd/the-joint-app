@@ -3,6 +3,7 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { errorMessage, request } from "./client";
 import { Feedback, IdentityFrame } from "./frame";
+import { HouseholdSummary } from "./household-summary";
 import { InvitationForm } from "./invitation-form";
 import { useIdentity } from "./use-identity";
 import { LogoutCompletion } from "./logout-completion";
@@ -114,52 +115,21 @@ export function Household(): ReactNode {
               </p>
             </section>
           ) : (
-            <>
-              <section
-                className="surface form-card"
-                aria-labelledby="household-heading"
-              >
-                <p className="step-label">Together starts here</p>
-                <h2 id="household-heading">Your household is ready</h2>
-                <dl className="detail-list">
-                  <div>
-                    <dt>Signed in as</dt>
-                    <dd className="break-word">{identity.user.email}</dd>
-                  </div>
-                  <div>
-                    <dt>Your role</dt>
-                    <dd>
-                      {membership.role === "ADMIN"
-                        ? "Household admin"
-                        : "Household member"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Members</dt>
-                    <dd>{membership.household.memberCount} of 2 adults</dd>
-                  </div>
-                  <div>
-                    <dt>Currency & time zone</dt>
-                    <dd>
-                      {membership.household.baseCurrency} ·{" "}
-                      {membership.household.timezone}
-                    </dd>
-                  </div>
-                </dl>
-              </section>
+            <div className="household-panels">
+              <HouseholdSummary identity={identity} membership={membership} />
               {membership.role === "ADMIN" &&
                 membership.household.memberCount < 2 && (
                   <InvitationForm householdId={membership.householdId} />
                 )}
-            </>
+            </div>
           )}
           <aside className="development-note">
             <p className="step-label">A foundation, with care</p>
             <h2>One small step at a time.</h2>
             <p>
-              This local build supports private manual accounts, household
-              membership and security. Imports and connected accounts are still
-              in development.
+              Start with private manual accounts and CSV imports. Your household
+              membership and account security stay separate from sharing
+              permissions. Direct bank and broker connections are not available.
             </p>
           </aside>
           <p className="privacy-note break-word">

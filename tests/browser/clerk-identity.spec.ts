@@ -4,8 +4,10 @@ import { fileURLToPath } from "node:url";
 import { test, expect } from "@playwright/test";
 import { syntheticClerkBrowser } from "../fixtures/clerk-browser.js";
 import { createClerkFixture } from "../fixtures/clerk.js";
+import { registerClerkWorkspaceCases } from "../fixtures/identity-clerk-workspace.js";
 
 const origin = "http://127.0.0.1:3311";
+registerClerkWorkspaceCases(origin);
 let web: ChildProcess | undefined;
 const fixture = await createClerkFixture();
 test.use({ baseURL: origin, serviceWorkers: "block" });
