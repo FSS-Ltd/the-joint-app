@@ -59,7 +59,11 @@ export async function request<T>(
   path: string,
   body?: object,
   idempotencyKey?: string,
-  options: { method?: "PATCH" | "PUT" | "DELETE"; ifMatch?: number } = {},
+  options: {
+    method?: "PATCH" | "PUT" | "DELETE";
+    ifMatch?: number;
+    signal?: AbortSignal;
+  } = {},
 ): Promise<T> {
   try {
     const headers: Record<string, string> = {};
@@ -75,6 +79,7 @@ export async function request<T>(
       method: options.method ?? (body === undefined ? "GET" : "POST"),
       credentials: "same-origin",
       cache: "no-store",
+      signal: options.signal,
       headers,
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
