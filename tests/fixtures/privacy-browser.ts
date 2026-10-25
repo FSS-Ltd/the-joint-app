@@ -16,6 +16,8 @@ import { createLocalAuthFixture } from "./local-auth.js";
 
 export const importKey = randomBytes(32).toString("base64");
 export const origin = "http://127.0.0.1:3701";
+export const statusOrigin = "http://127.0.0.1:3771";
+let activeOrigin = origin;
 type Fixture = ReturnType<typeof createLocalAuthFixture>;
 type LocalUser = Awaited<ReturnType<Fixture["createConfirmedUser"]>>;
 let auth: Fixture;
@@ -40,16 +42,14 @@ async function waitForWeb(): Promise<void> {
         "Isolated privacy web server exited before becoming ready",
       );
     try {
-      if ((await fetch(origin, { signal: AbortSignal.timeout(500) })).ok)
+      if ((await fetch(activeOrigin, { signal: AbortSignal.timeout(500) })).ok)
         return;
     } catch {
       /* The owned local server may still be starting. */
     }
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  throw new Error(
-    "Isolated privacy web server did not become ready on port 3701",
-  );
+  throw new Error("Isolated privacy web server did not become ready");
 }
 async function stopWeb(): Promise<void> {
   if (!web || web.exitCode !== null) return;
@@ -63,11 +63,11 @@ async function stopWeb(): Promise<void> {
   }
 }
 export async function signIn(page: Page, user: LocalUser): Promise<void> {
-  await page.goto(`${origin}/sign-in`);
+  await page.goto(`${activeOrigin}/sign-in`);
   await page.getByLabel("Email address").fill(user.email);
   await page.getByLabel(/^Password/).fill(user.password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(`${origin}/household`);
+  await expect(page).toHaveURL(`${activeOrigin}/household`);
 }
 export async function expectMutation(
   page: Page,
@@ -77,7 +77,7 @@ export async function expectMutation(
 ): Promise<void> {
   const response = page.waitForResponse(
     (result) =>
-      result.url() === `${origin}${path}` &&
+      result.url() === `${activeOrigin}${path}` &&
       result.request().method() === method,
   );
   await action();
@@ -94,6 +94,9 @@ async function startPrivacyBrowserInstance(withEvents: boolean): Promise<void> {
     throw new Error(
       "Privacy browser integration requires local runtime and migration-owner database settings",
     );
+  activeOrigin = withEvents ? statusOrigin : origin;
+  const webPort = new URL(activeOrigin).port;
+  const apiPort = withEvents ? 3772 : 3702;
   database = createOrm(process.env.MIGRATION_DATABASE_URL);
   runtime = createOrm(process.env.DATABASE_URL);
   health = createDatabase(process.env.DATABASE_URL, 500);
@@ -123,7 +126,7 @@ async function startPrivacyBrowserInstance(withEvents: boolean): Promise<void> {
         )
       : undefined,
   });
-  await application.listen(3702, "127.0.0.1");
+  await application.listen(apiPort, "127.0.0.1");
   web = spawn(
     process.execPath,
     [
@@ -137,14 +140,14 @@ async function startPrivacyBrowserInstance(withEvents: boolean): Promise<void> {
       "--hostname",
       "127.0.0.1",
       "--port",
-      "3701",
+      webPort,
     ],
     {
       cwd: fileURLToPath(new URL("../../apps/web/", import.meta.url)),
       env: {
         ...process.env,
-        API_BASE_URL: "http://127.0.0.1:3702",
-        WEB_ORIGIN: origin,
+        API_BASE_URL: `http://127.0.0.1:${apiPort}`,
+        WEB_ORIGIN: activeOrigin,
       },
       stdio: "ignore",
     },

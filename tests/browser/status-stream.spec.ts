@@ -4,7 +4,7 @@ import { meResponseSchema } from "../../packages/contracts/dist/index.js";
 import {
   database,
   households,
-  origin,
+  statusOrigin as origin,
   privacyUsers,
   signIn,
   startStatusBrowser,
