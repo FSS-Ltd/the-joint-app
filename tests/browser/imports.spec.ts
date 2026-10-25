@@ -1,3 +1,4 @@
+import { createStatusEvents } from "../fixtures/status-events.js";
 import { randomBytes } from "node:crypto";
 import { spawn, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
@@ -123,6 +124,7 @@ test.beforeAll(async () => {
     database: runtime,
     environment: authServerEnvironmentSchema.parse(process.env),
     importKey,
+    events: createStatusEvents(),
   });
   await application.listen(3502, "127.0.0.1");
   web = spawn(

@@ -101,6 +101,7 @@ export function Archive(): ReactNode {
               <ExportPanel
                 accounts={list.accounts}
                 path="/api/me/archive/exports"
+                streamScope={{ kind: "archive-export" }}
                 refreshing={list.loading}
                 scopeError={Boolean(list.error)}
                 actor={identity.user.id}

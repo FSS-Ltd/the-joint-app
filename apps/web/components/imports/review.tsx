@@ -1,39 +1,87 @@
 "use client";
-import { useEffect, useState, type ReactNode } from "react";
-import type { ImportBatchResponse, NormalizedCsvRow } from "@joint/contracts";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
+import {
+  importRowsQuerySchema,
+  type ImportBatchResponse,
+  type NormalizedCsvRow,
+} from "@joint/contracts";
 import { request, errorMessage } from "../identity/client";
 import { Feedback } from "../identity/frame";
 import { financePath } from "../finance/http";
 import { ReviewRow } from "./review-row";
 
+type ReviewChoices = Record<number, "KEEP" | "SKIP">;
+type ReviewFilter = ReturnType<typeof importRowsQuerySchema.parse>["filter"];
+export interface ImportReviewDraft {
+  version: number;
+  filter: ReviewFilter;
+  offset: number;
+  choices: ReviewChoices;
+}
+const emptyChoices: ReviewChoices = Object.freeze({});
+
 export function ImportReview({
   householdId,
   batch,
   saved,
-  onDirty,
+  draft,
+  onDraft,
 }: {
   householdId: string;
   batch: ImportBatchResponse;
   saved: (batch: ImportBatchResponse) => void;
-  onDirty: (dirty: boolean) => void;
+  draft: ImportReviewDraft | null;
+  onDraft: Dispatch<SetStateAction<ImportReviewDraft | null>>;
 }): ReactNode {
-  const [filter, setFilter] = useState("ALL");
-  const [offset, setOffset] = useState(0);
+  const restored = draft?.version === batch.version ? draft : null;
+  const [filter, setFilter] = useState<ReviewFilter>(restored?.filter ?? "ALL");
+  const [offset, setOffset] = useState(restored?.offset ?? 0);
   const [rows, setRows] = useState<NormalizedCsvRow[]>([]);
   const [next, setNext] = useState<number | null>(null);
-  const [choices, setChoices] = useState<Record<number, "KEEP" | "SKIP">>({});
+  const choices = restored?.choices ?? emptyChoices;
+  function setChoices(action: SetStateAction<ReviewChoices>): void {
+    onDraft((current) => {
+      if (current && current.version > batch.version) return current;
+      return {
+        version: batch.version,
+        filter,
+        offset,
+        choices:
+          typeof action === "function"
+            ? action(
+                current?.version === batch.version
+                  ? current.choices
+                  : emptyChoices,
+              )
+            : action,
+      };
+    });
+  }
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
   const editable = batch.state === "READY";
-  useEffect(() => {
-    onDirty(Object.keys(choices).length > 0);
-  }, [choices, onDirty]);
+  const scope = JSON.stringify([
+    householdId,
+    batch.id,
+    batch.version,
+    offset,
+    filter,
+  ]);
+  const previousScope = useRef(scope);
   useEffect(() => {
     let current = true;
     setPending(true);
     setRows([]);
-    setChoices({});
+    if (previousScope.current !== scope) setChoices({});
+    previousScope.current = scope;
     setError("");
     const query = new URLSearchParams({
       offset: String(offset),
@@ -95,7 +143,11 @@ export function ImportReview({
             value={filter}
             disabled={pending || Object.keys(choices).length > 0}
             onChange={(event) => {
-              setFilter(event.target.value);
+              const nextFilter = importRowsQuerySchema.shape.filter.safeParse(
+                event.target.value,
+              );
+              if (!nextFilter.success) return;
+              setFilter(nextFilter.data);
               setOffset(0);
             }}
           >
@@ -144,7 +196,7 @@ export function ImportReview({
       {editable && (
         <button
           className="button primary"
-          disabled={pending || !Object.keys(choices).length}
+          disabled={pending || Boolean(error) || !Object.keys(choices).length}
           type="button"
           onClick={() => void save()}
         >

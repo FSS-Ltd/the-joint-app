@@ -1,3 +1,4 @@
+import { installStatusSignals } from "./status-signals.js";
 import type { Page } from "@playwright/test";
 import {
   importReviewSchema,
@@ -102,6 +103,7 @@ export async function importWorkspaceFixture(page: Page): Promise<{
   writes: string[];
 }> {
   await accountWorkspaceFixture(page);
+  await installStatusSignals(page);
   let batch = structuredClone(importBatch),
     rows = structuredClone(importRows),
     failure = false;

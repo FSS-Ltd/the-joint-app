@@ -1,41 +1,51 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
 import { idempotencyKeySchema, type DeletionStatus } from "@joint/contracts";
+import { watchStatusResource } from "../events/status-subscription";
 import { IdentityFrame, Feedback } from "../identity/frame";
 import { errorMessage, request } from "../identity/client";
 
-export function DeletionReceiptPage(): ReactNode {
+export function DeletionReceiptPage({ id }: { id: string | null }): ReactNode {
   const [status, setStatus] = useState<DeletionStatus | null>(null);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
+  const [reconnecting, setReconnecting] = useState(false);
   useEffect(() => {
-    let current = true;
-    let timeout: ReturnType<typeof setTimeout>;
-    const id = new URLSearchParams(window.location.search).get("id");
-    if (!idempotencyKeySchema.safeParse(id).success) {
+    setStatus(null);
+    setError("");
+    setReconnecting(false);
+    const parsed = idempotencyKeySchema.safeParse(id);
+    if (!parsed.success) {
       setError("This deletion receipt is unavailable.");
       return;
     }
-    async function load() {
-      try {
-        const result = await request<DeletionStatus>(
-          `/api/privacy/deletion-requests/${id}`,
-        );
-        if (!current) return;
+    const receiptId = parsed.data;
+    return watchStatusResource({
+      selector: { kind: "deletion", id: receiptId },
+      read: (signal) =>
+        request<DeletionStatus>(
+          `/api/privacy/deletion-requests/${receiptId}`,
+          undefined,
+          undefined,
+          { signal },
+        ),
+      receive: (result) => {
         setStatus(result);
         setError("");
-        if (result.state !== "COMPLETED")
-          timeout = setTimeout(() => void load(), 5000);
-      } catch (cause) {
-        if (current) setError(errorMessage(cause));
-      }
-    }
-    void load();
-    return () => {
-      current = false;
-      clearTimeout(timeout);
-    };
-  }, [revision]);
+        setReconnecting(false);
+      },
+      unavailable: (cause) => {
+        setStatus(null);
+        setError(cause ? errorMessage(cause) : "");
+        setReconnecting(true);
+      },
+      failure: (cause) => {
+        setStatus(null);
+        setReconnecting(false);
+        setError(errorMessage(cause));
+      },
+    });
+  }, [id, revision]);
   return (
     <IdentityFrame
       eyebrow="Privacy receipt"
@@ -45,7 +55,10 @@ export function DeletionReceiptPage(): ReactNode {
       <section className="surface form-card">
         <h2>Deletion status</h2>
         <Feedback error={error} />
-        {!status && !error && <p role="status">Checking request…</p>}
+        {reconnecting && <p role="status">Reconnecting to receipt updates…</p>}
+        {!status && !error && !reconnecting && (
+          <p role="status">Checking request…</p>
+        )}
         {status && (
           <p role="status">
             {status.state === "COMPLETED"

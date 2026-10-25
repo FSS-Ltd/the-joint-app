@@ -7,7 +7,7 @@ interface StatusResource<T> {
   selector: StatusSubscription;
   read(signal: AbortSignal): Promise<T>;
   receive(value: T): void;
-  unavailable(): void;
+  unavailable(error?: unknown): void;
   failure(error: unknown): void;
 }
 const interrupted = (): RequestError =>
@@ -58,7 +58,9 @@ export function watchStatusResource<T>(
     if (stopped || hidden || offline) return;
     if (liveSince !== null && Date.now() - liveSince >= 30000) retries = 0;
     detach();
-    resource.unavailable();
+    resource.unavailable(
+      error instanceof RequestError && error.status > 0 ? error : undefined,
+    );
     if (stopped) return;
     if (fatal(error) || retries >= 5) {
       close();

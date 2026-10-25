@@ -1,7 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { AccountResponse, ExportStatus } from "@joint/contracts";
+import { watchStatusResource } from "../events/status-subscription";
 import { errorMessage, request, RequestError } from "../identity/client";
+
+export type ExportStatusScope =
+  { kind: "export"; householdId: string } | { kind: "archive-export" };
 
 interface ExportScope {
   actor: string;
@@ -37,6 +41,7 @@ export function useExportJob({
   refreshing,
   scopeError,
   onAccessChanged,
+  streamScope,
 }: {
   accounts: AccountResponse[];
   path: string;
@@ -44,8 +49,14 @@ export function useExportJob({
   refreshing: boolean;
   scopeError: boolean;
   onAccessChanged: () => void;
+  streamScope: ExportStatusScope;
 }) {
   const handle = useRef<ExportHandle | null>(null);
+  const stop = useRef<(() => void) | null>(null);
+  const [tracking, setTracking] = useState(false);
+  const streamKind = streamScope.kind;
+  const streamHousehold =
+    streamScope.kind === "export" ? streamScope.householdId : null;
   const submission = useRef<ExportScope | null>(null);
   const [revalidation, setRevalidation] = useState(0);
   const revision = useRef(0);
@@ -54,8 +65,9 @@ export function useExportJob({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [mfa, setMfa] = useState(false);
-  function fail(cause: unknown) {
-    handle.current = null;
+  function fail(cause: unknown, retain = false) {
+    if (!retain) handle.current = null;
+    setTracking(false);
     submission.current = null;
     setPending(false);
     setJob(null);
@@ -72,6 +84,8 @@ export function useExportJob({
   }
   useEffect(() => {
     const current = ++revision.current;
+    stop.current?.();
+    setTracking(false);
     setSelected([]);
     setJob(null);
     setError("");
@@ -104,48 +118,57 @@ export function useExportJob({
       return;
     }
     if (!saved) return;
-    // A paginated refresh may omit a source. Server status validates every
-    // original source, including permissions absent from this list page.
-    let active = true;
-    void request<ExportStatus>(`${path}/${saved.id}`)
-      .then((value) => {
-        if (active && current === revision.current) {
-          if (["INVALIDATED", "EXPIRED", "FAILED"].includes(value.state))
-            handle.current = null;
-          setJob(value);
+    // A paginated refresh may omit a source. Every status read still checks all
+    // original sources server-side, including permissions absent from this page.
+    setTracking(true);
+    const closeWatch = watchStatusResource({
+      selector: { ...streamScope, id: saved.id },
+      read: (signal) =>
+        request<ExportStatus>(`${path}/${saved.id}`, undefined, undefined, {
+          signal,
+        }),
+      receive: (value) => {
+        if (current !== revision.current || handle.current !== saved) return;
+        setJob(value);
+        setError("");
+        setTracking(false);
+        if (["INVALIDATED", "EXPIRED", "FAILED"].includes(value.state)) {
+          handle.current = null;
+          closeWatch();
         }
-      })
-      .catch((cause) => {
-        if (active && current === revision.current) fail(cause);
-      });
+      },
+      unavailable: (cause) => {
+        if (current !== revision.current) return;
+        setJob(null);
+        setError(cause ? errorMessage(cause) : "");
+        setTracking(true);
+      },
+      failure: (cause) => {
+        if (current !== revision.current) return;
+        const retain =
+          cause instanceof RequestError &&
+          (cause.status === 0 || cause.status >= 500);
+        fail(cause, retain);
+      },
+    });
+    stop.current = closeWatch;
     return () => {
-      active = false;
+      closeWatch();
     };
-  }, [accounts, path, actor, refreshing, scopeError, revalidation]);
-  useEffect(() => {
-    if (!job || !["QUEUED", "PROCESSING"].includes(job.state) || refreshing)
-      return;
-    const current = revision.current;
-    let active = true;
-    const timeout = window.setTimeout(() => {
-      void request<ExportStatus>(`${path}/${job.id}`)
-        .then((value) => {
-          if (active && current === revision.current) {
-            if (["INVALIDATED", "EXPIRED", "FAILED"].includes(value.state))
-              handle.current = null;
-            setJob(value);
-          }
-        })
-        .catch((cause) => {
-          if (active && current === revision.current) fail(cause);
-        });
-    }, 2000);
-    return () => {
-      active = false;
-      window.clearTimeout(timeout);
-    };
-  }, [job, path, refreshing]);
+  }, [
+    accounts,
+    path,
+    actor,
+    refreshing,
+    scopeError,
+    revalidation,
+    streamKind,
+    streamHousehold,
+  ]);
   async function submit() {
+    revision.current++;
+    stop.current?.();
+    setTracking(false);
     const scope: ExportScope = {
       path,
       actor,
@@ -177,6 +200,9 @@ export function useExportJob({
     }
   }
   function choose(id: string, checked: boolean) {
+    revision.current++;
+    stop.current?.();
+    setTracking(false);
     handle.current = null;
     setJob(null);
     setSelected((old) =>
@@ -190,6 +216,9 @@ export function useExportJob({
     pending,
     error,
     mfa,
+    tracking,
+    retryable: Boolean(handle.current && error),
+    retryStatus: () => setRevalidation((value) => value + 1),
     submit,
   };
 }

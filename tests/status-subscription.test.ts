@@ -243,3 +243,13 @@ it("unsubscribes an obsolete resource before a replacement can receive late data
   replacement.stop();
   expect(vi.getTimerCount()).toBe(0);
 });
+
+it("exposes an actionable HTTP failure while a transient reconnect remains bounded", async () => {
+  const f = fixture();
+  const error = new RequestError("Import temporarily unavailable.", 503);
+  connection().reject(error);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(f.unavailable).toHaveBeenLastCalledWith(error);
+  expect(f.failure).not.toHaveBeenCalled();
+  f.stop();
+});

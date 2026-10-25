@@ -1,3 +1,4 @@
+import { createStatusEvents } from "./status-events.js";
 import { mkdtemp, chmod, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -10,8 +11,6 @@ import { authServerEnvironmentSchema } from "../../packages/contracts/dist/index
 import { createApplication } from "../../apps/api/dist/application.js";
 import { createDatabase } from "../../packages/database/dist/index.js";
 import { createOrm } from "../../packages/database/dist/client.js";
-import { createDatabaseNotifications } from "../../packages/database/dist/notifications.js";
-import { StatusEventHub } from "../../apps/api/dist/modules/events/status-hub.js";
 import { createLocalAuthFixture } from "./local-auth.js";
 
 export const importKey = randomBytes(32).toString("base64");
@@ -89,14 +88,16 @@ export async function startPrivacyBrowser(): Promise<void> {
 export async function startStatusBrowser(): Promise<void> {
   return startPrivacyBrowserInstance(true);
 }
-async function startPrivacyBrowserInstance(withEvents: boolean): Promise<void> {
+async function startPrivacyBrowserInstance(
+  statusFixture: boolean,
+): Promise<void> {
   if (!process.env.DATABASE_URL || !process.env.MIGRATION_DATABASE_URL)
     throw new Error(
       "Privacy browser integration requires local runtime and migration-owner database settings",
     );
-  activeOrigin = withEvents ? statusOrigin : origin;
+  activeOrigin = statusFixture ? statusOrigin : origin;
   const webPort = new URL(activeOrigin).port;
-  const apiPort = withEvents ? 3772 : 3702;
+  const apiPort = statusFixture ? 3772 : 3702;
   database = createOrm(process.env.MIGRATION_DATABASE_URL);
   runtime = createOrm(process.env.DATABASE_URL);
   health = createDatabase(process.env.DATABASE_URL, 500);
@@ -114,17 +115,7 @@ async function startPrivacyBrowserInstance(withEvents: boolean): Promise<void> {
     environment: authServerEnvironmentSchema.parse(process.env),
     importKey,
     privacyJournalPath,
-    events: withEvents
-      ? new StatusEventHub((callbacks) =>
-          createDatabaseNotifications({
-            topic: "status",
-            connectionString: process.env.DATABASE_URL ?? "",
-            timeoutMs: 1000,
-            retryMaxMs: 1000,
-            ...callbacks,
-          }),
-        )
-      : undefined,
+    events: createStatusEvents(),
   });
   await application.listen(apiPort, "127.0.0.1");
   web = spawn(
