@@ -61,7 +61,11 @@ import { createGoalArchiveController } from "../goals/goal-archive.controller.js
 import { FundingEvidenceService } from "../funding-evidence/funding-evidence.service.js";
 import { createFundingEvidenceController } from "../funding-evidence/funding-evidence.controller.js";
 import { createFundingArchiveController } from "../funding-evidence/funding-archive.controller.js";
+import { createEventsController } from "../events/events.controller.js";
+import { StatusResources } from "../events/status-resources.js";
+import type { StatusEventHub } from "../events/status-hub.js";
 export type AuthOptions = IdentityAdapterOptions & {
+  events?: StatusEventHub;
   clerkWebhook?: { signingSecret: string; instanceId: string };
   importKey?: string;
   privacyJournalPath?: string;
@@ -69,6 +73,7 @@ export type AuthOptions = IdentityAdapterOptions & {
 export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   if (!options)
     return [
+      createEventsController(),
       createIdentityController(),
       createAccountsController(),
       createImportsController(),
@@ -93,6 +98,8 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   const { identity, vault, legacyLinker, clerkLogout } =
     createIdentityAdapter(options);
   const scoped = new ScopedDatabase(database);
+  const imports = new ImportQueries(scoped, vault);
+  const deletions = new DeletionRepository(database);
   const reports = new ReportService(scoped);
   const archive = new ArchiveDatabase(database);
   const journal = options.privacyJournalPath
@@ -107,6 +114,19 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   };
   const goals = { identity, goals: new GoalService(scoped, archive, vault) };
   return [
+    createEventsController(
+      options.events
+        ? {
+            source: options.events,
+            resources: new StatusResources({
+              identity,
+              imports,
+              exports,
+              deletions,
+            }),
+          }
+        : undefined,
+    ),
     createClerkWebhookController(
       options.provider === "clerk" && options.clerkWebhook
         ? new ClerkWebhookService(
@@ -125,7 +145,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
     createWealthController({ identity, wealth: new WealthService(scoped) }),
     createPrivacyController({
       identity,
-      privacy: new PrivacyService(new DeletionRepository(database), journal),
+      privacy: new PrivacyService(deletions, journal),
     }),
     createLeaveController({
       identity,
@@ -178,7 +198,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
     }),
     createImportsController({
       identity,
-      queries: new ImportQueries(scoped, vault),
+      queries: imports,
       preview: new ImportPreview(
         scoped,
         vault,

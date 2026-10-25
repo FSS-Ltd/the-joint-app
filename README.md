@@ -90,6 +90,22 @@ without a pending hint retries after one second, avoiding rapid scans of locked
 rows; idle workers have no timer. Existing import/export/deletion browser status
 polling remains tracked for EVENT2.
 
+EVENT2A supplies the authenticated status transport. `/api/events` accepts strict
+`kind=import|export|archive-export` selectors with a record `id` and, for household
+resources, `householdId`. Receipt streams use
+`/api/privacy/deletion-requests/:id/events` so their existing purpose-bound HttpOnly
+cookie stays within `/api/privacy`. Credentials never belong in query strings.
+The API uses one dedicated direct/session PostgreSQL listener and at most 256 active
+streams. Meaningful committed changes trigger existing authority checks; only empty
+signals cross the BFF. Auth refresh/last-seen bookkeeping does not notify itself.
+Fifteen-second heartbeat comments perform no database queries. Actual credential,
+receipt and resource deadlines trigger renewal, invalidation or one authoritative
+read. Disconnects require reconnect catch-up; there is no recurring idle scan.
+Apply migrations before restarting the API. Existing browser consumers still poll
+until the separate EVENT2B delivery replaces them; this transport alone does not
+complete the conversion. Hosted streaming/runtime compatibility remains a launch
+gate, and all application execution remains local until MVP/deployment approval.
+
 Open `/accounts` after joining a household. Enroll/verify an authenticator before creating an account. Creation records your self-declared sole adult ownership; a viewing grant does not make the other adult an owner. Accounts start private, even when another adult joins. An unknown value stays unknown until its owner records a dated manual GBP value. Liability values mean nonnegative outstanding debt. Account kinds and legal ownership cannot be changed through metadata edits.
 
 The manual valuation API accepts optional `adultMoney` alongside original `money` and `asOfDate`. This owner attestation records the household adults' portion, not spendable cash. Omitted or null ownership stays unknown, including historical valuations; legal title does not imply adult ownership. Owners correct evidence with a new valuation using the existing version/idempotency controls. Positive portions must be within the original amount; overdrafts and liabilities require the full obligation. Archive reads and CSV balance details preserve both amounts. The current form does not attest ownership; an explicit control belongs to the later wealth screen.

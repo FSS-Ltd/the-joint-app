@@ -10,6 +10,7 @@ import {
 import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import type { INestApplication } from "@nestjs/common";
+import { StatusEventHub } from "./modules/events/status-hub.js";
 import type { DatabaseConnection } from "@joint/database";
 import type { HealthResponse } from "@joint/contracts";
 import { MAX_CSV_BYTES } from "@joint/contracts";
@@ -39,6 +40,9 @@ export async function createApplication(
     }
   }
   @Module({
+    providers: auth?.events
+      ? [{ provide: StatusEventHub, useValue: auth.events }]
+      : [],
     controllers: [
       HealthController,
       ...identityControllers(auth),

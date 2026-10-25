@@ -108,6 +108,11 @@ export class ClerkIdentityService implements IdentityAccess {
       return identity.principal;
     });
   }
+  subscriptionExpiry(token: string): Promise<number> {
+    return this.withIdentity(token, async (identity) =>
+      Math.min(identity.expiresAt.getTime(), identity.credential.expiresAt),
+    );
+  }
   financeContext(token: string, householdId: string): Promise<AuthContext> {
     return this.withIdentity(token, async (identity) => {
       requireMfa(identity);

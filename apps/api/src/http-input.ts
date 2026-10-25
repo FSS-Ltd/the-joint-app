@@ -9,7 +9,7 @@ import { randomUUID } from "node:crypto";
 import type { OwnerArchiveContext } from "@joint/database/archive";
 
 export async function ownerArchiveContext(
-  identity: IdentityAccess,
+  identity: Pick<IdentityAccess, "actor">,
   header: string | undefined,
 ): Promise<OwnerArchiveContext> {
   return {
@@ -29,7 +29,7 @@ export function validateInput<T>(
   return result.data;
 }
 export function financeContext(
-  identity: IdentityAccess | undefined,
+  identity: Pick<IdentityAccess, "financeContext"> | undefined,
   header: string | undefined,
   householdId: string,
 ): Promise<AuthContext> {
