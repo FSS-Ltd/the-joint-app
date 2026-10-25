@@ -87,8 +87,7 @@ the subscription. `WORKER_RETRY_MAX_MS` (1000–60000, default 30000) bounds fai
 backoff from an initial 1000ms; it replaces the old `WORKER_INTERVAL_MS` scan setting.
 Failure cooldowns coalesce new hints until the retry deadline. Known overdue work
 without a pending hint retries after one second, avoiding rapid scans of locked
-rows; idle workers have no timer. Existing import/export/deletion browser status
-polling remains tracked for EVENT2.
+rows; idle workers have no timer.
 
 EVENT2A supplies the authenticated status transport. `/api/events` accepts strict
 `kind=import|export|archive-export` selectors with a record `id` and, for household
@@ -101,9 +100,18 @@ signals cross the BFF. Auth refresh/last-seen bookkeeping does not notify itself
 Fifteen-second heartbeat comments perform no database queries. Actual credential,
 receipt and resource deadlines trigger renewal, invalidation or one authoritative
 read. Disconnects require reconnect catch-up; there is no recurring idle scan.
-Apply migrations before restarting the API. Existing browser consumers still poll
-until the separate EVENT2B delivery replaces them; this transport alone does not
-complete the conversion. Hosted streaming/runtime compatibility remains a launch
+Apply migrations before restarting the API.
+
+Import detail, household/archive exports and deletion receipts subscribe to these
+signals. Each initial/change signal requests current authorized state; bursts are
+coalesced into serial reads. Idle resources make no recurring status requests,
+including terminal imports and ready exports. Disconnects clear displayed data;
+reconnect reads current state before showing it again. Only opaque handles and
+same-version Keep/Skip choices survive transient loss. Revocation clears them.
+The transport uses a 10-second handshake and 45-second validated-frame watchdog,
+then bounded reconnect delays of 1/2/4/8/16 seconds before manual retry. These
+timers check transport health, not database state. There is no periodic status
+reconciliation fallback. Hosted streaming/runtime compatibility remains a launch
 gate, and all application execution remains local until MVP/deployment approval.
 
 Open `/accounts` after joining a household. Enroll/verify an authenticator before creating an account. Creation records your self-declared sole adult ownership; a viewing grant does not make the other adult an owner. Accounts start private, even when another adult joins. An unknown value stays unknown until its owner records a dated manual GBP value. Liability values mean nonnegative outstanding debt. Account kinds and legal ownership cannot be changed through metadata edits.
