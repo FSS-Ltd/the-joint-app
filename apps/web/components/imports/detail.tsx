@@ -3,7 +3,10 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { ImportBatchResponse } from "@joint/contracts";
 import { useIdentity } from "../identity/use-identity";
 import { request, errorMessage } from "../identity/client";
-import { watchStatusResource } from "../events/status-subscription";
+import {
+  isRetryableStatusError,
+  watchStatusResource,
+} from "../events/status-subscription";
 import { Feedback } from "../identity/frame";
 import { AccountsFrame } from "../accounts/frame";
 import { financePath } from "../finance/http";
@@ -87,7 +90,7 @@ function ScopedImportDetail({
         setReconnecting(true);
       },
       failure: (cause) => {
-        setDraft(null);
+        if (!isRetryableStatusError(cause)) setDraft(null);
         setResource(null);
         setReconnecting(false);
         setError(errorMessage(cause));

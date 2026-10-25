@@ -1,7 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { AccountResponse, ExportStatus } from "@joint/contracts";
-import { watchStatusResource } from "../events/status-subscription";
+import {
+  isRetryableStatusError,
+  watchStatusResource,
+} from "../events/status-subscription";
 import { errorMessage, request, RequestError } from "../identity/client";
 
 export type ExportStatusScope =
@@ -145,10 +148,7 @@ export function useExportJob({
       },
       failure: (cause) => {
         if (current !== revision.current) return;
-        const retain =
-          cause instanceof RequestError &&
-          (cause.status === 0 || cause.status >= 500);
-        fail(cause, retain);
+        fail(cause, isRetryableStatusError(cause));
       },
     });
     stop.current = closeWatch;

@@ -12,13 +12,13 @@ interface StatusResource<T> {
 }
 const interrupted = (): RequestError =>
   new RequestError("Live updates interrupted. Retry status to reconnect.", 0);
-function fatal(error: unknown): boolean {
+export function isRetryableStatusError(error: unknown): boolean {
   return (
-    !(error instanceof RequestError) ||
-    error.code === "INVALID_STATUS_STREAM" ||
-    (error.status >= 400 &&
-      error.status < 500 &&
-      ![408, 429].includes(error.status))
+    error instanceof RequestError &&
+    error.code !== "INVALID_STATUS_STREAM" &&
+    (error.status === 0 ||
+      error.status >= 500 ||
+      [408, 429].includes(error.status))
   );
 }
 
@@ -62,7 +62,7 @@ export function watchStatusResource<T>(
       error instanceof RequestError && error.status > 0 ? error : undefined,
     );
     if (stopped) return;
-    if (fatal(error) || retries >= 5) {
+    if (!isRetryableStatusError(error) || retries >= 5) {
       close();
       resource.failure(error);
       return;
