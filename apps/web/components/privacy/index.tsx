@@ -67,6 +67,7 @@ export function Privacy(): ReactNode {
                 <ExportPanel
                   accounts={list.accounts}
                   path={`/api/households/${householdId}/exports`}
+                  streamScope={{ kind: "export", householdId }}
                   refreshing={list.loading}
                   scopeError={Boolean(list.error)}
                   actor={identity.user.id}

@@ -1,50 +1,104 @@
 "use client";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { ImportBatchResponse } from "@joint/contracts";
 import { useIdentity } from "../identity/use-identity";
 import { request, errorMessage } from "../identity/client";
+import {
+  isRetryableStatusError,
+  watchStatusResource,
+} from "../events/status-subscription";
 import { Feedback } from "../identity/frame";
 import { AccountsFrame } from "../accounts/frame";
 import { financePath } from "../finance/http";
-import { ImportReview } from "./review";
+import { ImportReview, type ImportReviewDraft } from "./review";
 import { BatchActions } from "./batch-actions";
 import { ImportBatchSummary } from "./batch-summary";
 import "./imports.css";
 import "../finance/finance.css";
 
 export function ImportDetail({ batchId }: { batchId: string }): ReactNode {
-  const { identity, loading, error: identityError } = useIdentity();
+  const viewer = useIdentity();
+  const scope = `${viewer.identity?.user.id ?? ""}:${viewer.identity?.membership?.householdId ?? ""}:${batchId}`;
+  return <ScopedImportDetail key={scope} batchId={batchId} viewer={viewer} />;
+}
+
+function ScopedImportDetail({
+  batchId,
+  viewer,
+}: {
+  batchId: string;
+  viewer: ReturnType<typeof useIdentity>;
+}): ReactNode {
+  const { identity, loading, error: identityError } = viewer;
   const householdId = identity?.membership?.householdId;
-  const [batch, setBatch] = useState<ImportBatchResponse | null>(null);
+  const [resource, setResource] = useState<{
+    batch: ImportBatchResponse;
+    epoch: number;
+  } | null>(null);
+  const batch = resource?.batch ?? null;
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
-  const [dirty, setDirty] = useState(false);
+  const [draft, setDraft] = useState<ImportReviewDraft | null>(null);
+  const [reconnecting, setReconnecting] = useState(false);
+  const authority = useRef(0);
+  const operationEpoch = resource?.epoch;
+  const dirty = Boolean(
+    batch &&
+    draft?.version === batch.version &&
+    Object.keys(draft.choices).length,
+  );
+  function saveMutation(next: ImportBatchResponse): void {
+    if (operationEpoch === authority.current) saveBatch(next);
+  }
+  function saveBatch(next: ImportBatchResponse): void {
+    const epoch = authority.current;
+    setDraft((current) =>
+      current && current.version < next.version ? null : current,
+    );
+    setResource((current) =>
+      current &&
+      current.batch.id === next.id &&
+      current.batch.version > next.version
+        ? current
+        : { batch: next, epoch },
+    );
+  }
   useEffect(() => {
+    authority.current++;
+    setResource(null);
+    setError("");
+    setReconnecting(false);
     if (!householdId) return;
-    const currentHousehold = householdId;
-    let current = true;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    async function load() {
-      try {
-        const result = await request<ImportBatchResponse>(
-          financePath(currentHousehold, "imports", batchId),
-        );
-        if (!current) return;
-        setBatch(result);
+    const stop = watchStatusResource({
+      selector: { kind: "import", householdId, id: batchId },
+      read: (signal) =>
+        request<ImportBatchResponse>(
+          financePath(householdId, "imports", batchId),
+          undefined,
+          undefined,
+          { signal },
+        ),
+      receive: (result) => {
+        saveBatch(result);
         setError("");
-        if (["QUEUED", "PREVIEWING", "COMMITTING"].includes(result.state))
-          timer = setTimeout(() => void load(), 1000);
-      } catch (cause) {
-        if (current) {
-          setBatch(null);
-          setError(errorMessage(cause));
-        }
-      }
-    }
-    void load();
+        setReconnecting(false);
+      },
+      unavailable: (cause) => {
+        authority.current++;
+        setResource(null);
+        setError(cause ? errorMessage(cause) : "");
+        setReconnecting(true);
+      },
+      failure: (cause) => {
+        if (!isRetryableStatusError(cause)) setDraft(null);
+        setResource(null);
+        setReconnecting(false);
+        setError(errorMessage(cause));
+      },
+    });
     return () => {
-      current = false;
-      if (timer) clearTimeout(timer);
+      authority.current++;
+      stop();
     };
   }, [householdId, batchId, revision]);
   return (
@@ -70,7 +124,10 @@ export function ImportDetail({ batchId }: { batchId: string }): ReactNode {
           Retry import status
         </button>
       )}
-      {(loading || (householdId && !batch && !error)) && (
+      {reconnecting && (
+        <p role="status">Reconnecting to live import updates…</p>
+      )}
+      {(loading || (householdId && !batch && !error && !reconnecting)) && (
         <p role="status">Loading import…</p>
       )}
       {identity && !loading && !householdId && (
@@ -89,8 +146,11 @@ export function ImportDetail({ batchId }: { batchId: string }): ReactNode {
             <ImportReview
               householdId={householdId}
               batch={batch}
-              saved={setBatch}
-              onDirty={setDirty}
+              saved={saveMutation}
+              draft={draft}
+              onDraft={(action) => {
+                if (operationEpoch === authority.current) setDraft(action);
+              }}
             />
           )}
           <BatchActions
@@ -99,7 +159,8 @@ export function ImportDetail({ batchId }: { batchId: string }): ReactNode {
             batch={batch}
             dirty={dirty}
             saved={(next) => {
-              setBatch(next);
+              if (operationEpoch !== authority.current) return;
+              saveMutation(next);
               setRevision((value) => value + 1);
             }}
           />

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import type { AccountResponse, ExportStatus } from "@joint/contracts";
-import { useExportJob } from "./use-export-job";
+import { useExportJob, type ExportStatusScope } from "./use-export-job";
 import { Feedback } from "../identity/frame";
 
 const stateLabels: Record<ExportStatus["state"], string> = {
@@ -20,6 +20,7 @@ export function ExportPanel({
   scopeError,
   actor,
   onAccessChanged,
+  streamScope,
 }: {
   accounts: AccountResponse[];
   path: string;
@@ -27,6 +28,7 @@ export function ExportPanel({
   scopeError: boolean;
   actor: string;
   onAccessChanged: () => void;
+  streamScope: ExportStatusScope;
 }): ReactNode {
   const {
     selected,
@@ -35,6 +37,9 @@ export function ExportPanel({
     pending,
     error,
     mfa,
+    tracking,
+    retryable,
+    retryStatus,
     submit: requestExport,
   } = useExportJob({
     accounts,
@@ -43,6 +48,7 @@ export function ExportPanel({
     refreshing,
     scopeError,
     onAccessChanged,
+    streamScope,
   });
   const unavailable = refreshing || scopeError;
   const [downloadMfa, setDownloadMfa] = useState(false);
@@ -63,7 +69,10 @@ export function ExportPanel({
     await requestExport();
   }
   const busy =
-    pending || job?.state === "QUEUED" || job?.state === "PROCESSING";
+    pending ||
+    tracking ||
+    job?.state === "QUEUED" ||
+    job?.state === "PROCESSING";
   return (
     <div
       className="privacy-export-frame"
@@ -92,6 +101,16 @@ export function ExportPanel({
                 : "")
           }
         />
+        {tracking && <p role="status">Checking live export status…</p>}
+        {retryable && (
+          <button
+            className="button secondary"
+            type="button"
+            onClick={retryStatus}
+          >
+            Retry export status
+          </button>
+        )}
         {(mfa || downloadMfa) && (
           <a
             href={`/security?next=${path === "/api/me/archive/exports" ? "archive" : "privacy"}&reauth=1`}

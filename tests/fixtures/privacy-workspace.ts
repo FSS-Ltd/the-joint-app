@@ -1,3 +1,4 @@
+import { installStatusSignals } from "./status-signals.js";
 import type { Page } from "@playwright/test";
 import type {
   AccountResponse,
@@ -18,6 +19,7 @@ export async function privacyWorkspaceFixture(page: Page): Promise<{
   exportBodies: unknown[];
 }> {
   await accountWorkspaceFixture(page);
+  await installStatusSignals(page);
   let failure = false;
   let privacyRows = accounts;
   let rows = accounts.filter((account) => account.ownership === "OWNED");

@@ -85,6 +85,10 @@ test("native browser streams cross the real BFF with HttpOnly credentials and re
       previewExpiresAt: new Date(Date.now() + 60000),
     },
   });
+  await page.goto(`/imports/${batchId}`);
+  await expect(
+    page.getByRole("heading", { name: "Queued", exact: true }),
+  ).toBeVisible();
   const query = new URLSearchParams({
     kind: "import",
     id: batchId,
@@ -100,11 +104,20 @@ test("native browser streams cross the real BFF with HttpOnly credentials and re
       data: { state: "READY", version: { increment: 1 } },
     });
     await expect(output).toHaveText("2");
+    await expect(
+      page.getByRole("heading", { name: "Ready for review", exact: true }),
+    ).toBeVisible();
     await database.accountOwner.update({
       where: { accountId_userId: { accountId, userId: identity.user.id } },
       data: { status: "ARCHIVED" },
     });
     await expect(output).toHaveAttribute("data-invalidated", "true");
+    await expect(
+      page.getByRole("region", { name: "Import overview", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("region", { name: "Source row review", exact: true }),
+    ).toHaveCount(0);
     expect(await page.evaluate(() => document.cookie)).not.toContain(
       "joint-session",
     );
