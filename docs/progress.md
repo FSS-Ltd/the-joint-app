@@ -673,3 +673,20 @@ hints and bounded export planning. Export JIT compilation was scoped off for
 the existing 500-record helper after reproducing a five-second transaction
 expiry; no deadlines or permissions were relaxed. Owner API, final review and
 PR/CI/merge delivery are still pending. Development storage remains unchanged.
+
+3C.4 owner API is locally verified on `98a3440a441a577a9319f65e07f7247f0982a4ef`
+(tree `9a17b4fb1070f20d0875aaa92f21c8c1a7881be7`): a fresh secret-free
+source copy passes frozen installation, formatting, lint, eight builds, sixteen
+package type tasks plus strict test-source types, 385 unit, 282 integration and
+181 isolated browser cases. Fresh and populated upgrades preserve exact prior
+identity/session and financial records without invented allocation history.
+The public scan reports 833 tracked files, zero forbidden private paths and zero
+exact local-secret matches. No checks/deadlines/permissions were weakened.
+
+The owner routes, encrypted replay/cursors, frozen archive and free fresh-MFA
+exports are documented in `docs/api/goal-allocations.md`. Source authorization is
+checked before account locks and again after waits; export MFA freshness is
+checked after reads too. Independent whole-branch review and the current-head
+PR/CI/test-merge/host-merge gate remain pending. This is not Phase 3 completion.
+No allocation migration or service restart has touched the personal development
+stack; no deployment, hosted database, tunnel or paid service was introduced.

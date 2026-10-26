@@ -62,6 +62,6 @@
 
 **Interfaces:** GET/PUT `/v1/households/:householdId/goals/:goalId/allocations`, bounded history and free fresh-MFA export; read-only owner archive equivalents under `/v1/me/archive/goals/:goalId/allocations`. PUT uses canonical Idempotency-Key, quoted goal If-Match and body source versions. All selectors and successful database outputs are strict; responses are no-store.
 
-- [ ] Write failing HTTP/service cases for unavailable scope, required headers, atomic conflict mapping, canonical replay, revoked ownership/session replay, archive cutoff, cursor reuse denial and free export after downgrade.
-- [ ] Implement thin boundary validation, scoped authorization-before-replay, encrypted exact replay/cursors and safe public errors using existing patterns. Do not enable new raw table access.
-- [ ] Run frozen clean-source install, format, lint, all builds/types/test types, unit/integration/browser suites, fresh/populated migrations and public-file scan. Inspect every changed file/diff and actual current routes; record limits honestly.
+- [x] Write failing HTTP/service cases for unavailable scope, required headers, atomic conflict mapping, canonical replay, revoked ownership/session replay, archive cutoff, cursor reuse denial and free export after downgrade.
+- [x] Implement thin boundary validation, scoped authorization-before-replay, encrypted exact replay/cursors and safe public errors using existing patterns. Do not enable new raw table access.
+- [x] Run frozen clean-source install, format, lint, all builds/types/test types, unit/integration/browser suites, fresh/populated migrations and public-file scan. Inspect every changed file/diff and actual current routes; record limits honestly.

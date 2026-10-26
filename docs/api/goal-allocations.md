@@ -1,6 +1,7 @@
 # Goal allocations — Task 3C.4
 
-Implementation is in local verification. The build unit is not complete until its
+Implementation is locally verified; independent review and PR delivery remain.
+The build unit is not complete until its
 own PR passes current CI and is host-confirmed merged. Nothing is deployed.
 
 ## Routes and authority
