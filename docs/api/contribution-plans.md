@@ -55,6 +55,8 @@ Archive routes are read-only. Leaving captures an immutable revision ceiling;
 later co-owner changes are not visible through it. Actual deletion and signed
 journal restore remove exclusive and unjustified later history while retaining
 independently authorized shared/frozen evidence and its exact timestamps.
+Deletion also discovers goal-derived history when the deleted goal participant
+never belonged to the captured budget.
 
 ## Writes and replay
 

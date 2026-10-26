@@ -1,10 +1,10 @@
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { AuthContext } from "../packages/contracts/dist/index.js";
-import { DeletionRepository } from "../packages/database/dist/deletion.repository.js";
 import { assessDatedContributions } from "../packages/domain/dist/goals/index.js";
 import { createContributionFixture } from "./fixtures/contribution-budget.js";
 import { databaseErrorCode } from "../apps/api/src/database-error.js";
+import { purgeFixtureUser } from "./fixtures/purge-user.js";
 
 let f: ReturnType<typeof createContributionFixture>;
 beforeEach(async () => {
@@ -23,20 +23,6 @@ async function seedPlans(): Promise<string> {
   const initial = await f.writeCapacity();
   await f.writePlan(1);
   return initial.budget.id;
-}
-async function purge(actor: AuthContext): Promise<void> {
-  const deletion = new DeletionRepository(f.runtime);
-  const request = await deletion.request(
-    actor,
-    randomUUID(),
-    randomBytes(32).toString("hex"),
-    new Date(Date.now() + 600000),
-  );
-  const lease = await deletion.claim(request.id);
-  if (!lease) throw new Error("Missing synthetic contribution deletion lease");
-  await deletion.purge(lease.id, lease.leaseToken);
-  await deletion.purge(lease.id, lease.leaseToken);
-  await deletion.finish(lease.id, lease.leaseToken, true);
 }
 describe("contribution metadata and frozen lifecycle", () => {
   it("reorders shared funding atomically with saved goal priority and advances provenance", async () => {
@@ -169,7 +155,7 @@ describe("contribution metadata and frozen lifecycle", () => {
         budgetId_membershipId: { budgetId: id, membershipId: f.b.membershipId },
       },
     });
-    await purge(f.a);
+    await purgeFixtureUser(f.runtime, f.a);
     expect(await f.owner.contributionBudget.count({ where: { id } })).toBe(0);
     expect(
       await f.owner.contributionPlan.count({ where: { householdId: f.hh } }),
@@ -181,7 +167,7 @@ describe("contribution metadata and frozen lifecycle", () => {
     const frozen = await f.readArchive(id);
     await f.writePlan(2, f.planInput("10000", 1), f.goalId, f.b);
     await changeGoal({ ...f.goalInput, priority: 3 });
-    await purge(f.b);
+    await purgeFixtureUser(f.runtime, f.b);
     expect(await f.readArchive(id)).toEqual(frozen);
     const head = await f.owner.contributionBudget.findUniqueOrThrow({
       where: { id },

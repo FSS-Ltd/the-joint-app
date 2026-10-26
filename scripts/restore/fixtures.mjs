@@ -268,6 +268,10 @@ export function fixtureIntents(fixture) {
       kind: "DELETE_USER",
     },
     {
+      ...base(fixture.contributions.outsider.deleted.userId),
+      kind: "DELETE_USER",
+    },
+    {
       ...base(fixture.leaver.userId),
       kind: "LEAVE_HOUSEHOLD",
       householdId: fixture.leaver.householdId,

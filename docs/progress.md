@@ -822,3 +822,24 @@ All three internal tasks are verified; one independent whole-branch review and
 PR/current-head/test-merge CI/merge remain pending. This supersedes earlier
 pre-correction test counts. 3C.5 is implemented but unmerged; no next build unit,
 personal database migration, running-service restart or deployment has begun.
+
+3C.5 independent whole-branch review inspected all59 files at `166a466`. It
+found one important retention gap and no critical/minor issue: a later shared
+goal participant outside the original budget could create a metadata revision
+which their deletion missed. Real deletion reproduced head3 instead of frozen2;
+signed restore independently failed its exact frozen-head proof.
+
+The single correction pass adds forward041 discovery through captured budget
+and goal-derived links before goal cleanup removes them. Existing retention
+predicates exclude the already-deleted user, preserve independently justified
+active data, and restore exact frozen heads/timestamps. Twenty targeted deletion,
+retention, ACL and signed-restore cases pass;407 units, strict test types, lint,
+formatting and the885-file privacy/source scan pass. No earlier migration,
+security assertion, deadline or concurrency setting changed.
+
+The full correction run passed315/322 cases and failed seven existing checks:
+50,000-row cascade/export planning/import deadlines, spending-report timeout,
+receipt expiry, worker retry bounds and restore-container startup. These are
+being investigated and rerun in isolated storage; the full local suite is not
+green. No completed review-fix/step claim or merge is recorded. Required current
+cloud CI remains unchanged and must pass before this unit can progress.

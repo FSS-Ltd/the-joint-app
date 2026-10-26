@@ -11,7 +11,7 @@ export async function verifyRestoredContributions(
   freshContext,
   fixture,
 ) {
-  const { exclusive, frozen, shared } = fixture.contributions;
+  const { exclusive, shared } = fixture.contributions;
   for (const [table, column] of [
     ["ContributionBudget", "id"],
     ["ContributionBudgetParticipant", "budgetId"],
@@ -24,46 +24,51 @@ export async function verifyRestoredContributions(
     );
     requireContribution(rows.length === 0);
   }
-  const {
-    rows: [head],
-  } = await owner.query(
-    'SELECT version,"updatedAt" FROM app."ContributionBudget" WHERE id=$1',
-    [frozen.budgetId],
-  );
-  requireContribution(
-    head.version === 2 &&
-      head.updatedAt.toISOString() === frozen.originalCreatedAt,
-  );
-  const { rows: history } = await owner.query(
-    'SELECT version,"createdAt" FROM app."ContributionBudgetRevision" WHERE "budgetId"=$1 ORDER BY version',
-    [frozen.budgetId],
-  );
-  requireContribution(
-    history.length === 2 &&
-      history[0].version === 1 &&
-      history[1].version === 2 &&
-      history[1].createdAt.toISOString() === frozen.originalCreatedAt,
-  );
-  const { rows: caches } = await owner.query(
-    'SELECT 1 FROM app."ContributionPlan" WHERE "budgetId"=$1',
-    [frozen.budgetId],
-  );
-  requireContribution(caches.length === 0);
-  const actor = await freshContext(frozen.leaver, true);
-  const [row] = await archive.withScope(
-    actor,
-    (tx) =>
-      tx.$queryRaw`SELECT app.read_contribution_budget(${frozen.budgetId}::uuid,NULL,0) AS data`,
-  );
-  const page = contributionRawPageSchema.parse(row.data);
-  requireContribution(
-    page.view.budget.version === 2 &&
-      page.view.budget.updatedAt === frozen.originalCreatedAt &&
-      page.view.plans.length === 1 &&
-      page.view.plans[0].priority === 1 &&
-      page.view.plans[0].plan.monthlyContributions[0].amount.amountMinor ===
-        "20",
-  );
+  for (const frozen of [
+    fixture.contributions.frozen,
+    fixture.contributions.outsider,
+  ]) {
+    const {
+      rows: [head],
+    } = await owner.query(
+      'SELECT version,"updatedAt" FROM app."ContributionBudget" WHERE id=$1',
+      [frozen.budgetId],
+    );
+    requireContribution(
+      head.version === 2 &&
+        head.updatedAt.toISOString() === frozen.originalCreatedAt,
+    );
+    const { rows: history } = await owner.query(
+      'SELECT version,"createdAt" FROM app."ContributionBudgetRevision" WHERE "budgetId"=$1 ORDER BY version',
+      [frozen.budgetId],
+    );
+    requireContribution(
+      history.length === 2 &&
+        history[0].version === 1 &&
+        history[1].version === 2 &&
+        history[1].createdAt.toISOString() === frozen.originalCreatedAt,
+    );
+    const { rows: caches } = await owner.query(
+      'SELECT 1 FROM app."ContributionPlan" WHERE "budgetId"=$1',
+      [frozen.budgetId],
+    );
+    requireContribution(caches.length === 0);
+    const actor = await freshContext(frozen.leaver, true);
+    const [row] = await archive.withScope(
+      actor,
+      (tx) =>
+        tx.$queryRaw`SELECT app.read_contribution_budget(${frozen.budgetId}::uuid,NULL,0) AS data`,
+    );
+    const page = contributionRawPageSchema.parse(row.data);
+    requireContribution(
+      page.view.budget.version === 2 &&
+        page.view.budget.updatedAt === frozen.originalCreatedAt &&
+        page.view.plans.length === 1 &&
+        page.view.plans[0].priority === 1 &&
+        page.view.plans[0].plan.monthlyContributions[0].amount.amountMinor ===
+          "20",
+    );
+  }
   const remaining = await freshContext(fixture.remaining);
   const [current] = await scoped.withScope(
     remaining,
@@ -87,6 +92,7 @@ export async function verifyRestoredContributions(
       participants[0].membershipId === fixture.remaining.membershipId,
   );
   return {
+    contributionOutsiderGoalPurged: true,
     contributionExclusivePurged: true,
     contributionFrozenArchive: true,
     contributionSharedRetained: true,

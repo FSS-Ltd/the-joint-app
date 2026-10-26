@@ -85,7 +85,7 @@ async function plan(client, budget, amount, version, expectedBudgetVersion) {
     [randomUUID(), budget.householdId, budget.planId, amount],
   );
 }
-async function budget(client, householdId, goalId, members) {
+async function capacityBudget(client, householdId, goalId, members) {
   const record = {
     budgetId: randomUUID(),
     planId: randomUUID(),
@@ -111,6 +111,10 @@ async function budget(client, householdId, goalId, members) {
       }),
     ],
   );
+  return record;
+}
+async function budget(client, householdId, goalId, members) {
+  const record = await capacityBudget(client, householdId, goalId, members);
   await plan(client, record, "20", 1, 1);
   const {
     rows: [head],
@@ -119,6 +123,58 @@ async function budget(client, householdId, goalId, members) {
     [record.budgetId],
   );
   return { ...record, originalCreatedAt: head.updatedAt.toISOString() };
+}
+
+async function lateParticipantBudget(client) {
+  const solo = await group(client, 1),
+    leaver = solo.members[0];
+  const record = await capacityBudget(
+    client,
+    solo.householdId,
+    solo.goalId,
+    solo.members,
+  );
+  const deleted = {
+    userId: randomUUID(),
+    membershipId: randomUUID(),
+    householdId: solo.householdId,
+  };
+  await client.query('INSERT INTO app."User"(id) VALUES($1)', [deleted.userId]);
+  await client.query(
+    'INSERT INTO app."Membership"(id,"userId","householdId",slot) VALUES($1,$2,$3,2)',
+    [deleted.membershipId, deleted.userId, solo.householdId],
+  );
+  record.goalId = randomUUID();
+  await client.query(
+    'INSERT INTO app."Goal"(id,"householdId",name,priority,"targetMinor") VALUES($1,$2,\'Synthetic later shared goal\',1,100)',
+    [record.goalId, record.householdId],
+  );
+  for (const member of [leaver, deleted])
+    await client.query(
+      'INSERT INTO app."GoalParticipant"("householdId","goalId","membershipId") VALUES($1,$2,$3)',
+      [record.householdId, record.goalId, member.membershipId],
+    );
+  await plan(client, record, "20", 1, 1);
+  const {
+    rows: [head],
+  } = await client.query(
+    'SELECT "updatedAt" FROM app."ContributionBudget" WHERE id=$1',
+    [record.budgetId],
+  );
+  await client.query(
+    "SELECT app.exit_household_member($1::uuid,$2::uuid,$3::uuid)",
+    [leaver.userId, leaver.householdId, leaver.membershipId],
+  );
+  await client.query(
+    'UPDATE app."Goal" SET priority=3,version=version+1 WHERE id=$1',
+    [record.goalId],
+  );
+  return {
+    ...record,
+    leaver,
+    deleted,
+    originalCreatedAt: head.updatedAt.toISOString(),
+  };
 }
 
 export async function seedContributionRestoreFixture(client, adults, goals) {
@@ -152,7 +208,9 @@ export async function seedContributionRestoreFixture(client, adults, goals) {
     goals.sharedGoalId,
     [adults.deleted, adults.remaining],
   );
+  const outsider = await lateParticipantBudget(client);
   return {
+    outsider,
     exclusive: { ...exclusive, deleted: solo.members[0] },
     frozen: { ...frozen, leaver, deleted },
     shared,

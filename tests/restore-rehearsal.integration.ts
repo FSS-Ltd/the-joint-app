@@ -22,6 +22,7 @@ it("restores an isolated snapshot, replays later privacy intents before login, a
     allocationExclusivePurged: true,
     allocationFrozenArchive: true,
     allocationJointRetained: true,
+    contributionOutsiderGoalPurged: true,
     contributionExclusivePurged: true,
     contributionFrozenArchive: true,
     contributionSharedRetained: true,
