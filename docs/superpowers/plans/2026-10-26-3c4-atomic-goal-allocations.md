@@ -28,6 +28,11 @@
 - Exit, archive, deletion and restored-journal replay retain only independently justified frozen history.
 - Replay, cursor, commit notification and idle behavior preserve authority across revocation and reconnect.
 
+## Whole-branch delivery gate
+
+- [ ] Obtain one fresh whole-branch review. Resolve material findings with RED/GREEN and current green suites; record all rulings and deferred minors without a second review loop.
+- [ ] Push/open own PR and attach it. Verify final-head/actual-test-merge CI, required reviews/protections and authorized host merge; record exact evidence and refresh main before contributions or other later work.
+
 ### Task 1: Contracts and private storage
 
 **Files:** `packages/contracts/src/goal-allocations.ts`, contracts index and dormant allocation DTO in `goals.ts`; Prisma schema and new additive migrations under `20261026*_goal_allocations/`; `tests/goal-allocation-contracts.test.ts`, `tests/goal-allocation-storage.integration.ts`, existing contract/storage fixtures.
@@ -45,13 +50,13 @@
 
 **Interfaces:** SQL `app.write_goal_allocations(goal_id uuid, expected_goal_version integer, input jsonb) RETURNS jsonb`; `app.read_goal_allocations(goal_id uuid, account_ids uuid[], after_cursor jsonb) RETURNS jsonb`. Private helpers authorize/lock, resolve immutable fraction bases, assess all source claims, append state/revisions and release on authorized lifecycle transitions. Internal pages return validated raw continuation; public cursors are sealed later.
 
-- [ ] Reproduce missing functions with real restricted-role tests: £500/two £300 concurrency, partial-batch rollback, co-owner lock race, stale source/goal versions, fractional HALF_UP, reserve excess, underfunded reductions, stale/unavailable release, hidden/cross-tenant denial and expired-session rejection after locks.
-- [ ] Implement deterministic locks, complete source admission and immutable append/replacement. Preserve source evidence; reject unknown legacy admission. Recheck after blocking locks.
-- [ ] Prove goal archive/last-owner exit releases live claims without rewriting frozen history. Prove later co-owner updates remain invisible after exit.
-- [ ] Extend actual purge and restored-journal fixtures/proofs. Observe the new retention assertions fail before implementing scoped pruning/counter repair; preserve joint justified history and exact timestamps.
-- [ ] Prove empty committed hints, no rollback/replay hint and read-only reconciliation. Run affected plus full integration, inspect grants/search_path/indexes/query bounds and commit the verified lifecycle.
+- [x] Reproduce missing functions with real restricted-role tests: £500/two £300 concurrency, partial-batch rollback, co-owner lock race, stale source/goal versions, fractional HALF_UP, reserve excess, underfunded reductions, stale/unavailable release, hidden/cross-tenant denial and expired-session rejection after locks.
+- [x] Implement deterministic locks, complete source admission and immutable append/replacement. Preserve source evidence; reject unknown legacy admission. Recheck after blocking locks.
+- [x] Prove goal archive/last-owner exit releases live claims without rewriting frozen history. Prove later co-owner updates remain invisible after exit.
+- [x] Extend actual purge and restored-journal fixtures/proofs. Observe the new retention assertions fail before implementing scoped pruning/counter repair; preserve joint justified history and exact timestamps.
+- [x] Prove empty committed hints, no rollback/replay hint and read-only reconciliation. Run affected plus full integration, inspect grants/search_path/indexes/query bounds and commit the verified lifecycle.
 
-### Task 3: Owner API, exports and delivery
+### Task 3: Owner API and exports
 
 **Files:** focused allocation services/controllers/cursors/errors under `apps/api/src/modules/goals/allocations/`, identity composition, API docs, endpoint tests and `docs/progress.md`.
 
@@ -60,5 +65,3 @@
 - [ ] Write failing HTTP/service cases for unavailable scope, required headers, atomic conflict mapping, canonical replay, revoked ownership/session replay, archive cutoff, cursor reuse denial and free export after downgrade.
 - [ ] Implement thin boundary validation, scoped authorization-before-replay, encrypted exact replay/cursors and safe public errors using existing patterns. Do not enable new raw table access.
 - [ ] Run frozen clean-source install, format, lint, all builds/types/test types, unit/integration/browser suites, fresh/populated migrations and public-file scan. Inspect every changed file/diff and actual current routes; record limits honestly.
-- [ ] Obtain one fresh whole-branch review. Resolve material findings with RED/GREEN and current green suites; record all rulings and deferred minors without a second review loop.
-- [ ] Push/open own PR and attach it. Verify final-head/actual-test-merge CI, required reviews/protections and authorized host merge; record exact evidence and refresh main before contributions or other later work.

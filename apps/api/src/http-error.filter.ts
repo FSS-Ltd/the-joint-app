@@ -69,6 +69,10 @@ const knownErrors: Record<string, string> = {
   INVITE_SELF: "Choose the other adult's verified email address.",
   HOUSEHOLD_FULL: "This household already has two adult members.",
   HOUSEHOLD_EXISTS: "You already belong to a household.",
+  ALLOCATION_EXCEEDS_AVAILABLE:
+    "Reduce the intention or release another commitment before trying again.",
+  FUNDING_UNAVAILABLE:
+    "Check the current eligible adult valuation and funding evidence before trying again.",
   IDEMPOTENCY_CONFLICT: "This request key was used with different details.",
   IDENTITY_MIGRATION_REQUIRED:
     "Verify your existing account before linking this sign-in.",

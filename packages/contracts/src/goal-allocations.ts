@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { scopeQuerySchema } from "./reporting-primitives.js";
 import { goalAllocationSchema } from "./goals.js";
 import {
   calendarDateSchema,
@@ -159,3 +160,10 @@ export const goalAllocationRawPageSchema = z
     );
   });
 export type GoalAllocationRawPage = z.infer<typeof goalAllocationRawPageSchema>;
+
+export const goalAllocationQuerySchema = z
+  .object({
+    accountIds: scopeQuerySchema,
+    cursor: z.string().min(1).max(4096).optional(),
+  })
+  .strict();

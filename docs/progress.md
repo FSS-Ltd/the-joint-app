@@ -666,3 +666,10 @@ corrected full database run passed 265 cases; added delayed-change and commit-hi
 cases passed focused checks. Final lifecycle regression and API delivery remain
 in progress. No allocation migration has been applied to the development database,
 no PR has been raised for this incomplete unit, and no deployment has occurred.
+
+3C.4 lifecycle checkpoint: all 270 integration cases pass on internal revision
+fb9dd10, including exact allocation admission, frozen privacy/restore, commit
+hints and bounded export planning. Export JIT compilation was scoped off for
+the existing 500-record helper after reproducing a five-second transaction
+expiry; no deadlines or permissions were relaxed. Owner API, final review and
+PR/CI/merge delivery are still pending. Development storage remains unchanged.

@@ -3,6 +3,7 @@ import {
   goalAllocationWriteSchema,
   goalAllocationSetDtoSchema,
   goalAllocationPageSchema,
+  goalAllocationQuerySchema,
 } from "../packages/contracts/src/goal-allocations.js";
 
 const accountId = "a1111111-1111-4111-8111-111111111111";
@@ -208,4 +209,22 @@ describe("atomic allocation contracts", () => {
     ])
       expect(goalAllocationPageSchema.safeParse(input).success).toBe(false);
   });
+});
+
+it("canonicalizes explicit query scope and rejects undeclared selectors", () => {
+  expect(
+    goalAllocationQuerySchema.parse({
+      accountIds: otherId.toUpperCase() + "," + accountId.toUpperCase(),
+    }),
+  ).toEqual({ accountIds: [accountId, otherId] });
+  for (const query of [
+    {},
+    { accountIds: "" },
+    { accountIds: accountId + "," + accountId.toUpperCase() },
+    { accountIds: [accountId] },
+    { accountIds: accountId, ownerId: otherId },
+    { accountIds: accountId, cursor: "" },
+    { accountIds: accountId, cursor: "a".repeat(4097) },
+  ])
+    expect(goalAllocationQuerySchema.safeParse(query).success).toBe(false);
 });

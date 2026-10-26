@@ -55,6 +55,9 @@ import {
 } from "../privacy/privacy.controller.js";
 import { createWealthController } from "../wealth/wealth.controller.js";
 import { WealthService } from "../wealth/wealth.service.js";
+import { GoalAllocationService } from "../goals/allocations/allocation.service.js";
+import { createAllocationController } from "../goals/allocations/allocation.controller.js";
+import { createAllocationArchiveController } from "../goals/allocations/allocation-archive.controller.js";
 import { GoalService } from "../goals/goals.service.js";
 import { createGoalsController } from "../goals/goals.controller.js";
 import { createGoalArchiveController } from "../goals/goal-archive.controller.js";
@@ -82,6 +85,8 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       createWealthController(),
       createFundingEvidenceController(),
       createFundingArchiveController(),
+      createAllocationController(),
+      createAllocationArchiveController(),
       createGoalsController(),
       createGoalArchiveController(),
       createBudgetsController(),
@@ -113,6 +118,10 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
     funding: new FundingEvidenceService(scoped, archive, vault),
   };
   const goals = { identity, goals: new GoalService(scoped, archive, vault) };
+  const allocations = {
+    identity,
+    allocations: new GoalAllocationService(scoped, archive, vault),
+  };
   return [
     createEventsController(
       options.events
@@ -140,6 +149,8 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
     ),
     createFundingEvidenceController(funding),
     createFundingArchiveController(funding),
+    createAllocationController(allocations),
+    createAllocationArchiveController(allocations),
     createGoalsController(goals),
     createGoalArchiveController(goals),
     createWealthController({ identity, wealth: new WealthService(scoped) }),
