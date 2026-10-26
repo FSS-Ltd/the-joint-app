@@ -799,3 +799,26 @@ See [contribution API](api/contribution-plans.md). Native task completion, one
 independent final review and current-head/test-merge PR CI remain delivery gates.
 3C.5, Phase3 and MVP are not yet marked complete. No contribution UI, personal
 database migration, running-service restart, new dependency or deployment.
+
+3C.5 author replay correction: a new regression reproduced404 on a completed
+plan retry after goal archival. Forward migration040 separates shared authority
+from active-write eligibility; existing captured/goal rights still authorize
+exact replay, while new archived-goal writes remain unavailable. No earlier
+migration checksum changed. The25 focused authorization/lifecycle/replay cases
+pass, followed by the native full320/320 integration rerun across72 files on
+`378cb10`, with all94 migrations and exact populated financial preservation.
+407 units, strict types, lint and formatting pass; the881-file public scan and
+source comparison are clean. No private paths or exact local key values found.
+
+The updated user browser policy now permits only the Codex in-app browser for
+local browser work. The queued container-browser rerun was stopped in its DB
+phase and is not acceptance evidence; only its verified owned database/scratch
+were removed. Local browser launching is disabled in the verification helper.
+The earlier181-case local pass on `92c7b94` is historical. The user explicitly
+authorized unchanged required cloud Chromium CI to continue; current-head CI
+must provide final browser evidence. No UI changes require local inspection.
+
+All three internal tasks are verified; one independent whole-branch review and
+PR/current-head/test-merge CI/merge remain pending. This supersedes earlier
+pre-correction test counts. 3C.5 is implemented but unmerged; no next build unit,
+personal database migration, running-service restart or deployment has begun.
