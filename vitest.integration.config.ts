@@ -2,6 +2,7 @@ import { defineConfig } from "vitest/config";
 
 const capacityFiles = [
   "tests/status-notifications.integration.ts",
+  "tests/goal-allocation-events.integration.ts",
   "tests/status-transport.integration.ts",
   // Global worker deadlines must be observed without concurrent fixture writes.
   "tests/worker-events.integration.ts",
@@ -12,6 +13,7 @@ const capacityFiles = [
   "tests/export-cascade-performance.integration.ts",
   // Keep paged export/lock-fence deadlines free of unrelated fixture writes.
   "tests/export-privacy-fences.integration.ts",
+  "tests/export-planning.integration.ts",
 ];
 
 export default defineConfig({

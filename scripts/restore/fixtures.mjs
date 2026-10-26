@@ -1,4 +1,5 @@
 import { seedFundingRestoreFixture } from "./funding-fixtures.mjs";
+import { seedAllocationRestoreFixture } from "./allocation-fixtures.mjs";
 import { seedGoalRestoreFixture } from "./goal-fixtures.mjs";
 import { Buffer } from "node:buffer";
 import { DataVault } from "../../packages/database/dist/data-vault.js";
@@ -212,8 +213,15 @@ export async function seedRestoreFixture(client, recoveryKey) {
     accounts,
   );
   const goals = await seedGoalRestoreFixture(client, { deleted, remaining });
+  const allocations = await seedAllocationRestoreFixture(
+    client,
+    { deleted, remaining },
+    accounts,
+    goals,
+  );
   return {
     goals,
+    allocations,
     funding,
     importBatchId,
     encryptedTransactionId,
@@ -242,6 +250,7 @@ export function fixtureIntents(fixture) {
     { ...base(fixture.deleted.userId), kind: "DELETE_USER" },
     { ...base(fixture.absentUserId), kind: "DELETE_USER" },
     { ...base(fixture.goals.deleted.userId), kind: "DELETE_USER" },
+    { ...base(fixture.allocations.deleted.userId), kind: "DELETE_USER" },
     { ...base(fixture.funding.deleted.userId), kind: "DELETE_USER" },
     {
       ...base(fixture.leaver.userId),

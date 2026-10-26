@@ -213,11 +213,28 @@ describe("Task 3A contract boundaries", () => {
   it("distinguishes fixed money from a fraction of a named valuation", () => {
     const allocation = {
       schema: "goal-allocation-set",
-      schemaVersion: 1,
-      id,
+      schemaVersion: 2,
       goalId: id2,
       householdId: id,
       version: 1,
+      scope: {
+        kind: "CONTROLLED",
+        accountIds: [id],
+        sources: [{ accountId: id, version: 1 }],
+      },
+      positions: [
+        {
+          accountId: id,
+          status: "FUNDED",
+          reason: null,
+          available: money("100000"),
+          committed: money("25000"),
+          allocated: money("25000"),
+          shortfall: money("0"),
+        },
+      ],
+      asOfDate: "2026-10-26",
+      calculatedAt: "2026-10-26T12:00:00.000Z",
       allocations: [
         {
           basis: "FRACTION",
@@ -254,6 +271,18 @@ describe("Task 3A contract boundaries", () => {
     expect(
       goalAllocationSetDtoSchema.safeParse({
         ...allocation,
+        scope: {
+          kind: "CONTROLLED",
+          accountIds: [id, id3],
+          sources: [
+            { accountId: id, version: 1 },
+            { accountId: id3, version: 1 },
+          ],
+        },
+        positions: [
+          allocation.positions[0],
+          { ...allocation.positions[0], accountId: id3 },
+        ],
         allocations: [
           allocation.allocations[0],
           { ...allocation.allocations[0], accountId: id3, valuationId: id3 },
@@ -270,6 +299,13 @@ describe("Task 3A contract boundaries", () => {
     expect(
       goalAllocationSetDtoSchema.safeParse({
         ...allocation,
+        positions: [
+          {
+            ...allocation.positions[0],
+            allocated: money("100"),
+            committed: money("100"),
+          },
+        ],
         allocations: [
           {
             basis: "FIXED",
@@ -284,6 +320,13 @@ describe("Task 3A contract boundaries", () => {
     expect(
       goalAllocationSetDtoSchema.safeParse({
         ...allocation,
+        positions: [
+          {
+            ...allocation.positions[0],
+            allocated: money("100"),
+            committed: money("100"),
+          },
+        ],
         allocations: [
           {
             basis: "FIXED",

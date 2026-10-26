@@ -651,3 +651,60 @@ UI8 coordinated correction evidence: the dashboard destination test first failed
 UI8 final revised local acceptance: 378/378 unit tests, 181/181 browser cases (two workers, 4.3m), 28/28 focused database/session/stream cases, eight builds, sixteen package type tasks plus strict test types, formatting, lint and diff checks pass. Populated upgrades preserve exact legacy identity/session rows. All 17 runtime/test files match the checked archive. Revised material and authorized sign-in entry are included; the earlier 172-case/source96% results are historical only. No applicable assertion, timeout, retry or concurrency was weakened. Full243 integration remains required in CI. Additional engines, native transparency preference settings and live-user redirect confirmation remain unverified; no claim of those checks. PR/current-head/test-merge CI and verified merge remain pending. The full project goal remains active.
 
 UI8 delivery: [PR32](https://github.com/FSS-Ltd/the-joint-app/pull/32) targets verified main `23f822884960ea2c2c154f0c6f6cbb2f616dcc8d`. Final locally verified implementation `2b6216efe6be7ba1c2fd97bf2474d230df0f82ff` includes the user/review corrections. This delivery-record revision needs its own current-head and actual test-merge CI success. Final revisions, all check results, review/protection verification and actual merge evidence will be recorded in the linked PR body. No merge or subsequent unit is claimed. Source remains local with authorised GitHub source/CI delivery only; no deployment.
+
+## UI8 merged; Task 3C.4 atomic allocations in progress
+
+Host re-verifies [PR32](https://github.com/FSS-Ltd/the-joint-app/pull/32) MERGED at2026-10-26T17:35:50Z, merge `6e12e906ef68ff7e936264603f6d365b17627a56`, matching clean local/origin main before this branch. Final head `6c3b5382236656fd4b4cd6df58b6d314b231fc47` passed all27 applicable steps of [CI40368504919](https://github.com/FSS-Ltd/the-joint-app/actions/runs/40368504919):378 unit,243 integration,181 browser, frozen installation, formatting/lint, eight builds and package/test types. Actual checkout/test merge `361bedd8391b0bb0c387bc3e2ba8dffced47c196` has exact base/head parents and tree `c6a7a6b297af0650daebcdffb391240740c27362`, equal to actual merge. No blocking reviews or unresolved threads; protections retained with no bypass/self-approval. The user confirmed the refreshed local flow works. Superseded40368451835 is cancelled. This supersedes historical UI8 pending records; the PR body preserves final evidence. No deployment.
+
+Task 3C.4 starts on `build/3c4-atomic-goal-allocations` from that verified merge. Funding predecessor [PR18](https://github.com/FSS-Ltd/the-joint-app/pull/18) is also host-verified MERGED with successful required checks. [Design](decisions/task-3c4-allocation-design.md) and [plan](superpowers/plans/2026-10-26-3c4-atomic-goal-allocations.md) activate selected-source atomic owner allocations with private source-version vectors, immutable history and privacy lifecycle before contributions/projections/screens. Shared goal metadata never grants source control. The existing-assets step does not move money or add a dependency/service. UI8 and the private reference baseline remain binding for later screens.
+
+Initial contract tests failed for the missing allocation module; the new strict versioned write/view/history contracts pass19 focused cases with existing contract fixtures, including exact amounts, fractions, source-vector completeness, out-of-scope intentions and conserved underfunding. The never-exposed allocation DTO advances to schemaVersion2 before its first runtime endpoint. The new storage integration first reached missing AccountAllocationState; an initial additive-storage run passes3 cases. Prisma generation then caught a missing composite unique key for the one-to-one state relation; the schema/SQL are corrected and current-source build/fresh verification remain required. Storage remains runtime denied and no allocation writer/API is active. No subsequent build unit or deployment.
+
+3C.4 internal lifecycle verification: exact owner/source admission and releases,
+frozen history and actual deletion/isolated restore proof are implemented. The
+corrected full database run passed 265 cases; added delayed-change and commit-hint
+cases passed focused checks. Final lifecycle regression and API delivery remain
+in progress. No allocation migration has been applied to the development database,
+no PR has been raised for this incomplete unit, and no deployment has occurred.
+
+3C.4 lifecycle checkpoint: all 270 integration cases pass on internal revision
+fb9dd10, including exact allocation admission, frozen privacy/restore, commit
+hints and bounded export planning. Export JIT compilation was scoped off for
+the existing 500-record helper after reproducing a five-second transaction
+expiry; no deadlines or permissions were relaxed. Owner API, final review and
+PR/CI/merge delivery are still pending. Development storage remains unchanged.
+
+3C.4 owner API is locally verified on `98a3440a441a577a9319f65e07f7247f0982a4ef`
+(tree `9a17b4fb1070f20d0875aaa92f21c8c1a7881be7`): a fresh secret-free
+source copy passes frozen installation, formatting, lint, eight builds, sixteen
+package type tasks plus strict test-source types, 385 unit, 282 integration and
+181 isolated browser cases. Fresh and populated upgrades preserve exact prior
+identity/session and financial records without invented allocation history.
+The public scan reports 833 tracked files, zero forbidden private paths and zero
+exact local-secret matches. No checks/deadlines/permissions were weakened.
+
+The owner routes, encrypted replay/cursors, frozen archive and free fresh-MFA
+exports are documented in `docs/api/goal-allocations.md`. Source authorization is
+checked before account locks and again after waits; export MFA freshness is
+checked after reads too. Independent whole-branch review and the current-head
+PR/CI/test-merge/host-merge gate remain pending. This is not Phase 3 completion.
+No allocation migration or service restart has touched the personal development
+stack; no deployment, hosted database, tunnel or paid service was introduced.
+
+3C.4 independent review of `6e12e90..098266a` read all 46 changed files and found
+zero Critical, Important or Minor issues. It independently reran 31 contract and
+arithmetic cases under Node 22.23.3 and confirmed the supplied full verification
+logs. No second review or code correction was needed. Accepted scope limits:
+allocation UI/subscription registration remains Task E; active JSON export pages
+are current authorized views, not a frozen multi-request snapshot; there is no
+public source-archive action outside supported household exit; contributions,
+projections, direct providers, FX and deployment remain later gates. PR/CI/merge
+are still pending, so 3C.4 and Phase 3 are not marked complete.
+
+3C.4 delivery: [PR33](https://github.com/FSS-Ltd/the-joint-app/pull/33)
+targets verified main `6e12e906ef68ff7e936264603f6d365b17627a56`.
+Initial published head `2d3fc0e8f3517c24010370a7bfb4313a8600a01d`
+contains the verified runtime and review records. This delivery-record revision
+requires its own current-head and actual test-merge CI success. Final checked
+revisions, CI results, review/protection checks and host merge evidence will be
+preserved in the linked PR body. No subsequent unit or deployment has started.
