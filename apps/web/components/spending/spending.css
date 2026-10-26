@@ -32,7 +32,7 @@
 }
 .report-hero {
   padding: 32px;
-  background: var(--ink);
+  background: var(--forest-glass);
   color: white;
   display: grid;
   gap: 24px;
@@ -281,13 +281,6 @@
 }
 .report-source p {
   margin: 4px 0;
-}
-.report-summary-frame,
-.cap-grid {
-  padding: 8px;
-  background: #dde7dd24;
-  border: 1px solid #dde7dd66;
-  border-radius: var(--radius-frame);
 }
 .report-hero {
   border: 1px solid #dde7dd66;

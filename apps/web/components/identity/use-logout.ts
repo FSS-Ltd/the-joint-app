@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuthRuntime } from "./auth-runtime";
 import { errorMessage, request, RequestError } from "./client";
+import { authContinuation } from "../../lib/auth-continuation";
 
 export function useLogout(resumeCleanup = false) {
   const { finishSignOut } = useAuthRuntime();
@@ -17,9 +18,12 @@ export function useLogout(resumeCleanup = false) {
       await finishSignOut();
       if (!remotePending)
         window.location.assign(
-          window.location.pathname === "/archive"
-            ? "/sign-in?next=archive"
-            : "/sign-in",
+          authContinuation(
+            "/sign-in",
+            window.location.pathname === "/archive"
+              ? "?next=archive"
+              : window.location.search,
+          ),
         );
     } catch {
       setError(

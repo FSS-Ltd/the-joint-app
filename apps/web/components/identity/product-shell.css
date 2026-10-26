@@ -59,10 +59,6 @@ html:has(.app-navigation) {
 .identity-content {
   grid-template-columns: minmax(0, 1fr);
   --focus-ring: var(--focus);
-  padding: 8px;
-  border: 1px solid #dde7dd59;
-  border-radius: var(--radius-frame);
-  background: #dde7dd1f;
 }
 .identity-content > .privacy-note {
   color: var(--sage);
@@ -88,11 +84,6 @@ html:has(.app-navigation) {
   --muted: #52665c;
   --focus-ring: var(--focus);
 }
-.surface {
-  box-shadow:
-    0 0 0 4px #dde7dd1f,
-    0 8px 24px #10281f0d;
-}
 .accounts-main {
   color: var(--canvas);
   --muted: #dde7dd;
@@ -112,11 +103,6 @@ html:has(.app-navigation) {
   z-index: 10;
   color: var(--ink);
   border-radius: var(--radius-control);
-}
-@supports (backdrop-filter: blur(16px)) {
-  .identity-content {
-    backdrop-filter: blur(16px);
-  }
 }
 @media (max-width: 1099px) {
   .accounts-main {
@@ -168,11 +154,11 @@ html:has(.app-navigation) {
     margin: 24px 16px 32px;
     width: calc(100% - 32px);
     padding: 28px;
-    border: 8px solid transparent;
+    border: 1px solid #ffffff80;
     border-radius: var(--radius-frame);
-    background:
-      linear-gradient(var(--canvas), var(--canvas)) padding-box,
-      linear-gradient(135deg, #dde7dd88, #ffffff24) border-box;
+    background: var(--canvas-glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: inset 0 1px 0 #ffffffb3;
     color: var(--ink);
     --muted: #52665c;
     --focus-ring: var(--focus);

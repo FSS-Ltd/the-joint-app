@@ -4,10 +4,6 @@
 }
 .account-overview {
   margin-bottom: 32px;
-  padding: 8px;
-  border: 1px solid #dde7dd66;
-  border-radius: var(--radius-frame);
-  background: #dde7dd24;
 }
 .account-overview-panel {
   padding: 24px;

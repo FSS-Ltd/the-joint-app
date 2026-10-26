@@ -5,9 +5,11 @@ import { test, expect } from "@playwright/test";
 import { syntheticClerkBrowser } from "../fixtures/clerk-browser.js";
 import { createClerkFixture } from "../fixtures/clerk.js";
 import { registerClerkWorkspaceCases } from "../fixtures/identity-clerk-workspace.js";
+import { registerExistingSessionCases } from "../fixtures/clerk-existing-session.js";
 
 const origin = "http://127.0.0.1:3311";
 registerClerkWorkspaceCases(origin);
+registerExistingSessionCases(origin);
 let web: ChildProcess | undefined;
 const fixture = await createClerkFixture();
 test.use({ baseURL: origin, serviceWorkers: "block" });
@@ -569,6 +571,18 @@ test("an existing browser session can finish signing out without losing the arch
   context,
 }) => {
   const actions = await syntheticClerkBrowser(context, origin, "existing");
+  await page.route("**/api/auth/csrf", (route) =>
+    route.fulfill({ json: { csrfToken: "synthetic-csrf" } }),
+  );
+  await page.route("**/api/auth/logout", (route) =>
+    route.fulfill({ json: { providerCleanupPending: false } }),
+  );
+  await page.route("**/api/me", (route) =>
+    route.fulfill({
+      status: 503,
+      json: { error: { message: "Synthetic service unavailable" } },
+    }),
+  );
   await page.goto("/sign-in?next=archive");
   await page.getByRole("button", { name: "Sign out of this browser" }).click();
   await expect.poll(() => actions.includes("sign-out")).toBe(true);

@@ -7,6 +7,8 @@ import { authContent, type AuthMode } from "../auth-content";
 import { Feedback, IdentityFrame } from "../frame";
 import { PasswordField } from "../password-field";
 import { useClerkAuthFlow } from "./use-auth-flow";
+import { ExistingSession } from "./existing-session";
+import { LogoutRecovery } from "../logout-completion";
 
 export function ClerkAuthForm({
   mode,
@@ -32,6 +34,12 @@ export function ClerkAuthForm({
     }
   }
   const verification = stage === "email" || stage === "mfa";
+  if (flow.hasExistingSession)
+    return cleanupPending ? (
+      <LogoutRecovery />
+    ) : (
+      <ExistingSession search={search} />
+    );
   return (
     <IdentityFrame {...text}>
       <section className="surface form-card" aria-labelledby="form-title">
@@ -53,20 +61,6 @@ export function ClerkAuthForm({
                   ? "Choose a new password"
                   : text.heading}
         </h2>
-        {flow.hasExistingSession && (
-          <p role="status">
-            You are already signed in.{" "}
-            <button
-              type="button"
-              className="text-button"
-              disabled={flow.pending}
-              onClick={() => void flow.signOutExisting()}
-            >
-              Sign out of this browser
-            </button>{" "}
-            before starting another sign-in.
-          </p>
-        )}
         {cleanupPending && (
           <p role="status">
             A previous provider sign-out still needs cleanup.{" "}
@@ -92,7 +86,7 @@ export function ClerkAuthForm({
           <button
             type="button"
             className="text-button"
-            disabled={flow.hasExistingSession || flow.pending}
+            disabled={flow.pending}
             onClick={() => {
               setBackupCode(false);
               setCode("");
@@ -113,7 +107,7 @@ export function ClerkAuthForm({
               <button
                 type="button"
                 className="text-button"
-                disabled={flow.hasExistingSession || flow.pending}
+                disabled={flow.pending}
                 onClick={() => {
                   setBackupCode(!backupCode);
                   setCode("");
@@ -133,7 +127,7 @@ export function ClerkAuthForm({
                 required
                 minLength={4}
                 maxLength={64}
-                disabled={flow.hasExistingSession || flow.pending}
+                disabled={flow.pending}
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
               />
@@ -147,7 +141,7 @@ export function ClerkAuthForm({
                 autoComplete="email"
                 required
                 maxLength={254}
-                disabled={flow.hasExistingSession || flow.pending}
+                disabled={flow.pending}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
               />
@@ -164,7 +158,7 @@ export function ClerkAuthForm({
               }
               value={password}
               onChange={setPassword}
-              disabled={flow.hasExistingSession || flow.pending}
+              disabled={flow.pending}
               autoComplete={
                 mode === "sign-in" && stage === "credentials"
                   ? "current-password"
@@ -187,7 +181,7 @@ export function ClerkAuthForm({
                 required
                 minLength={stage === "mfa" && backupCode ? 1 : 6}
                 maxLength={stage === "mfa" && backupCode ? 128 : 6}
-                disabled={flow.hasExistingSession || flow.pending}
+                disabled={flow.pending}
                 value={code}
                 onChange={(event) => setCode(event.target.value.trim())}
               />
@@ -198,9 +192,7 @@ export function ClerkAuthForm({
           <button
             type="submit"
             className="button primary"
-            disabled={
-              flow.hasExistingSession || flow.pending || stage === "complete"
-            }
+            disabled={flow.pending || stage === "complete"}
           >
             {flow.pending
               ? "Please wait…"
@@ -218,9 +210,7 @@ export function ClerkAuthForm({
           <button
             type="button"
             className="text-button"
-            disabled={
-              flow.hasExistingSession || flow.pending || flow.resendSeconds > 0
-            }
+            disabled={flow.pending || flow.resendSeconds > 0}
             onClick={() => void flow.resend()}
           >
             {flow.resendSeconds > 0
@@ -232,7 +222,7 @@ export function ClerkAuthForm({
           <button
             type="button"
             className="button secondary google-button"
-            disabled={flow.hasExistingSession || flow.pending}
+            disabled={flow.pending}
             onClick={() => void flow.google()}
           >
             Continue with Google
