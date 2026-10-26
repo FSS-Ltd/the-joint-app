@@ -708,3 +708,138 @@ contains the verified runtime and review records. This delivery-record revision
 requires its own current-head and actual test-merge CI success. Final checked
 revisions, CI results, review/protection checks and host merge evidence will be
 preserved in the linked PR body. No subsequent unit or deployment has started.
+
+## 3C.4 merged; 3C.5 shared contributions in progress
+
+Host confirms [PR33](https://github.com/FSS-Ltd/the-joint-app/pull/33) MERGED
+at2026-10-26T20:08:53Z, merge `d7ee55a3b00f5074f4fb77d3d2f039b703a77220`.
+Final head `1d0b5fafe1a045542eb9137d588fdc2d301a0317` passes all27 applicable
+steps of [CI40391607960](https://github.com/FSS-Ltd/the-joint-app/actions/runs/40391607960):
+385 unit,282 integration,181 browser, frozen installation, formatting/lint,
+eight builds and package/test types. Actual CI checkout/test merge
+`330a97fc97519f1647d99ac2cddb91d9a7f2150e` has exact base/head parents and tree
+`dce51f580420cd9c266bae3f742f0496b96abc31`, equal to the host merge and refreshed
+local main. No blocking reviews or unresolved conversations; protections retained
+with no bypass or self-approval. Superseded40391158357 was cancelled. The PR body
+preserves complete final evidence. This supersedes earlier pending checkpoints;
+Phase3 and MVP remain incomplete. Personal storage and running services unchanged.
+
+3C.5 starts on `build/3c5-shared-contribution-plans` from that verified merge.
+The [design](decisions/task-3c5-contribution-design.md) and
+[plan](superpowers/plans/2026-10-26-3c5-shared-contribution-plans.md) implement the
+existing shared finite future-budget requirement: explicit manual GBP capacity,
+dated requests, saved priorities and visible shortfalls. New members do not
+inherit historical plans. No transactions, source-asset allocations, grants,
+projections or screens are created. A fresh builder check reports no unresolved
+design question; baseline385 unit cases pass before code changes. Native inline
+execution and one final independent review continue under standing project
+authorization. No deployment or subsequent build unit starts here.
+
+3C.5 internal Task1 verification: strict capacity/plan/view/history contracts and
+pure dated assessment are implemented. All407 units pass across67 files,
+including22 new contract/calendar cases covering priority, shifted starts, leap
+centuries,600 months, int64 aggregate overflow and out-of-window intentions.
+Contracts/domain builds, strict test-source types, lint and formatting pass; the
+earlier full16 package build/type tasks also pass. Self-review found an archived
+selected plan could also appear active; a reproduced RED now passes with strict
+mutual exclusion and a valid archive preservation case. No dependency or database
+change. Root typecheck also rebuilt dependent apps through Turbo; subsequent
+full verification uses isolated source copies to protect the preview. Persistence,
+privacy lifecycle, API, full database/browser checks, independent review and the
+3C.5 PR/CI/merge gate remain pending. This is not completed contribution delivery.
+
+3C.5 Task2 storage checkpoint: new forced-RLS budget/participant/revision tables
+and nullable legacy plan provenance pass13 real database cases with the existing
+account-isolation/ACL suite. Retained history is immutable; cross-tenant links and
+malformed goal-version provenance are rejected. New provenance cases first
+reproduced accepted invalid history, then pass after a safe SQL constraint. Fresh
+owned upgrades preserve exact legacy identity/session rows; the broader populated
+financial upgrade remains pending. Prisma generation/build, strict test types,
+lint, formatting and diff checks pass. All owned database containers cleaned up.
+No personal database migration or service restart occurred; the ignored local
+database client was regenerated during validation. Atomic writers, exit/deletion
+callbacks, restore proof and API remain in progress. No3C.5 PR or completed-step
+claim yet; no subsequent unit or deployment.
+
+3C.5 Task2 persistence checkpoint: all307 integration cases across68 files and
+407 unit cases across67 files pass. Narrow SQL writes serialize capacity/plan
+changes, validate schedules independently and preserve over-budget intent.
+Goal metadata advances the shared revision; exit ceilings, real deletion and
+signed restore preserve only justified history and exact frozen timestamps.
+Committed empty hints pass with silent reads, rollbacks and unchanged writes;
+53-event catch-up uses bounded history. Fifty active plans are admitted, the
+fifty-first is rejected atomically, and archival frees one slot.
+
+The owned populated pre030 upgrade preserves exact legacy contribution steps,
+goals, account balances/owners and identity/session rows. New provenance remains
+null, with no invented budget/participants/history. All92 migrations deploy;
+eight builds, sixteen package build/type tasks, strict test types, lint and
+formatting pass in the secret-free copy. No new dependency, personal migration,
+service restart or deployment. Native completion rerun, API/replay/exports,
+browser verification, independent final review and PR/CI/merge remain pending.
+
+3C.5 API checkpoint: strict capacity/goal-plan routes, bounded history, captured
+archive lists and free fresh-MFA exports are implemented. Encrypted replay
+reauthorizes the complete current scope before decryption and after waits;
+sealed cursors bind actor/session, membership epoch or archive mode, budget, goal
+and operation. Real cache-lock expiry proves replay is not decrypted after
+authority expires. Exact replay, unchanged intentions and API reads add no
+financial revision, audit or notification. No entitlement gates were added.
+
+Fresh secret-free verification passes frozen installation, eight uncached
+builds, sixteen package build/type tasks and strict test-source types, lint,
+formatting,407 units,319 database integrations and181 browser tests. All93
+migrations deploy; the populated pre030 upgrade preserves exact legacy
+schedules, goals, balances, ownership and identity/session rows, without invented
+capacity or rights. The880 public files match the verification copy; private-path
+and exact local-key scans report zero matches. All owned database/browser
+containers and temporary privacy journals are cleaned after verification.
+
+See [contribution API](api/contribution-plans.md). Native task completion, one
+independent final review and current-head/test-merge PR CI remain delivery gates.
+3C.5, Phase3 and MVP are not yet marked complete. No contribution UI, personal
+database migration, running-service restart, new dependency or deployment.
+
+3C.5 author replay correction: a new regression reproduced404 on a completed
+plan retry after goal archival. Forward migration040 separates shared authority
+from active-write eligibility; existing captured/goal rights still authorize
+exact replay, while new archived-goal writes remain unavailable. No earlier
+migration checksum changed. The25 focused authorization/lifecycle/replay cases
+pass, followed by the native full320/320 integration rerun across72 files on
+`378cb10`, with all94 migrations and exact populated financial preservation.
+407 units, strict types, lint and formatting pass; the881-file public scan and
+source comparison are clean. No private paths or exact local key values found.
+
+The updated user browser policy now permits only the Codex in-app browser for
+local browser work. The queued container-browser rerun was stopped in its DB
+phase and is not acceptance evidence; only its verified owned database/scratch
+were removed. Local browser launching is disabled in the verification helper.
+The earlier181-case local pass on `92c7b94` is historical. The user explicitly
+authorized unchanged required cloud Chromium CI to continue; current-head CI
+must provide final browser evidence. No UI changes require local inspection.
+
+All three internal tasks are verified; one independent whole-branch review and
+PR/current-head/test-merge CI/merge remain pending. This supersedes earlier
+pre-correction test counts. 3C.5 is implemented but unmerged; no next build unit,
+personal database migration, running-service restart or deployment has begun.
+
+3C.5 independent whole-branch review inspected all59 files at `166a466`. It
+found one important retention gap and no critical/minor issue: a later shared
+goal participant outside the original budget could create a metadata revision
+which their deletion missed. Real deletion reproduced head3 instead of frozen2;
+signed restore independently failed its exact frozen-head proof.
+
+The single correction pass adds forward041 discovery through captured budget
+and goal-derived links before goal cleanup removes them. Existing retention
+predicates exclude the already-deleted user, preserve independently justified
+active data, and restore exact frozen heads/timestamps. Twenty targeted deletion,
+retention, ACL and signed-restore cases pass;407 units, strict test types, lint,
+formatting and the885-file privacy/source scan pass. No earlier migration,
+security assertion, deadline or concurrency setting changed.
+
+The full correction run passed315/322 cases and failed seven existing checks:
+50,000-row cascade/export planning/import deadlines, spending-report timeout,
+receipt expiry, worker retry bounds and restore-container startup. These are
+being investigated and rerun in isolated storage; the full local suite is not
+green. No completed review-fix/step claim or merge is recorded. Required current
+cloud CI remains unchanged and must pass before this unit can progress.

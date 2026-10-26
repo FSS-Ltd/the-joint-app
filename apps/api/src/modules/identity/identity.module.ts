@@ -59,6 +59,8 @@ import { GoalAllocationService } from "../goals/allocations/allocation.service.j
 import { createAllocationController } from "../goals/allocations/allocation.controller.js";
 import { createAllocationArchiveController } from "../goals/allocations/allocation-archive.controller.js";
 import { GoalService } from "../goals/goals.service.js";
+import { ContributionService } from "../goals/contributions/contribution.service.js";
+import { createContributionControllers } from "../goals/contributions/contribution-controllers.js";
 import { createGoalsController } from "../goals/goals.controller.js";
 import { createGoalArchiveController } from "../goals/goal-archive.controller.js";
 import { FundingEvidenceService } from "../funding-evidence/funding-evidence.service.js";
@@ -87,6 +89,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       createFundingArchiveController(),
       createAllocationController(),
       createAllocationArchiveController(),
+      ...createContributionControllers(),
       createGoalsController(),
       createGoalArchiveController(),
       createBudgetsController(),
@@ -151,6 +154,10 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
     createFundingArchiveController(funding),
     createAllocationController(allocations),
     createAllocationArchiveController(allocations),
+    ...createContributionControllers({
+      identity,
+      contributions: new ContributionService(scoped, archive, vault),
+    }),
     createGoalsController(goals),
     createGoalArchiveController(goals),
     createWealthController({ identity, wealth: new WealthService(scoped) }),

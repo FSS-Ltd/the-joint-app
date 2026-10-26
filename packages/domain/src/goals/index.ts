@@ -8,6 +8,8 @@ export type {
 } from "./funding-types.js";
 
 export { assessContributionBudget } from "./contribution-budget.js";
+export { assessDatedContributions } from "./dated-contributions.js";
+export type { DatedContributionInput } from "./dated-contributions.js";
 export type {
   ContributionBudgetInput,
   ContributionBudgetAssessment,

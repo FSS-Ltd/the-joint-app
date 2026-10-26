@@ -112,10 +112,15 @@ export * from "./entitlements.js";
 export * from "./wealth.js";
 export * from "./goals.js";
 export * from "./goal-allocations.js";
+export * from "./contribution-schedules.js";
+export * from "./contribution-assessment.js";
+export * from "./contribution-budget.js";
+export * from "./contribution-history.js";
 export * from "./goal-lifecycle.js";
 export * from "./projections.js";
 
 export { bookedDateSchema } from "./financial-input.js";
+export { monthEndAtOffset } from "./projection-primitives.js";
 export * from "./funding-evidence.js";
 export * from "./clerk.js";
 
