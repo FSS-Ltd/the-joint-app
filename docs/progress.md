@@ -777,3 +777,25 @@ eight builds, sixteen package build/type tasks, strict test types, lint and
 formatting pass in the secret-free copy. No new dependency, personal migration,
 service restart or deployment. Native completion rerun, API/replay/exports,
 browser verification, independent final review and PR/CI/merge remain pending.
+
+3C.5 API checkpoint: strict capacity/goal-plan routes, bounded history, captured
+archive lists and free fresh-MFA exports are implemented. Encrypted replay
+reauthorizes the complete current scope before decryption and after waits;
+sealed cursors bind actor/session, membership epoch or archive mode, budget, goal
+and operation. Real cache-lock expiry proves replay is not decrypted after
+authority expires. Exact replay, unchanged intentions and API reads add no
+financial revision, audit or notification. No entitlement gates were added.
+
+Fresh secret-free verification passes frozen installation, eight uncached
+builds, sixteen package build/type tasks and strict test-source types, lint,
+formatting,407 units,319 database integrations and181 browser tests. All93
+migrations deploy; the populated pre030 upgrade preserves exact legacy
+schedules, goals, balances, ownership and identity/session rows, without invented
+capacity or rights. The880 public files match the verification copy; private-path
+and exact local-key scans report zero matches. All owned database/browser
+containers and temporary privacy journals are cleaned after verification.
+
+See [contribution API](api/contribution-plans.md). Native task completion, one
+independent final review and current-head/test-merge PR CI remain delivery gates.
+3C.5, Phase3 and MVP are not yet marked complete. No contribution UI, personal
+database migration, running-service restart, new dependency or deployment.

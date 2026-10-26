@@ -71,6 +71,8 @@ const knownErrors: Record<string, string> = {
   HOUSEHOLD_EXISTS: "You already belong to a household.",
   ALLOCATION_EXCEEDS_AVAILABLE:
     "Reduce the intention or release another commitment before trying again.",
+  CONTRIBUTION_PLAN_LIMIT:
+    "Archive an existing goal before adding another active contribution plan. The limit is fifty.",
   FUNDING_UNAVAILABLE:
     "Check the current eligible adult valuation and funding evidence before trying again.",
   IDEMPOTENCY_CONFLICT: "This request key was used with different details.",

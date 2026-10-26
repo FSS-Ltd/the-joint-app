@@ -3,6 +3,9 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createDatabaseNotifications } from "../packages/database/src/notifications.js";
 import { createContributionFixture } from "./fixtures/contribution-budget.js";
 import { contributionCapacity } from "./fixtures/contribution-plans.js";
+import { randomBytes, randomUUID } from "node:crypto";
+import { ContributionService } from "../apps/api/src/modules/goals/contributions/contribution.service.js";
+import { IdentityVault } from "../apps/api/src/modules/identity/identity-vault.js";
 
 let f: ReturnType<typeof createContributionFixture>;
 beforeEach(async () => {
@@ -10,6 +13,58 @@ beforeEach(async () => {
   await f.setup();
 });
 afterEach(() => f.close());
+it("keeps exact encrypted replay and API reads silent without duplicate audits", async () => {
+  const key = randomBytes(32).toString("base64"),
+    ready = vi.fn(),
+    wake = vi.fn();
+  const service = new ContributionService(
+    f.scoped,
+    f.archive,
+    new IdentityVault(key, key),
+  );
+  const listener = createDatabaseNotifications({
+    topic: "status",
+    connectionString: process.env.DATABASE_URL ?? "",
+    timeoutMs: 1000,
+    retryMaxMs: 1000,
+    onReady: ready,
+    onWake: wake,
+  });
+  try {
+    await vi.waitFor(() => expect(ready).toHaveBeenCalledOnce());
+    const requestKey = randomUUID();
+    const made = await service.writeCapacity(
+      f.a,
+      0,
+      contributionCapacity,
+      requestKey,
+    );
+    await vi.waitFor(() => expect(wake).toHaveBeenCalledOnce());
+    const audits = await f.owner.auditEvent.findMany({
+      where: { householdId: f.hh },
+      orderBy: { id: "asc" },
+    });
+    expect(
+      await service.writeCapacity(f.a, 0, contributionCapacity, requestKey),
+    ).toEqual(made);
+    expect(
+      await service.writeCapacity(f.a, 1, contributionCapacity, randomUUID()),
+    ).toEqual(made);
+    await service.read(f.a);
+    await service.history(f.a);
+    await service.export(f.a);
+    await delay(100);
+    expect(wake).toHaveBeenCalledOnce();
+    expect(
+      await f.owner.auditEvent.findMany({
+        where: { householdId: f.hh },
+        orderBy: { id: "asc" },
+      }),
+    ).toEqual(audits);
+  } finally {
+    await listener.close();
+  }
+});
 it("delivers empty hints only after committed changes and stays silent for reads, rollback and unchanged intent", async () => {
   const ready = vi.fn(),
     wake = vi.fn();

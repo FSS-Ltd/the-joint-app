@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { createFundingEvidenceFixture } from "./funding-evidence.js";
-import type { AuthContext } from "../../packages/contracts/dist/index.js";
+import type {
+  AuthContext,
+  ContributionPlanWrite,
+} from "../../packages/contracts/dist/index.js";
 import {
   contributionRawPageSchema,
   contributionRawViewSchema,
@@ -19,7 +22,10 @@ export function createContributionFixture() {
     target: { amountMinor: "100000", currency: "GBP" },
     targetDate: null,
   };
-  function planInput(amountMinor = "30000", expectedPlanVersion = 0) {
+  function planInput(
+    amountMinor = "30000",
+    expectedPlanVersion = 0,
+  ): ContributionPlanWrite {
     return {
       expectedGoalVersion: 1,
       expectedPlanVersion,
