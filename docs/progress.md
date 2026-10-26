@@ -708,3 +708,42 @@ contains the verified runtime and review records. This delivery-record revision
 requires its own current-head and actual test-merge CI success. Final checked
 revisions, CI results, review/protection checks and host merge evidence will be
 preserved in the linked PR body. No subsequent unit or deployment has started.
+
+## 3C.4 merged; 3C.5 shared contributions in progress
+
+Host confirms [PR33](https://github.com/FSS-Ltd/the-joint-app/pull/33) MERGED
+at2026-10-26T20:08:53Z, merge `d7ee55a3b00f5074f4fb77d3d2f039b703a77220`.
+Final head `1d0b5fafe1a045542eb9137d588fdc2d301a0317` passes all27 applicable
+steps of [CI40391607960](https://github.com/FSS-Ltd/the-joint-app/actions/runs/40391607960):
+385 unit,282 integration,181 browser, frozen installation, formatting/lint,
+eight builds and package/test types. Actual CI checkout/test merge
+`330a97fc97519f1647d99ac2cddb91d9a7f2150e` has exact base/head parents and tree
+`dce51f580420cd9c266bae3f742f0496b96abc31`, equal to the host merge and refreshed
+local main. No blocking reviews or unresolved conversations; protections retained
+with no bypass or self-approval. Superseded40391158357 was cancelled. The PR body
+preserves complete final evidence. This supersedes earlier pending checkpoints;
+Phase3 and MVP remain incomplete. Personal storage and running services unchanged.
+
+3C.5 starts on `build/3c5-shared-contribution-plans` from that verified merge.
+The [design](decisions/task-3c5-contribution-design.md) and
+[plan](superpowers/plans/2026-10-26-3c5-shared-contribution-plans.md) implement the
+existing shared finite future-budget requirement: explicit manual GBP capacity,
+dated requests, saved priorities and visible shortfalls. New members do not
+inherit historical plans. No transactions, source-asset allocations, grants,
+projections or screens are created. A fresh builder check reports no unresolved
+design question; baseline385 unit cases pass before code changes. Native inline
+execution and one final independent review continue under standing project
+authorization. No deployment or subsequent build unit starts here.
+
+3C.5 internal Task1 verification: strict capacity/plan/view/history contracts and
+pure dated assessment are implemented. All407 units pass across67 files,
+including22 new contract/calendar cases covering priority, shifted starts, leap
+centuries,600 months, int64 aggregate overflow and out-of-window intentions.
+Contracts/domain builds, strict test-source types, lint and formatting pass; the
+earlier full16 package build/type tasks also pass. Self-review found an archived
+selected plan could also appear active; a reproduced RED now passes with strict
+mutual exclusion and a valid archive preservation case. No dependency or database
+change. Root typecheck also rebuilt dependent apps through Turbo; subsequent
+full verification uses isolated source copies to protect the preview. Persistence,
+privacy lifecycle, API, full database/browser checks, independent review and the
+3C.5 PR/CI/merge gate remain pending. This is not completed contribution delivery.
