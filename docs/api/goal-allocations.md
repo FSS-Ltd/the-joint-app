@@ -25,7 +25,8 @@ version, goal and complete source selection; they never confer access.
 
 Active access requires current source ownership and existing goal participation.
 A viewing grant or household membership alone does not control a source. The
-entire selection is authorized before any amounts or history are returned.
+entire selection is authorized before account locks, amounts or history. Authority
+is checked again after waiting for the selected locks.
 Archive access requires both frozen source-owner and goal-participant rights.
 Later co-owner changes cannot appear in a departed owner's archive. Archive
 positions are explicitly unavailable rather than expose another adult's live
