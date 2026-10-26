@@ -700,3 +700,11 @@ are current authorized views, not a frozen multi-request snapshot; there is no
 public source-archive action outside supported household exit; contributions,
 projections, direct providers, FX and deployment remain later gates. PR/CI/merge
 are still pending, so 3C.4 and Phase 3 are not marked complete.
+
+3C.4 delivery: [PR33](https://github.com/FSS-Ltd/the-joint-app/pull/33)
+targets verified main `6e12e906ef68ff7e936264603f6d365b17627a56`.
+Initial published head `2d3fc0e8f3517c24010370a7bfb4313a8600a01d`
+contains the verified runtime and review records. This delivery-record revision
+requires its own current-head and actual test-merge CI success. Final checked
+revisions, CI results, review/protection checks and host merge evidence will be
+preserved in the linked PR body. No subsequent unit or deployment has started.
