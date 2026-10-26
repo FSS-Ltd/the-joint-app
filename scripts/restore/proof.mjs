@@ -1,3 +1,4 @@
+import { verifyRestoredAllocations } from "./allocation-proof.mjs";
 import { verifyRestoredFunding } from "./funding-proof.mjs";
 import { verifyRestoredGoals } from "./goal-proof.mjs";
 import { Buffer } from "node:buffer";
@@ -100,6 +101,7 @@ export async function verifyRestoredAccess(
       requestId: randomUUID(),
     };
   }
+  let allocationProof;
   let goalProof;
   let fundingProof;
   try {
@@ -111,6 +113,13 @@ export async function verifyRestoredAccess(
       fixture,
     );
     goalProof = await verifyRestoredGoals(
+      owner,
+      scoped,
+      archive,
+      freshContext,
+      fixture,
+    );
+    allocationProof = await verifyRestoredAllocations(
       owner,
       scoped,
       archive,
@@ -205,6 +214,7 @@ export async function verifyRestoredAccess(
     await runtime.$disconnect();
   }
   return {
+    ...allocationProof,
     ...goalProof,
     ...fundingProof,
     ciphertextRecovered: true,

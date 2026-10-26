@@ -659,3 +659,10 @@ Host re-verifies [PR32](https://github.com/FSS-Ltd/the-joint-app/pull/32) MERGED
 Task 3C.4 starts on `build/3c4-atomic-goal-allocations` from that verified merge. Funding predecessor [PR18](https://github.com/FSS-Ltd/the-joint-app/pull/18) is also host-verified MERGED with successful required checks. [Design](decisions/task-3c4-allocation-design.md) and [plan](superpowers/plans/2026-10-26-3c4-atomic-goal-allocations.md) activate selected-source atomic owner allocations with private source-version vectors, immutable history and privacy lifecycle before contributions/projections/screens. Shared goal metadata never grants source control. The existing-assets step does not move money or add a dependency/service. UI8 and the private reference baseline remain binding for later screens.
 
 Initial contract tests failed for the missing allocation module; the new strict versioned write/view/history contracts pass19 focused cases with existing contract fixtures, including exact amounts, fractions, source-vector completeness, out-of-scope intentions and conserved underfunding. The never-exposed allocation DTO advances to schemaVersion2 before its first runtime endpoint. The new storage integration first reached missing AccountAllocationState; an initial additive-storage run passes3 cases. Prisma generation then caught a missing composite unique key for the one-to-one state relation; the schema/SQL are corrected and current-source build/fresh verification remain required. Storage remains runtime denied and no allocation writer/API is active. No subsequent build unit or deployment.
+
+3C.4 internal lifecycle verification: exact owner/source admission and releases,
+frozen history and actual deletion/isolated restore proof are implemented. The
+corrected full database run passed 265 cases; added delayed-change and commit-hint
+cases passed focused checks. Final lifecycle regression and API delivery remain
+in progress. No allocation migration has been applied to the development database,
+no PR has been raised for this incomplete unit, and no deployment has occurred.

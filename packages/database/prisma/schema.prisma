@@ -362,7 +362,7 @@ model GoalAllocation {
   goalId String @db.Uuid
   goal Goal @relation(fields: [householdId, goalId], references: [householdId, id], onDelete: Cascade)
   accountId String @db.Uuid
-  account Account @relation(fields: [householdId, accountId], references: [householdId, id])
+  account Account @relation(fields: [householdId, accountId], references: [householdId, id], onDelete: Cascade)
   valuationId String @db.Uuid
   valuation BalanceSnapshot @relation(fields: [householdId, accountId, valuationId], references: [householdId, accountId, id])
   basis AllocationBasis
@@ -371,6 +371,7 @@ model GoalAllocation {
   sourceVersion Int?
   sourceRevision AccountAllocationRevision? @relation(fields: [householdId, accountId, goalId, sourceVersion], references: [householdId, accountId, goalId, version], onDelete: NoAction, map: "GoalAllocation_sourceRevision_fkey")
   @@unique([householdId, goalId, accountId])
+  @@index([accountId, goalId], map: "GoalAllocation_source_goal_idx")
   @@index([householdId, accountId, valuationId])
   @@schema("app")
 }
@@ -401,6 +402,7 @@ model AccountAllocationRevision {
   @@unique([householdId, accountId, goalId, version])
   @@index([accountId, goalId, version(sort: Desc)], map: "AccountAllocationRevision_goal_source_idx")
   @@index([goalId], map: "AccountAllocationRevision_goal_idx")
+  @@index([goalId, accountId, version], map: "AccountAllocationRevision_goal_page_idx")
   @@index([valuationId], map: "AccountAllocationRevision_valuation_idx")
   @@schema("app")
 }
