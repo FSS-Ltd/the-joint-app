@@ -13,6 +13,7 @@ const capacityFiles = [
   "tests/export-cascade-performance.integration.ts",
   // Keep paged export/lock-fence deadlines free of unrelated fixture writes.
   "tests/export-privacy-fences.integration.ts",
+  "tests/export-planning.integration.ts",
 ];
 
 export default defineConfig({
