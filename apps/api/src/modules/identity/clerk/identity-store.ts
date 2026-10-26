@@ -1,3 +1,4 @@
+import { sessionDeadline } from "../session-activity.js";
 import type { ClerkSessionRejected } from "./rejected-session.js";
 import {
   ConflictException,
@@ -47,6 +48,7 @@ export class ClerkIdentityStore {
           ${credential.issuer},${credential.subject},${credential.sessionId},${this.vault.emailHash(credential.email)},
           ${new Date(credential.expiresAt)}::timestamptz,${new Date(credential.sessionExpiresAt)}::timestamptz,${new Date(credential.sessionCreatedAt)}::timestamptz) mapped`;
         if (!row) throw new UnauthorizedException();
+        const deadline = await sessionDeadline(transaction, row.sessionId);
         const [requirement] = await transaction.$queryRaw<
           { required: boolean }[]
         >`SELECT app.clerk_mfa_requirement(${credential.issuer},${credential.subject},${credential.mfaEnrolled}) AS required`;
@@ -69,7 +71,9 @@ export class ClerkIdentityStore {
           credential,
           mfaRequired: requirement.required,
           transaction,
-          expiresAt: row.expiresAt,
+          expiresAt: new Date(
+            Math.min(row.expiresAt.getTime(), Date.parse(deadline.expiresAt)),
+          ),
           principal: {
             userId: row.userId,
             sessionId: row.sessionId,

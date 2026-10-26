@@ -1,5 +1,7 @@
 "use client";
 
+import { SessionBoundary } from "../session/boundary";
+
 import { useClerk, useSession } from "@clerk/nextjs";
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { AuthRuntimeContext } from "../auth-runtime";
@@ -32,7 +34,9 @@ export function ClerkRuntimeBridge({
   );
   return (
     <AuthRuntimeContext.Provider value={actions}>
-      {children}
+      <SessionBoundary disabled={!isLoaded || Boolean(session?.currentTask)}>
+        {children}
+      </SessionBoundary>
     </AuthRuntimeContext.Provider>
   );
 }

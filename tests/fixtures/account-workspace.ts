@@ -1,3 +1,4 @@
+import { sessionActivityFixture } from "./session-activity.js";
 import type { Page } from "@playwright/test";
 import type {
   AccountResponse,
@@ -92,6 +93,7 @@ export async function accountWorkspaceFixture(page: Page): Promise<{
       json: { error: { code: "UNAVAILABLE", message: "Synthetic outage" } },
     }),
   );
+  await sessionActivityFixture(page);
   await page.route("**/api/me", (route) => route.fulfill({ json: identity }));
   await page.route(`**/api/households/${householdId}/accounts**`, (route) => {
     const url = new URL(route.request().url());

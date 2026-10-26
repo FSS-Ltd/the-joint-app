@@ -1,3 +1,4 @@
+import { SessionBoundary } from "../components/identity/session/boundary";
 import type { ReactNode } from "react";
 import "./globals.css";
 import { OfflineRegistration } from "../components/finance/offline-registration";
@@ -39,7 +40,7 @@ export default async function RootLayout({
             <ClerkRuntimeBridge>{content}</ClerkRuntimeBridge>
           </ClerkProvider>
         ) : (
-          content
+          <SessionBoundary>{content}</SessionBoundary>
         )}
       </body>
     </html>

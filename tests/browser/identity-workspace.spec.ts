@@ -132,3 +132,89 @@ test("household invitation stays explicit and its long private link remains usab
       });
   }
 });
+
+test("inactivity clears protected content before failed sign-out and offers retry", async ({
+  page,
+}) => {
+  await identityWorkspaceFixture(page);
+  let reads = 0;
+  await page.route("**/api/auth/session", (route) => {
+    reads++;
+    return reads === 1
+      ? route.fulfill({
+          json: {
+            expiresAt: new Date(Date.now() + 1500).toISOString(),
+            serverTime: new Date().toISOString(),
+          },
+        })
+      : route.fulfill({
+          status: 401,
+          json: { error: { code: "UNAUTHORIZED" } },
+        });
+  });
+  await page.route("**/api/auth/logout", (route) =>
+    route.fulfill({
+      status: 503,
+      json: { error: { message: "Sign-out unavailable" } },
+    }),
+  );
+  await page.goto("/household");
+  await expect(
+    page.getByRole("heading", { name: "Invite your person" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Your session is locked" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Invite your person" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Retry sign-out" }),
+  ).toBeVisible();
+  for (const width of [390, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.getByRole("button", { name: "Retry sign-out" }).focus();
+    await expect(
+      page.getByRole("button", { name: "Retry sign-out" }),
+    ).toBeFocused();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: `/tmp/joint-auth3-lock-${width}.png`,
+      fullPage: true,
+    });
+  }
+});
+
+test("only trusted input reports activity; programmatic events do not renew access", async ({
+  page,
+}) => {
+  const fixture = await identityWorkspaceFixture(page);
+  fixture.setIdentity({ ...soloIdentity, membership: null });
+  const activity: unknown[] = [];
+  await page.route("**/api/auth/session", (route) => {
+    if (route.request().method() === "POST")
+      activity.push(route.request().postDataJSON());
+    return route.fulfill({
+      json: {
+        expiresAt: new Date(Date.now() + 600_000).toISOString(),
+        serverTime: new Date().toISOString(),
+      },
+    });
+  });
+  await page.goto("/household");
+  await expect(page.getByLabel("Household name")).toBeVisible();
+  await page.evaluate(() =>
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "x" })),
+  );
+  await page.waitForTimeout(150);
+  expect(activity).toHaveLength(0);
+  await page.getByLabel("Household name").fill("Synthetic active home");
+  // fill() emits trusted input but no keyboard event; deliberate key presses renew the session.
+  await page.getByLabel("Household name").press("End");
+  await expect.poll(() => activity.length).toBeGreaterThan(0);
+  expect(activity[0]).toEqual({ activityAgeMs: expect.any(Number) });
+});

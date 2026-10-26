@@ -1,3 +1,5 @@
+import { sessionDeadline } from "./session-activity.js";
+import type { SessionDeadline } from "@joint/contracts";
 import { readIdentity } from "./identity-read.js";
 import { randomUUID } from "node:crypto";
 import {
@@ -54,6 +56,18 @@ export class IdentityService {
   me(token: string): Promise<MeResponse> {
     return this.sessions.withSession(token, (identity) =>
       readIdentity(identity, this.provider),
+    );
+  }
+  session(
+    token: string,
+    activityAgeMs: number | null = null,
+  ): Promise<SessionDeadline> {
+    return this.sessions.withSession(token, async (identity) =>
+      sessionDeadline(
+        identity.transaction,
+        identity.principal.sessionId,
+        activityAgeMs,
+      ),
     );
   }
   subscriptionExpiry(token: string): Promise<number> {

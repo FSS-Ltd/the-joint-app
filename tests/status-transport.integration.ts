@@ -142,6 +142,43 @@ it("renews at verified bearer expiry even while the provider session remains val
   }
 });
 
+it("closes an open subscription at the inactivity deadline without waiting for another notification", async () => {
+  const mapping = await fixture.owner.clerkSession.findUniqueOrThrow({
+    where: {
+      issuer_externalSessionId: {
+        issuer: fixture.provider.environment.CLERK_ISSUER,
+        externalSessionId: fixture.actor.external.sessionId,
+      },
+    },
+  });
+  const previous = await fixture.owner.sessionRegistry.findUniqueOrThrow({
+    where: { id: mapping.internalSessionId },
+  });
+  const abort = new AbortController();
+  const timeout = setTimeout(() => abort.abort(), 5000);
+  try {
+    await fixture.owner
+      .$executeRaw`UPDATE app."SessionRegistry" SET "lastSeenAt"=clock_timestamp()-interval '598 seconds' WHERE id=${mapping.internalSessionId}::uuid`;
+    const response = await fixture.request(
+      fixture.url("import", fixture.batchId, fixture.householdId),
+      undefined,
+      abort.signal,
+    );
+    expect(response.status).toBe(200);
+    const frames = statusSignals(response);
+    expect(await frames.next()).toBe("event: change\ndata: {}");
+    expect(await frames.next()).toBe("event: renew\ndata: {}");
+    expect(await frames.next()).toBeNull();
+  } finally {
+    clearTimeout(timeout);
+    abort.abort();
+    await fixture.owner.sessionRegistry.update({
+      where: { id: mapping.internalSessionId },
+      data: { lastSeenAt: previous.lastSeenAt },
+    });
+  }
+});
+
 it("keeps deletion receipts independent of sign-in, isolated by hash and bounded by receipt expiry", async () => {
   const query = fixture.url("deletion", fixture.receiptId);
   expect((await fixture.request(query)).status).toBe(401);

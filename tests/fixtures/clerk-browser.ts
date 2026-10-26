@@ -1,3 +1,4 @@
+import { sessionActivityFixture } from "./session-activity.js";
 import { readFile } from "node:fs/promises";
 import type { BrowserContext } from "@playwright/test";
 
@@ -7,6 +8,7 @@ export async function syntheticClerkBrowser(
   scenario: string,
 ): Promise<string[]> {
   const actions: string[] = [];
+  await sessionActivityFixture(context);
   const source = await readFile(
     new URL("./clerk-browser-sdk.mjs", import.meta.url),
     "utf8",
