@@ -69,6 +69,8 @@ Conflicting versions return 409 without partial writes. The same key, versions
 and canonical body replay the exact encrypted original view after current
 authority checks. Different details with that key return `IDEMPOTENCY_CONFLICT`.
 Unchanged intentions and exact replay add no financial revision, audit or hint.
+Archiving preserves replay of a completed request for authorized participants;
+it still prevents new plan writes.
 The fifty-plan bound returns safe `CONTRIBUTION_PLAN_LIMIT`; source database
 details are never returned.
 

@@ -77,6 +77,31 @@ it("replays exact encrypted capacity and plans after complete authority checks",
   ).rejects.toMatchObject({ status: 404 });
 });
 
+it("preserves completed replay after archival while rejecting new plan writes", async () => {
+  const key = randomUUID();
+  await service.writeCapacity(f.a, 0, capacity, randomUUID());
+  const saved = await service.writePlan(f.a, f.goalId, 1, f.planInput(), key);
+  await f.scoped.withScope(
+    f.b,
+    (tx) => tx.$queryRaw`
+    SELECT app.write_goal(${f.goalId}::uuid,1,${JSON.stringify({ ...f.goalInput, status: "ARCHIVED" })}::jsonb)`,
+  );
+  const before = await service.history(f.a);
+  expect(await service.writePlan(f.a, f.goalId, 1, f.planInput(), key)).toEqual(
+    saved,
+  );
+  await expect(
+    service.writePlan(
+      f.a,
+      f.goalId,
+      3,
+      { ...f.planInput("1", 1), expectedGoalVersion: 2 },
+      randomUUID(),
+    ),
+  ).rejects.toMatchObject({ status: 404 });
+  expect(await service.history(f.a)).toEqual(before);
+});
+
 it("denies revoked sessions before encrypted replay and rolls back malformed writes", async () => {
   const key = randomUUID();
   await service.writeCapacity(f.a, 0, capacity, key);
