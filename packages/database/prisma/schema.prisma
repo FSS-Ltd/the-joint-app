@@ -257,6 +257,8 @@ model Account {
   budgetScopeAccounts BudgetScopeAccount[]
   fundingEvidence FundingEvidence[]
   goalAllocations GoalAllocation[]
+  allocationState AccountAllocationState?
+  allocationRevisions AccountAllocationRevision[]
   projectionSources ProjectionSource[]
   @@unique([householdId, id])
   @@unique([householdId, id, currency])
@@ -272,6 +274,7 @@ model AccountOwner {
   membership Membership @relation("AccountOwnership", fields: [householdId, membershipId, userId], references: [householdId, id, userId])
   status AccountOwnerStatus @default(ACTIVE)
   fundingCutoffVersion Int @default(0)
+  allocationCutoffVersion Int @default(0)
   @@id([accountId, userId])
   @@index([userId, status, accountId])
   @@index([householdId, membershipId, accountId])
@@ -305,6 +308,7 @@ model BalanceSnapshot {
   source String @default("MANUAL") @db.VarChar(20)
   fundingEvidence FundingEvidence[]
   goalAllocations GoalAllocation[]
+  allocationRevisions AccountAllocationRevision[]
   projectionSources ProjectionSource[]
   @@unique([householdId, accountId, id])
   @@index([householdId, accountId, asOfDate(sort: Desc), createdAt(sort: Desc), id])
@@ -343,6 +347,7 @@ model Goal {
   participants GoalParticipant[]
   revisions GoalRevision[]
   allocations GoalAllocation[]
+  allocationRevisions AccountAllocationRevision[]
   contributionPlan ContributionPlan?
   scenarios Scenario[]
   runs ProjectionRun[]
@@ -363,8 +368,40 @@ model GoalAllocation {
   basis AllocationBasis
   amountMinor BigInt?
   fraction Decimal? @db.Decimal(13, 12)
+  sourceVersion Int?
+  sourceRevision AccountAllocationRevision? @relation(fields: [householdId, accountId, goalId, sourceVersion], references: [householdId, accountId, goalId, version], onDelete: NoAction, map: "GoalAllocation_sourceRevision_fkey")
   @@unique([householdId, goalId, accountId])
   @@index([householdId, accountId, valuationId])
+  @@schema("app")
+}
+
+model AccountAllocationState {
+  accountId String @id @db.Uuid
+  householdId String @db.Uuid
+  account Account @relation(fields: [householdId, accountId], references: [householdId, id], onDelete: Cascade)
+  version Int @default(0)
+  updatedAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(3)
+  @@unique([householdId, accountId])
+  @@schema("app")
+}
+
+model AccountAllocationRevision {
+  accountId String @db.Uuid
+  version Int
+  householdId String @db.Uuid
+  goalId String @db.Uuid
+  valuationId String? @db.Uuid
+  allocation Json?
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(3)
+  account Account @relation(fields: [householdId, accountId], references: [householdId, id], onDelete: Cascade)
+  goal Goal @relation(fields: [householdId, goalId], references: [householdId, id], onDelete: Cascade)
+  valuation BalanceSnapshot? @relation(fields: [householdId, accountId, valuationId], references: [householdId, accountId, id], onDelete: Cascade)
+  currentAllocations GoalAllocation[]
+  @@id([accountId, version])
+  @@unique([householdId, accountId, goalId, version])
+  @@index([accountId, goalId, version(sort: Desc)], map: "AccountAllocationRevision_goal_source_idx")
+  @@index([goalId], map: "AccountAllocationRevision_goal_idx")
+  @@index([valuationId], map: "AccountAllocationRevision_valuation_idx")
   @@schema("app")
 }
 

@@ -48,22 +48,6 @@ export const goalAllocationSchema = z.discriminatedUnion("basis", [
     })
     .strict(),
 ]);
-export const goalAllocationSetDtoSchema = z
-  .object({
-    schema: z.literal("goal-allocation-set"),
-    schemaVersion: z.literal(1),
-    ...goalIdentity,
-    allocations: z.array(goalAllocationSchema).max(50),
-  })
-  .strict()
-  .refine(
-    (set) =>
-      new Set(
-        set.allocations.map((allocation) => allocation.accountId.toLowerCase()),
-      ).size === set.allocations.length,
-  );
-export type GoalAllocationSetDto = z.infer<typeof goalAllocationSetDtoSchema>;
-
 export const monthlyContributionSchema = z
   .object({
     fromMonth: z.number().int().min(1).max(600),
