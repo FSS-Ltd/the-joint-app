@@ -34,6 +34,7 @@ model Household {
   accounts Account[]
   budgetScopes BudgetScope[]
   goals Goal[]
+  contributionBudget ContributionBudget?
   @@schema("app")
 }
 
@@ -135,6 +136,7 @@ model Membership {
   createdBudgets Budget[]
   budgetRevisions BudgetRevision[]
   goalParticipations GoalParticipant[]
+  contributionParticipations ContributionBudgetParticipant[]
   authoredFundingEvidence FundingEvidence[]
   @@unique([householdId, id])
   @@unique([householdId, id, userId])
@@ -349,6 +351,7 @@ model Goal {
   allocations GoalAllocation[]
   allocationRevisions AccountAllocationRevision[]
   contributionPlan ContributionPlan?
+  contributionRevisions ContributionBudgetRevision[]
   scenarios Scenario[]
   runs ProjectionRun[]
   @@unique([householdId, id])
@@ -414,9 +417,56 @@ model ContributionPlan {
   goal Goal @relation(fields: [householdId, goalId], references: [householdId, id], onDelete: Cascade)
   version Int @default(1)
   firstContributionDate DateTime @db.Date
+  budgetId String? @db.Uuid
+  sourceVersion Int?
+  budget ContributionBudget? @relation(fields: [householdId, budgetId], references: [householdId, id], onDelete: Cascade)
+  sourceRevision ContributionBudgetRevision? @relation(fields: [householdId, budgetId, goalId, sourceVersion], references: [householdId, budgetId, goalId, version], onDelete: NoAction, map: "ContributionPlan_sourceRevision_fkey")
   steps ContributionStep[]
   @@unique([householdId, goalId])
   @@unique([householdId, id])
+  @@index([householdId, budgetId, goalId, sourceVersion], map: "ContributionPlan_source_revision_idx")
+  @@schema("app")
+}
+
+model ContributionBudget {
+  id String @id @default(uuid()) @db.Uuid
+  householdId String @unique @db.Uuid
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  version Int @default(1)
+  updatedAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(3)
+  participants ContributionBudgetParticipant[]
+  revisions ContributionBudgetRevision[]
+  plans ContributionPlan[]
+  @@unique([householdId, id])
+  @@schema("app")
+}
+
+model ContributionBudgetParticipant {
+  householdId String @db.Uuid
+  budgetId String @db.Uuid
+  membershipId String @db.Uuid
+  cutoffVersion Int?
+  budget ContributionBudget @relation(fields: [householdId, budgetId], references: [householdId, id], onDelete: Cascade)
+  membership Membership @relation(fields: [householdId, membershipId], references: [householdId, id], onDelete: Cascade)
+  @@id([budgetId, membershipId])
+  @@index([membershipId, budgetId])
+  @@schema("app")
+}
+
+model ContributionBudgetRevision {
+  householdId String @db.Uuid
+  budgetId String @db.Uuid
+  version Int
+  goalId String? @db.Uuid
+  change Json
+  createdAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(3)
+  budget ContributionBudget @relation(fields: [householdId, budgetId], references: [householdId, id], onDelete: Cascade)
+  goal Goal? @relation(fields: [householdId, goalId], references: [householdId, id], onDelete: Cascade)
+  currentPlans ContributionPlan[]
+  @@id([budgetId, version])
+  @@unique([householdId, budgetId, goalId, version], map: "ContributionBudgetRevision_scope_key")
+  @@index([budgetId, goalId, version(sort: Desc)], map: "ContributionBudgetRevision_goal_head_idx")
+  @@index([goalId], map: "ContributionBudgetRevision_goal_idx")
   @@schema("app")
 }
 

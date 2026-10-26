@@ -747,3 +747,16 @@ change. Root typecheck also rebuilt dependent apps through Turbo; subsequent
 full verification uses isolated source copies to protect the preview. Persistence,
 privacy lifecycle, API, full database/browser checks, independent review and the
 3C.5 PR/CI/merge gate remain pending. This is not completed contribution delivery.
+
+3C.5 Task2 storage checkpoint: new forced-RLS budget/participant/revision tables
+and nullable legacy plan provenance pass13 real database cases with the existing
+account-isolation/ACL suite. Retained history is immutable; cross-tenant links and
+malformed goal-version provenance are rejected. New provenance cases first
+reproduced accepted invalid history, then pass after a safe SQL constraint. Fresh
+owned upgrades preserve exact legacy identity/session rows; the broader populated
+financial upgrade remains pending. Prisma generation/build, strict test types,
+lint, formatting and diff checks pass. All owned database containers cleaned up.
+No personal database migration or service restart occurred; the ignored local
+database client was regenerated during validation. Atomic writers, exit/deletion
+callbacks, restore proof and API remain in progress. No3C.5 PR or completed-step
+claim yet; no subsequent unit or deployment.
