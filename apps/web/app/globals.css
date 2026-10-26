@@ -12,6 +12,26 @@
   --radius-card: 6px;
   --radius-control: 8px;
   --radius-frame: 10px;
+  --panel-glass: var(--surface);
+  --canvas-glass: var(--canvas);
+  --forest-glass: var(--ink);
+  --glass-blur: none;
+}
+@supports (backdrop-filter: blur(16px)) {
+  :root {
+    --panel-glass: rgb(255 255 255 / 96%);
+    --canvas-glass: rgb(247 245 239 / 97%);
+    --forest-glass: rgb(32 59 50 / 96%);
+    --glass-blur: blur(16px);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --panel-glass: var(--surface);
+    --canvas-glass: var(--canvas);
+    --forest-glass: var(--ink);
+    --glass-blur: none;
+  }
 }
 * {
   box-sizing: border-box;

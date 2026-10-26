@@ -73,13 +73,6 @@
   gap: 16px;
   padding-top: 16px;
 }
-.activity-ledger-frame,
-.activity-source-frame {
-  padding: 8px;
-  border: 1px solid #dde7dd66;
-  border-radius: var(--radius-frame);
-  background: #dde7dd24;
-}
 .activity-rows {
   display: grid;
   gap: 8px;

@@ -96,10 +96,6 @@
 .privacy-export-frame,
 .archive-introduction-frame {
   min-width: 0;
-  padding: 8px;
-  border: 1px solid #dde7dd66;
-  border-radius: var(--radius-frame);
-  background: #dde7dd24;
 }
 .privacy-scope-count {
   padding: 12px 16px;
