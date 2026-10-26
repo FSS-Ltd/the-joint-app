@@ -5,7 +5,7 @@ import { flushSync } from "react-dom";
 import { usePathname } from "next/navigation";
 import { sessionDeadlineSchema } from "@joint/contracts";
 import { request, subscribeSessionChanges } from "../client";
-import { IdentityFrame } from "../frame";
+import { SessionLockScreen, type SessionLockState } from "./lock-screen";
 import { useLogout } from "../use-logout";
 import { IdleSessionController } from "./idle-controller";
 
@@ -37,10 +37,14 @@ export function SessionBoundary({
   );
 }
 
-function ProtectedSession({ children }: { children: ReactNode }): ReactNode {
-  const [state, setState] = useState<
-    "checking" | "ready" | "unavailable" | "expired"
-  >("checking");
+export function ProtectedSession({
+  children,
+}: {
+  children: ReactNode;
+}): ReactNode {
+  const [state, setState] = useState<SessionLockState | "ready">("checking");
+  const [retained, setRetained] = useState(false);
+  const terminal = useRef(false);
   const ready = useRef(false);
   const controller = useRef<IdleSessionController | null>(null);
   const signout = useLogout();
@@ -67,11 +71,14 @@ function ProtectedSession({ children }: { children: ReactNode }): ReactNode {
         setState("checking");
       },
       ready: () => {
+        setRetained(true);
         ready.current = document.visibilityState === "visible";
         setState(ready.current ? "ready" : "checking");
       },
       unavailable: () => setState("unavailable"),
       expire: () => {
+        terminal.current = true;
+        setRetained(false);
         setState("expired");
         void signout.logout("local");
       },
@@ -91,6 +98,7 @@ function ProtectedSession({ children }: { children: ReactNode }): ReactNode {
         idle.interact();
     };
     const conceal = () => {
+      if (terminal.current) return;
       ready.current = false;
       flushSync(() => setState("checking"));
     };
@@ -125,58 +133,16 @@ function ProtectedSession({ children }: { children: ReactNode }): ReactNode {
       channel?.close();
     };
   }, []);
-  if (state === "ready") return children;
-  const expired = state === "expired";
   return (
-    <IdentityFrame
-      eyebrow="Your private account"
-      title={expired ? "Your session is locked" : "Checking your session"}
-      description={
-        expired
-          ? "Ten minutes without activity ends access. Sign in again to continue."
-          : "We’re checking access before showing your household."
-      }
-    >
-      <section className="surface form-card" aria-live="polite">
-        {expired ? (
-          <>
-            <p>
-              {signout.pending
-                ? "Signing out of this browser…"
-                : signout.error || "Fresh sign-in is required."}
-            </p>
-            {!signout.pending && (
-              <button
-                type="button"
-                className="button primary"
-                onClick={() =>
-                  void (signout.started
-                    ? signout.retry()
-                    : signout.logout("local"))
-                }
-              >
-                Retry sign-out
-              </button>
-            )}
-          </>
-        ) : state === "unavailable" ? (
-          <>
-            <p>
-              We could not verify your session. Your household stays locked
-              until access is checked.
-            </p>
-            <button
-              type="button"
-              className="button primary"
-              onClick={() => void controller.current?.reconcile()}
-            >
-              Retry session check
-            </button>
-          </>
-        ) : (
-          <p role="status">Checking access…</p>
-        )}
-      </section>
-    </IdentityFrame>
+    <>
+      {retained && <div hidden={state !== "ready"}>{children}</div>}
+      {state !== "ready" && (
+        <SessionLockScreen
+          state={state}
+          signout={signout}
+          retrySession={() => void controller.current?.reconcile()}
+        />
+      )}
+    </>
   );
 }

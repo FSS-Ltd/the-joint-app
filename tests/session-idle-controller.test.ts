@@ -1,3 +1,4 @@
+import { RequestError } from "../apps/web/components/identity/client.js";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { IdleSessionController } from "../apps/web/components/identity/session/idle-controller.js";
 
@@ -104,5 +105,67 @@ it("keeps an active form mounted during reconciliation, but conceals it at its k
   await f.controller.reconcile(false);
   expect(f.lock).toHaveBeenCalled();
   expect(f.expire).toHaveBeenCalledOnce();
+  f.controller.stop();
+});
+
+it("preserves a live screen and draft when activity has a transient service failure", async () => {
+  const f = fixture();
+  await f.controller.start();
+  f.lock.mockClear();
+  f.activity.mockRejectedValueOnce(
+    new RequestError("Synthetic activity outage", 503),
+  );
+  f.controller.interact();
+  await vi.advanceTimersByTimeAsync(1);
+  expect(f.lock).not.toHaveBeenCalled();
+  expect(f.expire).not.toHaveBeenCalled();
+  f.read.mockRejectedValueOnce({ status: 401 });
+  await vi.advanceTimersByTimeAsync(599_999);
+  expect(f.lock).toHaveBeenCalled();
+  expect(f.expire).toHaveBeenCalledOnce();
+  f.controller.stop();
+});
+
+it("preserves terminal expiry and its recovery action during later restoration", async () => {
+  const f = fixture();
+  await f.controller.start();
+  f.read.mockRejectedValueOnce({ status: 401 });
+  await vi.advanceTimersByTimeAsync(600_000);
+  expect(f.expire).toHaveBeenCalledOnce();
+  f.lock.mockClear();
+  await f.controller.reconcile(false);
+  expect(f.lock).not.toHaveBeenCalled();
+  expect(f.read).toHaveBeenCalledTimes(2);
+  f.controller.stop();
+});
+
+it("catches up an activity hint received while an older deadline read is pending", async () => {
+  const f = fixture();
+  await f.controller.start();
+  await vi.advanceTimersByTimeAsync(599_900);
+  let resolveOld:
+    ((value: { expiresAt: string; serverTime: string }) => void) | undefined;
+  f.read.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveOld = resolve;
+      }),
+  );
+  f.read.mockResolvedValueOnce({
+    expiresAt: new Date(1_199_950).toISOString(),
+    serverTime: new Date(600_050).toISOString(),
+  });
+  const pending = f.controller.reconcile(false);
+  await vi.advanceTimersByTimeAsync(50);
+  const hint = f.controller.reconcile(false);
+  await vi.advanceTimersByTimeAsync(100);
+  resolveOld?.({
+    expiresAt: new Date(600_000).toISOString(),
+    serverTime: new Date(599_900).toISOString(),
+  });
+  await pending;
+  await hint;
+  expect(f.read).toHaveBeenCalledTimes(3);
+  expect(f.expire).not.toHaveBeenCalled();
   f.controller.stop();
 });

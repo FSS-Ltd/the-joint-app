@@ -43,7 +43,7 @@
 
 **Files:** Focused idle-session controller/hook and protected-content boundary; identity lifecycle and Clerk auth entry; synthetic unit/browser fixtures and existing progress record.
 
-**Interfaces:** Consume the Task 1 session response. One deadline timer; trusted input coalesces at most one activity request per five seconds, with a trailing request only when new input exists. Startup, visibility restore, reconnect and cross-tab signals perform bounded authenticated reconciliation.
+**Interfaces:** Consume the Task 1 session response. One deadline timer; trusted input coalesces at most one activity request per five seconds per protected page instance, with a trailing request only when new input exists. Startup, visibility restore, reconnect and cross-tab signals perform bounded authenticated reconciliation.
 
 - [x] Write failing timer/browser tests for passive inactivity, active use, multi-tab reconciliation, expiry clearing, cleanup failure, BFCache and fresh sign-in.
 - [x] Observe RED, implement, and verify GREEN. Exclude public auth/task/deletion-receipt pages from the protected boundary.

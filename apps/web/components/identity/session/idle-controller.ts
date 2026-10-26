@@ -1,3 +1,4 @@
+import { isRetryableStatusError } from "../../events/status-subscription";
 import type { SessionDeadline } from "@joint/contracts";
 
 type Operations = {
@@ -20,6 +21,7 @@ export class IdleSessionController {
   private inputTimer: ReturnType<typeof setTimeout> | undefined;
   private pending: Promise<void> | undefined;
   private expired = false;
+  private reconciliationPending = false;
 
   constructor(private readonly operations: Operations) {}
 
@@ -32,7 +34,12 @@ export class IdleSessionController {
     clearTimeout(this.inputTimer);
   }
   reconcile(hide = true): Promise<void> {
+    if (this.expired || this.abort.signal.aborted) return Promise.resolve();
     if (hide || Date.now() >= this.deadline) this.operations.lock();
+    if (this.pending) {
+      this.reconciliationPending = true;
+      return this.pending;
+    }
     return this.perform(() => this.operations.read(this.abort.signal));
   }
   interact(): void {
@@ -86,8 +93,13 @@ export class IdleSessionController {
     const started = Date.now();
     this.pending = (async () => {
       try {
-        const result = await operation();
+        const result = await Promise.resolve().then(operation);
         if (this.abort.signal.aborted || this.expired) return;
+        if (this.reconciliationPending) {
+          if (activity) this.operations.changed();
+          if (Date.now() >= this.deadline) this.operations.lock();
+          return;
+        }
         const remaining =
           Date.parse(result.expiresAt) - Date.parse(result.serverTime);
         // Deduct the whole request duration, conservatively accounting for transit.
@@ -104,6 +116,17 @@ export class IdleSessionController {
         if (activity) this.operations.changed();
       } catch (error) {
         if (this.abort.signal.aborted) return;
+        if (this.reconciliationPending) {
+          this.operations.lock();
+          return;
+        }
+        if (isRetryableStatusError(error) && Date.now() < this.deadline) {
+          // A failed keep-alive cannot extend or revoke the last verified window.
+          this.operations.ready();
+          return;
+        }
+        this.deadline = 0;
+        clearTimeout(this.expiryTimer);
         this.operations.lock();
         if (
           typeof error === "object" &&
@@ -115,6 +138,10 @@ export class IdleSessionController {
         else this.operations.unavailable();
       } finally {
         this.pending = undefined;
+        if (this.reconciliationPending) {
+          this.reconciliationPending = false;
+          await this.reconcile(false);
+        }
       }
     })();
     return this.pending;
