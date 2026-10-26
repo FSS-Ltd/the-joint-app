@@ -13,6 +13,11 @@ import {
 
 test.use({ serviceWorkers: "block" });
 
+test.beforeEach(async ({ page }) => {
+  // Session and stream timers must start in the same clock domain.
+  await page.clock.install();
+});
+
 async function exhaustRetries(
   page: Page,
   initialClosed: number,
@@ -39,7 +44,6 @@ test("manual retry preserves opaque import choices after transient retries exhau
     .getByRole("group", { name: "Decision for row 2", exact: true })
     .getByRole("radio", { name: "Keep", exact: true });
   await keep.check();
-  await page.clock.install();
   const baseline = (await statusSignalCounts(page))?.closed ?? 0;
   fixture.fail(true);
   await emitStatusSignal(page, "change");
@@ -96,7 +100,6 @@ for (const [status, archive] of [
     });
     await page.goto(archive ? "/archive" : "/settings/privacy");
     await page.getByRole("checkbox", { name: /Everyday account/ }).check();
-    await page.clock.install();
     await page
       .getByRole("button", { name: "Request CSV export", exact: true })
       .click();
