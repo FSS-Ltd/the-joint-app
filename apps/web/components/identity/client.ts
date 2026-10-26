@@ -68,7 +68,12 @@ export async function request<T>(
   try {
     const headers: Record<string, string> = {};
     if (body !== undefined) {
-      const csrf = await request<{ csrfToken: string }>("/api/auth/csrf");
+      const csrf = await request<{ csrfToken: string }>(
+        "/api/auth/csrf",
+        undefined,
+        undefined,
+        { signal: options.signal },
+      );
       headers["Content-Type"] = "application/json";
       headers["X-CSRF-Token"] = csrf.csrfToken;
       if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;

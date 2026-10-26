@@ -409,3 +409,78 @@ it("removing an authenticator during recovery cannot bypass an already establish
   });
   expect(response.status).toBe(403);
 });
+
+it("expires idle Clerk sessions despite valid provider credentials and rejects late activity", async () => {
+  const person = fixture.account();
+  const initial = meResponseSchema.parse(
+    await (await me(person.userId, person.sessionId)).json(),
+  );
+  const registry = await owner.sessionRegistry.findFirstOrThrow({
+    where: { userId: initial.user.id },
+  });
+  const token = await fixture.token(person.userId, person.sessionId);
+  const headers = {
+    Authorization: "Bearer " + token,
+    "Content-Type": "application/json",
+  };
+  const activity = (body: unknown) =>
+    fetch(origin + "/v1/auth/session", {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    });
+  expect(
+    (await activity({ activityAgeMs: 0, sessionId: randomUUID() })).status,
+  ).toBe(400);
+  const before = await owner.sessionRegistry.findUniqueOrThrow({
+    where: { id: registry.id },
+  });
+  expect((await fetch(origin + "/v1/auth/session", { headers })).status).toBe(
+    200,
+  );
+  expect(
+    (
+      await owner.sessionRegistry.findUniqueOrThrow({
+        where: { id: registry.id },
+      })
+    ).lastSeenAt,
+  ).toEqual(before.lastSeenAt);
+  expect((await activity({ activityAgeMs: 0 })).status).toBe(200);
+  await owner.sessionRegistry.update({
+    where: { id: registry.id },
+    data: { lastSeenAt: new Date(Date.now() - 601_000) },
+  });
+  expect((await me(person.userId, person.sessionId)).status).toBe(401);
+  expect((await activity({ activityAgeMs: 0 })).status).toBe(401);
+  expect(
+    (
+      await fetch(origin + "/v1/auth/logout", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ scope: "local" }),
+      })
+    ).status,
+  ).toBe(200);
+});
+
+it("session activity preserves a shortened provider session cap", async () => {
+  const person = fixture.account();
+  await me(person.userId, person.sessionId);
+  const providerSession = fixture.sessions.get(person.sessionId);
+  if (!providerSession) throw new Error("Missing synthetic session");
+  providerSession.expiresAt = Date.now() + 30_000;
+  const response = await fetch(origin + "/v1/auth/session", {
+    method: "POST",
+    headers: {
+      Authorization:
+        "Bearer " + (await fixture.token(person.userId, person.sessionId)),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ activityAgeMs: 0 }),
+  });
+  expect(response.status).toBe(200);
+  const body = await response.json();
+  expect(Date.parse(body.expiresAt)).toBeLessThanOrEqual(
+    providerSession.expiresAt,
+  );
+});

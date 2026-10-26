@@ -1,3 +1,4 @@
+import { sessionActivityFixture } from "../fixtures/session-activity.js";
 import { expect, test } from "@playwright/test";
 import type { MeResponse } from "../../packages/contracts/dist/index.js";
 
@@ -24,6 +25,7 @@ test.beforeEach(async ({ page }) => {
       json: { error: { code: "UNAVAILABLE", message: "Synthetic outage" } },
     }),
   );
+  await sessionActivityFixture(page);
   await page.route("**/api/me", (route) => route.fulfill({ json: identity }));
 });
 

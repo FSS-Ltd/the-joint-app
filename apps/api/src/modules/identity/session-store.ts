@@ -1,3 +1,4 @@
+import { sessionDeadline } from "./session-activity.js";
 import {
   ServiceUnavailableException,
   UnauthorizedException,
@@ -110,6 +111,7 @@ export class SessionStore {
         )
           return revoked;
         if (!row.providerTokens || !row.providerExpiresAt) return revoked;
+        const deadline = await sessionDeadline(transaction, id);
         let tokens: ProviderTokens;
         try {
           tokens = providerTokensSchema.parse(
@@ -162,7 +164,7 @@ export class SessionStore {
             principal,
             user,
             tokens,
-            expiresAt: row.expiresAt,
+            expiresAt: new Date(deadline.expiresAt),
             purpose: row.purpose,
             transaction,
             saveTokens: async (session) => {

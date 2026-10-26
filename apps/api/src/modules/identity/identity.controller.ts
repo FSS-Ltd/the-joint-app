@@ -13,6 +13,7 @@ import {
   type Type,
 } from "@nestjs/common";
 import {
+  sessionActivitySchema,
   acceptInviteSchema,
   emptyObjectSchema,
   householdCreateSchema,
@@ -91,6 +92,24 @@ export function createIdentityController(
     @Header("Cache-Control", "no-store")
     me(@Headers("authorization") authorization: string | undefined) {
       return identity().me(readIdentityToken(authorization));
+    }
+    @Get("auth/session")
+    @Header("Cache-Control", "no-store")
+    session(@Headers("authorization") authorization: string | undefined) {
+      return identity().session(readIdentityToken(authorization));
+    }
+    @Post("auth/session")
+    @HttpCode(200)
+    @Header("Cache-Control", "no-store")
+    activity(
+      @Body() body: unknown,
+      @Headers("authorization") authorization: string | undefined,
+    ) {
+      const value = validate(sessionActivitySchema, body);
+      return identity().session(
+        readIdentityToken(authorization),
+        value.activityAgeMs,
+      );
     }
     @Post("auth/password")
     @HttpCode(200)

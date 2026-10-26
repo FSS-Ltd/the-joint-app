@@ -24,6 +24,10 @@ The CSV-first MVP does not implement a live broker connector. Provider-specific 
 
 Supplier procurement evidence remains required before the future live-bank implementation/activation, not before generic/manual MVP development. Child profiles are also post-MVP. Only implemented capabilities may be sold or advertised; bank-refresh pricing and entitlement limits remain future hypotheses.
 
+## Statement conversion MVP amendment — 26 October 2026
+
+Add [STMT1 — local statement-to-CSV conversion](../decisions/statement-to-csv-converter.md) near the end of the founder MVP, before final rehearsal/acceptance. PDF statements, including a verified scanned-PDF/OCR route, must support reviewed and corrected extraction into the existing account-scoped CSV import workflow. Preserve exact financial values, privacy, permissions, duplicate review and source provenance. Bank-format coverage is verified rather than universally promised. This is accepted scope, not an implemented feature or approval to upload statements to an external service.
+
 ## 1. Executive summary
 
 The Joint App brings spending, debts, savings, investments and children's assets into one permission-aware household view. It answers: Where did our money go? What do we own and owe? What have we put aside? When could we reach a goal if these assumptions hold? What spending changes would alter that date?
@@ -106,7 +110,7 @@ Joint legal ownership is distinct from household UI sharing. Two provider connec
 | R01 | Identity and household   | Two individual accounts, explicit invitation/acceptance, owner-safe exit and deletion                                                                        |
 | R02 | Direct banks             | One approved UK provider, real consent journey, accurate booked transactions, revocation and reconnection                                                    |
 | R03 | Investments              | Read-only supported brokerage balances, cash and holdings; Trading 212 permission gate                                                                       |
-| R04 | Imports                  | CSV preview, mapping, duplicate review, rollback and provenance                                                                                              |
+| R04 | Imports                  | CSV preview, mapping, duplicate review, rollback and provenance; reviewed statement-to-CSV conversion before founder acceptance                              |
 | R05 | Spending                 | Calendar-month categories, trends, recurring-payment candidates, corrected classifications                                                                   |
 | R06 | Budgets                  | Monthly category caps, remaining countdown, accessible limit/overspend feedback, qualified savings impact and month-end encouragement; incomplete-data state |
 | R07 | Net worth                | Assets less liabilities, account-level freshness, no double counting                                                                                         |

@@ -3,6 +3,7 @@ import { readEnvironment, webEnvironmentSchema } from "@joint/contracts";
 import { BffError } from "./responses";
 
 type Path =
+  | "/v1/auth/session"
   | "/v1/auth/signup"
   | "/v1/auth/login"
   | "/v1/auth/verify"
@@ -28,7 +29,7 @@ type Path =
   | `/v1/households/${string}/budgets/${string}`
   | `/v1/households/${string}/transfers/${string}`;
 const allowedPath =
-  /^\/v1\/(?:auth\/(?:signup|login|verify|recovery|password|logout(?:\/retry)?|link-legacy|mfa\/(?:enroll|verify))|me|households(?:\/[0-9a-f-]{36}\/(?:invitations|accounts(?:\/[0-9a-f-]{36}(?:\/(?:valuations|coverage\/\d{4}-\d{2}|grants\/[0-9a-f-]{36}))?)?|imports(?:\/(?:inspect|preview|[0-9a-f-]{36}(?:\/(?:rows|review|commit|original))?))?|reports\/spending|categories|budgets\/\d{4}-\d{2}|transfers\/(?:confirm|[0-9a-f-]{36})|transactions(?:\/[0-9a-f-]{36}(?:\/(?:annotation|splits))?)?))?|invitations\/accept)$/i;
+  /^\/v1\/(?:auth\/(?:session|signup|login|verify|recovery|password|logout(?:\/retry)?|link-legacy|mfa\/(?:enroll|verify))|me|households(?:\/[0-9a-f-]{36}\/(?:invitations|accounts(?:\/[0-9a-f-]{36}(?:\/(?:valuations|coverage\/\d{4}-\d{2}|grants\/[0-9a-f-]{36}))?)?|imports(?:\/(?:inspect|preview|[0-9a-f-]{36}(?:\/(?:rows|review|commit|original))?))?|reports\/spending|categories|budgets\/\d{4}-\d{2}|transfers\/(?:confirm|[0-9a-f-]{36})|transactions(?:\/[0-9a-f-]{36}(?:\/(?:annotation|splits))?)?))?|invitations\/accept)$/i;
 const safeErrors: Record<string, string> = {
   INVALID_SCOPE: "Choose between one and fifty available accounts.",
   SCOPE_SELECTION_REQUIRED: "Choose up to fifty accounts for this report.",

@@ -1,3 +1,5 @@
+import { sessionDeadline } from "../session-activity.js";
+import type { SessionDeadline } from "@joint/contracts";
 import { ClerkSessionRejected } from "./rejected-session.js";
 import {
   ForbiddenException,
@@ -106,6 +108,27 @@ export class ClerkIdentityService implements IdentityAccess {
     return this.withIdentity(token, async (identity) => {
       requireMfa(identity);
       return identity.principal;
+    });
+  }
+  session(
+    token: string,
+    activityAgeMs: number | null = null,
+  ): Promise<SessionDeadline> {
+    return this.withIdentity(token, async (identity) => {
+      const deadline = await sessionDeadline(
+        identity.transaction,
+        identity.principal.sessionId,
+        activityAgeMs,
+      );
+      return {
+        ...deadline,
+        expiresAt: new Date(
+          Math.min(
+            Date.parse(deadline.expiresAt),
+            identity.credential.sessionExpiresAt,
+          ),
+        ).toISOString(),
+      };
     });
   }
   subscriptionExpiry(token: string): Promise<number> {

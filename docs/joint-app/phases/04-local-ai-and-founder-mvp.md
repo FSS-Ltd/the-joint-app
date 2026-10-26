@@ -110,6 +110,15 @@ pnpm run verify:phase04
 
 `doctor` checks loopback/local-only configuration and pinned model availability. `evaluate` uses the committed manifest and fixture set. `verify:phase04` includes type/build/OpenAPI checks, expiry cleanup and migration validation. These are project scripts to implement, not claims that the current workspace already supplies them.
 
+### Additional delivery unit — STMT1 statement conversion
+
+Founder scope amendment, 26 October 2026: deliver [STMT1](../../decisions/statement-to-csv-converter.md) after the core features above and before Task E/final acceptance. Preserve existing phase/task numbering. This is a separate late-MVP build unit, not part of AUTH3 or an already-complete phase.
+
+- [ ] Implement local PDF-to-CSV extraction and a verified scanned-PDF/OCR path with explicit supported-layout feedback.
+- [ ] Require accessible preview, correction and confirmation of exact dates, descriptions, debit/credit amounts and currency before generating CSV or handing off to the existing account-scoped importer.
+- [ ] Verify privacy, bounds/cancellation, source provenance, balance/total reconciliation where available, and duplicate/permission behavior using synthetic statements. No external AI upload, server retention of original PDFs or paid extraction by default.
+- [ ] Complete local verification, independent review, current-revision CI and verified merge before founder acceptance can count the converter as delivered.
+
 ## 6. Task E — One-month founder rehearsal
 
 Create `docs/runbooks/founder-monthly-review.md` and a redacted acceptance record containing checks and opaque references, not bank data or prompts.

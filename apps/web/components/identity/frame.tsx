@@ -15,18 +15,22 @@ export function IdentityFrame({
   description,
   children,
   navigation,
+  idPrefix = "",
 }: {
   eyebrow: string;
   title: string;
   description: string;
   children: ReactNode;
   navigation?: AppDestination;
+  idPrefix?: string;
 }): ReactNode {
+  const mainId = idPrefix ? `${idPrefix}-main` : "main";
+  const titleId = idPrefix ? `${idPrefix}-page-title` : "page-title";
   return (
     <div
       className={`identity-shell identity-screen${navigation ? " has-app-navigation" : ""}`}
     >
-      <a className="skip-link" href="#main">
+      <a className="skip-link" href={`#${mainId}`}>
         Skip to content
       </a>
       <header className="identity-header">
@@ -34,10 +38,10 @@ export function IdentityFrame({
         <span className="environment-label">Local development</span>
       </header>
       {navigation && <AppNavigation active={navigation} />}
-      <main className="identity-main" id="main">
-        <section className="identity-intro" aria-labelledby="page-title">
+      <main className="identity-main" id={mainId}>
+        <section className="identity-intro" aria-labelledby={titleId}>
           <p className="eyebrow">{eyebrow}</p>
-          <h1 id="page-title">{title}</h1>
+          <h1 id={titleId}>{title}</h1>
           <p className="identity-description">{description}</p>
           <div className="together-note">
             <span aria-hidden="true">↗</span>

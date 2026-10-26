@@ -1,5 +1,7 @@
 "use client";
 
+import { ProtectedSession } from "./session/boundary";
+
 import {
   useCallback,
   useEffect,
@@ -75,7 +77,7 @@ export function JoinHousehold(): ReactNode {
       setPending(false);
     }
   }
-  return (
+  const content = (
     <IdentityFrame
       eyebrow="An invitation to together"
       title="There's a place for you."
@@ -164,4 +166,5 @@ export function JoinHousehold(): ReactNode {
       </section>
     </IdentityFrame>
   );
+  return identity ? <ProtectedSession>{content}</ProtectedSession> : content;
 }

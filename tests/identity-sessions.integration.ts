@@ -167,6 +167,37 @@ it("reports provider JWKS HTTP 503 as retryable rather than an invalid identity"
     await outage.close();
   }
 });
+it("keeps passive local reads idle and denies expired activity", async () => {
+  const before = await database.sessionRegistry.findUniqueOrThrow({
+    where: { id: sessionId },
+  });
+  const expiry = await store.withSession(
+    browserToken,
+    async (identity) => identity.expiresAt,
+  );
+  expect(expiry.getTime()).toBe(before.lastSeenAt.getTime() + 600_000);
+  expect(
+    (
+      await database.sessionRegistry.findUniqueOrThrow({
+        where: { id: sessionId },
+      })
+    ).lastSeenAt,
+  ).toEqual(before.lastSeenAt);
+  await fixtureOwner.sessionRegistry.update({
+    where: { id: sessionId },
+    data: { lastSeenAt: new Date(Date.now() - 601_000) },
+  });
+  try {
+    await expect(
+      store.withSession(browserToken, async () => true),
+    ).rejects.toMatchObject({ status: 401 });
+  } finally {
+    await fixtureOwner.sessionRegistry.update({
+      where: { id: sessionId },
+      data: { lastSeenAt: before.lastSeenAt },
+    });
+  }
+});
 it("denies a disabled user and a revoked session despite an unexpired signed JWT", async () => {
   await database.user.update({
     where: { id: user.id },

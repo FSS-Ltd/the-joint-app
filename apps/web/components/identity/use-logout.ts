@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAuthRuntime } from "./auth-runtime";
-import { errorMessage, request } from "./client";
+import { errorMessage, request, RequestError } from "./client";
 
 export function useLogout(resumeCleanup = false) {
   const { finishSignOut } = useAuthRuntime();
@@ -15,7 +15,12 @@ export function useLogout(resumeCleanup = false) {
     setProviderPending(remotePending);
     try {
       await finishSignOut();
-      if (!remotePending) window.location.assign("/sign-in");
+      if (!remotePending)
+        window.location.assign(
+          window.location.pathname === "/archive"
+            ? "/sign-in?next=archive"
+            : "/sign-in",
+        );
     } catch {
       setError(
         "App access has ended. Browser sign-out could not finish. Retry below.",
@@ -35,8 +40,14 @@ export function useLogout(resumeCleanup = false) {
       );
       await finish(result.providerCleanupPending === true);
     } catch (cause) {
-      setError(errorMessage(cause));
-      setPending(false);
+      if (cause instanceof RequestError && cause.status === 401) {
+        // Access already ended (including another tab's logout). Still clear
+        // the browser provider session before presenting fresh sign-in.
+        await finish(false);
+      } else {
+        setError(errorMessage(cause));
+        setPending(false);
+      }
     }
   }
   async function retry() {

@@ -356,3 +356,72 @@ test("revalidated source rows keep opaque choices and disable writes until reads
     page.getByRole("button", { name: "Save row choices", exact: true }),
   ).toBeEnabled();
 });
+
+test("transient activity failure preserves opaque import choices within the live session deadline", async ({
+  page,
+}) => {
+  await importWorkspaceFixture(page);
+  await page.route("**/api/auth/session", (route) =>
+    route.request().method() === "POST"
+      ? route.fulfill({
+          status: 503,
+          json: { error: { message: "Synthetic activity outage" } },
+        })
+      : route.fallback(),
+  );
+  await page.goto(`/imports/${importBatch.id}`);
+  const keep = page
+    .getByRole("group", { name: "Decision for row 2", exact: true })
+    .getByRole("radio", { name: "Keep", exact: true });
+  const activity = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/api/auth/session" &&
+      response.request().method() === "POST",
+  );
+  await keep.check();
+  expect((await activity).status()).toBe(503);
+  await page.waitForTimeout(150);
+  await expect(keep).toBeChecked();
+  await expect(
+    page.getByRole("button", { name: "Retry session check" }),
+  ).toHaveCount(0);
+});
+
+test("successful activity reconciliation in a hidden tab retains its opaque import draft", async ({
+  page,
+}) => {
+  await importWorkspaceFixture(page);
+  await page.goto(`/imports/${importBatch.id}`);
+  const keep = page
+    .getByRole("group", { name: "Decision for row 2", exact: true })
+    .getByRole("radio", { name: "Keep", exact: true });
+  await keep.check();
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => "hidden",
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  const checked = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/api/auth/session" &&
+      response.request().method() === "GET",
+  );
+  await page.evaluate(() => {
+    const channel = new BroadcastChannel("joint-session-activity");
+    channel.postMessage("ACTIVITY_COMMITTED");
+    channel.close();
+  });
+  expect((await checked).status()).toBe(200);
+  await page.waitForTimeout(150);
+  await expect(page.locator("#main")).toHaveCount(1);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => "visible",
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await expect(keep).toBeChecked();
+});
