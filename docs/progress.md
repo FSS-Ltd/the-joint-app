@@ -760,3 +760,20 @@ No personal database migration or service restart occurred; the ignored local
 database client was regenerated during validation. Atomic writers, exit/deletion
 callbacks, restore proof and API remain in progress. No3C.5 PR or completed-step
 claim yet; no subsequent unit or deployment.
+
+3C.5 Task2 persistence checkpoint: all307 integration cases across68 files and
+407 unit cases across67 files pass. Narrow SQL writes serialize capacity/plan
+changes, validate schedules independently and preserve over-budget intent.
+Goal metadata advances the shared revision; exit ceilings, real deletion and
+signed restore preserve only justified history and exact frozen timestamps.
+Committed empty hints pass with silent reads, rollbacks and unchanged writes;
+53-event catch-up uses bounded history. Fifty active plans are admitted, the
+fifty-first is rejected atomically, and archival frees one slot.
+
+The owned populated pre030 upgrade preserves exact legacy contribution steps,
+goals, account balances/owners and identity/session rows. New provenance remains
+null, with no invented budget/participants/history. All92 migrations deploy;
+eight builds, sixteen package build/type tasks, strict test types, lint and
+formatting pass in the secret-free copy. No new dependency, personal migration,
+service restart or deployment. Native completion rerun, API/replay/exports,
+browser verification, independent final review and PR/CI/merge remain pending.

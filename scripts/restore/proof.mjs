@@ -1,4 +1,5 @@
 import { verifyRestoredAllocations } from "./allocation-proof.mjs";
+import { verifyRestoredContributions } from "./contribution-proof.mjs";
 import { verifyRestoredFunding } from "./funding-proof.mjs";
 import { verifyRestoredGoals } from "./goal-proof.mjs";
 import { Buffer } from "node:buffer";
@@ -102,9 +103,17 @@ export async function verifyRestoredAccess(
     };
   }
   let allocationProof;
+  let contributionProof;
   let goalProof;
   let fundingProof;
   try {
+    contributionProof = await verifyRestoredContributions(
+      owner,
+      scoped,
+      archive,
+      freshContext,
+      fixture,
+    );
     fundingProof = await verifyRestoredFunding(
       owner,
       scoped,
@@ -214,6 +223,7 @@ export async function verifyRestoredAccess(
     await runtime.$disconnect();
   }
   return {
+    ...contributionProof,
     ...allocationProof,
     ...goalProof,
     ...fundingProof,
