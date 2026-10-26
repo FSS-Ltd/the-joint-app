@@ -93,7 +93,7 @@ export function useClerkAuthFlow(mode: AuthMode) {
     }
   }
   useEffect(() => {
-    if (resumed.current) return;
+    if (resumed.current || clerk.session) return;
     resumed.current = true;
     // Continue SDK attempts after Google callbacks without replaying a password or sending a code on every render.
     const current = mode === "sign-up" ? signUp : signIn;
@@ -104,12 +104,6 @@ export function useClerkAuthFlow(mode: AuthMode) {
   return {
     stage,
     hasExistingSession: Boolean(clerk.session),
-    signOutExisting: () =>
-      run(async () => {
-        if (clerk.session) await clerk.signOut({ sessionId: clerk.session.id });
-        announceSessionChange();
-        window.location.replace(continuation("/sign-in"));
-      }),
     pending: pending || signingIn === "fetching" || signingUp === "fetching",
     error,
     notice,

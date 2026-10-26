@@ -1,5 +1,10 @@
 export type AuthDestination =
-  "/join" | "/accounts" | "/household" | "/archive" | "/settings/privacy";
+  | "/join"
+  | "/accounts"
+  | "/household"
+  | "/archive"
+  | "/settings/privacy"
+  | "/dashboard";
 export type AuthTransition =
   | "/sign-in"
   | "/sign-up"
@@ -11,15 +16,17 @@ export type AuthTransition =
 
 export function readAuthDestination(search: string): AuthDestination {
   const next = new URLSearchParams(search).get("next");
-  return next === "archive"
-    ? "/archive"
-    : next === "privacy"
-      ? "/settings/privacy"
-      : next === "join"
-        ? "/join"
-        : next === "accounts"
-          ? "/accounts"
-          : "/household";
+  return next === "dashboard"
+    ? "/dashboard"
+    : next === "archive"
+      ? "/archive"
+      : next === "privacy"
+        ? "/settings/privacy"
+        : next === "join"
+          ? "/join"
+          : next === "accounts"
+            ? "/accounts"
+            : "/household";
 }
 /** Carry only the existing destination allowlist, never provider codes or arbitrary redirects. */
 export function authContinuation(path: AuthTransition, search: string): string {

@@ -1,11 +1,14 @@
 .surface {
   background: var(--panel-glass);
+  background-image: var(--glass-highlight);
   border-radius: var(--radius-card);
   backdrop-filter: var(--glass-blur);
   box-shadow:
     inset 0 1px 0 #ffffffb3,
-    0 8px 24px #10281f0d;
-  border: 1px solid #e8ece5;
+    inset 0 -1px 0 #203b320d,
+    0 12px 32px #10281f18;
+  border: 1px solid #ffffffbf;
+  border-bottom-color: #d3ddd4;
 }
 .form-card {
   padding: 32px;

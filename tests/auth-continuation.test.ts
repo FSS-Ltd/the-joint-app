@@ -4,7 +4,7 @@ import {
   readAuthDestination,
 } from "../apps/web/lib/auth-continuation.js";
 
-it.each(["archive", "privacy", "join", "accounts"])(
+it.each(["archive", "privacy", "join", "accounts", "dashboard"])(
   "retains the allowlisted %s destination across every authentication transition",
   (next) => {
     for (const path of [
