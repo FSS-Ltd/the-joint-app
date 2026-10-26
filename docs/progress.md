@@ -690,3 +690,13 @@ checked after reads too. Independent whole-branch review and the current-head
 PR/CI/test-merge/host-merge gate remain pending. This is not Phase 3 completion.
 No allocation migration or service restart has touched the personal development
 stack; no deployment, hosted database, tunnel or paid service was introduced.
+
+3C.4 independent review of `6e12e90..098266a` read all 46 changed files and found
+zero Critical, Important or Minor issues. It independently reran 31 contract and
+arithmetic cases under Node 22.23.3 and confirmed the supplied full verification
+logs. No second review or code correction was needed. Accepted scope limits:
+allocation UI/subscription registration remains Task E; active JSON export pages
+are current authorized views, not a frozen multi-request snapshot; there is no
+public source-archive action outside supported household exit; contributions,
+projections, direct providers, FX and deployment remain later gates. PR/CI/merge
+are still pending, so 3C.4 and Phase 3 are not marked complete.

@@ -1,6 +1,6 @@
 # Goal allocations — Task 3C.4
 
-Implementation is locally verified; independent review and PR delivery remain.
+Implementation is locally verified and independently reviewed; PR delivery remains.
 The build unit is not complete until its
 own PR passes current CI and is host-confirmed merged. Nothing is deployed.
 
@@ -21,7 +21,9 @@ Reads and exports require `accountIds`, a comma-separated selection of one to
 fifty distinct UUIDs. An optional opaque `cursor` continues history. Undeclared
 query fields, duplicate IDs and malformed cursors are rejected. UUID case and
 selection order are normalized. Each page contains at most fifty revisions.
-Cursors bind the actor, session, active/archive mode, active membership/grant
+Active export pages each reflect their current authorized view and calculation time;
+concurrent writes may add later history. They are not a frozen multi-request
+snapshot. Cursors bind the actor, session, active/archive mode, active membership/grant
 version, goal and complete source selection; they never confer access.
 
 Active access requires current source ownership and existing goal participation.

@@ -30,7 +30,7 @@
 
 ## Whole-branch delivery gate
 
-- [ ] Obtain one fresh whole-branch review. Resolve material findings with RED/GREEN and current green suites; record all rulings and deferred minors without a second review loop.
+- [x] Obtain one fresh whole-branch review. Resolve material findings with RED/GREEN and current green suites; record all rulings and deferred minors without a second review loop.
 - [ ] Push/open own PR and attach it. Verify final-head/actual-test-merge CI, required reviews/protections and authorized host merge; record exact evidence and refresh main before contributions or other later work.
 
 ### Task 1: Contracts and private storage
