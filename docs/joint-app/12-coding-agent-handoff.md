@@ -1,5 +1,9 @@
 # The Joint App — Coding Agent Handoff
 
+## iOS-only amendment — 2 November 2026
+
+The [iOS-only product amendment](../decisions/ios-only-product.md) and [ordered delivery plan](../superpowers/plans/2026-11-02-ios-only-delivery.md) supersede historical web-first household UI, Android delivery and Supabase-native identity instructions below. Household features now target Expo React Native iOS; web houses marketing, subscriptions/account recovery and separately authorized staff analytics. Keep existing financial/privacy/local-AI/statement gates. No app-wide WebView, deployment or paid service is authorized. Expo push notifications are the selected notification service; defer device credentials until needed. Use CI/CD and Xcode for iOS builds/release preparation; Android Studio is reserved for any separately approved Android scope. The founder gives final approval before any App Store review submission. Do not submit automatically or provision EAS cloud builds. Consult the Oasis app build reference before release configuration.
+
 > **Current execution order, 23 October 2026:** The CSV-first baseline follows Phase 0 → Phase 1 → Phase 3 from manual/imported evidence → Phase 4 → Phase 5. Phase 2 bank/direct-source work and child profiles are deferred; live-source prerequisites below do not block the manual MVP. Retain source activation gates, local-AI/security/device requirements and the per-step PR/CI/merge gate. See [release scope](../decisions/release-scope.md).
 
 Use this document when handing the plan to Codex, Claude Code or another implementation agent. The deliverable in this folder is documentation; it does not imply an existing application or authorised external deployment.
