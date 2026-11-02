@@ -883,3 +883,39 @@ Security dependency audit is not clean: zero critical, one high, two moderate an
 IOS1 targeted re-review at `3adc5b9`: Code Reviewer passes spec compliance and code quality, both touch and Google-source findings addressed. Application Security Engineer independently re-ran merged permission assertions and confirms the storage finding addressed, with no remaining material IOS1 security blocker. Prior dependency audit and device/release limits remain disclosed. Final local relative-link review covers thirteen changed Markdown files with zero missing targets; all thirty-one changed tracked paths exclude private/generated environment files. Current unit is ready for PR; no merge or IOS2 work yet.
 
 IOS1 PR: https://github.com/FSS-Ltd/the-joint-app/pull/36. Initial publication head: `4ec4687`. State: PR open; Foundation checks and Native bundle checks must pass on the final revision. Reviewed implementation/fix head: `3adc5b9`; subsequent changes record evidence only. This progress update creates a new checked head; do not reuse earlier CI. Actual merge remains pending. No IOS2 implementation, production build, push setup or store submission has started.
+
+## IOS2 — Native identity, session lock and household onboarding
+
+Predecessor IOS1 [PR #36](https://github.com/FSS-Ltd/the-joint-app/pull/36) is host-verified merged at `974208e118478ce41bd82b85e05c77eff5eee2ef` on 2 November 2026. Final head `c154cd669e602c80e53fb30b912f6982275d4eba` and checked test merge `cf562c885f3fabab28801f99393aee96c4314ff4` passed [CI run 41538262010](https://github.com/FSS-Ltd/the-joint-app/actions/runs/41538262010). Foundation checks passed formatting/lint, builds, types, 407 unit tests, 322 database integrations and 181 browser tests. Native bundle checks passed frozen install, native types, dependency checks, Expo Doctor (20/20) and both platform exports. All applicable steps succeeded. Checkout logs in both jobs identify the same tested merge; its parents match the final base/head.
+
+Fresh host checks found no required approvals or unresolved review threads. Normal protected merge used standing founder authority with an exact-head condition; no bypass or self-approval. This supersedes historical pending IOS1 entries. IOS1 source delivery is complete; its recorded Android runtime, full screen-reader, signed-binary and dependency-audit limitations remain future verification/maintenance work, not silently waived.
+
+Current branch: build/ios2-native-identity, based on the verified IOS1 merge. State: entry investigation and interface planning. Agents Orchestrator is reviewing existing Clerk/session and household seams read-only. Current scope remains iOS first with functional Android support. No IOS3 work, deployment, push provisioning or store submission. Next action: define the bounded native identity implementation brief using existing contracts, then implement and independently review IOS2 before its PR.
+
+IOS2 server checkpoint: the Identity & Access Engineer implemented an opt-in API-purpose session profile. Signature/issuer/time verification precedes strict profile selection; present malformed/foreign `azp` never falls back. Exact signed audience and purpose are required for configured origin-less API sessions. Existing provider, registry, MFA, idle and tenant authority remains. Schema/type names preserve the established web claims type and separate common session facts. No provider setting, migration or live account was changed. Design: [IOS2 identity](decisions/ios2-native-identity.md).
+
+Verification so far: full unit run passed 457 cases across 68 files; after a type-only naming correction, 92 focused cases and contracts/API/test-source types passed. Contracts/API builds, targeted lint/format and diff checks pass. An owned disposable PostgreSQL run passed 35 cases across five suites (API bearer, Clerk session/identity, session idle and households). Three legacy HTTP-auth cases failed before behavior execution because the PostgreSQL-only runner lacks loopback `SUPABASE_AUTH_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_TEST_ADMIN_KEY` fixtures. This is not a wholly green six-suite run. No assertion or timeout was weakened; full isolated legacy auth verification remains required. The runner verified its ownership label/name before removing its container, anonymous volume and scratch directory.
+
+IOS2 native implementation is now assigned to the Mobile App Builder profile, with mobile/runtime/UI ownership and justified shared pure auth/idle reuse across web and native. Backend and parent documentation ownership remain separate. It is in progress, not verified complete. Actual Native API status, audience/claim configuration, registered return identities and real provider/device evidence remain unverified inputs; prepare reviewable source/setup guidance before any required configuration approval. IOS2 has no PR yet. Independent whole-branch Code Reviewer and Application Security Engineer reviews, final local/CI checks and verified merge remain mandatory before IOS3.
+
+IOS2 verification update: the parent extended only its ignored, ownership-checked
+runner to provision a disposable loopback Auth gateway, provider database and
+synthetic Mailpit inbox using existing pinned images and fresh scratch keys.
+The same six integration suites then passed **38/38 tests across 6/6 files**,
+including all three legacy HTTP-auth cases. This supersedes the earlier missing
+fixture result; no assertion, deadline or production source was weakened.
+Cleanup independently found zero owned app/auth containers, auth volumes or
+scratch directories. Personal databases, private auth settings and unrelated
+services were not read or changed. Retained evidence is the ignored
+`ios2-server-integration-auth.log`.
+
+A read-only public Clerk environment probe returned HTTP 200 without a Native
+API disabled error. This does not establish successful signed-session admission;
+the server API bearer audience remains unset. No provider setting changed.
+CUA inspected the configured iOS Expo Go password sign-in/signup forms, empty
+email validation, password visibility and navigation without submitting real
+credentials. Parent feedback improved action hierarchy, field boundaries and
+error announcements. The loopback UI probe returns only 503 and provides no
+authentication authority. Real signed-session, TOTP, household and registered
+return acceptance, Android runtime and complete screen-reader checks remain
+unverified. IOS2 remains current, with no PR or next-unit implementation yet.

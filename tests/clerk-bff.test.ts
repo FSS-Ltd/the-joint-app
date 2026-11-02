@@ -17,6 +17,9 @@ it("requires explicit provider selection when Clerk settings are present", () =>
   expect(() => readAuthProvider({ AUTH_PROVIDER: "unknown" })).toThrow(
     "Invalid environment fields: AUTH_PROVIDER",
   );
+  expect(() =>
+    readAuthProvider({ CLERK_API_BEARER_AUDIENCE: "urn:joint:test-api" }),
+  ).toThrow("Invalid environment fields: AUTH_PROVIDER");
 });
 it("uses only the server SDK token source and produces the configured transport", async () => {
   const source = vi.fn(async () => "signed.synthetic.token");
@@ -58,6 +61,7 @@ afterEach(() => {
 });
 it("Clerk-mode writes still reject foreign origin or missing CSRF before looking up identity", async () => {
   vi.stubEnv("AUTH_PROVIDER", "clerk");
+  vi.stubEnv("CLERK_API_BEARER_AUDIENCE", "urn:joint:test-api");
   const fetcher = vi.fn();
   vi.stubGlobal("fetch", fetcher);
   for (const origin of [

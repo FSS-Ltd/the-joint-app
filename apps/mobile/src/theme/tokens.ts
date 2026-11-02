@@ -6,6 +6,7 @@ export const colors = {
   sage: "#DDE7DD",
   apricot: "#F0D6BC",
   secondary: "#52665C",
+  error: "#9C3838",
   border: "#CCD5CC",
 } as const;
 

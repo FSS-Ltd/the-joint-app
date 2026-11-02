@@ -26,16 +26,17 @@ Run apps separately with `pnpm --filter @joint/web dev`, `pnpm --filter @joint/a
 
 `pnpm auth:down` stops Auth and its inbox. `pnpm db:down` stops Compose services and preserves volumes. Do not delete volumes containing wanted data.
 
-## Native app (IOS1)
+## Native app (IOS2)
 
-`apps/mobile` is the iOS-first, Android-compatible Expo shell. It contains a
-no-data welcome screen and a native “How sharing works” information sheet. It
-uses no authentication, backend, financial values or personal data. It makes no
-runtime permission requests. The screen and sheet work offline once the app
-bundle is loaded.
+`apps/mobile` is the iOS-first, Android-compatible Expo application. It includes
+native Clerk identity, authenticator verification, secure session lifecycle and
+optional household setup. Missing public configuration fails closed. See
+[native setup and verification](apps/mobile/README.md) for exact inputs, provider
+prerequisites, return registration and runtime acceptance limits.
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm --filter @joint/identity-runtime... build
 pnpm --filter @joint/mobile start
 ```
 
@@ -78,7 +79,7 @@ Integration and browser tests require migrated local PostgreSQL and built packag
 
 ## Structure and delivery
 
-- apps/mobile: Expo Router native entry screen and universal native sharing sheet.
+- apps/mobile: Expo Router native identity, secure sessions and optional household setup.
 - apps/web: Next.js introduction, identity/household onboarding and mobile-first manual accounts.
 - apps/api: NestJS health, server-owned identity/session and household/invitation and private account/grant endpoints.
 - apps/worker: independent local process and bounded job runner with staged CSV publication.
