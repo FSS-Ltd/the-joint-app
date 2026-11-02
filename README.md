@@ -30,8 +30,9 @@ Run apps separately with `pnpm --filter @joint/web dev`, `pnpm --filter @joint/a
 
 `apps/mobile` is the iOS-first, Android-compatible Expo shell. It contains a
 no-data welcome screen and a native “How sharing works” information sheet. It
-uses no authentication, backend, financial values, device permissions or personal
-data, and the screen and sheet work offline once the app bundle is loaded.
+uses no authentication, backend, financial values or personal data. It makes no
+runtime permission requests. The screen and sheet work offline once the app
+bundle is loaded.
 
 ```sh
 pnpm install --frozen-lockfile

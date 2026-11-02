@@ -13,18 +13,17 @@ export function NativeAction({
   onPress,
 }: NativeActionProps): React.JSX.Element {
   return (
-    <Button
-      onPress={onPress}
-      variant="text"
-      style={{
-        width: "100%",
-        paddingVertical: spacing.medium,
-        paddingHorizontal: spacing.large,
-        borderRadius: corners.action,
-        backgroundColor: colors.action,
-      }}
-    >
-      <Row alignment="center">
+    <Button onPress={onPress} variant="text">
+      <Row
+        alignment="center"
+        style={{
+          width: "100%",
+          paddingVertical: spacing.medium,
+          paddingHorizontal: spacing.large,
+          borderRadius: corners.action,
+          backgroundColor: colors.action,
+        }}
+      >
         <Spacer flexible />
         <Text textStyle={{ color: colors.white, textAlign: "center" }}>
           {label}

@@ -30,7 +30,7 @@ Extract a typed transport only when the native client needs it. Preserve integer
 
 Web supports hosted Stripe Checkout and the customer portal. Native may access valid web-funded household benefits, but web-only purchase steering is not assumed compliant for paid iOS digital features. Retain StoreKit/RevenueCat purchase, restore and source-specific management before public paid release. Verify applicable storefront rules at implementation and release. Do not add a general UK external-checkout link inside iOS. Exact prices, benefits, signing identity, developer account and product configuration remain launch inputs, not invented defaults.
 
-One normalized server entitlement view covers Apple and Stripe identities. Webhooks commit durable idempotent events before notification; expiry/retry work runs when due. Reconcile at startup/reconnect and on provider events; any periodic safety reconciliation must document its exceptional reason, frequency and query budget. Duplicate funding never doubles household caps; refunds, cancellation, grace, downgrade and identity conflict preserve free privacy/export access.
+One normalized server entitlement view covers Apple, Google and Stripe identities. Webhooks commit durable idempotent events before notification; expiry/retry work runs when due. Reconcile at startup/reconnect and on provider events; any periodic safety reconciliation must document its exceptional reason, frequency and query budget. Duplicate funding never doubles household caps; refunds, cancellation, grace, downgrade and identity conflict preserve free privacy/export access.
 
 ## Staff analytics boundary and definitions
 
