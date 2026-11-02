@@ -89,3 +89,50 @@ Local identity infrastructure pins `supabase/gotrue:v2.197.0` (MIT), `postgres:1
 `@clerk/backend` **3.26.1** (MIT) is installed in the API for maintained session-token and webhook signature verification. `@clerk/nextjs` **7.9.19** (MIT) is installed in the web app for the official Next.js integration and Core 3 custom authentication flows. These SDKs are necessary for the approved Clerk provider migration; no alternate auth UI library or new cryptography dependency is introduced. Exact transitive dependencies are recorded in the frozen lockfile. The existing local Auth SDK/images remain available for synthetic fixtures and explicit legacy identity proof/cleanup. No hosted resource, production data-region guarantee, paid plan or deployment is included.
 
 Authenticator QR setup uses `qrcode` 1.5.4 and `@types/qrcode` 1.5.6. This encoder runs locally in the browser; no external QR service receives enrollment secrets. Both are exactly pinned in the lockfile.
+
+## IOS1 native shell dependencies
+
+Checked 2 November 2026 against official Expo documentation, the SDK 58 package's
+`bundledNativeModules.json`, exact npm metadata, installed package source/types,
+and local compatibility checks. The earlier native candidates above are
+superseded by these installed pins. Node 22.23.3, pnpm 10.6.5, TypeScript 6.0.3 and
+web React 19.3.1 are unchanged.
+
+| Dependency                     | Exact version | Reason                                                                                                                                                                          |
+| ------------------------------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| expo                           | 58.0.22       | Maintained native runtime and CLI; its engine accepts Node 22.23.3.                                                                                                             |
+| react-native                   | 0.88.1        | SDK 58's current native runtime pin, including the patch update from the earlier 0.88.0 proposal.                                                                               |
+| react                          | 19.3.0        | SDK 58's renderer-compatible React pin; isolated from the web app.                                                                                                              |
+| react-dom                      | 19.3.0        | Satisfies Expo's optional DOM peers locally, preventing pnpm from selecting web React DOM 19.3.1 against mobile React 19.3.0. No native web target or DOM screen is configured. |
+| @expo/ui                       | 58.0.26       | Universal SwiftUI/Jetpack Compose actions and native sharing sheet, hosted through `Host`.                                                                                      |
+| expo-router                    | 58.0.29       | File-based entry route and native stack shell.                                                                                                                                  |
+| @expo/metro-runtime            | 58.0.16       | Router runtime peer.                                                                                                                                                            |
+| expo-constants                 | 58.0.14       | Router's Expo configuration/runtime peer.                                                                                                                                       |
+| expo-linking                   | 58.0.15       | Router's native linking peer; no auth return flow is implemented.                                                                                                               |
+| expo-status-bar                | 58.0.4        | Legible native status bar on the forest screen.                                                                                                                                 |
+| react-native-safe-area-context | 5.10.1        | Native safe-area provider and content insets.                                                                                                                                   |
+| react-native-screens           | 4.30.1        | Router's native navigation screen implementation.                                                                                                                               |
+| react-native-worklets          | 0.13.0        | Pins Expo UI’s optional worklet runtime to the SDK’s native-compatible version, avoiding pnpm’s 0.13.1 peer selection.                                                          |
+| @types/react                   | 19.3.0        | React typings for strict native TypeScript.                                                                                                                                     |
+| expo-doctor                    | 1.21.5        | Pinned development/CI compatibility and configuration checks.                                                                                                                   |
+
+These packages report MIT licence metadata. The lockfile pins transitive packages;
+retain third-party notices when distributing a binary. No new licence is granted
+to repository source. No auth, data-fetching, analytics, push, cloud build or custom
+font dependency is added; no application animation runtime is configured. Native data remains absent in IOS1.
+
+The universal UI API was verified from the installed 58.0.26 `Host`, `Button`,
+`BottomSheet`, `ScrollView`, `Column`, `Text` and `RNHostView` source/types. React
+Native text is bridged inside the sheet for shared typography, Dynamic Type and
+accessibility headings; the sheet and actions use platform-native controls.
+Metro uses Expo's default monorepo configuration without React-wide overrides.
+
+Primary references:
+
+- [SDK 58 reference](https://docs.expo.dev/versions/v58.0.0/).
+- [Expo UI](https://docs.expo.dev/versions/latest/sdk/ui/).
+- [Router manual installation](https://docs.expo.dev/router/installation/).
+- [Expo monorepo support](https://docs.expo.dev/guides/monorepos/).
+- [Expo 58.0.22 registry metadata](https://registry.npmjs.org/expo/58.0.22).
+- [Expo UI 58.0.26 registry metadata](https://registry.npmjs.org/@expo%2fui/58.0.26).
+- [Router 58.0.29 registry metadata](https://registry.npmjs.org/expo-router/58.0.29).
