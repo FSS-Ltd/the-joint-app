@@ -26,6 +26,39 @@ Run apps separately with `pnpm --filter @joint/web dev`, `pnpm --filter @joint/a
 
 `pnpm auth:down` stops Auth and its inbox. `pnpm db:down` stops Compose services and preserves volumes. Do not delete volumes containing wanted data.
 
+## Native app (IOS1)
+
+`apps/mobile` is the iOS-first, Android-compatible Expo shell. It contains a
+no-data welcome screen and a native “How sharing works” information sheet. It
+uses no authentication, backend, financial values or personal data. It makes no
+runtime permission requests. The screen and sheet work offline once the app
+bundle is loaded.
+
+```sh
+pnpm install --frozen-lockfile
+pnpm --filter @joint/mobile start
+```
+
+This starts Metro on localhost port 8082. It does not open a browser or simulator.
+Use Expo Go for SDK 58 on an iOS simulator or Android emulator; press `i` or `a`
+in Metro only when you want to launch that platform. Root `pnpm dev` continues to
+start only web, API and worker. For local native binary work, use Xcode on iOS and
+Android Studio/Gradle on Android. Signing identities, production builds, push and
+store submission remain deferred; no EAS cloud Build/Submit is configured.
+
+```sh
+pnpm --filter @joint/mobile typecheck
+pnpm --filter @joint/mobile check:dependencies
+pnpm --filter @joint/mobile check:doctor
+pnpm --filter @joint/mobile bundle:ios
+pnpm --filter @joint/mobile bundle:android
+```
+
+CI checks both native bundle exports alongside the existing foundation checks.
+Bundle compilation does not establish render, accessibility or device acceptance.
+See the [native dependency baseline](docs/decisions/version-matrix.md#ios1-native-shell-dependencies)
+for exact pins and dependency reasons.
+
 ## Checks
 
 ```sh
@@ -45,6 +78,7 @@ Integration and browser tests require migrated local PostgreSQL and built packag
 
 ## Structure and delivery
 
+- apps/mobile: Expo Router native entry screen and universal native sharing sheet.
 - apps/web: Next.js introduction, identity/household onboarding and mobile-first manual accounts.
 - apps/api: NestJS health, server-owned identity/session and household/invitation and private account/grant endpoints.
 - apps/worker: independent local process and bounded job runner with staged CSV publication.

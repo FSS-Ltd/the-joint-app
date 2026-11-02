@@ -21,3 +21,8 @@ docs/private/
 
 # Reproducible Prisma client output
 packages/database/src/generated/
+
+# Expo local state and generated native projects (Continuous Native Generation)
+apps/mobile/.expo/
+apps/mobile/ios/
+apps/mobile/android/

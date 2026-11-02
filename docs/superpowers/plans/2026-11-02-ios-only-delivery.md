@@ -1,10 +1,10 @@
-# iOS-only family finance implementation plan
+# iOS-first family finance implementation plan
 
 > **For agentic workers:** Use the requested Agents Orchestrator profile for coordination and relevant installed profiles for bounded work. Read both this plan and its spec. Each numbered delivery unit below is a separate branch/PR, not a batch of concurrent PRs. Code Reviewer and Application Security Engineer review before every PR.
 
-**Goal:** Finish the CSV/manual family fund product as an iOS app, with web marketing, subscriptions and staff revenue/retention analytics.
+**Goal:** Finish the CSV/manual family fund product as an iOS-first app that also functions on Android, with web marketing, subscriptions and staff revenue/retention analytics.
 
-**Architecture:** Retain NestJS, PostgreSQL, Clerk, durable workers and shared TypeScript contracts/domain packages. Add an Expo Router iOS app with focused reusable native components. Web finance remains a temporary reference until verified native cutover.
+**Architecture:** Retain NestJS, PostgreSQL, Clerk, durable workers and shared TypeScript contracts/domain packages. Add an Expo Router iOS-first app with Android support and focused reusable native components. Web finance remains a temporary reference until verified native cutover.
 
 **Tech stack:** Existing pnpm/Turbo monorepo and pinned tools; Expo React Native, Expo Router and @expo/ui, with compatible versions selected/locked in IOS1. Stripe/RevenueCat integration remains subject to configured test products and later release gates.
 
@@ -12,12 +12,12 @@
 
 ## Global constraints
 
-- iOS only for household user journeys; web marketing, billing/account recovery and separately authorized staff analytics.
-- CSV/manual read-only finance; no direct connectors, money movement, child profiles or Android in this delivery.
+- iOS first with functional Android support for household user journeys; web marketing, billing/account recovery and separately authorized staff analytics.
+- CSV/manual read-only finance; no direct connectors, money movement, child profiles in this delivery.
 - Reuse existing contracts, exact minor-unit arithmetic, permissions, migration conventions and event infrastructure.
 - Native navigation and controls; Expo DOM only for a justified specialist leaf, never an app-wide wrapper.
 - No paid services, deployment, live financial data, store upload or third-party messages without existing explicit authority.
-- Expo push notifications; CI/CD validation and Xcode for iOS builds/submission preparation, following Oasis. Final review submission requires founder approval. Defer signing/push/store infrastructure until needed; no EAS cloud Build/Submit.
+- Expo push notifications; CI/CD validation and Xcode for iOS and Android Studio for Android builds/submission preparation, following Oasis. Final review submission requires founder approval. Defer signing/push/store infrastructure until needed; no EAS cloud Build/Submit.
 - Every unit requires independent code/security review, local checks, one PR, current required green CI and verified merge before the next begins.
 - Keep applicable existing CI; do not remove tests or weaken timeouts/protections to pass.
 
@@ -35,25 +35,25 @@ Live predecessor: 3C.5 PR #34 merged at `a1c849918422016b63f427aae3525dec578b939
 
 Order is strictly the listed IOS0 through IOS18 units, including each lettered subunit, below. Reading future scope is allowed; scaffolding or implementing later units before the predecessor merge is not. Each implementation unit starts with an exact file/interface brief against the then-current base; later paths are ownership boundaries, not a claim files already exist. Commands proposed for mobile are added and verified in IOS1; do not execute nonexistent scripts as evidence.
 
-### IOS0 — Product amendment and gated PR backlog
+### IOS0 — Product amendment and gated PR backlog (merged; platform corrected in IOS1)
 
 **Files:** This plan, `docs/decisions/ios-only-product.md`, `docs/progress.md` and scoped amendment notices in canonical product/architecture/API/commercial/release/phase/handoff/design documents.
 **Produces:** Explicit platform, reuse, identity, billing, analytics and delivery boundaries; route inventory below.
 
-- [ ] Record host predecessor evidence and current user decisions without inventing completion.
-- [ ] Check local links, formatting, scope consistency and public disclosure. No product runtime change.
-- [ ] Obtain Code Reviewer and Application Security Engineer review; correct material findings.
-- [ ] Commit, push and open IOS0 PR. Require existing Foundation checks; verify merge before IOS1.
+- [x] Record host predecessor evidence and current user decisions without inventing completion.
+- [x] Check local links, formatting, scope consistency and public disclosure. No product runtime change.
+- [x] Obtain Code Reviewer and Application Security Engineer review; correct material findings.
+- [x] Commit, push and open IOS0 PR. Require existing Foundation checks; verify merge before IOS1.
 
-### IOS1 — Runnable iOS shell and reusable visual primitives
+### IOS1 — Runnable iOS-first/Android-compatible shell and reusable visual primitives
 
 **Owns:** `apps/mobile/package.json`, app/Metro/TypeScript configuration, root layout/entry route, `apps/mobile/src/components/`, `apps/mobile/src/theme/`, lockfile and relevant Turbo/lint/CI wiring.
 **Consumes:** Semantic palette and native design contract. **Produces:** Native screen container, text, action, amount, notice/loading/empty primitives and one honest no-data entry flow; no fabricated balances or inert tabs.
 
 - [ ] Verify SDK/React/Router/@expo/ui peers from official docs and registry. Choose maintained compatible exact versions; keep web React isolated if required. Document why each dependency is necessary.
-- [ ] Add iOS-only config, Expo Router shell, safe areas and native reusable primitives. Do not add Android/web targets, auth stubs or future empty screens.
-- [ ] Run frozen install, mobile TypeScript, lint/format, iOS bundle export and Expo compatibility checks. Add CI for these without weakening existing checks.
-- [ ] Launch simulator and inspect real shell, enlarged text, contrast and VoiceOver labels; disclose if simulator unavailable. Bundle success alone is not render evidence.
+- [ ] Add iOS/Android config, Expo Router shell, safe areas and native reusable primitives. Support Android from the same components; do not add a web household target, auth stubs or future empty screens.
+- [ ] Run frozen install, mobile TypeScript, lint/format, iOS and Android bundle exports and Expo compatibility checks. Add CI for these without weakening existing checks.
+- [ ] Launch the iOS simulator first and inspect real shell, enlarged text, contrast and VoiceOver labels; validate Android emulator/device behavior and TalkBack where available, documenting exact limitations. Bundle success alone is not render evidence.
 - [ ] Complete reviews and PR/CI/merge gate.
 
 ### IOS2 — Native identity, session lock and household onboarding
@@ -161,12 +161,12 @@ Order is strictly the listed IOS0 through IOS18 units, including each lettered s
 - [ ] Implement Stripe/RevenueCat normalization and server-selected products/return URLs. No success-page fulfillment or double-counted caps; due-time expiry/retry, startup/event reconciliation and documented exceptional provider fallback only.
 - [ ] Verify downgrade preserves free privacy/history, duplicate checkout, multiple funding sources and refunds; use provider test fixtures/configuration only. Missing products/secrets block activation, not truthful tests. Review and deliver through gate.
 
-### IOS12 — Native purchase, restore and entitlement recovery
+### IOS12 — Native purchase, restore and entitlement recovery (iOS first, then Android)
 
 **Owns:** Native billing feature/routes and platform purchase adapter.
 
 - [ ] Test canceled/pending purchases, delayed verification, duplicate funding, different login with same Apple account and restore without another charge.
-- [ ] Implement localized native product prices, annual total, dismissal, restore and correct management destination. Do not sell undelivered benefits or steer UK iOS to unapproved web checkout.
+- [ ] Implement Apple and Google native purchase adapters with shared localized product presentation; use the existing commercial policy for platform billing. Implement localized native product prices, annual total, dismissal, restore and correct management destination. Do not sell undelivered benefits or steer UK iOS to unapproved web checkout.
 - [ ] Verify sandbox purchase/restore on required signed device environment; missing signing/store products remain an explicit public-release blocker. Review and deliver through gate.
 
 ### IOS13a / IOS13b / IOS13c — Local companion (three sequential PRs)
@@ -211,10 +211,10 @@ Order is strictly the listed IOS0 through IOS18 units, including each lettered s
 
 ### IOS18 — Physical-device, commercial and release readiness
 
-**Owns:** iOS security/device evidence, release configuration, store/privacy copy and runbooks.
+**Owns:** iOS and Android security/device evidence, release configuration, store/privacy copy and runbooks.
 
-- [ ] Verify supported real devices/OS, secure storage, app snapshots/background locking, accessibility, deep links, offline/reconnect, purchases, logout/revocation and data portability.
-- [ ] Inspect Oasis build/release reference, then add required CI/CD native build/signing validation using Xcode. Android Studio is reserved for a separately approved Android scope; no EAS cloud Build/Submit. Defer this release machinery until needed.
+- [ ] Verify supported iOS and Android real devices/OS (iOS first), secure storage, app snapshots/background locking, accessibility, deep links, offline/reconnect, purchases, logout/revocation and data portability.
+- [ ] Inspect Oasis build/release reference, then add required CI/CD native build/signing validation using Xcode for iOS and Android Studio/Gradle for Android; iOS delivery first, no EAS cloud Build/Submit. Defer this release machinery until needed.
 - [ ] Add Expo push delivery only when a real user flow needs it; test permission denial, token rotation/unbind, tenant isolation, generic payloads and authorized cold/warm deep links.
 - [ ] Complete provider-independent commercial/legal/privacy evidence, truthful paid benefits, signing/App Store products and operating cost gates. No invented approval or additional spend.
 - [ ] Run full build/type/lint/unit/integration/device suites, restore drill and release rollback plan. Raise readiness PR with exact unmet gates.

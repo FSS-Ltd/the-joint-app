@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "The Family Fund App",
+    "slug": "the-family-fund-app",
+    "version": "0.1.0",
+    "scheme": "familyfund",
+    "platforms": ["ios", "android"],
+    "userInterfaceStyle": "light",
+    "plugins": ["expo-router"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "permissions": [],
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
+    }
+  }
+}
