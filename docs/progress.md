@@ -843,3 +843,23 @@ receipt expiry, worker retry bounds and restore-container startup. These are
 being investigated and rerun in isolated storage; the full local suite is not
 green. No completed review-fix/step claim or merge is recorded. Required current
 cloud CI remains unchanged and must pass before this unit can progress.
+
+## IOS0 — iOS-only product amendment and delivery plan
+
+Date: 2 November 2026. Branch: build/ios0-delivery-plan. Base: main. State: documenting and verifying; no PR yet.
+
+Live GitHub verification supersedes historical pending 3C.5 notes: [PR #34](https://github.com/FSS-Ltd/the-joint-app/pull/34) is merged at `a1c849918422016b63f427aae3525dec578b939d`. Final head `b7659a3950e9369f95c8b2715f441609beb332dd` passed required Foundation checks in [run 40415924691](https://github.com/FSS-Ltd/the-joint-app/actions/runs/40415924691). Tested merge `be9253b0afc103af97f65ce9dfdb5849b918f51a` is recorded in the PR checkout evidence. Host main matches that merge; there are no open PRs. Main requires strict Foundation checks, PRs, resolved conversations and admin enforcement; configured required approval count is zero. Standing founder merge authority remains as recorded in Task 0.2. No protection bypass or self-approval is authorized.
+
+New instruction: family features move to Expo React Native iOS; web houses marketing, subscriptions and authorized staff analytics. Read [product amendment](decisions/ios-only-product.md) and [sequential delivery plan](superpowers/plans/2026-11-02-ios-only-delivery.md). The requested Agents Orchestrator profile supplied a read-only architecture/reuse review. Code Reviewer and Application Security Engineer review must both finish before opening this and every subsequent PR.
+
+Build instruction: use Oasis as a reference, Expo push notifications, CI/CD and Xcode for iOS builds/submission preparation. Android Studio is reserved for separately approved Android delivery. Defer signing/push/store infrastructure until needed. Founder has final review-submission approval; no automatic submission or EAS cloud Build/Submit.
+
+IOS0 changes documentation only. No mobile scaffold, dependency install, schema change, deployment, paid service or next-unit implementation. Native auth retains Clerk/server session policy; Expo DOM is limited to justified leaves. Existing financial/privacy/local-AI/STMT1/device/rehearsal gates remain. Exact local checks, review findings, PR and current CI evidence will be appended after verification. Next permissible implementation: IOS1 only after IOS0 current required CI and actual merged state are verified.
+
+IOS0 Oasis reference check: read the mobile store-submission checklist, versioning guide and push implementation plan. Borrow human approval, version/build distinction and safe push lifecycle; their EAS/Android choices do not override the current Xcode/iOS-only request. Their push plan is reference material, not evidence that push is implemented. No Oasis files or service settings changed.
+
+IOS0 independent reviews: Code Reviewer reviewed all eleven changed/new documents; two P2 findings corrected by adding explicit recurring/baseline and separate savings-feedback units, and fixing turnover cohort/MRR discount definitions. Application Security Engineer found one P2 privacy ambiguity; mandatory server-side small-cohort suppression now includes totals/filter differencing tests. No runtime security claim is made. Pre-PR local formatting and relative-link checks (eleven files, zero missing targets) passed; diff/public-scope inspection passed. Runtime suites are not rerun locally for documentation-only changes; unchanged full Foundation CI remains mandatory.
+
+Targeted follow-up code and security reviews confirm all three P2 findings resolved; code review's minor step-label corrections are applied. No remaining material planning blocker. IOS0 is ready for its documentation PR after final formatting/diff checks; mobile implementation has not started.
+
+IOS0 PR: https://github.com/FSS-Ltd/the-joint-app/pull/35. Initial reviewed head: `357aa86dc72000256848ae45ef50a4fb9372fc17`. GitHub connector creation returned integration permission 403; authenticated CLI created the same authorized PR. State: PR open, required current-revision Foundation CI pending, merge not yet performed. This evidence update creates a new checked revision; final head/test-merge/results and merge evidence must be verified from the host. No IOS1 implementation has started.

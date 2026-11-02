@@ -1,5 +1,9 @@
 # Phase 5 — Mobile and Public MVP Implementation Plan
 
+## iOS-only amendment — 2 November 2026
+
+The [iOS-only product amendment](../../decisions/ios-only-product.md) and [ordered delivery plan](../../superpowers/plans/2026-11-02-ios-only-delivery.md) supersede historical web-first household UI, Android delivery and Supabase-native identity instructions below. Household features now target Expo React Native iOS; web houses marketing, subscriptions/account recovery and separately authorized staff analytics. Keep existing financial/privacy/local-AI/statement gates. No app-wide WebView, deployment or paid service is authorized. Expo push notifications are the selected notification service; defer device credentials until needed. Use CI/CD and Xcode for iOS builds/release preparation; Android Studio is reserved for any separately approved Android scope. The founder gives final approval before any App Store review submission. Do not submit automatically or provision EAS cloud builds. Consult the Oasis app build reference before release configuration.
+
 > **CSV-first MVP revision, 23 October 2026:** Direct bank connections and bank procurement are post-MVP by founder instruction. The current MVP uses CSV/manual records; historical live-bank prerequisites and live-refresh paywall promises below are deferred. Provider evidence remains required before future live work. No live broker connector is included in the CSV-first build; its separate permission gate remains. See the [canonical scope revision](../01-product-specification.md).
 
 > **Scope revision, 23 October 2026:** Child profiles and child-specific UI/projections are post-MVP, per the [canonical product revision](../01-product-specification.md). Treat child-specific tasks below as deferred; retain the safeguards against double counting and including verified child-earmarked funds in adult spendable totals. All MVP UI is mobile first.

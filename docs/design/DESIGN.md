@@ -1,5 +1,9 @@
 # The Family Fund App — visual contract
 
+## iOS-only amendment — 2 November 2026
+
+The [iOS-only product amendment](../decisions/ios-only-product.md) and [ordered delivery plan](../superpowers/plans/2026-11-02-ios-only-delivery.md) supersede historical web-first household UI, Android delivery and Supabase-native identity instructions below. Household features now target Expo React Native iOS; web houses marketing, subscriptions/account recovery and separately authorized staff analytics. Keep existing financial/privacy/local-AI/statement gates. No app-wide WebView, deployment or paid service is authorized. Expo push notifications are the selected notification service; defer device credentials until needed. Use CI/CD and Xcode for iOS builds/release preparation; Android Studio is reserved for any separately approved Android scope. The founder gives final approval before any App Store review submission. Do not submit automatically or provision EAS cloud builds. Consult the Oasis app build reference before release configuration.
+
 Status: human-approved UI implementation baseline on 23 October 2026. The user explicitly approved applying the revised wireframes and this contract after AUTH2 merged. Approval of the baseline does not claim any production screen implemented.
 
 The user's menu criticism refers to the existing app menu, not the navigation in these mockups. UI1 replaces that menu using the approved visual direction and links only to available features.
