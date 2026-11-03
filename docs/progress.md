@@ -1249,3 +1249,29 @@ runtime and expanded accessibility/device coverage remain unverified here.
 Current-revision CI remains required. The dependency audit reports three
 existing baseline advisories (multer high; minimatch/glob moderate), with none
 reported for the newly added QR/SVG graph. Do not describe the full audit as green.
+
+### IOS2 configured runtime acceptance — current evidence
+
+Host revalidated [PR38](https://github.com/FSS-Ltd/the-joint-app/pull/38)
+as merged at `84da2976d9246204559d81d1af74176c7cc80583`. Reviewed head
+`971f195078b1c95c89336a1f442c03fc2bf38c74`, PR CI41632854737 and main
+CI41648118830 have successful Foundation checks and Native bundle checks.
+The preceding PR38-open status is historical. Its implementation checklist is
+complete; IOS2 runtime acceptance remains incomplete.
+
+The [runtime acceptance record](joint-app/ios2-native-runtime-acceptance.md)
+separates source/CI verification, founder-reported actions, native observations,
+integration coverage and unavailable checks. New iOS evidence confirms fresh
+household TOTP proof, registered warm/cold invitation prompts, one deliberate
+acceptance and the intended two-adult ADMIN/MEMBER household. Android evidence
+now includes fresh sign-in, the shared household, signed background/foreground
+return, local logout, on-screen synthetic input and registered warm/cold links
+that preserved the expired-session gate.
+
+Final Android manual logout, enlarged text and TalkBack results remain pending
+because automation cannot reliably click the available viewer. Reviewed cleanup
+also remains open. Historical unknown-key cleanup tickets and wider physical
+storage/accessibility/store limits are preserved explicitly. No production
+identity, store submission, new product code or IOS3 work is included. This
+current-unit documentation update must receive both independent reviews and its
+own current-head CI/merge before any later delivery step.
