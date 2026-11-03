@@ -6,7 +6,10 @@ export const colors = {
   sage: "#DDE7DD",
   apricot: "#F0D6BC",
   secondary: "#52665C",
+  error: "#9C3838",
   border: "#CCD5CC",
+  shellSage: "#344C42",
+  shellApricot: "#3E4A3C",
 } as const;
 
 export const spacing = {

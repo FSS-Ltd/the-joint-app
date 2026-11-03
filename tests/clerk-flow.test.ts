@@ -123,3 +123,28 @@ it("routes mandatory tasks before the application and rejects unknown tasks", ()
   expect(taskPath(undefined)).toBe("/auth/complete");
   expect(() => taskPath("choose-organization")).toThrow("unsupported");
 });
+
+it("keeps malformed or unknown SDK error details generic without reflecting provider text", () => {
+  const generic = clerkFlowError(undefined);
+  for (const errors of [
+    undefined,
+    null,
+    "PRIVATE",
+    [],
+    [null],
+    ["PRIVATE"],
+    [{ message: "PRIVATE" }],
+    [{ code: "unknown", message: "PRIVATE" }],
+    [{ code: { message: "PRIVATE" } }],
+  ]) {
+    expect(clerkFlowError({ code: "api_response_error", errors })).toBe(
+      generic,
+    );
+  }
+  expect(
+    clerkFlowError({
+      code: "form_code_expired",
+      errors: [{ code: "form_password_incorrect" }],
+    }),
+  ).toContain("expired");
+});

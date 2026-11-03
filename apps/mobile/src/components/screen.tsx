@@ -1,19 +1,81 @@
 import type { PropsWithChildren } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors, spacing } from "@/theme/tokens";
 
-export function Screen({ children }: PropsWithChildren): React.JSX.Element {
+export function Screen({
+  children,
+  compact = false,
+}: PropsWithChildren<{ compact?: boolean }>): React.JSX.Element {
+  const { width } = useWindowDimensions();
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content}>{children}</ScrollView>
-    </SafeAreaView>
+    <View style={styles.shell}>
+      <View
+        pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        collapsable={false}
+        style={styles.backdrop}
+      >
+        <View
+          style={[
+            styles.sageRibbon,
+            { left: -width * 0.45, width: width * 1.55 },
+          ]}
+        />
+        <View
+          style={[
+            styles.apricotRibbon,
+            { right: -width * 0.75, width: width * 1.4 },
+          ]}
+        />
+      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          contentContainerStyle={[styles.content, compact && styles.compact]}
+          automaticallyAdjustKeyboardInsets
+          keyboardShouldPersistTaps="handled"
+        >
+          {children}
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.forest },
+  shell: { flex: 1, backgroundColor: colors.forest },
+  safeArea: { flex: 1, backgroundColor: "transparent" },
+  backdrop: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    overflow: "hidden",
+  },
+  sageRibbon: {
+    position: "absolute",
+    top: -180,
+    height: 540,
+    borderRadius: 300,
+    backgroundColor: colors.shellSage,
+    transform: [{ rotate: "-24deg" }],
+  },
+  apricotRibbon: {
+    position: "absolute",
+    top: 420,
+    height: 280,
+    borderRadius: 180,
+    backgroundColor: colors.shellApricot,
+    transform: [{ rotate: "34deg" }],
+  },
   content: {
     flexGrow: 1,
     width: "100%",
@@ -22,4 +84,5 @@ const styles = StyleSheet.create({
     padding: spacing.medium,
     gap: spacing.section,
   },
+  compact: { gap: spacing.large },
 });

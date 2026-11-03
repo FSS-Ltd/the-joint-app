@@ -1,9 +1,9 @@
 import { UnauthorizedException } from "@nestjs/common";
-import type { ClerkSessionClaims } from "@joint/contracts";
+import type { ClerkSessionFacts } from "@joint/contracts";
 
 /** Trusted signature has been checked; these fields are never an HTTP response. */
 export class ClerkSessionRejected extends UnauthorizedException {
-  constructor(readonly claims: ClerkSessionClaims) {
+  constructor(readonly claims: ClerkSessionFacts) {
     super();
   }
 }

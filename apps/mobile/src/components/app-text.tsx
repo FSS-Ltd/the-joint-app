@@ -17,8 +17,13 @@ export function AppText({
 }
 
 const styles = StyleSheet.create({
-  body: { fontSize: 17, lineHeight: 26 },
-  heading: { fontSize: 32, lineHeight: 39, fontWeight: "600" },
+  body: { fontSize: 16, lineHeight: 24 },
+  heading: {
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: "600",
+    letterSpacing: -0.5,
+  },
   title: { fontSize: 22, lineHeight: 29, fontWeight: "600" },
   label: { fontSize: 14, lineHeight: 21, fontWeight: "600" },
   primary: { color: colors.forest },

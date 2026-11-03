@@ -883,3 +883,320 @@ Security dependency audit is not clean: zero critical, one high, two moderate an
 IOS1 targeted re-review at `3adc5b9`: Code Reviewer passes spec compliance and code quality, both touch and Google-source findings addressed. Application Security Engineer independently re-ran merged permission assertions and confirms the storage finding addressed, with no remaining material IOS1 security blocker. Prior dependency audit and device/release limits remain disclosed. Final local relative-link review covers thirteen changed Markdown files with zero missing targets; all thirty-one changed tracked paths exclude private/generated environment files. Current unit is ready for PR; no merge or IOS2 work yet.
 
 IOS1 PR: https://github.com/FSS-Ltd/the-joint-app/pull/36. Initial publication head: `4ec4687`. State: PR open; Foundation checks and Native bundle checks must pass on the final revision. Reviewed implementation/fix head: `3adc5b9`; subsequent changes record evidence only. This progress update creates a new checked head; do not reuse earlier CI. Actual merge remains pending. No IOS2 implementation, production build, push setup or store submission has started.
+
+## IOS2 — Native identity, session lock and household onboarding
+
+Predecessor IOS1 [PR #36](https://github.com/FSS-Ltd/the-joint-app/pull/36) is host-verified merged at `974208e118478ce41bd82b85e05c77eff5eee2ef` on 2 November 2026. Final head `c154cd669e602c80e53fb30b912f6982275d4eba` and checked test merge `cf562c885f3fabab28801f99393aee96c4314ff4` passed [CI run 41538262010](https://github.com/FSS-Ltd/the-joint-app/actions/runs/41538262010). Foundation checks passed formatting/lint, builds, types, 407 unit tests, 322 database integrations and 181 browser tests. Native bundle checks passed frozen install, native types, dependency checks, Expo Doctor (20/20) and both platform exports. All applicable steps succeeded. Checkout logs in both jobs identify the same tested merge; its parents match the final base/head.
+
+Fresh host checks found no required approvals or unresolved review threads. Normal protected merge used standing founder authority with an exact-head condition; no bypass or self-approval. This supersedes historical pending IOS1 entries. IOS1 source delivery is complete; its recorded Android runtime, full screen-reader, signed-binary and dependency-audit limitations remain future verification/maintenance work, not silently waived.
+
+Current branch: build/ios2-native-identity, based on the verified IOS1 merge. State: entry investigation and interface planning. Agents Orchestrator is reviewing existing Clerk/session and household seams read-only. Current scope remains iOS first with functional Android support. No IOS3 work, deployment, push provisioning or store submission. Next action: define the bounded native identity implementation brief using existing contracts, then implement and independently review IOS2 before its PR.
+
+IOS2 server checkpoint: the Identity & Access Engineer implemented an opt-in API-purpose session profile. Signature/issuer/time verification precedes strict profile selection; present malformed/foreign `azp` never falls back. Exact signed audience and purpose are required for configured origin-less API sessions. Existing provider, registry, MFA, idle and tenant authority remains. Schema/type names preserve the established web claims type and separate common session facts. No provider setting, migration or live account was changed. Design: [IOS2 identity](decisions/ios2-native-identity.md).
+
+Verification so far: full unit run passed 457 cases across 68 files; after a type-only naming correction, 92 focused cases and contracts/API/test-source types passed. Contracts/API builds, targeted lint/format and diff checks pass. An owned disposable PostgreSQL run passed 35 cases across five suites (API bearer, Clerk session/identity, session idle and households). Three legacy HTTP-auth cases failed before behavior execution because the PostgreSQL-only runner lacks loopback `SUPABASE_AUTH_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_TEST_ADMIN_KEY` fixtures. This is not a wholly green six-suite run. No assertion or timeout was weakened; full isolated legacy auth verification remains required. The runner verified its ownership label/name before removing its container, anonymous volume and scratch directory.
+
+IOS2 native implementation is now assigned to the Mobile App Builder profile, with mobile/runtime/UI ownership and justified shared pure auth/idle reuse across web and native. Backend and parent documentation ownership remain separate. It is in progress, not verified complete. Actual Native API status, audience/claim configuration, registered return identities and real provider/device evidence remain unverified inputs; prepare reviewable source/setup guidance before any required configuration approval. IOS2 has no PR yet. Independent whole-branch Code Reviewer and Application Security Engineer reviews, final local/CI checks and verified merge remain mandatory before IOS3.
+
+IOS2 verification update: the parent extended only its ignored, ownership-checked
+runner to provision a disposable loopback Auth gateway, provider database and
+synthetic Mailpit inbox using existing pinned images and fresh scratch keys.
+The same six integration suites then passed **38/38 tests across 6/6 files**,
+including all three legacy HTTP-auth cases. This supersedes the earlier missing
+fixture result; no assertion, deadline or production source was weakened.
+Cleanup independently found zero owned app/auth containers, auth volumes or
+scratch directories. Personal databases, private auth settings and unrelated
+services were not read or changed. Retained evidence is the ignored
+`ios2-server-integration-auth.log`.
+
+A read-only public Clerk environment probe returned HTTP 200 without a Native
+API disabled error. This does not establish successful signed-session admission;
+the server API bearer audience remains unset. No provider setting changed.
+CUA inspected the configured iOS Expo Go password sign-in/signup forms, empty
+email validation, password visibility and navigation without submitting real
+credentials. Parent feedback improved action hierarchy, field boundaries and
+error announcements. The loopback UI probe returns only 503 and provides no
+authentication authority. Real signed-session, TOTP, household and registered
+return acceptance, Android runtime and complete screen-reader checks remain
+unverified. IOS2 remains current, with no PR or next-unit implementation yet.
+
+IOS2 independent review at `6cc2c9b`: Code Reviewer requested five corrections:
+verification/recovery resumption, pending authenticator enrollment, terminal
+cleanup-ticket recovery, late async background concealment and stale-session SDK
+sign-out isolation. Application Security Engineer independently confirmed cleanup
+expiry and additionally found a terminal-invalid-credential local-removal gap.
+Both reviewers passed 131 focused cases, but source-executing deferred-response
+probes reproduced lifecycle defects those pure tests missed. No new credential,
+MFA or tenant authorization bypass was confirmed; this is not approval.
+The Mobile App Builder is implementing correction round 1 with behavior-focused
+regressions; reviewers must independently recheck before PR creation. The fresh
+audit retains the four previously recorded advisory identities and is not clean.
+Real-provider/device acceptance remains open. IOS3 has not started.
+
+IOS2 correction round 1 checkpoint (3 November): minimal non-secret workflow
+progress now survives concealment without implicit email sends. Shared pure
+stage selectors avoid duplicating provider mappings. Sensitive fields still
+unmount. Ordinary refresh cannot enable foreground state; deferred operations
+check lifecycle/actor scope, and SDK cleanup checks the original current session
+and its existence. Cleanup capabilities are queued, terminal rejection retires
+only the affected capability after durable persistence, and explicit local
+credential removal does not claim server/global logout.
+
+Source-executing regressions replayed against `6cc2c9b` fail 10 of 11 targeted
+cases; corrected lifecycle cases pass 26/26. Full units pass 507/507, focused
+native/shared cases 65/65, types 19/19 tasks plus tests, builds 9/9, lint and
+formatting pass. Both native exports and Doctor 20/20 pass. These do not replace
+real-provider/device evidence. Parent is freezing the corrected revision for
+independent code/security re-review. No PR yet and no IOS3 work.
+
+IOS2 round 1 re-review at `1a69ec5` resolved the original code R1–R4 and
+security SEC-1. Actual installed Clerk 6.42.1 probes found remaining SDK-boundary
+defects that the earlier doubles omitted: throwing from finalization navigation
+can leave SDK state undefined; broad sign-out can remove a replacement session
+after its internal await; terminal SDK token-acquisition errors are still hidden
+as generic unavailability. Passing 507 unit tests does not clear these findings.
+
+Round 2 is authorized within IOS2 only. Use supported captured-session removal,
+a runtime-owned mutation coordinator spanning actual SDK completion, synchronous
+SDK resource observations and continuous app concealment. SDK selection cannot
+be atomically cancelled through its public API; conflicting/ambiguous state must
+settle safely or remain concealed for explicit selection. Normalize only
+recognized terminal authentication errors; preserve transient failures. Actual
+installed-SDK deferred tests, followed by both independent reviewers, are required
+before PR creation. No provider settings, deployment or next delivery unit.
+
+IOS2 round 2 checkpoint: supported captured SessionResource.remove replaces
+broad SDK sign-out. Runtime coordination holds through actual SDK completion,
+blocks all identity reads during mutation/loading/quarantine, preserves observed
+conflicts and offers explicit bounded selection recovery. No throwing navigation
+cancellation, private SDK patch, automatic rollback loop or timeout unlock.
+Recognized terminal Clerk token errors preserve their expired-credential outcome;
+transient failures remain unconfirmed.
+
+The installed native SDK now executes against synthetic environment/client
+responses with every fetch trapped. Deferred tests cover replacement actors,
+captured removal, failed/missing targets, loading, background, an unfinished
+operation past timeout and a normal 60-second browser return. These are not live
+provider/device flows. Full units pass 528/528 across 77 files, types 19/19 plus
+tests, lint/format, builds 9/9, both native exports and Doctor 20/20 pass. Parent
+is freezing this revision for both independent retests; no PR or IOS3 yet.
+
+IOS2 draft [PR #37](https://github.com/FSS-Ltd/the-joint-app/pull/37) is open.
+Published/reviewed source head: 1e44e8ee59aef2cdd88f1c3d9d67fc83b80ccd6f.
+Both required profiles completed review before publication. Original critical
+SDK transition/removal defects are corrected, but code C3/C4 and security SEC2
+leave three P2 recovery corrections: start-over must reset completed attempts;
+A → B → A must preserve the latest changed selection; recognized structured
+session_not_found 404 must expose terminal credential recovery. Actual installed
+SDK probes reproduce each. Independent full 528 tests and 178 focused security
+tests pass; they do not clear the findings. PR is deliberately draft, not approved
+or merged. Latest applicable cloud CI must still be verified.
+
+Round 3 will fix only these current-unit recovery findings and obtain both
+independent retests. Provider audience/customization and configured native
+runtime acceptance remain open; Android exports are not Android runtime proof.
+No IOS3, personal database change, deployment, push provisioning or store review.
+
+IOS2 round 3 local checkpoint: fresh restart resets both SDK attempts through
+maintained hooks before abandoning workflow and clearing selection; failed reset
+stays concealed. Defined actor changes back to the original actor are retained,
+while known late SDK completion remains excluded. Only recognized structured
+session_not_found 404 joins terminal token recovery; unrelated 404 and transient
+errors retain unconfirmed handling.
+
+Three first-red installed-SDK cases were preserved before the narrow fixes.
+Full units pass 536/536 across 78 files; types 19/19 plus tests, lint/format,
+builds 9/9, both exports, Doctor 20/20 and diff checks pass. Parent is committing
+for both independent retests before pushing the correction to Draft PR #37.
+Cloud run 41555212015 checks the earlier documentation head 0ad9b34: native
+bundle checks succeeded and Foundation remained pending at last observation.
+Older run 41555142105 was requested cancelled because its head was superseded;
+it is not current-revision acceptance evidence. No merge or IOS3.
+
+IOS2 round 3 independent retests at c176a8d5e40a6c365c2ad64088f55c3bfd2e46c7
+clear code C3/C4 and security SEC1/SEC2/SEC3 within source/installed-SDK evidence.
+Code Reviewer passed 56 focused tests, mobile types and diff checks; Application
+Security Engineer passed 186 tests plus both corrected original probes, scoped
+secret/diff/report checks. No additional actionable source finding. This is
+source readiness to update Draft PR #37, not runtime/merge approval.
+
+Earlier head 0ad9b348ea8c38b2b5bd6f59c83c96a4b0d26359 passed both applicable
+jobs in [CI run 41555212015](https://github.com/FSS-Ltd/the-joint-app/actions/runs/41555212015):
+528 unit, 324 integration and 181 browser cases, both exports and Doctor.
+Both jobs checked merge 02200b0711ff991683e8ae5ad3f6982302ffa39e, whose parents
+are base 974208e and that exact PR head. This is baseline evidence only; the
+reviewed correction and this evidence update require fresh current-head CI.
+No merge is authorized by these results. Live configured native identity
+acceptance and previously disclosed device/configuration limits remain open.
+
+IOS2 visual correction — 3 November 2026: the founder rejected the native
+composition's drift from the approved Stitch wireframes. Agents Orchestrator
+compared the actual setup/home snapshots and contract; Mobile App Builder is
+refining shared presentation within Draft PR #37. Preserve the approved mark,
+compact header, restrained backdrop, single highlighted light panel and small
+rectangular controls. The UI8 contract supersedes the snapshots' doubled frames.
+Auth coordination and server authority remain unchanged. Parent native inspection,
+fresh code/security reviews, local checks and current-head CI must precede
+delivery evidence. No IOS3 work.
+
+The founder separately approved development-only Clerk session claims
+`aud: "familyfund-api"` and `joint_token_use: "api-session-v1"`, preserving
+existing fields and stopping on an audience conflict, with the matching private
+audience only in the owned test API. This approval supersedes the earlier
+approval blocker. No provider setting or live acceptance result is claimed here;
+visual refinement is the current priority.
+
+Host refresh confirms IOS1 PR #36 merged at
+`974208e118478ce41bd82b85e05c77eff5eee2ef`, with final-head CI run
+`41538262010` successful. PR #37 remains open/draft/unmerged at
+`ad3966aab3007263cb0c63cce148d748d03bcbd2` before these visual edits. Earlier
+green CI is not proof of the new visual revision.
+
+IOS2 visual correction locally verified: shared components now use the compact
+approved wordmark, static sage/apricot backdrop, one highlighted ivory panel,
+16px body copy and rectangular actions. Native fields use an RN outline around
+the universal input to avoid clipped SwiftUI stroke corners. Secondary actions
+use the home reference's quiet sage fill; nested percentage wrappers were rejected
+after actual iOS inspection showed intrinsic-width buttons. iOS fixed native fonts
+now scale explicitly, while Compose retains its own sp scaling. Password controls
+stack for narrow/enlarged layouts. Minimum target padding remains inside each
+painted semantic label, including text actions and reduced preferred text sizes.
+
+Parent CUA inspection on the named iOS 26.3 "Flamingo Mama Storage Smoke"
+runtime covered blank sign-in, signup and recovery, local validation, clean field
+outlines/focus, full-width actions, password toggle top/bottom padding, primary
+and secondary perimeter taps, and text-action outer padding. Three preferred
+text-size increases showed readable scaled copy and stacked password controls;
+all three increments were restored. Native password focus moved the lower field
+into view; a background gesture dismissed the software keyboard. Manual scrolling
+with the keyboard held open was not established through the automation. No
+credentials, codes or provider actions were submitted in these visual checks.
+Blank final screenshot is retained in ignored local review evidence.
+
+Code Reviewer and Application Security Engineer cleared the final source before
+PR update. Review found an undersized target at small preferred text sizes;
+the corrected padding guarantees at least 48pt before additional line-box height,
+without capping text or fixing button height. Both profiles independently retested
+the final action correction with no remaining material finding. Parent reopened
+all eleven changed/new files. Full local units pass 539/539 across 79 files;
+root types 19/19 plus tests, lint, formatting, build 9/9, both iOS/Android exports
+and diff checks pass. Three new metrics cases cover default sizing, uncapped iOS
+scaling and Android avoiding double scaling. No new dependency or migration.
+
+Limits remain: no exact 320px native runtime, maximum accessibility size, full
+VoiceOver/TalkBack, Android device runtime, household/verification live-provider
+flow or signed binary/store verification. This is a visual revision of IOS2,
+not completion or merge. PR #37 must remain draft until applicable configured
+identity acceptance is resolved; its new revision needs fresh CI. No IOS3 work.
+
+IOS2 configured acceptance checkpoint after visual head `6595249`: both
+Foundation and Native bundle jobs passed [CI41598388517](https://github.com/FSS-Ltd/the-joint-app/actions/runs/41598388517).
+Checkout logs identify tested merge `1dd54279380e59d5dc2a4a7abca7178db229ffe9`
+of that head into base `974208e118478ce41bd82b85e05c77eff5eee2ef`. Results:
+539 unit, 324 integration, 181 browser tests, both exports and Doctor20/20.
+PR #37 remains draft/unmerged; these checks precede the invitation correction.
+
+Applied only the explicitly approved development Clerk custom claims, preserving
+the previous empty custom object and all other session settings. Matched Family
+Fund Development's domain to the native public issuer before save. Native API
+was already enabled; no toggle, app identity, return URL or production change.
+The security-reviewed owned API fixture started with fresh restricted PostgreSQL,
+status LISTEN/health readiness and anonymous `/v1/me` denial (401). Only its
+matching private API audience is enabled. Root private configuration is read
+selectively in memory, never changed or bundled; public mobile preview origin
+was updated and the owned Metro/app reloaded. No personal database was used.
+
+The user initially reported another sign-in failure, then confirmed correct
+credentials work and the earlier password was wrong. Parent observed the native
+account/household screen after this confirmation, without exposing credentials,
+codes or setup keys. This establishes signed identity/account access through the
+configured fixture; enrollment, returns, invitation acceptance, logout and the
+remaining device matrix are not all individually verified by that observation.
+
+The user then found that inviting another adult had no deferral action. Current
+IOS2 correction: default invitation to a collapsed account action, add explicit
+“Invite later,” preserve later access and pending/permission boundaries. This is
+the existing optional-invitation requirement, not IOS3. Add failing behavior
+regressions, verify the native result, obtain fresh code/security reviews and
+current-head CI before updating/merging PR #37. Source delivery remains open.
+
+IOS2 invitation correction native acceptance passed on the configured signed
+household: default collapsed with no email field, open reveals the form and
+“Invite later,” deferral returns to the ready household and account action,
+reopening works, and parent left it closed. No invitation was submitted by these
+checks. Four source-executing UI cases cover default optional state, no-invitation-
+write deferral/reopening, a pending write guard and hidden/reopened existing link,
+plus organiser/full-household boundaries. First-red reproduced three missing
+action cases; all four pass after the focused fix.
+
+The earlier wrong-password attempt also exposed a feedback defect: the real
+installed native SDK returns an `api_response_error` container whose nested code
+was ignored by the existing mapper. Independent synthetic SDK probe reproduced
+this without real credentials/provider calls. Two committed SDK regressions
+failed first for incorrect password/missing identifier, then passed after one-level
+normalization through the existing fixed message allowlist. Direct codes retain
+their behavior; unknown/malformed details remain generic with no provider-text
+reflection. This changes feedback only and grants no authentication authority.
+Fresh independent code/security reviews and final local/cloud checks are running.
+
+IOS2 final local checkpoint for invitation/feedback correction: Code Reviewer
+and Application Security Engineer both pass the final source before PR update.
+Independent results include 14 focused plus the original SDK probe, and 52
+security-focused cases respectively, mobile/shared/test types, scoped lint,
+formatting and diff/secret checks. Parent reopened every changed/new file and
+passed 546 units across 81 files, root types 19/19 plus tests, lint/format,
+build 9/9 and both iOS/Android exports. The new revision requires fresh cloud CI.
+
+Acceptance audit retains the current gate: configured email/recovery return,
+authenticator enrollment/return and separate fresh server TOTP, deliberate
+two-adult invitation/share/accept, signed background/foreground and local/global
+logout evidence remain to record. Disabled optional Google OAuth is not an
+active return flow. Invitation custom-scheme acceptance still needs a registered
+native installation; Expo Go alone cannot prove it. No development bundle ID is
+specified in app.json, so do not invent a production/Clerk identity. Confirm
+disposable test-account scope before revoking other provider sessions. Corrected
+the IOS2 decision's stale physical-device/release reference to IOS18; IOS16 is
+marketing/web cutover. Keep PR #37 draft until applicable acceptance passes.
+
+IOS2 invitation/feedback head `757e4718200a76a858f9d995efe45cf82a311fa7`
+passed both Foundation and Native bundle jobs in
+[CI41604397577](https://github.com/FSS-Ltd/the-joint-app/actions/runs/41604397577).
+Both checkout logs identify merge `cfe1cde6d8e7ea7f27ce9811e98600c747aa2e6a`
+into base `974208e118478ce41bd82b85e05c77eff5eee2ef`: 546 units, 324
+integrations, 181 browser tests, both exports and Doctor20/20. Host still reports
+PR #37 draft and unmerged. This is baseline evidence for the following fix.
+
+The founder approved using the current development account for local/global
+logout and creating/removing one disposable second adult for enrollment and
+invitation tests. No second adult has yet been created. Approved global logout
+concealed account/household access, but cleanup stayed pending after one explicit
+retry. A read-only provider check found zero active sessions. The strict parser
+expected an envelope while Clerk's default sessions response is an array.
+Requesting `paginated=true` matches the existing schema and the installed backend
+SDK. Preserve subject, creation-cutoff, bounded pagination and confirmation guards.
+Two regressions failed before the fix; 17 focused logout cases pass afterward.
+A second read-only provider check accepted the paginated envelope with zero active
+sessions and no provider writes. The already-running fixture still holds the old
+code; this does not establish native cleanup recovery. Do not retire its pending
+ticket or report successful global cleanup merely from the provider session count.
+
+Local follow-up checks: 547 units/81 files, types 19/19 plus test types, lint,
+formatting and build 9/9 pass. Three affected identity/session integration files
+pass 33/33 in a fresh owned database; its verified container and anonymous volumes
+were removed. Code Reviewer and Application Security Engineer independently clear
+the source/test correction: 17 focused cases plus pagination/cutoff/isolation
+probes, API/test types, lint/format and diff checks. Fresh revision CI remains
+required before this fix can satisfy the delivery gate.
+
+The founder has no existing development bundle ID. An isolated managed checkout
+at `757e471` uses temporary `com.example.familyfund.dev` only for unsigned local
+simulator acceptance; no Apple/Clerk registration or production identity changed.
+Frozen install, shared builds, iOS prebuild and 113 pods passed. Xcode 26.3 failed
+before app compilation in ExpoModulesJSI (`sending 'slot' risks causing data
+races`), exit 65. No installable binary, install or native invitation return was
+produced. [Expo SDK58 requires Xcode26.4+](https://docs.expo.dev/versions/v58.0.0/).
+[Apple lists Xcode26.4.1 as compatible with macOS26.2](https://developer.apple.com/xcode/system-requirements/).
+Official download sign-in is prepared in the in-app browser. Keep the existing
+toolchain and generated checkout intact while the supported rebuild is pending;
+no vendor patch, concurrency weakening, EAS or store submission. IOS2 remains
+current; IOS3 has not started.

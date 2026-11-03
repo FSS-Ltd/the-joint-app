@@ -18,6 +18,13 @@ const originSchema = z
   })
   .transform((value) => new URL(value).origin);
 
+const apiAudienceSchema = z
+  .string()
+  .min(1)
+  .max(255)
+  .regex(/^[\x21-\x7E]+$/)
+  .refine((value) => !value.includes("*"));
+
 export const clerkServerEnvironmentSchema = z.object({
   CLERK_ISSUER: originSchema,
   CLERK_JWT_KEY: z
@@ -32,6 +39,7 @@ export const clerkServerEnvironmentSchema = z.object({
     .string()
     .transform((value) => value.split(",").map((origin) => origin.trim()))
     .pipe(z.array(originSchema).min(1).max(10)),
+  CLERK_API_BEARER_AUDIENCE: apiAudienceSchema.optional(),
   CLERK_TIMEOUT_MS: z.coerce.number().int().min(100).max(5000).default(2000),
 });
 export type ClerkServerEnvironment = z.infer<
@@ -94,18 +102,28 @@ export const clerkProviderUserSchema = z.object({
   phone_numbers: z.array(z.object({ reserved_for_second_factor: z.boolean() })),
 });
 
-export const clerkSessionClaimsSchema = z.object({
+export const clerkSessionFactsSchema = z.object({
   v: z.literal(2),
   sub: z.string().regex(/^user_[A-Za-z0-9]+$/),
   sid: z.string().regex(/^sess_[A-Za-z0-9]+$/),
   iss: z.string(),
-  azp: z.string(),
   exp: z.number().int().positive(),
   iat: z.number().int().positive(),
   fva: z.tuple([z.number().int().min(-1), z.number().int().min(-1)]).optional(),
   sts: z.literal("active").optional(),
   act: z.never().optional(),
 });
+
+export const clerkSessionClaimsSchema = clerkSessionFactsSchema.extend({
+  azp: z.string(),
+});
+export const clerkApiBearerSessionClaimsSchema = clerkSessionFactsSchema.extend(
+  {
+    azp: z.never().optional(),
+    aud: apiAudienceSchema,
+    joint_token_use: z.literal("api-session-v1"),
+  },
+);
 
 export const authProviderSchema = z.enum(["local", "clerk"]);
 export function readAuthProvider(
@@ -117,6 +135,7 @@ export function readAuthProvider(
         "CLERK_ISSUER",
         "CLERK_SECRET_KEY",
         "CLERK_JWT_KEY",
+        "CLERK_API_BEARER_AUDIENCE",
         "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
       ].some((key) => values[key] !== undefined)
     )
@@ -141,6 +160,7 @@ export const clerkProviderSessionListSchema = z.object({
   total_count: z.number().int().nonnegative(),
 });
 
+export type ClerkSessionFacts = z.infer<typeof clerkSessionFactsSchema>;
 export type ClerkSessionClaims = z.infer<typeof clerkSessionClaimsSchema>;
 export const clerkTotpVerificationSchema = z.object({
   verified: z.literal(true),

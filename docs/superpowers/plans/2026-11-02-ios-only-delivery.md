@@ -50,11 +50,11 @@ Order is strictly the listed IOS0 through IOS18 units, including each lettered s
 **Owns:** `apps/mobile/package.json`, app/Metro/TypeScript configuration, root layout/entry route, `apps/mobile/src/components/`, `apps/mobile/src/theme/`, lockfile and relevant Turbo/lint/CI wiring.
 **Consumes:** Semantic palette and native design contract. **Produces:** Native screen container, text, action, amount, notice/loading/empty primitives and one honest no-data entry flow; no fabricated balances or inert tabs.
 
-- [ ] Verify SDK/React/Router/@expo/ui peers from official docs and registry. Choose maintained compatible exact versions; keep web React isolated if required. Document why each dependency is necessary.
-- [ ] Add iOS/Android config, Expo Router shell, safe areas and native reusable primitives. Support Android from the same components; do not add a web household target, auth stubs or future empty screens.
-- [ ] Run frozen install, mobile TypeScript, lint/format, iOS and Android bundle exports and Expo compatibility checks. Add CI for these without weakening existing checks.
-- [ ] Launch the iOS simulator first and inspect real shell, enlarged text, contrast and VoiceOver labels; validate Android emulator/device behavior and TalkBack where available, documenting exact limitations. Bundle success alone is not render evidence.
-- [ ] Complete reviews and PR/CI/merge gate.
+- [x] Verify SDK/React/Router/@expo/ui peers from official docs and registry. Choose maintained compatible exact versions; keep web React isolated if required. Document why each dependency is necessary.
+- [x] Add iOS/Android config, Expo Router shell, safe areas and native reusable primitives. Support Android from the same components; do not add a web household target, auth stubs or future empty screens.
+- [x] Run frozen install, mobile TypeScript, lint/format, iOS and Android bundle exports and Expo compatibility checks. Add CI for these without weakening existing checks.
+- [x] Launch the iOS simulator first and inspect real shell, enlarged text, contrast and VoiceOver labels; validate Android emulator/device behavior and TalkBack where available, documenting exact limitations. Bundle success alone is not render evidence.
+- [x] Complete reviews and PR/CI/merge gate.
 
 ### IOS2 — Native identity, session lock and household onboarding
 

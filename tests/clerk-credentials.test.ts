@@ -98,6 +98,38 @@ describe("Clerk environment boundary", () => {
       }).CLERK_AUTHORIZED_PARTIES,
     ).toEqual([origin]);
   });
+  it("keeps API bearer admission disabled until an exact audience is configured", () => {
+    const environment = { ...settings, CLERK_JWT_KEY: publicKey };
+    expect(clerkServerEnvironmentSchema.parse(environment)).not.toHaveProperty(
+      "CLERK_API_BEARER_AUDIENCE",
+    );
+    expect(
+      clerkServerEnvironmentSchema.parse({
+        ...environment,
+        CLERK_API_BEARER_AUDIENCE: "urn:joint:test-api",
+      }),
+    ).toHaveProperty("CLERK_API_BEARER_AUDIENCE", "urn:joint:test-api");
+  });
+  it.each([
+    "",
+    " ",
+    " urn:joint:api",
+    "urn:joint:api ",
+    "*",
+    "a\nb",
+    "a".repeat(256),
+  ])(
+    "rejects an unsafe API audience configuration without exposing its value",
+    (audience) => {
+      expect(() =>
+        readEnvironment(clerkServerEnvironmentSchema, {
+          ...settings,
+          CLERK_JWT_KEY: publicKey,
+          CLERK_API_BEARER_AUDIENCE: audience,
+        }),
+      ).toThrow("Invalid environment fields: CLERK_API_BEARER_AUDIENCE");
+    },
+  );
   it.each([
     "https://u:p@example.test",
     "https://example.test/path",
