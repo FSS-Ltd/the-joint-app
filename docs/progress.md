@@ -980,3 +980,19 @@ operation past timeout and a normal 60-second browser return. These are not live
 provider/device flows. Full units pass 528/528 across 77 files, types 19/19 plus
 tests, lint/format, builds 9/9, both native exports and Doctor 20/20 pass. Parent
 is freezing this revision for both independent retests; no PR or IOS3 yet.
+
+IOS2 draft [PR #37](https://github.com/FSS-Ltd/the-joint-app/pull/37) is open.
+Published/reviewed source head: 1e44e8ee59aef2cdd88f1c3d9d67fc83b80ccd6f.
+Both required profiles completed review before publication. Original critical
+SDK transition/removal defects are corrected, but code C3/C4 and security SEC2
+leave three P2 recovery corrections: start-over must reset completed attempts;
+A → B → A must preserve the latest changed selection; recognized structured
+session_not_found 404 must expose terminal credential recovery. Actual installed
+SDK probes reproduce each. Independent full 528 tests and 178 focused security
+tests pass; they do not clear the findings. PR is deliberately draft, not approved
+or merged. Latest applicable cloud CI must still be verified.
+
+Round 3 will fix only these current-unit recovery findings and obtain both
+independent retests. Provider audience/customization and configured native
+runtime acceptance remain open; Android exports are not Android runtime proof.
+No IOS3, personal database change, deployment, push provisioning or store review.
