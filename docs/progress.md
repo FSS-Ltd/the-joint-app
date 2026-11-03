@@ -1231,7 +1231,10 @@ The founder requested easier authenticator setup. IOS2.1 is a focused follow-up
 on the verified merged baseline: local QR, explicit authenticator-app opening,
 and hidden manual-key fallback. See [design](decisions/ios2-authenticator-setup.md)
 and [implementation plan](superpowers/plans/2026-11-03-authenticator-setup.md).
-Current branch is `build/ios2-authenticator-setup`; no PR or merge is yet claimed.
+[PR38](https://github.com/FSS-Ltd/the-joint-app/pull/38) is open from
+`build/ios2-authenticator-setup` against main. Source revision
+`3ad81255ecea295d8db6cae24aeebb94026c8f91` passed the local checks below.
+Current branch-head CI must pass before merge; no merge is claimed.
 Code Reviewer and Application Security Engineer independently found no blocking
 source issue and each passed 49 focused tests. Local verification passed 591
 units across 84 files, root types/lint/format/build, Doctor 20/20, dependency
