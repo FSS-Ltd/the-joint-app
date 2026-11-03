@@ -1,5 +1,7 @@
 import { useClerk, useUser } from "@clerk/expo";
-import { useState, useSyncExternalStore } from "react";
+import { useLayoutEffect, useState, useSyncExternalStore } from "react";
+import * as Linking from "expo-linking";
+import { getTotpSetupUri } from "@joint/identity-runtime";
 import { AppText } from "@/components/app-text";
 import { Feedback, IdentityFrame } from "@/components/identity-frame";
 import { NativeField } from "@/components/native-field";
@@ -8,6 +10,10 @@ import { NativeActions } from "@/components/native-actions";
 import { SessionActions } from "./session-actions";
 import { useIdentity } from "./context";
 import { useIdentityOperation } from "./use-operation";
+import {
+  AuthenticatorEnrollment,
+  type AuthenticatorSetup,
+} from "./authenticator-enrollment";
 
 export function SecurityScreen({
   onBack,
@@ -24,9 +30,20 @@ export function SecurityScreen({
     identity.workflow.getSnapshot,
   );
   const enrollmentPending = identity.workflow.enrollmentPending;
-  const [secret, setSecret] = useState(""),
+  const [setup, setSetup] = useState<{
+      material: AuthenticatorSetup;
+      active(): boolean;
+    } | null>(null),
     [code, setCode] = useState("");
-  const [showKey, setShowKey] = useState(false);
+  useLayoutEffect(() => {
+    let actor = identity.workflow.capture();
+    return identity.workflow.subscribe(() => {
+      if (actor.current()) return;
+      actor = identity.workflow.capture();
+      setSetup(null);
+      setCode("");
+    });
+  }, [identity.workflow]);
   async function enroll() {
     await operation.run(async (_signal, lifetime) => {
       if (!user) throw new Error();
@@ -34,9 +51,27 @@ export function SecurityScreen({
       if (!enrollment.secret) throw new Error();
       if (lifetime.current()) identity.workflow.setEnrollmentPending(true);
       if (lifetime.active()) {
-        setSecret(enrollment.secret);
+        setSetup({
+          material: {
+            secret: enrollment.secret,
+            uri: getTotpSetupUri(enrollment.uri, enrollment.secret),
+          },
+          active: lifetime.active,
+        });
         setCode("");
-        setShowKey(false);
+      }
+    });
+  }
+  async function openAuthenticator(uri: string) {
+    if (!setup?.active() || uri !== setup.material.uri) return;
+    await operation.run(async (_signal, lifetime) => {
+      try {
+        await Linking.openURL(uri);
+      } catch {
+        if (lifetime.active())
+          operation.setNotice(
+            "Could not open an authenticator. Scan the QR code from another device or use the private manual setup key.",
+          );
       }
     });
   }
@@ -51,9 +86,8 @@ export function SecurityScreen({
         await user.verifyTOTP({ code });
         if (lifetime.current()) identity.workflow.setEnrollmentPending(false);
         if (!lifetime.active()) return;
-        setSecret("");
+        setSetup(null);
         setCode("");
-        setShowKey(false);
         await user.reload();
         if (!lifetime.active()) return;
         await clerk.session?.reload();
@@ -82,27 +116,12 @@ export function SecurityScreen({
         Email verification and backup codes do not replace a fresh authenticator
         check for household access.
       </AppText>
-      {secret && (
-        <>
-          <AppText>
-            Add The Family Fund App in your authenticator. Choose a time-based
-            code and enter this private setup key.
-          </AppText>
-          {showKey && (
-            <AppText
-              selectable
-              accessibilityLabel={`Private setup key: ${secret}`}
-            >
-              {secret}
-            </AppText>
-          )}
-          <NativeActions>
-            <NativeAction
-              label={showKey ? "Hide setup key" : "Show private setup key"}
-              onPress={() => setShowKey(!showKey)}
-            />
-          </NativeActions>
-        </>
+      {setup?.active() && (
+        <AuthenticatorEnrollment
+          setup={setup.material}
+          pending={operation.pending}
+          onOpen={(uri) => void openAuthenticator(uri)}
+        />
       )}
       {(user?.totpEnabled || enrollmentPending) && (
         <NativeField
@@ -134,7 +153,7 @@ export function SecurityScreen({
             onPress={() => void verify()}
           />
         )}
-        {enrollmentPending && !secret && (
+        {enrollmentPending && !setup?.active() && (
           <NativeAction
             label="Restart authenticator setup"
             tone="text"

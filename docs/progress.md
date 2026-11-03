@@ -1200,3 +1200,52 @@ Official download sign-in is prepared in the in-app browser. Keep the existing
 toolchain and generated checkout intact while the supported rebuild is pending;
 no vendor patch, concurrency weakening, EAS or store submission. IOS2 remains
 current; IOS3 has not started.
+
+### IOS2 merged baseline and IOS2.1 authenticator setup
+
+Host revalidated [PR37](https://github.com/FSS-Ltd/the-joint-app/pull/37) as
+merged into main at `099f3ce2820a3fa6d952e566ae8eaf3a2ccc3ccb` on
+2026-11-03. Reviewed head was `8dfb550b5486b2fb889d1e9eb3b8d3388fa8b807`;
+its tree equals the actual merge. PR CI41610480514 and main CI41618624503
+succeeded. The PR checks tested merge `f14f91922a02b16897522b2ac6c3b5b512f982eb`:
+547 units, 324 integrations, 181 browser tests, both native exports and Doctor20/20.
+
+Configured native acceptance progressed after the founder updated Xcode to26.6.
+The local iOS build and Android Debug build succeeded with temporary local-only
+identifiers. The initial unsigned iOS packaging failed SecureStore startup;
+normal simulator ad-hoc signing restored startup without a developer account or
+manual entitlement changes. Native sign-in, optional invite deferral/reopening,
+signed background return and fresh global logout passed. Provider read-only
+confirmation found zero active sessions after that fresh logout. This does not
+recover or retire the earlier runtime's pending cleanup ticket.
+
+One approved disposable adult signed in with development email verification.
+The founder reported authenticator setup, background clearing of key/code, and
+separate fresh session verification passed. A subsequent local logout settled at
+Welcome home with no pending cleanup. Deliberate invitation acceptance, remaining
+return/device checks and final disposable-fixture cleanup remain outstanding.
+Actual financial access and later delivery phases are not certified by these
+observations. IOS3 has not started.
+
+The founder requested easier authenticator setup. IOS2.1 is a focused follow-up
+on the verified merged baseline: local QR, explicit authenticator-app opening,
+and hidden manual-key fallback. See [design](decisions/ios2-authenticator-setup.md)
+and [implementation plan](superpowers/plans/2026-11-03-authenticator-setup.md).
+[PR38](https://github.com/FSS-Ltd/the-joint-app/pull/38) is open from
+`build/ios2-authenticator-setup` against main. Source revision
+`3ad81255ecea295d8db6cae24aeebb94026c8f91` passed the local checks below.
+Current branch-head CI must pass before merge; no merge is claimed.
+Code Reviewer and Application Security Engineer independently found no blocking
+source issue and each passed 49 focused tests. Local verification passed 591
+units across 84 files, root types/lint/format/build, Doctor 20/20, dependency
+alignment and both standard-entry exports. Xcode 26.6 native compilation and
+strict simulator signing verification passed. A public sample of the actual
+component rendered under Hermes; Apple Vision decoded its QR to the exact
+expected URI. Explicit opening reached iOS Passwords, and manual reveal/hide
+passed. No sample credential was saved. The temporary preview entry was restored
+and the normal configured native sign-in screen is ready. Android Debug native compilation, SVG autolink/codegen packaging and APK
+signature verification also passed. Physical-device scan/enrollment, Android
+runtime and expanded accessibility/device coverage remain unverified here.
+Current-revision CI remains required. The dependency audit reports three
+existing baseline advisories (multer high; minimatch/glob moderate), with none
+reported for the newly added QR/SVG graph. Do not describe the full audit as green.

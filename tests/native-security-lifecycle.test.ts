@@ -9,6 +9,7 @@ import {
 } from "./fixtures/native-source-harness.js";
 import { NativeWorkflow } from "../apps/mobile/src/features/identity/workflow.js";
 import * as shared from "../packages/identity-runtime/src/clerk-flow.js";
+import { getTotpSetupUri } from "../packages/identity-runtime/src/totp-setup.js";
 import { passwordResetSchema } from "../packages/contracts/src/index.js";
 type Operation = {
   pending: boolean;
@@ -28,7 +29,10 @@ function fixture() {
   workflow.identify("user:a");
   const user = {
     totpEnabled: false,
-    createTOTP: vi.fn(async () => ({ secret: "synthetic-private-key" })),
+    createTOTP: vi.fn(async () => ({
+      secret: "synthetic-private-key",
+      uri: "otpauth://totp/sample?secret=synthetic-private-key",
+    })),
     verifyTOTP: vi.fn<(value: { code: string }) => Promise<void>>(async () => {
       user.totpEnabled = true;
     }),
@@ -46,6 +50,7 @@ function fixture() {
     api: { verifyTotp: vi.fn(async () => {}) },
   };
   let pending: Promise<boolean> | undefined;
+  const openURL = vi.fn<(uri: string) => Promise<boolean>>(async () => true);
   function mount(
     name: "SecurityScreen" | "PasswordTaskScreen" | "AccountScreen",
   ) {
@@ -53,6 +58,8 @@ function fixture() {
     const deps = {
       react: h.react,
       "react/jsx-runtime": jsxBoundary,
+      "expo-linking": { openURL },
+      "@joint/identity-runtime": { ...shared, getTotpSetupUri },
       "@joint/contracts": { passwordResetSchema },
       "@clerk/expo": {
         useUser: () => ({ user }),
@@ -68,6 +75,15 @@ function fixture() {
       "@/components/native-action": { NativeAction: "action" },
       "@/components/native-actions": { NativeActions: "actions" },
       "./session-actions": { SessionActions: "sessions" },
+      "./authenticator-enrollment": {
+        AuthenticatorEnrollment: ({
+          setup,
+          onOpen,
+        }: {
+          setup: { secret: string; uri: string | null };
+          onOpen(uri: string): void;
+        }) => jsxBoundary.jsx("enrollment", { setup, onOpen }),
+      },
       "./security-screen": { SecurityScreen: "security" },
       "./household-forms": {
         AcceptInvitation: "accept",
@@ -117,7 +133,15 @@ function fixture() {
       unmount: h.unmount,
     };
   }
-  return { workflow, user, session, identity, mount, done: () => pending };
+  return {
+    workflow,
+    user,
+    session,
+    identity,
+    openURL,
+    mount,
+    done: () => pending,
+  };
 }
 it("resumes pending authenticator verification after concealment without retaining the secret or code", async () => {
   const f = fixture(),
@@ -125,7 +149,6 @@ it("resumes pending authenticator verification after concealment without retaini
   press(first.render(), "Set up authenticator");
   await f.done();
   field(first.render(), "Authenticator code").onChangeText("111111");
-  press(first.render(), "Show private setup key");
   expect(JSON.stringify(first.render())).toContain("synthetic-private-key");
   first.unmount();
   f.workflow.conceal();
@@ -134,13 +157,133 @@ it("resumes pending authenticator verification after concealment without retaini
   expect(JSON.stringify(resumed.render())).not.toContain(
     "synthetic-private-key",
   );
+  expect(JSON.stringify(resumed.render())).not.toContain("otpauth:");
+  expect(f.user.createTOTP).toHaveBeenCalledOnce();
   field(resumed.render(), "Authenticator code").onChangeText("123456");
   press(resumed.render(), "Enable authenticator");
   await f.done();
   expect(f.user.createTOTP).toHaveBeenCalledOnce();
   expect(f.user.verifyTOTP).toHaveBeenCalledWith({ code: "123456" });
   expect(f.identity.api.verifyTotp).not.toHaveBeenCalled();
+  field(resumed.render(), "Authenticator code").onChangeText("654321");
+  press(resumed.render(), "Verify this session");
+  await f.done();
+  expect(f.identity.api.verifyTotp).toHaveBeenCalledWith(
+    "654321",
+    expect.any(AbortSignal),
+  );
   resumed.unmount();
+});
+
+function openAuthenticator(tree: unknown): void {
+  const enrollment = elements(tree).find((item) => item.props.setup);
+  const setup = enrollment?.props.setup as { uri: string } | undefined;
+  const open = enrollment?.props.onOpen;
+  if (!setup || typeof open !== "function")
+    throw new Error("Missing authenticator handoff");
+  open(setup.uri);
+}
+
+it("hands off the matching creation URI only on press, without verifying enrollment", async () => {
+  const f = fixture(),
+    screen = f.mount("SecurityScreen");
+  expect(f.user.createTOTP).not.toHaveBeenCalled();
+  press(screen.render(), "Set up authenticator");
+  await f.done();
+  expect(f.openURL).not.toHaveBeenCalled();
+  openAuthenticator(screen.render());
+  await f.done();
+  expect(f.openURL).toHaveBeenCalledExactlyOnceWith(
+    "otpauth://totp/sample?secret=synthetic-private-key",
+  );
+  expect(f.user.verifyTOTP).not.toHaveBeenCalled();
+  expect(f.identity.api.verifyTotp).not.toHaveBeenCalled();
+  expect(f.workflow.enrollmentPending).toBe(true);
+  screen.unmount();
+});
+
+it("gives fixed QR/manual fallback feedback when an authenticator cannot open", async () => {
+  const f = fixture(),
+    screen = f.mount("SecurityScreen");
+  f.openURL.mockRejectedValueOnce(new Error("synthetic provider detail"));
+  press(screen.render(), "Set up authenticator");
+  await f.done();
+  openAuthenticator(screen.render());
+  await f.done();
+  const result = JSON.stringify(screen.render());
+  expect(result).toContain("manual setup key");
+  expect(result).not.toContain("synthetic provider detail");
+  expect(f.workflow.enrollmentPending).toBe(true);
+  screen.unmount();
+});
+
+it.each(["conceal", "actor"])(
+  "invalidates a retained handoff callback after %s",
+  async (transition) => {
+    const f = fixture(),
+      screen = f.mount("SecurityScreen");
+    press(screen.render(), "Set up authenticator");
+    await f.done();
+    const before = screen.render();
+    if (transition === "conceal") f.workflow.conceal();
+    else f.workflow.identify("other:b");
+    openAuthenticator(before);
+    await f.done();
+    expect(f.openURL).not.toHaveBeenCalled();
+    screen.unmount();
+  },
+);
+
+it.each(["conceal", "actor"])(
+  "ignores a late authenticator opening rejection after %s",
+  async (transition) => {
+    const f = fixture(),
+      screen = f.mount("SecurityScreen");
+    let reject: ((cause: Error) => void) | undefined;
+    f.openURL.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, fail) => {
+          reject = fail;
+        }),
+    );
+    press(screen.render(), "Set up authenticator");
+    await f.done();
+    field(screen.render(), "Authenticator code").onChangeText("111111");
+    openAuthenticator(screen.render());
+    screen.unmount();
+    if (transition === "conceal") f.workflow.conceal();
+    else f.workflow.identify("other:b");
+    reject?.(new Error("synthetic late failure"));
+    await f.done();
+    const resumed = f.mount("SecurityScreen");
+    const result = JSON.stringify(resumed.render());
+    expect(result).not.toContain("synthetic-private-key");
+    expect(result).not.toContain("otpauth:");
+    expect(result).not.toContain("manual setup key");
+    expect(result).not.toContain("111111");
+    expect(f.user.createTOTP).toHaveBeenCalledOnce();
+    if (transition === "conceal") {
+      expect(f.workflow.enrollmentPending).toBe(true);
+      expect(field(resumed.render(), "Authenticator code").value).toBe("");
+    } else expect(f.workflow.enrollmentPending).toBe(false);
+    resumed.unmount();
+  },
+);
+
+it("clears creation material and entered code if the actor changes while mounted", async () => {
+  const f = fixture(),
+    screen = f.mount("SecurityScreen");
+  press(screen.render(), "Set up authenticator");
+  await f.done();
+  field(screen.render(), "Authenticator code").onChangeText("111111");
+  f.workflow.identify("other:b");
+  f.workflow.setEnrollmentPending(true);
+  const result = JSON.stringify(screen.render());
+  expect(result).not.toContain("synthetic-private-key");
+  expect(result).not.toContain("otpauth:");
+  expect(result).not.toContain("111111");
+  expect(field(screen.render(), "Authenticator code").value).toBe("");
+  screen.unmount();
 });
 it("retains optional account-security navigation over concealment but clears it on actor change", () => {
   const f = fixture(),
@@ -186,7 +329,11 @@ it("does not continue an old actor's enrollment after provider response", async 
   f.user.createTOTP.mockImplementationOnce(
     () =>
       new Promise((done) => {
-        resolve = () => done({ secret: "synthetic-private-key" });
+        resolve = () =>
+          done({
+            secret: "synthetic-private-key",
+            uri: "otpauth://totp/sample?secret=synthetic-private-key",
+          });
       }),
   );
   press(screen.render(), "Set up authenticator");
@@ -212,7 +359,11 @@ it("retains only pending enrollment metadata when creation resolves after backgr
   f.user.createTOTP.mockImplementationOnce(
     () =>
       new Promise((done) => {
-        resolve = () => done({ secret: "synthetic-private-key" });
+        resolve = () =>
+          done({
+            secret: "synthetic-private-key",
+            uri: "otpauth://totp/sample?secret=synthetic-private-key",
+          });
       }),
   );
   press(screen.render(), "Set up authenticator");
