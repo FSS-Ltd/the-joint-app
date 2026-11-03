@@ -33,6 +33,7 @@ export function createClerkRevoker(
             status: "active",
             limit: "20",
             offset: String(offset),
+            paginated: "true",
           });
           const page = clerkProviderSessionListSchema.parse(
             await request(`/sessions?${query}`, "GET", signal),

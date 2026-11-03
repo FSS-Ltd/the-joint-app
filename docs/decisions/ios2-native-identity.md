@@ -58,6 +58,14 @@ Native state is explicit: loading, signed-out, locked (background/expired/unavai
 
 Preserve existing server-first logout, local/global cutoffs and cleanup-ticket recovery. Terminally rejected or missing API credentials require a separate, explicit actor-scoped local credential removal path; it must not claim server/global revocation. Retain outstanding cleanup capabilities and committed cutoffs. A rejected/expired cleanup capability is retired durably with an accurate remote-cleanup-unconfirmed notice; transient failures retain it. Use supported removal on the captured SessionResource, never broad SDK sign-out for scoped cleanup: its internal awaits can select a replacement session despite a stale supplied ID. TOTP enrollment uses SDK support; sensitive fresh proof uses the existing server endpoint and `clerk_totp` factor. Email/client trust, backup recovery and device unlock do not silently become financial TOTP proof. Native forms retain drafts on errors, disable duplicate submissions, validate boundaries and provide visible loading/error/success feedback. Native controls support scalable text and accessibility labels; password visibility and confirmation use real controls.
 
+Global Clerk cleanup requests the paginated session-list envelope explicitly
+(`paginated=true`), matching the strict provider schema. The default response is
+an array and cannot establish successful cleanup through that parser. Empty
+active-session lists complete cleanup without revoke writes; subject validation,
+original creation cutoff, bounded pages and confirmed revoke/absence remain
+mandatory. Provider session absence alone does not prove the application's
+cleanup-ticket lifecycle settled.
+
 Household setup reuses explicit GBP/Europe-London server defaults, optional partner invitation and deliberate invitation acceptance. Wrong email, full household, stale membership and revoked session remain server-authoritative. Invitations cannot authenticate a user or imply account sharing.
 
 Invitation is an optional action on the existing account screen, collapsed by

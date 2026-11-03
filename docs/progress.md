@@ -1157,3 +1157,46 @@ specified in app.json, so do not invent a production/Clerk identity. Confirm
 disposable test-account scope before revoking other provider sessions. Corrected
 the IOS2 decision's stale physical-device/release reference to IOS18; IOS16 is
 marketing/web cutover. Keep PR #37 draft until applicable acceptance passes.
+
+IOS2 invitation/feedback head `757e4718200a76a858f9d995efe45cf82a311fa7`
+passed both Foundation and Native bundle jobs in
+[CI41604397577](https://github.com/FSS-Ltd/the-joint-app/actions/runs/41604397577).
+Both checkout logs identify merge `cfe1cde6d8e7ea7f27ce9811e98600c747aa2e6a`
+into base `974208e118478ce41bd82b85e05c77eff5eee2ef`: 546 units, 324
+integrations, 181 browser tests, both exports and Doctor20/20. Host still reports
+PR #37 draft and unmerged. This is baseline evidence for the following fix.
+
+The founder approved using the current development account for local/global
+logout and creating/removing one disposable second adult for enrollment and
+invitation tests. No second adult has yet been created. Approved global logout
+concealed account/household access, but cleanup stayed pending after one explicit
+retry. A read-only provider check found zero active sessions. The strict parser
+expected an envelope while Clerk's default sessions response is an array.
+Requesting `paginated=true` matches the existing schema and the installed backend
+SDK. Preserve subject, creation-cutoff, bounded pagination and confirmation guards.
+Two regressions failed before the fix; 17 focused logout cases pass afterward.
+A second read-only provider check accepted the paginated envelope with zero active
+sessions and no provider writes. The already-running fixture still holds the old
+code; this does not establish native cleanup recovery. Do not retire its pending
+ticket or report successful global cleanup merely from the provider session count.
+
+Local follow-up checks: 547 units/81 files, types 19/19 plus test types, lint,
+formatting and build 9/9 pass. Three affected identity/session integration files
+pass 33/33 in a fresh owned database; its verified container and anonymous volumes
+were removed. Code Reviewer and Application Security Engineer independently clear
+the source/test correction: 17 focused cases plus pagination/cutoff/isolation
+probes, API/test types, lint/format and diff checks. Fresh revision CI remains
+required before this fix can satisfy the delivery gate.
+
+The founder has no existing development bundle ID. An isolated managed checkout
+at `757e471` uses temporary `com.example.familyfund.dev` only for unsigned local
+simulator acceptance; no Apple/Clerk registration or production identity changed.
+Frozen install, shared builds, iOS prebuild and 113 pods passed. Xcode 26.3 failed
+before app compilation in ExpoModulesJSI (`sending 'slot' risks causing data
+races`), exit 65. No installable binary, install or native invitation return was
+produced. [Expo SDK58 requires Xcode26.4+](https://docs.expo.dev/versions/v58.0.0/).
+[Apple lists Xcode26.4.1 as compatible with macOS26.2](https://developer.apple.com/xcode/system-requirements/).
+Official download sign-in is prepared in the in-app browser. Keep the existing
+toolchain and generated checkout intact while the supported rebuild is pending;
+no vendor patch, concurrency weakening, EAS or store submission. IOS2 remains
+current; IOS3 has not started.

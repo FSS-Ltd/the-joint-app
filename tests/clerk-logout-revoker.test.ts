@@ -3,17 +3,20 @@ import { createClerkRevoker } from "../apps/api/src/modules/identity/clerk/sessi
 afterEach(() => vi.unstubAllGlobals());
 it("global retry revokes only sessions created at or before the original cutoff", async () => {
   const paths: string[] = [];
+  const queries: URLSearchParams[] = [];
   vi.stubGlobal("fetch", async (url: string) => {
-    paths.push(new URL(url).pathname);
+    const parsed = new URL(url);
+    paths.push(parsed.pathname);
+    const sessions = [
+      { id: "sess_old", user_id: "user_synthetic", created_at: 1000 },
+      { id: "sess_later", user_id: "user_synthetic", created_at: 2001 },
+    ];
+    if (parsed.pathname === "/v1/sessions") queries.push(parsed.searchParams);
     return Response.json(
       url.includes("?")
-        ? {
-            data: [
-              { id: "sess_old", user_id: "user_synthetic", created_at: 1000 },
-              { id: "sess_later", user_id: "user_synthetic", created_at: 2001 },
-            ],
-            total_count: 2,
-          }
+        ? parsed.searchParams.get("paginated") === "true"
+          ? { data: sessions, total_count: sessions.length }
+          : sessions
         : { id: "sess_old", user_id: "user_synthetic", status: "revoked" },
     );
   });
@@ -31,6 +34,42 @@ it("global retry revokes only sessions created at or before the original cutoff"
     2000,
   );
   expect(paths).toEqual(["/v1/sessions", "/v1/sessions/sess_old/revoke"]);
+  expect(Object.fromEntries(queries[0] ?? [])).toEqual({
+    user_id: "user_synthetic",
+    status: "active",
+    limit: "20",
+    offset: "0",
+    paginated: "true",
+  });
+});
+
+it("finishes global cleanup when the provider has no active sessions", async () => {
+  const calls: string[] = [];
+  vi.stubGlobal("fetch", async (url: string) => {
+    const parsed = new URL(url);
+    calls.push(parsed.pathname);
+    return Response.json(
+      parsed.searchParams.get("paginated") === "true"
+        ? { data: [], total_count: 0 }
+        : [],
+    );
+  });
+  await expect(
+    createClerkRevoker({
+      CLERK_SECRET_KEY: "sk_test_synthetic",
+      CLERK_ISSUER: "https://synthetic.clerk.accounts.dev",
+      CLERK_JWT_KEY: "unused",
+      CLERK_AUTHORIZED_PARTIES: ["http://127.0.0.1:3000"],
+      CLERK_TIMEOUT_MS: 1000,
+    }).revoke(
+      "user_synthetic",
+      "sess_old",
+      "global",
+      new AbortController().signal,
+      2000,
+    ),
+  ).resolves.toBeUndefined();
+  expect(calls).toEqual(["/v1/sessions"]);
 });
 
 it("does not report successful cleanup for an unrelated or still-active provider session", async () => {
