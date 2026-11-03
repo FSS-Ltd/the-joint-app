@@ -1,3 +1,5 @@
+import { IdentityMutations } from "../apps/mobile/src/features/identity/mutations.js";
+import { sessionActor } from "../apps/mobile/src/features/identity/provider-session.js";
 import { sessionFixture as fixture } from "./fixtures/native-session-harness.js";
 import { expect, it, vi } from "vitest";
 import {
@@ -16,7 +18,8 @@ it.each(["missing token", "expired token", "disabled API profile"])(
     await f.screen.render().logout("global");
     expect(f.clerk.signOut).not.toHaveBeenCalled();
     await f.screen.render().discardRejectedSignIn?.();
-    expect(f.clerk.signOut).toHaveBeenCalledWith({ sessionId: "a" });
+    expect(f.original.remove).toHaveBeenCalledOnce();
+    expect(f.clerk.signOut).not.toHaveBeenCalled();
     await f.controller.identify(null);
     f.workflow.identify(null);
     const actions = f.screen.render();
@@ -109,12 +112,15 @@ it.each(["expired capability", "malformed capability"])(
       "apps/mobile/src/features/identity/identity-entry.tsx",
       {
         "react/jsx-runtime": jsxBoundary,
+        react: hookHarness().react,
+        "./mutation-screen": { MutationScreen: "mutation" },
         "@clerk/expo": { useSession: () => ({ session: null }) },
         "expo-router": { usePathname: () => "/" },
         "./context": {
           useIdentity: () => ({
             ...f.screen.render(),
             state: f.controller.getSnapshot(),
+            mutations: f.mutations,
           }),
         },
         "@/components/app-text": { AppText: "text" },
@@ -184,10 +190,11 @@ it("retains outstanding cleanup during explicit local credential discard", async
   f.screen.unmount();
   f.controller.dispose();
 });
-it("ordinary runtime refresh cannot override actual background AppState", async () => {
-  const f = await fixture();
+it("ordinary runtime refresh cannot override background or undefined provider state", async () => {
+  const f = await fixture(503);
   const h = hookHarness();
   let change: ((value: string) => void) | undefined;
+  let emit: ((event: unknown) => void) | undefined;
   const appState = {
     currentState: "active",
     addEventListener: (_name: string, listener: (value: string) => void) => {
@@ -204,6 +211,14 @@ it("ordinary runtime refresh cannot override actual background AppState", async 
       "react/jsx-runtime": jsxBoundary,
       "@clerk/expo": {
         useSession: () => ({ session: f.original, isLoaded: true }),
+        useClerk: () => ({
+          ...f.clerk,
+          addListener: (listener: (event: unknown) => void) => {
+            emit = listener;
+            listener({ session: f.clerk.session });
+            return () => {};
+          },
+        }),
       },
       "react-native": { AppState: appState, View: "view" },
       "expo-linking": {
@@ -212,6 +227,8 @@ it("ordinary runtime refresh cannot override actual background AppState", async 
       },
       "./api": { createIdentityApi: () => f.api },
       "./context": { IdentityContext: context },
+      "./mutations": { IdentityMutations },
+      "./provider-session": { sessionActor },
       "./workflow": { NativeWorkflow },
       "./controller": { NativeIdentityController },
       "./returns": { readInvitationLink: () => null },
@@ -228,6 +245,19 @@ it("ordinary runtime refresh cannot override actual background AppState", async 
     );
   render();
   await Promise.resolve();
+  emit?.({ session: undefined });
+  const masked = elements(render())[0]?.props.value as {
+    state: unknown;
+    refresh(): Promise<void>;
+  };
+  expect(masked.state).toEqual({ kind: "locked", reason: "transition" });
+  const beforeUndefined = f.api.readMe.mock.calls.length;
+  await masked.refresh();
+  change?.("active");
+  expect(f.api.readMe).toHaveBeenCalledTimes(beforeUndefined);
+  emit?.({ session: f.original });
+  await Promise.resolve();
+  expect(f.api.readMe.mock.calls.length).toBeGreaterThan(beforeUndefined);
   appState.currentState = "background";
   change?.("background");
   const before = f.api.readMe.mock.calls.length;

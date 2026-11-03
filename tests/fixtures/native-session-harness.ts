@@ -1,3 +1,4 @@
+import { IdentityMutations } from "../../apps/mobile/src/features/identity/mutations.js";
 import { vi } from "vitest";
 import { sourceExports, hookHarness } from "./native-source-harness.js";
 import { NativeWorkflow } from "../../apps/mobile/src/features/identity/workflow.js";
@@ -28,6 +29,13 @@ export async function sessionFixture(
     user: { id: "user" },
     status: "active",
     getToken: vi.fn(async (): Promise<string | null> => "synthetic"),
+    remove: vi.fn(async (): Promise<void> => {
+      clerk.client.signedInSessions = clerk.client.signedInSessions.filter(
+        (item) => item.id !== original.id,
+      );
+      if (clerk.session?.id === original.id) clerk.session = null;
+      mutations.observe(clerk.session);
+    }),
   };
   const clerk: {
     session: typeof original | null;
@@ -40,18 +48,6 @@ export async function sessionFixture(
     client: { signedInSessions: [original] },
     signOut: vi.fn(),
   };
-  // Reproduce clerk-js 6.42.1's real single-session fallback, even for a stale ID.
-  clerk.signOut.mockImplementation(async ({ sessionId }) => {
-    if (clerk.client.signedInSessions.length === 1) {
-      clerk.client.signedInSessions = [];
-      clerk.session = null;
-    } else {
-      clerk.client.signedInSessions = clerk.client.signedInSessions.filter(
-        (s) => s.id !== sessionId,
-      );
-      if (clerk.session?.id === sessionId) clerk.session = null;
-    }
-  });
   const api = {
     readMe: vi.fn(async () => {
       throw { status };
@@ -74,6 +70,17 @@ export async function sessionFixture(
   };
   const controller = new NativeIdentityController(api),
     workflow = new NativeWorkflow();
+  const mutations = new IdentityMutations({
+    current: () => clerk.session,
+    find: (id) => clerk.client.signedInSessions.find((item) => item.id === id),
+    select: async () => {
+      clerk.session = null;
+      mutations.observe(null);
+    },
+    block: () => controller.blockMutations(),
+    settle: () =>
+      controller.settleMutation(provider.sessionActor(clerk.session)),
+  });
   await controller.identify("user:a");
   workflow.identify("user:a");
   const backend = vi.fn<
@@ -120,6 +127,7 @@ export async function sessionFixture(
           controller,
           workflow,
           controller.getSnapshot(),
+          mutations,
         ),
       );
     render();
@@ -136,6 +144,7 @@ export async function sessionFixture(
     clerk,
     controller,
     workflow,
+    mutations,
     storage,
     screen,
     mount,

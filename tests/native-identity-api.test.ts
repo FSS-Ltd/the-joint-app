@@ -1,8 +1,6 @@
+import { providerError } from "./fixtures/clerk-sdk.js";
 import { expect, it, vi } from "vitest";
-import {
-  createIdentityApi,
-  IdentityApiError,
-} from "../apps/mobile/src/features/identity/api.js";
+import { createIdentityApi, IdentityApiError } from "./fixtures/native-api.js";
 import { readIdentityConfiguration } from "../apps/mobile/src/features/identity/configuration.js";
 import {
   NativeReturnGuard,
@@ -166,4 +164,56 @@ it("keeps unauthorized status authoritative even when an error body is not JSON"
   await expect(api.readMe(new AbortController().signal)).rejects.toMatchObject({
     status: 401,
   });
+});
+
+it("preserves recognized terminal SDK acquisition rejection without private messages", async () => {
+  const send = vi.fn<typeof fetch>();
+  const api = createIdentityApi(
+    apiUrl,
+    async () => {
+      throw providerError(401);
+    },
+    send,
+  );
+  await expect(api.readMe(new AbortController().signal)).rejects.toMatchObject({
+    status: 401,
+  });
+  expect(send).not.toHaveBeenCalled();
+});
+
+it.each([403, 429, 503])(
+  "classifies SDK acquisition status %i without leaking messages",
+  async (status) => {
+    const api = createIdentityApi(
+      apiUrl,
+      async () => {
+        throw providerError(status);
+      },
+      vi.fn(),
+    );
+    await expect(
+      api.readMe(new AbortController().signal),
+    ).rejects.toMatchObject({ status: status === 403 ? 401 : 0 });
+    await expect(api.readMe(new AbortController().signal)).rejects.not.toThrow(
+      "private provider detail",
+    );
+  },
+);
+it("does not treat a lookalike or transport failure as terminal SDK rejection", async () => {
+  for (const cause of [
+    { status: 401 },
+    new Error("network"),
+    new DOMException("cancelled", "AbortError"),
+  ]) {
+    const api = createIdentityApi(
+      apiUrl,
+      async () => {
+        throw cause;
+      },
+      vi.fn(),
+    );
+    await expect(
+      api.readMe(new AbortController().signal),
+    ).rejects.toMatchObject({ status: 0 });
+  }
 });

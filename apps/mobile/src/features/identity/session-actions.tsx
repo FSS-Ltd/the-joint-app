@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import { Alert } from "react-native";
 import { NativeAction } from "@/components/native-action";
 import { NativeActions } from "@/components/native-actions";
@@ -5,7 +6,13 @@ import { Feedback } from "@/components/identity-frame";
 import { useIdentity } from "./context";
 export function SessionActions(): React.JSX.Element {
   const identity = useIdentity();
-  const pending = identity.sessionPending;
+  const mutation = useSyncExternalStore(
+    identity.mutations.subscribe,
+    identity.mutations.getSnapshot,
+    identity.mutations.getSnapshot,
+  );
+  const pending =
+    identity.sessionPending || mutation.busy || mutation.quarantined;
   if (identity.cancelPendingSignIn)
     return (
       <>

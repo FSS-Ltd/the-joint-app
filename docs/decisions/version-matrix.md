@@ -154,9 +154,10 @@ React 19.3.0 and web React 19.3.1 pins remain unchanged.
 `@joint/identity-runtime` is a private workspace package depending only on
 `@joint/contracts`. Both web and native reuse its pure Clerk transitions and idle
 controller. No optional biometric, passkey, native Google or Clerk native UI
-module is installed. Installed `@clerk/clerk-js` 6.42.1 sign-out behavior requires
-application actor/session fencing even when a session ID is supplied; this is
-covered by the IOS2 lifecycle review and correction work.
+module is installed. Installed `@clerk/clerk-js` 6.42.1 broad sign-out can select a replacement
+session after internal awaits; scoped cleanup must use captured-session removal.
+SDK selection changes require coordinated settlement behind native concealment.
+These boundaries are covered by IOS2 review and correction work.
 
 Dependency compatibility, exports and Doctor checks do not establish real
 provider/device acceptance. IOS2 retains the previously documented four audit

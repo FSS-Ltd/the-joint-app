@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import type { IdentityMutations } from "./mutations";
 import type { NativeWorkflow } from "./workflow";
 import type { IdentityApi } from "./api";
 import type { IdentityState } from "./controller";
@@ -6,6 +7,7 @@ import type { IdentityState } from "./controller";
 export type IdentityContextValue = {
   state: IdentityState;
   workflow: NativeWorkflow;
+  mutations: IdentityMutations;
   api: IdentityApi;
   refresh(): Promise<void>;
   interact(): void;

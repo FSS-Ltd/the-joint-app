@@ -948,3 +948,35 @@ native/shared cases 65/65, types 19/19 tasks plus tests, builds 9/9, lint and
 formatting pass. Both native exports and Doctor 20/20 pass. These do not replace
 real-provider/device evidence. Parent is freezing the corrected revision for
 independent code/security re-review. No PR yet and no IOS3 work.
+
+IOS2 round 1 re-review at `1a69ec5` resolved the original code R1–R4 and
+security SEC-1. Actual installed Clerk 6.42.1 probes found remaining SDK-boundary
+defects that the earlier doubles omitted: throwing from finalization navigation
+can leave SDK state undefined; broad sign-out can remove a replacement session
+after its internal await; terminal SDK token-acquisition errors are still hidden
+as generic unavailability. Passing 507 unit tests does not clear these findings.
+
+Round 2 is authorized within IOS2 only. Use supported captured-session removal,
+a runtime-owned mutation coordinator spanning actual SDK completion, synchronous
+SDK resource observations and continuous app concealment. SDK selection cannot
+be atomically cancelled through its public API; conflicting/ambiguous state must
+settle safely or remain concealed for explicit selection. Normalize only
+recognized terminal authentication errors; preserve transient failures. Actual
+installed-SDK deferred tests, followed by both independent reviewers, are required
+before PR creation. No provider settings, deployment or next delivery unit.
+
+IOS2 round 2 checkpoint: supported captured SessionResource.remove replaces
+broad SDK sign-out. Runtime coordination holds through actual SDK completion,
+blocks all identity reads during mutation/loading/quarantine, preserves observed
+conflicts and offers explicit bounded selection recovery. No throwing navigation
+cancellation, private SDK patch, automatic rollback loop or timeout unlock.
+Recognized terminal Clerk token errors preserve their expired-credential outcome;
+transient failures remain unconfirmed.
+
+The installed native SDK now executes against synthetic environment/client
+responses with every fetch trapped. Deferred tests cover replacement actors,
+captured removal, failed/missing targets, loading, background, an unfinished
+operation past timeout and a normal 60-second browser return. These are not live
+provider/device flows. Full units pass 528/528 across 77 files, types 19/19 plus
+tests, lint/format, builds 9/9, both native exports and Doctor 20/20 pass. Parent
+is freezing this revision for both independent retests; no PR or IOS3 yet.

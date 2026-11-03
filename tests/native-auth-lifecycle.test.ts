@@ -1,3 +1,4 @@
+import { IdentityMutations } from "../apps/mobile/src/features/identity/mutations.js";
 import { expect, it, vi } from "vitest";
 import {
   sourceExports,
@@ -23,11 +24,29 @@ function fixture() {
   const verify = vi.fn<(input: { code: string }) => Promise<{ error: null }>>(
     async () => ({ error: null }),
   );
-  const finalize = vi.fn<
-    (options: { navigate: () => void }) => Promise<{ error: null }>
-  >(async () => ({ error: null }));
+  const created = { id: "created", user: { id: "user" }, status: "active" };
+  const clerk: {
+    session: null | { id: string };
+    client: { sessions: { id: string }[]; reload(): Promise<void> };
+  } = {
+    session: null,
+    client: { sessions: [created], reload: async () => {} },
+  };
+  const mutations = new IdentityMutations({
+    current: () => clerk.session,
+    find: (id) => (id === created.id ? created : undefined),
+    select: async () => {},
+    block: () => {},
+    settle: async () => {},
+  });
+  const finalize = vi.fn(async () => {
+    clerk.session = created;
+    mutations.observe(created);
+    return { error: null };
+  });
   const signUp = {
     id: "signup1",
+    createdSessionId: "created",
     status: "missing_requirements",
     unverifiedFields: ["email_address"],
     missingFields: [],
@@ -36,13 +55,13 @@ function fixture() {
   };
   const signIn = {
     id: "signin1",
+    createdSessionId: "created",
     status: "needs_first_factor",
     supportedSecondFactors: [],
     resetPasswordEmailCode: { sendCode: send, verifyCode: verify },
     create: vi.fn(async () => ({ error: null })),
     finalize,
   };
-  const clerk: { session: null | { id: string } } = { session: null };
   function mount(mode: "sign-up" | "recovery") {
     const harness = hookHarness();
     const exports = sourceExports(
@@ -55,7 +74,7 @@ function fixture() {
           useSignUp: () => ({ signUp, fetchStatus: "idle" }),
         },
         "@joint/identity-runtime": shared,
-        "./context": { useIdentity: () => ({ workflow }) },
+        "./context": { useIdentity: () => ({ workflow, mutations }) },
       },
     );
     // Source executes above; this assertion types its known exported hook.
@@ -67,7 +86,17 @@ function fixture() {
       unmount: harness.unmount,
     };
   }
-  return { send, verify, finalize, signIn, signUp, clerk, mount, workflow };
+  return {
+    send,
+    verify,
+    finalize,
+    signIn,
+    signUp,
+    clerk,
+    mount,
+    workflow,
+    mutations,
+  };
 }
 it("does not implicitly send a verification email on mount or after an inbox remount", async () => {
   const f = fixture(),
@@ -164,26 +193,49 @@ it("does not finalize a late verification or auto-finalize its completed attempt
   expect(f.finalize).toHaveBeenCalledOnce();
   resumed.unmount();
 });
-it("fences activation inside finalize after its internal reload when the actor changes", async () => {
+it("keeps an already-started finalize locked through concealment and quarantines a conflicting actor", async () => {
   const f = fixture();
   f.signUp.status = "complete";
   let resume: (() => void) | undefined;
-  const activate = vi.fn();
-  f.finalize.mockImplementationOnce(async ({ navigate }) => {
+  f.finalize.mockImplementationOnce(async () => {
     await new Promise<void>((done) => {
       resume = done;
     });
-    navigate();
-    activate();
+    f.clerk.session = { id: "created" };
+    f.mutations.observe(f.clerk.session);
     return { error: null };
   });
-  const screen = f.mount("sign-up"),
-    pending = screen.render().submit("", "", "", false, "");
+  const first = f.mount("sign-up"),
+    pending = first.render().submit("", "", "", false, "");
   expect(f.finalize).toHaveBeenCalledOnce();
+  first.unmount();
+  f.workflow.conceal();
+  f.clerk.session = { id: "other" };
+  f.mutations.observe(f.clerk.session);
   f.workflow.identify("other:session");
-  f.clerk.session = { id: "session" };
   resume?.();
   await pending;
-  expect(activate).not.toHaveBeenCalled();
-  screen.unmount();
+  expect(f.mutations.getSnapshot().quarantined).toBe(true);
+  expect(f.clerk.session?.id).toBe("created");
+});
+it("does not overlap a new recovery attempt after the first screen remounts", async () => {
+  const f = fixture();
+  let resolve: (() => void) | undefined;
+  f.signIn.create.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = () => done({ error: null });
+      }),
+  );
+  const first = f.mount("recovery"),
+    pending = first.render().submit("first@example.test", "", "", false, "");
+  first.unmount();
+  f.workflow.conceal();
+  const second = f.mount("recovery");
+  await second.render().submit("second@example.test", "", "", false, "");
+  expect(f.signIn.create).toHaveBeenCalledOnce();
+  resolve?.();
+  await pending;
+  expect(f.send).not.toHaveBeenCalled();
+  second.unmount();
 });

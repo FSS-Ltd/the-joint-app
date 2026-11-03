@@ -1,4 +1,4 @@
-import { useSession } from "@clerk/expo";
+import { useClerk, useSession } from "@clerk/expo";
 import * as Linking from "expo-linking";
 import {
   useEffect,
@@ -11,6 +11,8 @@ import {
 } from "react";
 import { AppState, View } from "react-native";
 import { createIdentityApi } from "./api";
+import { IdentityMutations } from "./mutations";
+import { sessionActor } from "./provider-session";
 import { IdentityContext } from "./context";
 import { NativeWorkflow } from "./workflow";
 import { NativeIdentityController } from "./controller";
@@ -26,22 +28,42 @@ export function IdentityRuntime({
   configuration: IdentityConfiguration;
 }>): React.JSX.Element {
   const { session, isLoaded } = useSession();
-  const sso = useNativeSso(configuration.authReturnUrl);
-  const sessionRef = useRef(session);
-  sessionRef.current = session;
+  const clerk = useClerk();
   const api = useMemo(
     () =>
       createIdentityApi(
         configuration.apiUrl,
-        async () => sessionRef.current?.getToken() ?? null,
+        async () => clerk.session?.getToken() ?? null,
       ),
-    [configuration.apiUrl],
+    [configuration.apiUrl, clerk],
   );
   const workflow = useMemo(
     () => new NativeWorkflow(() => AppState.currentState === "active"),
     [],
   );
   const controller = useMemo(() => new NativeIdentityController(api), [api]);
+  const mutations = useMemo(
+    () =>
+      new IdentityMutations({
+        current: () => clerk.session,
+        find: (id) =>
+          clerk.client?.signedInSessions.find((item) => item.id === id),
+        select: (id) => clerk.setActive({ session: id }),
+        block: () => controller.blockMutations(),
+        settle: () =>
+          controller.settleMutation(
+            clerk.session?.currentTask ? null : sessionActor(clerk.session),
+          ),
+      }),
+    [clerk, controller],
+  );
+  const sso = useNativeSso(configuration.authReturnUrl, mutations);
+  const mutationState = useSyncExternalStore(
+    mutations.subscribe,
+    mutations.getSnapshot,
+    mutations.getSnapshot,
+  );
+  const providerLoading = useRef(false);
   const state = useSyncExternalStore(
     controller.subscribe,
     controller.getSnapshot,
@@ -53,11 +75,11 @@ export function IdentityRuntime({
     controller,
     workflow,
     state,
+    mutations,
   );
   const { storageLoaded, storageFailed } = actions;
   const [invitation, setInvitation] = useState<string | null>(null);
   const [hydrationFailed, setHydrationFailed] = useState(false);
-  const task = session?.currentTask?.key;
   const actor = session ? `${session.user?.id}:${session.id}` : null;
   const previousActor = useRef<string | null>(null);
   useLayoutEffect(() => {
@@ -65,19 +87,40 @@ export function IdentityRuntime({
     if (AppState.currentState !== "active") controller.background();
     return () => controller.dispose();
   }, [controller]);
-  useLayoutEffect(() => {
-    if (isLoaded && storageLoaded && !storageFailed)
-      void controller.identify(task ? null : actor);
-    workflow.identify(actor);
-  }, [
-    isLoaded,
-    storageLoaded,
-    storageFailed,
-    actor,
-    task,
-    controller,
-    workflow,
-  ]);
+  useLayoutEffect(
+    () =>
+      clerk.addListener(({ session: current }) => {
+        mutations.observe(current);
+        if (current === undefined) {
+          providerLoading.current = true;
+          controller.blockMutations();
+          return;
+        }
+        workflow.identify(sessionActor(current));
+        if (
+          isLoaded &&
+          storageLoaded &&
+          !storageFailed &&
+          !mutations.getSnapshot().busy &&
+          !mutations.getSnapshot().quarantined
+        ) {
+          const actor = current?.currentTask ? null : sessionActor(current);
+          void (providerLoading.current
+            ? controller.settleMutation(actor)
+            : controller.identify(actor));
+          providerLoading.current = false;
+        }
+      }),
+    [
+      clerk,
+      mutations,
+      workflow,
+      controller,
+      isLoaded,
+      storageLoaded,
+      storageFailed,
+    ],
+  );
   useLayoutEffect(() => {
     if (previousActor.current !== null && previousActor.current !== actor)
       setInvitation(null);
@@ -128,8 +171,10 @@ export function IdentityRuntime({
         api,
         refresh: () => controller.refresh(),
         workflow,
+        mutations,
         interact: () => controller.interact(),
         ...actions,
+        sessionNotice: actions.sessionNotice || mutationState.notice,
         ...(configuration.authReturnUrl ? { google: sso.start } : {}),
         googlePending: sso.pending,
         authRevision: sso.revision,

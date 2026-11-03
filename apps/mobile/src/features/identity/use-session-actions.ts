@@ -7,6 +7,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import type { IdentityMutations, MutationScope } from "./mutations";
 import { createIdentityApi, type IdentityApi } from "./api";
 import { CleanupStore } from "./cleanup-store";
 import type { NativeIdentityController, IdentityState } from "./controller";
@@ -26,6 +27,7 @@ export function useSessionActions(
   controller: NativeIdentityController,
   workflow: NativeWorkflow,
   state: IdentityState,
+  mutations: IdentityMutations,
 ) {
   const clerk = useClerk(),
     { session } = useSession();
@@ -68,21 +70,16 @@ export function useSessionActions(
     };
   }, [store]);
   async function remove(
-    sessionToRemove: NonNullable<typeof session>,
-    unchanged: () => boolean,
-  ): Promise<boolean> {
-    return removeOriginalSession(
-      sessionToRemove,
-      () => clerk.session,
-      (id) => clerk.client.signedInSessions.some((item) => item.id === id),
-      unchanged,
-      async (id) => {
-        await clerk.signOut({ sessionId: id });
-      },
-    );
+    original: NonNullable<typeof session>,
+    scope: MutationScope,
+  ): Promise<void> {
+    await scope.activate(null, () => removeOriginalSession(original));
   }
   async function perform(
-    action: (lease: ReturnType<NativeWorkflow["capture"]>) => Promise<void>,
+    action: (
+      lease: ReturnType<NativeWorkflow["capture"]>,
+      scope: MutationScope,
+    ) => Promise<void>,
   ): Promise<void> {
     if (pending.current || !storageLoaded) return;
     const lease = workflow.capture();
@@ -91,7 +88,7 @@ export function useSessionActions(
     setSessionPending(true);
     setSessionError("");
     try {
-      await action(lease);
+      await mutations.run((scope) => action(lease, scope), "session");
     } catch {
       if (lease.current())
         setSessionError(
@@ -102,16 +99,18 @@ export function useSessionActions(
       setSessionPending(false);
     }
   }
-  async function logout(scope: "local" | "global"): Promise<void> {
+  async function logout(logoutScope: "local" | "global"): Promise<void> {
     const original = session;
     if (!original || sessionActor(clerk.session) !== sessionActor(original))
       return;
-    await perform(async (lease) => {
+    await perform(async (lease, scope) => {
       const originalActor = sessionActor(original);
-      const logoutApi = createIdentityApi(apiUrl, () => original.getToken());
+      const logoutApi = createIdentityApi(apiUrl, () =>
+        scope.hold(original.getToken()),
+      );
       controller.conceal();
       try {
-        await logoutIdentity(scope, {
+        await logoutIdentity(logoutScope, {
           logout: (value) =>
             logoutApi.logout(value, new AbortController().signal),
           revoke: () => controller.revoke(originalActor ?? undefined),
@@ -119,10 +118,9 @@ export function useSessionActions(
             if (value) await store.add(value);
           },
           signOut: async () => {
-            await remove(original, lease.current);
+            await remove(original, scope);
           },
         });
-        if (lease.current()) await controller.refresh();
       } catch (cause) {
         if (lease.current() && isCredentialRejected(cause))
           setRejectedActor(originalActor);
@@ -143,14 +141,12 @@ export function useSessionActions(
       sessionActor(clerk.session) !== sessionActor(original)
     )
       return;
-    await perform(async (lease) => {
+    await perform(async (_lease, scope) => {
       controller.conceal();
-      if (await remove(original, lease.current)) {
-        controller.revoke(sessionActor(original) ?? undefined);
-        // This is local recovery, never evidence of server or global revocation.
-        setSessionNotice(unconfirmedNotice);
-        await controller.refresh();
-      }
+      await remove(original, scope);
+      controller.revoke(sessionActor(original) ?? undefined);
+      // This is local recovery, never evidence of server or global revocation.
+      setSessionNotice(unconfirmedNotice);
     });
   }
   async function cancelPendingSignIn(): Promise<void> {
@@ -160,9 +156,9 @@ export function useSessionActions(
       sessionActor(clerk.session) !== sessionActor(original)
     )
       return;
-    await perform(async (lease) => {
+    await perform(async (_lease, scope) => {
       controller.conceal();
-      if (await remove(original, lease.current)) await controller.refresh();
+      await remove(original, scope);
     });
   }
   async function retryCleanup(): Promise<void> {

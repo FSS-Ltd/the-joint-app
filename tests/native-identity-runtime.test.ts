@@ -190,3 +190,46 @@ it("reconciles after a React effect remount without losing revocation history", 
   expect(controller.getSnapshot().kind).toBe("household-required");
   controller.dispose();
 });
+it("blocks every authority entry point during a mutation and rechecks deadline before reveal", async () => {
+  const { api, controller } = fixture();
+  await controller.identify("actor:a");
+  controller.blockMutations();
+  const before = api.readMe.mock.calls.length;
+  await controller.identify("actor:b");
+  await controller.foreground();
+  await controller.refresh();
+  controller.interact();
+  expect(api.readMe).toHaveBeenCalledTimes(before);
+  let release: (() => void) | undefined;
+  api.readDeadline.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        release = () =>
+          resolve({
+            serverTime: new Date().toISOString(),
+            expiresAt: new Date(600000).toISOString(),
+          });
+      }),
+  );
+  const settled = controller.settleMutation("actor:b");
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(controller.getSnapshot().kind).toBe("loading");
+  release?.();
+  await settled;
+  expect(controller.getSnapshot().kind).toBe("household-required");
+  controller.dispose();
+});
+it("keeps a revoked actor denied after mutation settlement", async () => {
+  const { api, controller } = fixture();
+  await controller.identify("actor:a");
+  controller.blockMutations();
+  controller.revoke("actor:a");
+  await controller.settleMutation("actor:a");
+  expect(controller.getSnapshot()).toEqual({
+    kind: "locked",
+    reason: "expired",
+  });
+  expect(api.readMe).toHaveBeenCalledTimes(1);
+  controller.dispose();
+});

@@ -4,7 +4,10 @@ import { IdleSessionController } from "@joint/identity-runtime";
 export type IdentityState =
   | { kind: "loading" }
   | { kind: "signed-out" }
-  | { kind: "locked"; reason: "background" | "expired" | "unavailable" }
+  | {
+      kind: "locked";
+      reason: "background" | "expired" | "unavailable" | "transition";
+    }
   | {
       kind: "security-required" | "household-required" | "ready";
       me: MeResponse;
@@ -23,6 +26,7 @@ export class NativeIdentityController {
   private readonly revoked = new Set<string>();
   private actor: string | null | undefined;
   private active = true;
+  private mutationsBlocked = false;
   private disposed = false;
   private epoch = 0;
   private abort: AbortController | undefined;
@@ -49,6 +53,20 @@ export class NativeIdentityController {
     this.idle?.stop();
     this.idle = undefined;
   }
+  blockMutations(): void {
+    this.mutationsBlocked = true;
+    this.cancel();
+    if (this.state.kind !== "signed-out")
+      this.publish({
+        kind: "locked",
+        reason: this.active ? "transition" : "background",
+      });
+  }
+  settleMutation(actor: string | null): Promise<void> {
+    this.mutationsBlocked = false;
+    this.actor = actor;
+    return this.refresh();
+  }
   async identify(actor: string | null): Promise<void> {
     if (this.actor === actor || this.disposed) return;
     this.actor = actor;
@@ -61,6 +79,10 @@ export class NativeIdentityController {
   }
   foreground(reconcile = true): Promise<void> {
     this.active = true;
+    if (this.mutationsBlocked) {
+      this.publish({ kind: "locked", reason: "transition" });
+      return Promise.resolve();
+    }
     return reconcile ? this.refresh() : Promise.resolve();
   }
   interact(): void {
@@ -84,7 +106,13 @@ export class NativeIdentityController {
   }
   async refresh(): Promise<void> {
     this.cancel();
-    if (!this.active || this.disposed || this.actor === undefined) return;
+    if (
+      !this.active ||
+      this.disposed ||
+      this.mutationsBlocked ||
+      this.actor === undefined
+    )
+      return;
     if (!this.actor) {
       this.publish({ kind: "signed-out" });
       return;

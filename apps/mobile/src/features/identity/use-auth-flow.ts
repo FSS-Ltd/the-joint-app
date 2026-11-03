@@ -12,13 +12,18 @@ import type { AuthMode } from "./workflow";
 export type { AuthMode } from "./workflow";
 export function useNativeAuthFlow(mode: AuthMode) {
   const clerk = useClerk(),
-    { workflow } = useIdentity();
+    { workflow, mutations } = useIdentity();
   const { signIn, fetchStatus: signingIn } = useSignIn(),
     { signUp, fetchStatus: signingUp } = useSignUp();
   useSyncExternalStore(
     workflow.subscribe,
     workflow.getSnapshot,
     workflow.getSnapshot,
+  );
+  const mutation = useSyncExternalStore(
+    mutations.subscribe,
+    mutations.getSnapshot,
+    mutations.getSnapshot,
   );
   const resource = mode === "sign-up" ? signUp : signIn;
   const stage = workflow.stage(mode, resource);
@@ -45,7 +50,11 @@ export function useNativeAuthFlow(mode: AuthMode) {
     return () => clearTimeout(timer);
   }, [resendAt]);
   async function run(
-    action: (active: () => boolean, current: () => boolean) => Promise<void>,
+    action: (
+      active: () => boolean,
+      current: () => boolean,
+      scope: import("./mutations").MutationScope,
+    ) => Promise<void>,
   ) {
     if (running.current) return false;
     running.current = true;
@@ -59,7 +68,13 @@ export function useNativeAuthFlow(mode: AuthMode) {
     const active = () => mounted.current && lease.active() && current();
     try {
       if (!active()) return false;
-      await action(active, current);
+      await mutations.run((scope) =>
+        action(
+          () => active() && scope.current(),
+          () => current() && scope.current(),
+          scope,
+        ),
+      );
       return active();
     } catch (cause) {
       if (active())
@@ -74,22 +89,28 @@ export function useNativeAuthFlow(mode: AuthMode) {
       if (mounted.current) setPending(false);
     }
   }
-  async function finalize(active: () => boolean): Promise<void> {
+  async function finalize(
+    active: () => boolean,
+    scope: import("./mutations").MutationScope,
+  ): Promise<void> {
     if (!active()) return;
-    // Clerk calls navigate after its internal reload/touch awaits and immediately before activation.
-    const navigate = () => {
-      if (!active())
-        throw new ClerkFlowFailure("Return to sign-in to continue.");
-    };
-    checked(
-      await (mode === "sign-up"
-        ? signUp.finalize({ navigate })
-        : signIn.finalize({ navigate })),
+    const id = resource.createdSessionId;
+    if (!id)
+      throw new ClerkFlowFailure("Sign-in is not ready. Please try again.");
+    if (!clerk.client.sessions.some((session) => session.id === id))
+      await clerk.client.reload();
+    if (!active()) return;
+    // Once started, the SDK call settles under the runtime lock; navigation is not a cancellation API.
+    await scope.activate(id, async () =>
+      checked(
+        await (mode === "sign-up" ? signUp.finalize() : signIn.finalize()),
+      ),
     );
   }
   async function advance(
     active: () => boolean,
     current: () => boolean,
+    scope: import("./mutations").MutationScope,
   ): Promise<void> {
     if (!active()) return;
     const next = await (mode === "sign-up"
@@ -97,7 +118,7 @@ export function useNativeAuthFlow(mode: AuthMode) {
       : advanceSignIn(signIn));
     if (current() && next.step === "email")
       workflow.rememberEmail(mode, resource.id, next.kind, true);
-    if (active() && next.step === "complete") await finalize(active);
+    if (active() && next.step === "complete") await finalize(active, scope);
   }
   async function sendEmail(
     kind: "signup" | "device" | "recovery",
@@ -116,7 +137,12 @@ export function useNativeAuthFlow(mode: AuthMode) {
   }
   return {
     stage,
-    pending: pending || signingIn === "fetching" || signingUp === "fetching",
+    pending:
+      pending ||
+      mutation.busy ||
+      mutation.quarantined ||
+      signingIn === "fetching" ||
+      signingUp === "fetching",
     error,
     notice,
     resendReady: Date.now() >= resendAt,
@@ -130,9 +156,9 @@ export function useNativeAuthFlow(mode: AuthMode) {
       backup: boolean,
       username: string,
     ) =>
-      run(async (active, current) => {
+      run(async (active, current, scope) => {
         if (stage.step === "complete") {
-          await finalize(active);
+          await finalize(active, scope);
           return;
         }
         if (stage.step === "email-request") {
@@ -175,7 +201,7 @@ export function useNativeAuthFlow(mode: AuthMode) {
                   signOutOfOtherSessions: true,
                 })),
           );
-        if (active()) await advance(active, current);
+        if (active()) await advance(active, current, scope);
       }),
     restart: () =>
       run(async (active) => {

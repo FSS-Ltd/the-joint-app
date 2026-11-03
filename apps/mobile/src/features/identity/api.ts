@@ -1,3 +1,4 @@
+import { isClerkAPIResponseError } from "@clerk/expo";
 import {
   acceptInviteSchema,
   authResultSchema,
@@ -80,7 +81,14 @@ export function createIdentityApi(
       const token = cleanupTicket
         ? null
         : await Promise.race([
-            getToken(),
+            getToken().catch((error: unknown) => {
+              if (
+                isClerkAPIResponseError(error) &&
+                (error.status === 401 || error.status === 403)
+              )
+                throw new IdentityApiError(401);
+              throw error;
+            }),
             new Promise<never>((_, reject) =>
               abort.signal.addEventListener(
                 "abort",

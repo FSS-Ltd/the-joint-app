@@ -4,20 +4,9 @@ export function sessionActor(
 ): string | null {
   return session ? `${session.user?.id}:${session.id}` : null;
 }
-/** Clerk's single-session signOut fallback ignores a stale target ID. Fence before invoking it. */
+/** The captured resource fixes the remote target before any SDK await. */
 export async function removeOriginalSession(
-  original: ProviderSession,
-  current: () => ProviderSession | null | undefined,
-  exists: (id: string) => boolean,
-  unchanged: () => boolean,
-  signOut: (id: string) => Promise<void>,
-): Promise<boolean> {
-  if (
-    !unchanged() ||
-    sessionActor(current()) !== sessionActor(original) ||
-    !exists(original.id)
-  )
-    return false;
-  await signOut(original.id);
-  return true;
+  original: ProviderSession & { remove(): Promise<unknown> },
+): Promise<void> {
+  await original.remove();
 }

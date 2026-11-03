@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from "react";
+import { MutationScreen } from "./mutation-screen";
 import { useSession } from "@clerk/expo";
 import { usePathname } from "expo-router";
 import { AppText } from "@/components/app-text";
@@ -15,6 +17,11 @@ export function IdentityEntry(): React.JSX.Element {
     { session } = useSession(),
     path = usePathname();
   const state = identity.state;
+  const mutation = useSyncExternalStore(
+    identity.mutations.subscribe,
+    identity.mutations.getSnapshot,
+    identity.mutations.getSnapshot,
+  );
   if (state.kind === "locked" && state.reason === "background")
     return (
       <IdentityFrame
@@ -24,6 +31,12 @@ export function IdentityEntry(): React.JSX.Element {
         <SessionActions />
       </IdentityFrame>
     );
+  if (
+    mutation.quarantined ||
+    (mutation.busy &&
+      (mutation.phase === "session" || state.kind !== "signed-out"))
+  )
+    return <MutationScreen />;
   const task = session?.currentTask?.key;
   if (task === "reset-password") return <PasswordTaskScreen />;
   if (task === "setup-mfa") return <SecurityScreen />;
