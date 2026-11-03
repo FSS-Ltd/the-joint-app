@@ -996,3 +996,19 @@ Round 3 will fix only these current-unit recovery findings and obtain both
 independent retests. Provider audience/customization and configured native
 runtime acceptance remain open; Android exports are not Android runtime proof.
 No IOS3, personal database change, deployment, push provisioning or store review.
+
+IOS2 round 3 local checkpoint: fresh restart resets both SDK attempts through
+maintained hooks before abandoning workflow and clearing selection; failed reset
+stays concealed. Defined actor changes back to the original actor are retained,
+while known late SDK completion remains excluded. Only recognized structured
+session_not_found 404 joins terminal token recovery; unrelated 404 and transient
+errors retain unconfirmed handling.
+
+Three first-red installed-SDK cases were preserved before the narrow fixes.
+Full units pass 536/536 across 78 files; types 19/19 plus tests, lint/format,
+builds 9/9, both exports, Doctor 20/20 and diff checks pass. Parent is committing
+for both independent retests before pushing the correction to Draft PR #37.
+Cloud run 41555212015 checks the earlier documentation head 0ad9b34: native
+bundle checks succeeded and Foundation remained pending at last observation.
+Older run 41555142105 was requested cancelled because its head was superseded;
+it is not current-revision acceptance evidence. No merge or IOS3.

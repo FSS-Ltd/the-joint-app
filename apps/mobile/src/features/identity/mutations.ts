@@ -27,7 +27,6 @@ export class IdentityMutations {
     notice: "",
   };
   private listeners = new Set<() => void>();
-  private baseline: string | null = null;
   private observed: string | null = null;
   private expectedId: string | null | undefined;
   private desired: string | null = null;
@@ -64,7 +63,6 @@ export class IdentityMutations {
     // SDK loading and our own late completion are not a newer user intent.
     if (
       actor === this.observed ||
-      actor === this.baseline ||
       (this.expectedId !== undefined &&
         (session?.id ?? null) === this.expectedId)
     )
@@ -87,8 +85,7 @@ export class IdentityMutations {
     phase: "attempt" | "session",
     reselect = false,
   ): Promise<void> {
-    this.baseline = sessionActor(this.port.current());
-    this.observed = this.baseline;
+    this.observed = sessionActor(this.port.current());
     this.expectedId = undefined;
     const generation = this.generation;
     this.port.block();
@@ -151,13 +148,32 @@ export class IdentityMutations {
       if (!this.snapshot.quarantined) await this.port.settle();
     }
   }
-  async reselect(startOver = false): Promise<void> {
+  reselect(): Promise<void> {
+    return this.recover(this.desired);
+  }
+  restart(
+    resetAttempts: (current: () => boolean) => Promise<void>,
+  ): Promise<void> {
+    return this.recover(null, resetAttempts);
+  }
+  private async recover(
+    target: string | null,
+    resetAttempts?: (current: () => boolean) => Promise<void>,
+  ): Promise<void> {
     if (this.snapshot.busy || !this.snapshot.quarantined) return;
-    const target = startOver ? null : this.desired;
     if (target !== null && !this.port.find(target))
       throw new Error("That sign-in is no longer available. Start again.");
     await this.execute(
-      (scope) => scope.activate(target, () => this.port.select(target)),
+      async (scope) => {
+        try {
+          await resetAttempts?.(scope.current);
+        } catch (error) {
+          this.quarantine();
+          throw error;
+        }
+        if (scope.current())
+          await scope.activate(target, () => this.port.select(target));
+      },
       "session",
       true,
     );

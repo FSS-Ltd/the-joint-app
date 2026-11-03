@@ -201,6 +201,7 @@ it.each([403, 429, 503])(
 );
 it("does not treat a lookalike or transport failure as terminal SDK rejection", async () => {
   for (const cause of [
+    { status: 404, errors: [{ code: "session_not_found" }] },
     { status: 401 },
     new Error("network"),
     new DOMException("cancelled", "AbortError"),
@@ -217,3 +218,19 @@ it("does not treat a lookalike or transport failure as terminal SDK rejection", 
     ).rejects.toMatchObject({ status: 0 });
   }
 });
+
+it.each(["not_found", "configuration_not_found"])(
+  "keeps recognized but unrelated404 %s unconfirmed",
+  async (code) => {
+    const api = createIdentityApi(
+      apiUrl,
+      async () => {
+        throw providerError(404, code);
+      },
+      vi.fn(),
+    );
+    await expect(
+      api.readMe(new AbortController().signal),
+    ).rejects.toMatchObject({ status: 0 });
+  },
+);

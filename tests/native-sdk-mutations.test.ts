@@ -175,7 +175,10 @@ it("requires explicit recovery when an activation target disappears or fails", a
   ).rejects.toThrow();
   expect(f.mutations.getSnapshot().quarantined).toBe(true);
   await expect(f.mutations.reselect()).rejects.toThrow();
-  await f.mutations.reselect(true);
+  await f.mutations.restart(async () => {
+    await f.clerk.client.signIn.__internal_future.reset();
+    await f.clerk.client.signUp.__internal_future.reset();
+  });
   expect(f.clerk.session).toBeNull();
   f.close();
 });

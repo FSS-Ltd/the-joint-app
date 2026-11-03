@@ -17,10 +17,13 @@ export const sdkErrors = sdkRequire(
   ) => Error & { status: number };
   isClerkAPIResponseError(error: unknown): error is Error & { status: number };
 };
-export function providerError(status: number): Error & { status: number } {
+export function providerError(
+  status: number,
+  code = "session_not_found",
+): Error & { status: number } {
   return new sdkErrors.ClerkAPIResponseError("private provider detail", {
     status,
-    data: [{ code: "session_not_found", message: "private provider detail" }],
+    data: [{ code, message: "private provider detail" }],
   });
 }
 
@@ -33,9 +36,18 @@ export type SdkSession = {
   touch(): Promise<SdkSession>;
   getToken(options?: { skipCache: boolean }): Promise<string | null>;
 };
+type SdkAttempt = {
+  id?: string;
+  status: string | null;
+  createdSessionId: string | null;
+  // Test-only read of the bridge consumed by the maintained useSignIn/useSignUp hooks. No state is patched.
+  __internal_future: { reset(): Promise<{ error: unknown | null }> };
+};
 export type NativeClerk = {
   session: SdkSession | null | undefined;
   client: {
+    signIn: SdkAttempt;
+    signUp: SdkAttempt;
     sessions: SdkSession[];
     signedInSessions: SdkSession[];
     reload(): Promise<unknown>;

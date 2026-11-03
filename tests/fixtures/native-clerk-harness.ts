@@ -9,7 +9,7 @@ export function deferred<T>() {
   });
   return { promise, resolve, reject };
 }
-export async function nativeClerkHarness() {
+export async function nativeClerkHarness(completed = false) {
   const statuses = new Map([
     ["a", "active"],
     ["b", "active"],
@@ -18,6 +18,7 @@ export async function nativeClerkHarness() {
   const calls: string[] = [];
   const delays = new Map<string, Promise<void>>();
   const failures = new Map<string, number>();
+  const errorCodes = new Map<string, string>();
   function session(id: string) {
     return {
       object: "session",
@@ -41,8 +42,22 @@ export async function nativeClerkHarness() {
       object: "client",
       id: "client_test",
       sessions: [...statuses.keys()].map(session),
-      sign_in: { object: "sign_in", status: "needs_identifier" },
-      sign_up: { object: "sign_up", status: "missing_requirements" },
+      sign_in: completed
+        ? {
+            object: "sign_in",
+            id: "signin_complete",
+            status: "complete",
+            created_session_id: "a",
+          }
+        : { object: "sign_in", status: "needs_identifier" },
+      sign_up: completed
+        ? {
+            object: "sign_up",
+            id: "signup_complete",
+            status: "complete",
+            created_session_id: "a",
+          }
+        : { object: "sign_up", status: "missing_requirements" },
       last_active_session_id: "a",
       updated_at: Date.now(),
     };
@@ -60,7 +75,10 @@ export async function nativeClerkHarness() {
       return new Response(
         JSON.stringify({
           errors: [
-            { code: "session_not_found", message: "private provider detail" },
+            {
+              code: errorCodes.get(pathname) ?? "session_not_found",
+              message: "private provider detail",
+            },
           ],
         }),
         { status },
@@ -107,5 +125,5 @@ export async function nativeClerkHarness() {
     telemetry: false,
     polling: false,
   });
-  return { clerk, calls, delays, failures, statuses, send };
+  return { clerk, calls, delays, failures, errorCodes, statuses, send };
 }

@@ -84,7 +84,12 @@ export function createIdentityApi(
             getToken().catch((error: unknown) => {
               if (
                 isClerkAPIResponseError(error) &&
-                (error.status === 401 || error.status === 403)
+                (error.status === 401 ||
+                  error.status === 403 ||
+                  (error.status === 404 &&
+                    error.errors.some(
+                      (item) => item.code === "session_not_found",
+                    )))
               )
                 throw new IdentityApiError(401);
               throw error;
