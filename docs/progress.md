@@ -1012,3 +1012,19 @@ Cloud run 41555212015 checks the earlier documentation head 0ad9b34: native
 bundle checks succeeded and Foundation remained pending at last observation.
 Older run 41555142105 was requested cancelled because its head was superseded;
 it is not current-revision acceptance evidence. No merge or IOS3.
+
+IOS2 round 3 independent retests at c176a8d5e40a6c365c2ad64088f55c3bfd2e46c7
+clear code C3/C4 and security SEC1/SEC2/SEC3 within source/installed-SDK evidence.
+Code Reviewer passed 56 focused tests, mobile types and diff checks; Application
+Security Engineer passed 186 tests plus both corrected original probes, scoped
+secret/diff/report checks. No additional actionable source finding. This is
+source readiness to update Draft PR #37, not runtime/merge approval.
+
+Earlier head 0ad9b348ea8c38b2b5bd6f59c83c96a4b0d26359 passed both applicable
+jobs in [CI run 41555212015](https://github.com/FSS-Ltd/the-joint-app/actions/runs/41555212015):
+528 unit, 324 integration and 181 browser cases, both exports and Doctor.
+Both jobs checked merge 02200b0711ff991683e8ae5ad3f6982302ffa39e, whose parents
+are base 974208e and that exact PR head. This is baseline evidence only; the
+reviewed correction and this evidence update require fresh current-head CI.
+No merge is authorized by these results. Live configured native identity
+acceptance and previously disclosed device/configuration limits remain open.
