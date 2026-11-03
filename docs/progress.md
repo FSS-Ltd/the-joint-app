@@ -1088,3 +1088,72 @@ VoiceOver/TalkBack, Android device runtime, household/verification live-provider
 flow or signed binary/store verification. This is a visual revision of IOS2,
 not completion or merge. PR #37 must remain draft until applicable configured
 identity acceptance is resolved; its new revision needs fresh CI. No IOS3 work.
+
+IOS2 configured acceptance checkpoint after visual head `6595249`: both
+Foundation and Native bundle jobs passed [CI41598388517](https://github.com/FSS-Ltd/the-joint-app/actions/runs/41598388517).
+Checkout logs identify tested merge `1dd54279380e59d5dc2a4a7abca7178db229ffe9`
+of that head into base `974208e118478ce41bd82b85e05c77eff5eee2ef`. Results:
+539 unit, 324 integration, 181 browser tests, both exports and Doctor20/20.
+PR #37 remains draft/unmerged; these checks precede the invitation correction.
+
+Applied only the explicitly approved development Clerk custom claims, preserving
+the previous empty custom object and all other session settings. Matched Family
+Fund Development's domain to the native public issuer before save. Native API
+was already enabled; no toggle, app identity, return URL or production change.
+The security-reviewed owned API fixture started with fresh restricted PostgreSQL,
+status LISTEN/health readiness and anonymous `/v1/me` denial (401). Only its
+matching private API audience is enabled. Root private configuration is read
+selectively in memory, never changed or bundled; public mobile preview origin
+was updated and the owned Metro/app reloaded. No personal database was used.
+
+The user initially reported another sign-in failure, then confirmed correct
+credentials work and the earlier password was wrong. Parent observed the native
+account/household screen after this confirmation, without exposing credentials,
+codes or setup keys. This establishes signed identity/account access through the
+configured fixture; enrollment, returns, invitation acceptance, logout and the
+remaining device matrix are not all individually verified by that observation.
+
+The user then found that inviting another adult had no deferral action. Current
+IOS2 correction: default invitation to a collapsed account action, add explicit
+“Invite later,” preserve later access and pending/permission boundaries. This is
+the existing optional-invitation requirement, not IOS3. Add failing behavior
+regressions, verify the native result, obtain fresh code/security reviews and
+current-head CI before updating/merging PR #37. Source delivery remains open.
+
+IOS2 invitation correction native acceptance passed on the configured signed
+household: default collapsed with no email field, open reveals the form and
+“Invite later,” deferral returns to the ready household and account action,
+reopening works, and parent left it closed. No invitation was submitted by these
+checks. Four source-executing UI cases cover default optional state, no-invitation-
+write deferral/reopening, a pending write guard and hidden/reopened existing link,
+plus organiser/full-household boundaries. First-red reproduced three missing
+action cases; all four pass after the focused fix.
+
+The earlier wrong-password attempt also exposed a feedback defect: the real
+installed native SDK returns an `api_response_error` container whose nested code
+was ignored by the existing mapper. Independent synthetic SDK probe reproduced
+this without real credentials/provider calls. Two committed SDK regressions
+failed first for incorrect password/missing identifier, then passed after one-level
+normalization through the existing fixed message allowlist. Direct codes retain
+their behavior; unknown/malformed details remain generic with no provider-text
+reflection. This changes feedback only and grants no authentication authority.
+Fresh independent code/security reviews and final local/cloud checks are running.
+
+IOS2 final local checkpoint for invitation/feedback correction: Code Reviewer
+and Application Security Engineer both pass the final source before PR update.
+Independent results include 14 focused plus the original SDK probe, and 52
+security-focused cases respectively, mobile/shared/test types, scoped lint,
+formatting and diff/secret checks. Parent reopened every changed/new file and
+passed 546 units across 81 files, root types 19/19 plus tests, lint/format,
+build 9/9 and both iOS/Android exports. The new revision requires fresh cloud CI.
+
+Acceptance audit retains the current gate: configured email/recovery return,
+authenticator enrollment/return and separate fresh server TOTP, deliberate
+two-adult invitation/share/accept, signed background/foreground and local/global
+logout evidence remain to record. Disabled optional Google OAuth is not an
+active return flow. Invitation custom-scheme acceptance still needs a registered
+native installation; Expo Go alone cannot prove it. No development bundle ID is
+specified in app.json, so do not invent a production/Clerk identity. Confirm
+disposable test-account scope before revoking other provider sessions. Corrected
+the IOS2 decision's stale physical-device/release reference to IOS18; IOS16 is
+marketing/web cutover. Keep PR #37 draft until applicable acceptance passes.

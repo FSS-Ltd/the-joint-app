@@ -60,6 +60,21 @@ Preserve existing server-first logout, local/global cutoffs and cleanup-ticket r
 
 Household setup reuses explicit GBP/Europe-London server defaults, optional partner invitation and deliberate invitation acceptance. Wrong email, full household, stale membership and revoked session remain server-authoritative. Invitations cannot authenticate a user or imply account sharing.
 
+Invitation is an optional action on the existing account screen, collapsed by
+default after household creation and on later visits. “Invite another adult”
+opens the form; “Invite later” closes it without creating an invitation. The
+account action remains available for an eligible organiser. Deferral is disabled
+while a write is pending; it does not cancel or revoke an invitation already
+created. Email/link drafts remain actor-scoped memory and clear with the existing
+identity lifecycle. No extra navigation or financial screen is introduced.
+
+The maintained SDK returns failed credential operations as a structured
+`api_response_error` with provider codes in `errors[0].code`. The shared feedback
+mapper unwraps that single known container before using its existing fixed
+message allowlist. Incorrect email/password feedback remains deliberately shared
+and never confirms whether an account exists. Unknown or malformed details stay
+generic; provider messages and private response fields are never reflected.
+
 Background concealment preserves only non-secret, actor/attempt-bound workflow progress: the authentication mode, attempt identifier, verification stage, resend deadline and pending authenticator-enrollment/navigation stage. Passwords, entered codes, setup secrets and identity/household responses still clear. Resuming a form never implicitly sends another code. Fence continuations after awaited SDK operations; ordinary refresh cannot force an inactive app into foreground state.
 
 Coordinate all application session mutations across actual SDK completion, including authentication, SSO activation, cancellation and cleanup. Observe SDK resources synchronously, keep desired intent separate from loading/observed state, and block identity reads and protected display while a mutation is unsettled or quarantined. Public SDK activation is not atomically cancellable. Do not throw from a navigation callback as cancellation; allow started work to settle behind concealment. An unexpected replacement actor requires bounded settlement or explicit selection, with fresh server authority and deadline checks before reveal. A timeout cannot release an unfinished mutation to overlap another one. No private SDK patch or periodic reconciliation loop.
@@ -92,7 +107,7 @@ Use only approved disposable development accounts and an owned isolated API/data
 6. Verify local/global logout using only the approved test accounts. Confirm committed server denial before ordinary credential cleanup; terminal local removal must retain its unconfirmed-server wording. A pending cleanup retry cannot resurrect revoked access. Preserve other applications, simulators and personal services.
 7. Repeat supported flows on a named Android emulator/device when available, including keyboard, text scaling and TalkBack. Independently record VoiceOver, physical storage/snapshot behavior and registered cold/warm return results. Exports and Doctor cannot substitute for these runtime results.
 
-Configured signed-session, verification, enrollment and household behavior needs current-step runtime evidence. The wider physical-device/store release matrix remains governed by IOS16; unavailable checks must be disclosed, and exports are not their proof.
+Configured signed-session, verification, enrollment and household behavior needs current-step runtime evidence. The wider physical-device/store release matrix remains governed by IOS18; unavailable checks must be disclosed, and exports are not their proof.
 
 Record the exact source revision, platform/runtime, configured issuer/audience match (not credential contents), disposable fixture ownership, observed result and remaining limitations in the existing progress record. Keep the PR draft while applicable native identity acceptance remains unverified; current-head CI and actual merge remain separate requirements.
 

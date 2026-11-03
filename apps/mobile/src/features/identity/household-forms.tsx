@@ -78,7 +78,8 @@ export function InviteAdult({
   me: MeResponse;
 }): React.JSX.Element | null {
   const [email, setEmail] = useState(""),
-    [link, setLink] = useState("");
+    [link, setLink] = useState(""),
+    [expanded, setExpanded] = useState(false);
   const identity = useIdentity(),
     operation = useIdentityOperation(),
     key = useWriteKey();
@@ -105,6 +106,27 @@ export function InviteAdult({
         );
       }
     });
+  }
+  if (!expanded && membership.household.memberCount < 2) {
+    return (
+      <>
+        <AppText variant="title">Your household is ready</AppText>
+        <AppText>
+          Inviting another adult is optional. You can invite them later from
+          your account.
+        </AppText>
+        <NativeActions>
+          <NativeAction
+            label="Invite another adult"
+            tone="secondary"
+            onPress={() => {
+              identity.interact();
+              setExpanded(true);
+            }}
+          />
+        </NativeActions>
+      </>
+    );
   }
   return (
     <>
@@ -147,6 +169,16 @@ export function InviteAdult({
                 }}
               />
             )}
+            <NativeAction
+              label="Invite later"
+              tone="text"
+              disabled={operation.pending}
+              onPress={() => {
+                if (operation.pending) return;
+                identity.interact();
+                setExpanded(false);
+              }}
+            />
           </NativeActions>
           {link && <AppText selectable>{link}</AppText>}
         </>

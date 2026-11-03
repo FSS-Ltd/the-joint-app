@@ -35,10 +35,23 @@ export function taskPath(
 }
 
 export function clerkFlowError(error: unknown): string {
-  const code =
+  const topLevelCode =
     typeof error === "object" && error !== null && "code" in error
       ? error.code
       : undefined;
+  // Maintained SDK methods wrap provider codes in a ClerkAPIResponseError.
+  const detail: unknown =
+    topLevelCode === "api_response_error" &&
+    typeof error === "object" &&
+    error !== null &&
+    "errors" in error &&
+    Array.isArray(error.errors)
+      ? error.errors[0]
+      : undefined;
+  const code =
+    typeof detail === "object" && detail !== null && "code" in detail
+      ? detail.code
+      : topLevelCode;
   switch (code) {
     case "form_code_incorrect":
       return "That code did not match. Check it and try again.";
