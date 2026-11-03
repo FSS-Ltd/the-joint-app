@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { toDataURL } from "qrcode";
+import { getTotpSetupUri } from "@joint/identity-runtime";
 
 export function AuthenticatorEnrollment({
   secret,
@@ -14,17 +15,13 @@ export function AuthenticatorEnrollment({
   const [unavailable, setUnavailable] = useState(false);
   useEffect(() => {
     let current = true;
+    setImage(null);
+    setUnavailable(false);
     async function prepare() {
       try {
-        if (!uri || uri.length > 2048) throw new Error();
-        const address = new URL(uri);
-        if (
-          address.protocol !== "otpauth:" ||
-          address.hostname !== "totp" ||
-          address.searchParams.get("secret") !== secret
-        )
-          throw new Error();
-        const value = await toDataURL(uri, {
+        const address = getTotpSetupUri(uri, secret);
+        if (!address) throw new Error();
+        const value = await toDataURL(address, {
           width: 200,
           margin: 2,
           errorCorrectionLevel: "M",
