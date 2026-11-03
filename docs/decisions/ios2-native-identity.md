@@ -24,6 +24,32 @@ Use Clerk **Sessions → Customize session token**, preserving existing custom f
 
 No provider settings change is authorized by this design. Read actual Native API status before claiming it is missing; enabling it can bypass browser CAPTCHA and requires a concrete authorization decision if not already enabled. Actual audience, native app IDs and approved callback destinations must be verified. No invented production domains, association files, team IDs or package identities. Configure provider claims before enabling server admission. Rollback removes the server audience setting and keeps native admission fail-closed without changing the web profile.
 
+## Visual fidelity correction — 3 November 2026
+
+The founder requested closer fidelity to the accepted Stitch wireframes after
+reviewing native sign-in. Follow the existing [visual contract](../design/DESIGN.md)
+and local setup/home snapshots. The compact approved wordmark, restrained
+sage/apricot backdrop, grouped heading and supporting copy, and one highlighted
+near-opaque light panel replace the stretched logo slab and flat composition.
+The later UI8 contract takes precedence over the snapshots' doubled frames.
+Keep 6px panels, 8px rectangular controls, 16px gutters, scalable text and native
+touch areas. Use existing native primitives and a solid material fallback;
+no new dependency, replacement logo or unavailable navigation is required.
+
+This correction remains in IOS2 / Draft PR #37. The mobile implementer owns
+shared presentation components and tokens; the parent owns native inspection
+and delivery evidence. Compare sign-in and recovery/signup layouts on the named
+iOS runtime, verify keyboard/error/large-text reachability and full control touch
+areas, run types/lint/format/units and both exports, then obtain fresh independent
+Code Reviewer and Application Security Engineer checks before updating the PR.
+Keep auth coordination, lifecycle and provider authority unchanged.
+
+The founder separately approved development-only claims `aud: "familyfund-api"`
+and `joint_token_use: "api-session-v1"`, preserving existing fields and stopping
+on an audience conflict. This authorizes that bounded configuration and matching
+private audience in the owned test API; it does not claim the settings were
+applied or live acceptance passed. Visual refinement is the current priority.
+
 ## Native lifecycle and UI
 
 Use the maintained Clerk Expo SDK and its SecureStore-backed token cache. Bundle only validated public configuration; keep all server keys out. An unconfigured build explains sign-in availability without initializing a keyless provider. Keep profile/household responses, MFA secrets and codes in memory, with pending work aborted and scoped data cleared on identity/session change, logout and background concealment.

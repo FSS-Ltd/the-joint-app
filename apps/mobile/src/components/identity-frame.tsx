@@ -20,7 +20,7 @@ export function IdentityFrame({
         <AppText variant="heading" tone="inverse" accessibilityRole="header">
           {title}
         </AppText>
-        <AppText tone="inverse">{description}</AppText>
+        <AppText style={styles.description}>{description}</AppText>
       </View>
       <View style={styles.surface}>{children}</View>
     </Screen>
@@ -45,11 +45,21 @@ export function Feedback({
   ) : null;
 }
 const styles = StyleSheet.create({
-  intro: { gap: spacing.medium },
+  intro: { gap: spacing.small },
+  description: { color: colors.sage },
   surface: {
+    // Solid native fallback preserves readable contrast without a blur dependency.
     backgroundColor: colors.ivory,
     borderRadius: corners.surface,
-    padding: spacing.large,
+    borderWidth: 1,
+    borderColor: colors.white,
+    padding: spacing.medium,
+    paddingVertical: spacing.large,
     gap: spacing.medium,
+    shadowColor: colors.forest,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    elevation: 3,
   },
 });

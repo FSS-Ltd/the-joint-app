@@ -9,8 +9,10 @@ import {
   type TextInputProps,
 } from "@expo/ui";
 import { useEffect, useState } from "react";
-import { colors, spacing } from "@/theme/tokens";
+import { View } from "react-native";
+import { colors, corners, spacing } from "@/theme/tokens";
 import { NativeAction } from "./native-action";
+import { useNativeTextMetrics } from "./use-native-text-metrics";
 
 type NativeFieldProps = Omit<TextInputProps, "value" | "onChangeText"> & {
   label: string;
@@ -28,21 +30,33 @@ export function NativeField({
   const nativeValue = useNativeState(value);
   const [visible, setVisible] = useState(false);
   const [focused, setFocused] = useState(false);
+  const text = useNativeTextMetrics();
+  const stackedLabel = text.fontScale >= 1.3 || text.width < 360;
+  const LabelLayout = stackedLabel ? Column : Row;
   useEffect(() => {
     nativeValue.value = value;
   }, [value, nativeValue]);
   return (
-    <Host
-      colorScheme="light"
-      seedColor={colors.action}
-      matchContents={{ vertical: true }}
-    >
-      <Column spacing={spacing.small}>
-        <Row alignment="center" style={{ width: "100%" }}>
-          <Text textStyle={{ color: colors.forest, fontWeight: "600" }}>
+    <View style={{ gap: spacing.small }}>
+      <Host
+        colorScheme="light"
+        seedColor={colors.action}
+        matchContents={{ vertical: true }}
+      >
+        <LabelLayout
+          alignment={stackedLabel ? "start" : "center"}
+          style={{ width: "100%" }}
+        >
+          <Text
+            textStyle={{
+              color: colors.forest,
+              fontSize: text.fontSize,
+              fontWeight: "600",
+            }}
+          >
             {label}
           </Text>
-          <Spacer flexible />
+          {!stackedLabel && <Spacer flexible />}
           {password && (
             <NativeAction
               label={`${visible ? "Hide" : "Show"} ${label.toLowerCase()}`}
@@ -52,33 +66,49 @@ export function NativeField({
               disabled={props.editable === false}
             />
           )}
-        </Row>
-        <TextInput
-          {...props}
-          onFocus={() => {
-            setFocused(true);
-            props.onFocus?.();
-          }}
-          onBlur={() => {
-            setFocused(false);
-            props.onBlur?.();
-          }}
-          value={nativeValue}
-          onChangeText={onChangeText}
-          accessibilityLabel={label}
-          secureTextEntry={Boolean(password && !visible)}
-          autoCorrect={false}
-          autoCapitalize={props.autoCapitalize ?? "none"}
-          textStyle={{ color: colors.forest }}
-          style={{
-            padding: spacing.medium,
-            backgroundColor: colors.white,
-            borderRadius: 8,
-            borderWidth: focused ? 2 : 1,
-            borderColor: focused ? colors.action : colors.secondary,
-          }}
-        />
-      </Column>
-    </Host>
+        </LabelLayout>
+      </Host>
+      <View
+        style={{
+          backgroundColor: colors.white,
+          borderRadius: corners.action,
+          borderWidth: focused ? 2 : 1,
+          borderColor: focused ? colors.action : colors.secondary,
+          overflow: "hidden",
+        }}
+      >
+        <Host
+          colorScheme="light"
+          seedColor={colors.action}
+          matchContents={{ vertical: true }}
+        >
+          <TextInput
+            {...props}
+            onFocus={() => {
+              setFocused(true);
+              props.onFocus?.();
+            }}
+            onBlur={() => {
+              setFocused(false);
+              props.onBlur?.();
+            }}
+            value={nativeValue}
+            onChangeText={onChangeText}
+            accessibilityLabel={label}
+            secureTextEntry={Boolean(password && !visible)}
+            autoCorrect={false}
+            autoCapitalize={props.autoCapitalize ?? "none"}
+            textStyle={{
+              color: colors.forest,
+              fontSize: text.fontSize,
+              lineHeight: text.fieldLineHeight,
+            }}
+            style={{
+              padding: focused ? spacing.medium - 1 : spacing.medium,
+            }}
+          />
+        </Host>
+      </View>
+    </View>
   );
 }

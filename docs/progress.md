@@ -1028,3 +1028,63 @@ are base 974208e and that exact PR head. This is baseline evidence only; the
 reviewed correction and this evidence update require fresh current-head CI.
 No merge is authorized by these results. Live configured native identity
 acceptance and previously disclosed device/configuration limits remain open.
+
+IOS2 visual correction — 3 November 2026: the founder rejected the native
+composition's drift from the approved Stitch wireframes. Agents Orchestrator
+compared the actual setup/home snapshots and contract; Mobile App Builder is
+refining shared presentation within Draft PR #37. Preserve the approved mark,
+compact header, restrained backdrop, single highlighted light panel and small
+rectangular controls. The UI8 contract supersedes the snapshots' doubled frames.
+Auth coordination and server authority remain unchanged. Parent native inspection,
+fresh code/security reviews, local checks and current-head CI must precede
+delivery evidence. No IOS3 work.
+
+The founder separately approved development-only Clerk session claims
+`aud: "familyfund-api"` and `joint_token_use: "api-session-v1"`, preserving
+existing fields and stopping on an audience conflict, with the matching private
+audience only in the owned test API. This approval supersedes the earlier
+approval blocker. No provider setting or live acceptance result is claimed here;
+visual refinement is the current priority.
+
+Host refresh confirms IOS1 PR #36 merged at
+`974208e118478ce41bd82b85e05c77eff5eee2ef`, with final-head CI run
+`41538262010` successful. PR #37 remains open/draft/unmerged at
+`ad3966aab3007263cb0c63cce148d748d03bcbd2` before these visual edits. Earlier
+green CI is not proof of the new visual revision.
+
+IOS2 visual correction locally verified: shared components now use the compact
+approved wordmark, static sage/apricot backdrop, one highlighted ivory panel,
+16px body copy and rectangular actions. Native fields use an RN outline around
+the universal input to avoid clipped SwiftUI stroke corners. Secondary actions
+use the home reference's quiet sage fill; nested percentage wrappers were rejected
+after actual iOS inspection showed intrinsic-width buttons. iOS fixed native fonts
+now scale explicitly, while Compose retains its own sp scaling. Password controls
+stack for narrow/enlarged layouts. Minimum target padding remains inside each
+painted semantic label, including text actions and reduced preferred text sizes.
+
+Parent CUA inspection on the named iOS 26.3 "Flamingo Mama Storage Smoke"
+runtime covered blank sign-in, signup and recovery, local validation, clean field
+outlines/focus, full-width actions, password toggle top/bottom padding, primary
+and secondary perimeter taps, and text-action outer padding. Three preferred
+text-size increases showed readable scaled copy and stacked password controls;
+all three increments were restored. Native password focus moved the lower field
+into view; a background gesture dismissed the software keyboard. Manual scrolling
+with the keyboard held open was not established through the automation. No
+credentials, codes or provider actions were submitted in these visual checks.
+Blank final screenshot is retained in ignored local review evidence.
+
+Code Reviewer and Application Security Engineer cleared the final source before
+PR update. Review found an undersized target at small preferred text sizes;
+the corrected padding guarantees at least 48pt before additional line-box height,
+without capping text or fixing button height. Both profiles independently retested
+the final action correction with no remaining material finding. Parent reopened
+all eleven changed/new files. Full local units pass 539/539 across 79 files;
+root types 19/19 plus tests, lint, formatting, build 9/9, both iOS/Android exports
+and diff checks pass. Three new metrics cases cover default sizing, uncapped iOS
+scaling and Android avoiding double scaling. No new dependency or migration.
+
+Limits remain: no exact 320px native runtime, maximum accessibility size, full
+VoiceOver/TalkBack, Android device runtime, household/verification live-provider
+flow or signed binary/store verification. This is a visual revision of IOS2,
+not completion or merge. PR #37 must remain draft until applicable configured
+identity acceptance is resolved; its new revision needs fresh CI. No IOS3 work.

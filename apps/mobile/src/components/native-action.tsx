@@ -1,5 +1,6 @@
 import { Button, Row, Spacer, Text } from "@expo/ui";
 import { colors, corners, spacing } from "@/theme/tokens";
+import { useNativeTextMetrics } from "./use-native-text-metrics";
 
 type NativeActionProps = {
   label: string;
@@ -10,7 +11,7 @@ type NativeActionProps = {
   compact?: boolean;
 };
 
-// Native labels retain system text scaling; the entire label row remains tappable.
+// The entire painted label row remains tappable, including its padding.
 export function NativeAction({
   label,
   onPress,
@@ -20,21 +21,29 @@ export function NativeAction({
   compact = false,
 }: NativeActionProps): React.JSX.Element {
   const primary = tone === "primary";
+  const secondary = tone === "secondary";
+  const text = useNativeTextMetrics();
+  // Preserve a 48pt target even when the preferred text size is reduced.
+  const verticalPadding = Math.max(14, (48 - text.fontSize) / 2);
   return (
-    <Button onPress={onPress} variant="text" disabled={disabled || pending}>
+    <Button
+      onPress={onPress}
+      variant="text"
+      disabled={disabled || pending}
+      style={{ opacity: disabled || pending ? 0.6 : 1 }}
+    >
       <Row
         alignment="center"
         style={{
           ...(compact ? {} : { width: "100%" }),
-          paddingVertical: compact ? 12 : spacing.medium,
-          paddingHorizontal: compact ? spacing.small : spacing.large,
+          paddingVertical: verticalPadding,
+          paddingHorizontal: compact ? spacing.small : spacing.medium,
           borderRadius: corners.action,
           backgroundColor: primary
             ? colors.action
-            : tone === "secondary"
+            : secondary
               ? colors.sage
-              : "transparent",
-          opacity: disabled || pending ? 0.6 : 1,
+              : colors.ivory,
         }}
       >
         {!compact && <Spacer flexible />}
@@ -42,7 +51,9 @@ export function NativeAction({
           textStyle={{
             color: primary ? colors.white : colors.action,
             textAlign: "center",
-            fontSize: 17,
+            fontSize: text.fontSize,
+            lineHeight: text.actionLineHeight,
+            fontWeight: primary ? "600" : "500",
           }}
         >
           {pending ? "Please wait…" : label}
