@@ -1,5 +1,5 @@
 import { useClerk, useUser } from "@clerk/expo";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { AppText } from "@/components/app-text";
 import { Feedback, IdentityFrame } from "@/components/identity-frame";
 import { NativeField } from "@/components/native-field";
@@ -18,15 +18,26 @@ export function SecurityScreen({
     clerk = useClerk(),
     identity = useIdentity(),
     operation = useIdentityOperation();
+  useSyncExternalStore(
+    identity.workflow.subscribe,
+    identity.workflow.getSnapshot,
+    identity.workflow.getSnapshot,
+  );
+  const enrollmentPending = identity.workflow.enrollmentPending;
   const [secret, setSecret] = useState(""),
     [code, setCode] = useState("");
   const [showKey, setShowKey] = useState(false);
   async function enroll() {
-    await operation.run(async (signal) => {
+    await operation.run(async (_signal, lifetime) => {
       if (!user) throw new Error();
       const enrollment = await user.createTOTP();
       if (!enrollment.secret) throw new Error();
-      if (!signal.aborted) setSecret(enrollment.secret);
+      if (lifetime.current()) identity.workflow.setEnrollmentPending(true);
+      if (lifetime.active()) {
+        setSecret(enrollment.secret);
+        setCode("");
+        setShowKey(false);
+      }
     });
   }
   async function verify() {
@@ -34,27 +45,30 @@ export function SecurityScreen({
       operation.setError("Enter the six-digit authenticator code.");
       return;
     }
-    await operation.run(async (signal) => {
+    await operation.run(async (signal, lifetime) => {
       if (!user) throw new Error();
-      if (secret) {
+      if (enrollmentPending) {
         await user.verifyTOTP({ code });
-        if (signal.aborted) return;
+        if (lifetime.current()) identity.workflow.setEnrollmentPending(false);
+        if (!lifetime.active()) return;
         setSecret("");
         setCode("");
         setShowKey(false);
         await user.reload();
+        if (!lifetime.active()) return;
         await clerk.session?.reload();
+        if (!lifetime.active()) return;
         operation.setNotice(
           "Authenticator enabled. Wait for the next code, then verify this session.",
         );
       } else {
         await clerk.session?.getToken({ skipCache: true });
-        if (signal.aborted) return;
+        if (!lifetime.active()) return;
         await identity.api.verifyTotp(code, signal);
-        if (signal.aborted) return;
+        if (!lifetime.active()) return;
         setCode("");
         await identity.refresh();
-        onBack?.();
+        if (lifetime.active()) onBack?.();
       }
     });
   }
@@ -90,7 +104,7 @@ export function SecurityScreen({
           </NativeActions>
         </>
       )}
-      {(user?.totpEnabled || secret) && (
+      {(user?.totpEnabled || enrollmentPending) && (
         <NativeField
           label="Authenticator code"
           value={code}
@@ -105,7 +119,7 @@ export function SecurityScreen({
         />
       )}
       <NativeActions>
-        {!user?.totpEnabled && !secret ? (
+        {!user?.totpEnabled && !enrollmentPending ? (
           <NativeAction
             label="Set up authenticator"
             pending={operation.pending}
@@ -113,9 +127,19 @@ export function SecurityScreen({
           />
         ) : (
           <NativeAction
-            label={secret ? "Enable authenticator" : "Verify this session"}
+            label={
+              enrollmentPending ? "Enable authenticator" : "Verify this session"
+            }
             pending={operation.pending}
             onPress={() => void verify()}
+          />
+        )}
+        {enrollmentPending && !secret && (
+          <NativeAction
+            label="Restart authenticator setup"
+            tone="text"
+            disabled={operation.pending}
+            onPress={() => void enroll()}
           />
         )}
         {operation.error && (
@@ -124,11 +148,15 @@ export function SecurityScreen({
             tone="secondary"
             disabled={operation.pending}
             onPress={() =>
-              void operation.run(async (signal) => {
+              void operation.run(async (_signal, lifetime) => {
                 await user?.reload();
-                if (signal.aborted) return;
+                if (!lifetime.active()) return;
                 await clerk.session?.reload();
-                if (!signal.aborted) await identity.refresh();
+                if (lifetime.active()) {
+                  if (user?.totpEnabled)
+                    identity.workflow.setEnrollmentPending(false);
+                  await identity.refresh();
+                }
               })
             }
           />

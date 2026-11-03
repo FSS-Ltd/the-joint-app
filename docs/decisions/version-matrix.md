@@ -136,3 +136,28 @@ Primary references:
 - [Expo 58.0.22 registry metadata](https://registry.npmjs.org/expo/58.0.22).
 - [Expo UI 58.0.26 registry metadata](https://registry.npmjs.org/@expo%2fui/58.0.26).
 - [Router 58.0.29 registry metadata](https://registry.npmjs.org/expo-router/58.0.29).
+
+## IOS2 native identity additions
+
+Checked 2 November 2026 against installed package metadata/types and the frozen
+lockfile. These packages report MIT licence metadata. Existing Expo 58, native
+React 19.3.0 and web React 19.3.1 pins remain unchanged.
+
+| Dependency        | Exact version | Reason                                                                                                                    |
+| ----------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| @clerk/expo       | 4.14.5        | Maintained custom authentication flows, session resources and SDK-owned OAuth exchange; peers support Expo 54 through 58. |
+| expo-secure-store | 58.0.2        | SDK token cache and device-only logout-cleanup capability storage; Android encrypted values are excluded from backup.     |
+| expo-auth-session | 58.0.16       | Required Clerk peer and configured browser authentication flow.                                                           |
+| expo-web-browser  | 58.0.7        | Required Clerk peer and native browser authentication session.                                                            |
+| expo-crypto       | 58.0.7        | Required Clerk peer and UUID idempotency keys for household writes.                                                       |
+
+`@joint/identity-runtime` is a private workspace package depending only on
+`@joint/contracts`. Both web and native reuse its pure Clerk transitions and idle
+controller. No optional biometric, passkey, native Google or Clerk native UI
+module is installed. Installed `@clerk/clerk-js` 6.42.1 sign-out behavior requires
+application actor/session fencing even when a session ID is supplied; this is
+covered by the IOS2 lifecycle review and correction work.
+
+Dependency compatibility, exports and Doctor checks do not establish real
+provider/device acceptance. IOS2 retains the previously documented four audit
+advisory identities; the audit is not clean and no risk waiver is implied.

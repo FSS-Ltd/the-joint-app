@@ -919,3 +919,32 @@ error announcements. The loopback UI probe returns only 503 and provides no
 authentication authority. Real signed-session, TOTP, household and registered
 return acceptance, Android runtime and complete screen-reader checks remain
 unverified. IOS2 remains current, with no PR or next-unit implementation yet.
+
+IOS2 independent review at `6cc2c9b`: Code Reviewer requested five corrections:
+verification/recovery resumption, pending authenticator enrollment, terminal
+cleanup-ticket recovery, late async background concealment and stale-session SDK
+sign-out isolation. Application Security Engineer independently confirmed cleanup
+expiry and additionally found a terminal-invalid-credential local-removal gap.
+Both reviewers passed 131 focused cases, but source-executing deferred-response
+probes reproduced lifecycle defects those pure tests missed. No new credential,
+MFA or tenant authorization bypass was confirmed; this is not approval.
+The Mobile App Builder is implementing correction round 1 with behavior-focused
+regressions; reviewers must independently recheck before PR creation. The fresh
+audit retains the four previously recorded advisory identities and is not clean.
+Real-provider/device acceptance remains open. IOS3 has not started.
+
+IOS2 correction round 1 checkpoint (3 November): minimal non-secret workflow
+progress now survives concealment without implicit email sends. Shared pure
+stage selectors avoid duplicating provider mappings. Sensitive fields still
+unmount. Ordinary refresh cannot enable foreground state; deferred operations
+check lifecycle/actor scope, and SDK cleanup checks the original current session
+and its existence. Cleanup capabilities are queued, terminal rejection retires
+only the affected capability after durable persistence, and explicit local
+credential removal does not claim server/global logout.
+
+Source-executing regressions replayed against `6cc2c9b` fail 10 of 11 targeted
+cases; corrected lifecycle cases pass 26/26. Full units pass 507/507, focused
+native/shared cases 65/65, types 19/19 tasks plus tests, builds 9/9, lint and
+formatting pass. Both native exports and Doctor 20/20 pass. These do not replace
+real-provider/device evidence. Parent is freezing the corrected revision for
+independent code/security re-review. No PR yet and no IOS3 work.

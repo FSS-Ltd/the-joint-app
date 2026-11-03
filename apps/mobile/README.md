@@ -31,9 +31,9 @@ The application uses the maintained JS custom-flow SDK. Native Clerk UI synchron
 
 ## Sessions, privacy and returns
 
-Profile and household data, passwords, MFA setup keys and verification codes are memory-only. AppState background/inactive events unmount protected forms and abort app requests. Foreground reconciles both identity and deadline before display. Reads and SDK refreshes do not earn activity credit. Genuine input uses the shared five-second coalescing cadence; deadline timers do not poll. Clerk's optional five-minute discovery polling is disabled. No SDK offline resource cache is enabled; offline authority failures conceal account data.
+Profile and household data, passwords, MFA setup keys and verification codes are memory-only. Nonsecret attempt IDs, email resend deadlines, pending authenticator enrollment and account-security navigation survive form concealment within the running app; actor changes clear them. Returning from an inbox or authenticator restores the existing step without sending a new code or automatically activating a completed attempt. AppState background/inactive events unmount protected forms and abort app requests. Foreground reconciles both identity and deadline before display. Reads and SDK refreshes do not earn activity credit. Genuine input uses the shared five-second coalescing cadence; deadline timers do not poll. Clerk's optional five-minute discovery polling is disabled. No SDK offline resource cache is enabled; offline authority failures conceal account data.
 
-Logout commits server revocation before SDK sign-out. Provider cleanup tickets are kept in SecureStore and retried explicitly, including after restart. A subsequent local logout cannot discard an earlier outstanding ticket. Sign-in stays blocked while a pending ticket needs cleanup. If server revocation cannot be confirmed, the app stays concealed and shows a retry; deleting local credentials is never reported as server revocation.
+Logout commits server revocation before SDK sign-out. Provider cleanup capabilities are queued in device-only SecureStore and retried explicitly, including after restart; a later session cannot replace an earlier global cleanup capability. Transient failures retain each capability. Terminal rejection retires it only after durable storage succeeds, permits fresh sign-in, and states that remote cleanup was not confirmed. An API-rejected session also offers explicit local credential removal, scoped to the original actor and an existing SDK session. It preserves outstanding cleanup and is never reported as server or global revocation; ordinary network/503 failure does not offer that fallback. Only actual foreground AppState events enable foreground reconciliation.
 
 Pending provider-only account tasks can be cancelled with a scoped SDK sign-out before this client registers an app identity; this does not claim global app revocation.
 
@@ -54,7 +54,7 @@ pnpm --filter @joint/mobile check:dependencies
 pnpm --filter @joint/mobile check:doctor
 pnpm --filter @joint/mobile bundle:ios
 pnpm --filter @joint/mobile bundle:android
-pnpm exec vitest run tests/native-identity-runtime.test.ts tests/native-identity-api.test.ts tests/native-logout.test.ts tests/session-idle-controller.test.ts tests/clerk-flow.test.ts
+pnpm exec vitest run tests/native-identity-runtime.test.ts tests/native-identity-api.test.ts tests/native-logout.test.ts tests/native-auth-lifecycle.test.ts tests/native-security-lifecycle.test.ts tests/native-session-lifecycle.test.ts tests/session-idle-controller.test.ts tests/clerk-flow.test.ts
 ```
 
 Use a named simulator/emulator explicitly. Preserve unrelated simulators and services; do not launch Chrome. Synthetic controller/API tests and exports do not establish real-provider authenticated runtime behavior. Full signed-session, TOTP, household, return registration, Android device, screen-reader and physical-device acceptance must be recorded separately with disposable authorized accounts and a configured API.

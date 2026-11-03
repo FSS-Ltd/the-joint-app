@@ -23,16 +23,17 @@ export function PasswordTaskScreen(): React.JSX.Element {
       operation.setError("Use 12–128 characters and match both passwords.");
       return;
     }
-    await operation.run(async (signal) => {
+    await operation.run(async (_signal, lifetime) => {
       if (!user) throw new Error();
       await user.updatePassword({
         newPassword: password,
         signOutOfOtherSessions: true,
       });
-      if (signal.aborted) return;
+      if (!lifetime.active()) return;
       setPassword("");
       setConfirm("");
       await clerk.session?.reload();
+      if (!lifetime.active()) return;
       await identity.refresh();
     });
   }

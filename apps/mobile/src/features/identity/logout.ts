@@ -27,13 +27,30 @@ export async function retryProviderCleanup(
   ticket: string,
   retry: (ticket: string) => Promise<LogoutResult>,
   saveTicket: (ticket: string | null) => Promise<void>,
-): Promise<void> {
-  const result = await retry(ticket);
+): Promise<"complete" | "pending" | "expired"> {
+  let result: LogoutResult;
+  try {
+    result = await retry(ticket);
+  } catch (cause) {
+    if (!isCredentialRejected(cause)) throw cause;
+    await saveTicket(null);
+    return "expired";
+  }
   if (result.state !== "SIGNED_OUT")
     throw new Error("Sign-out could not be confirmed.");
   await saveTicket(
     result.providerCleanupPending
       ? (result.providerCleanupToken ?? ticket)
       : null,
+  );
+  return result.providerCleanupPending ? "pending" : "complete";
+}
+
+export function isCredentialRejected(cause: unknown): boolean {
+  return (
+    typeof cause === "object" &&
+    cause !== null &&
+    "status" in cause &&
+    cause.status === 401
   );
 }

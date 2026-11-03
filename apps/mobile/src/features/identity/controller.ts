@@ -59,22 +59,28 @@ export class NativeIdentityController {
     this.cancel();
     this.publish({ kind: "locked", reason: "background" });
   }
-  foreground(): Promise<void> {
+  foreground(reconcile = true): Promise<void> {
     this.active = true;
-    return this.refresh();
+    return reconcile ? this.refresh() : Promise.resolve();
   }
   interact(): void {
     if (this.active) this.idle?.interact();
   }
   conceal(): void {
     this.cancel();
-    this.publish({ kind: "locked", reason: "unavailable" });
+    this.publish({
+      kind: "locked",
+      reason: this.active ? "unavailable" : "background",
+    });
   }
   revoke(actor: string | null | undefined = this.actor): void {
     if (actor) this.revoked.add(actor);
     if (actor !== this.actor) return;
     this.cancel();
-    this.publish({ kind: "locked", reason: "expired" });
+    this.publish({
+      kind: "locked",
+      reason: this.active ? "expired" : "background",
+    });
   }
   async refresh(): Promise<void> {
     this.cancel();

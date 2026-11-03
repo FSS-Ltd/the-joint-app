@@ -14,7 +14,10 @@ export function useIdentityOperation() {
     return () => abort.current.abort();
   }, []);
   async function run(
-    action: (signal: AbortSignal) => Promise<void>,
+    action: (
+      signal: AbortSignal,
+      lifetime: { active(): boolean; current(): boolean },
+    ) => Promise<void>,
   ): Promise<boolean> {
     if (running.current) return false;
     running.current = true;
@@ -22,11 +25,17 @@ export function useIdentityOperation() {
     setError("");
     setNotice("");
     const signal = abort.current.signal;
+    const lease = identity.workflow.capture();
+    const lifetime = {
+      current: lease.current,
+      active: () => !signal.aborted && lease.active(),
+    };
     try {
-      await action(signal);
-      return !signal.aborted;
+      if (!lifetime.active()) return false;
+      await action(signal, lifetime);
+      return lifetime.active();
     } catch (cause) {
-      if (!signal.aborted) {
+      if (lifetime.active()) {
         setError(
           cause instanceof IdentityApiError
             ? identityError(cause)
@@ -38,7 +47,7 @@ export function useIdentityOperation() {
       return false;
     } finally {
       running.current = false;
-      if (!signal.aborted) setPending(false);
+      if (lifetime.active()) setPending(false);
     }
   }
   return { pending, error, notice, setError, setNotice, run };

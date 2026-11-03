@@ -1,5 +1,5 @@
 import type { MeResponse } from "@joint/contracts";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { AppText } from "@/components/app-text";
 import { IdentityFrame } from "@/components/identity-frame";
 import { NativeAction } from "@/components/native-action";
@@ -9,12 +9,19 @@ import {
   CreateHousehold,
   InviteAdult,
 } from "./household-forms";
+import { useIdentity } from "./context";
 import { SecurityScreen } from "./security-screen";
 import { SessionActions } from "./session-actions";
 export function AccountScreen({ me }: { me: MeResponse }): React.JSX.Element {
-  const [security, setSecurity] = useState(false),
-    [individual, setIndividual] = useState(false);
-  if (security) return <SecurityScreen onBack={() => setSecurity(false)} />;
+  const { workflow } = useIdentity();
+  useSyncExternalStore(
+    workflow.subscribe,
+    workflow.getSnapshot,
+    workflow.getSnapshot,
+  );
+  const [individual, setIndividual] = useState(false);
+  if (workflow.securityOpen)
+    return <SecurityScreen onBack={() => workflow.showSecurity(false)} />;
   return (
     <IdentityFrame
       title={me.membership?.household.name ?? "Your account, your choice."}
@@ -61,7 +68,7 @@ export function AccountScreen({ me }: { me: MeResponse }): React.JSX.Element {
         <NativeAction
           label="Account security"
           tone="text"
-          onPress={() => setSecurity(true)}
+          onPress={() => workflow.showSecurity(true)}
         />
       </NativeActions>
       <SessionActions />

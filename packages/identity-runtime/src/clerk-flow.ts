@@ -69,11 +69,10 @@ export function clerkFlowError(error: unknown): string {
 export function checked(result: { error: unknown }): void {
   if (result.error) throw new ClerkFlowFailure(clerkFlowError(result.error));
 }
-export async function advanceSignIn(resource: {
+export function signInStage(resource: {
   status: string;
   supportedSecondFactors: ReadonlyArray<{ strategy: string }>;
-  mfa: { sendEmailCode(): Promise<{ error: unknown }> };
-}): Promise<ClerkStage> {
+}): ClerkStage | undefined {
   if (resource.status === "complete") return { step: "complete" };
   if (resource.status === "needs_new_password") return { step: "password" };
   if (
@@ -85,27 +84,48 @@ export async function advanceSignIn(resource: {
     ["needs_client_trust", "needs_second_factor"].includes(resource.status) &&
     resource.supportedSecondFactors.some((f) => f.strategy === "email_code")
   ) {
-    checked(await resource.mfa.sendEmailCode());
     return { step: "email", kind: "device" };
   }
-  throw new ClerkFlowFailure(
-    "An additional sign-in check is required. Retry sign-in or check the development authentication settings.",
-  );
+  return undefined;
 }
-export async function advanceSignUp(resource: {
+export function signUpStage(resource: {
   status: string | null;
   unverifiedFields: ReadonlyArray<string>;
   missingFields: ReadonlyArray<string>;
-  verifications: { sendEmailCode(): Promise<{ error: unknown }> };
-}): Promise<ClerkStage> {
+}): ClerkStage | undefined {
   if (resource.status === "complete") return { step: "complete" };
   if (resource.unverifiedFields.includes("email_address")) {
-    checked(await resource.verifications.sendEmailCode());
     return { step: "email", kind: "signup" };
   }
   if (resource.missingFields.includes("password")) return { step: "password" };
   if (resource.missingFields.includes("username")) return { step: "username" };
-  throw new ClerkFlowFailure(
-    "Sign-up requires additional details. Check the development authentication settings.",
-  );
+  return undefined;
+}
+
+export async function advanceSignIn(
+  resource: Parameters<typeof signInStage>[0] & {
+    mfa: { sendEmailCode(): Promise<{ error: unknown }> };
+  },
+): Promise<ClerkStage> {
+  const stage = signInStage(resource);
+  if (!stage)
+    throw new ClerkFlowFailure(
+      "An additional sign-in check is required. Retry sign-in or check the development authentication settings.",
+    );
+  if (stage.step === "email") checked(await resource.mfa.sendEmailCode());
+  return stage;
+}
+export async function advanceSignUp(
+  resource: Parameters<typeof signUpStage>[0] & {
+    verifications: { sendEmailCode(): Promise<{ error: unknown }> };
+  },
+): Promise<ClerkStage> {
+  const stage = signUpStage(resource);
+  if (!stage)
+    throw new ClerkFlowFailure(
+      "Sign-up requires additional details. Check the development authentication settings.",
+    );
+  if (stage.step === "email")
+    checked(await resource.verifications.sendEmailCode());
+  return stage;
 }

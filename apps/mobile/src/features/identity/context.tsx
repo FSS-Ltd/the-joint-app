@@ -1,9 +1,11 @@
 import { createContext, useContext } from "react";
+import type { NativeWorkflow } from "./workflow";
 import type { IdentityApi } from "./api";
 import type { IdentityState } from "./controller";
 
 export type IdentityContextValue = {
   state: IdentityState;
+  workflow: NativeWorkflow;
   api: IdentityApi;
   refresh(): Promise<void>;
   interact(): void;
@@ -13,6 +15,8 @@ export type IdentityContextValue = {
   sessionPending: boolean;
   cancelPendingSignIn?: () => Promise<void>;
   sessionError: string;
+  sessionNotice: string;
+  discardRejectedSignIn?: () => Promise<void>;
   googlePending: boolean;
   authRevision: number;
   google?: () => Promise<void>;

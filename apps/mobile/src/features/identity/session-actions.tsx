@@ -9,7 +9,10 @@ export function SessionActions(): React.JSX.Element {
   if (identity.cancelPendingSignIn)
     return (
       <>
-        <Feedback error={identity.sessionError} />
+        <Feedback
+          error={identity.sessionError}
+          notice={identity.sessionNotice}
+        />
         <NativeActions>
           <NativeAction
             label="Cancel sign-in"
@@ -22,7 +25,7 @@ export function SessionActions(): React.JSX.Element {
     );
   return (
     <>
-      <Feedback error={identity.sessionError} />
+      <Feedback error={identity.sessionError} notice={identity.sessionNotice} />
       <NativeActions>
         {identity.state.kind !== "signed-out" && (
           <>
@@ -52,6 +55,27 @@ export function SessionActions(): React.JSX.Element {
               }
             />
           </>
+        )}
+        {identity.discardRejectedSignIn && (
+          <NativeAction
+            label="Remove this device’s rejected sign-in"
+            tone="text"
+            disabled={pending}
+            onPress={() =>
+              Alert.alert(
+                "Remove this device’s sign-in?",
+                "Server and other-device sign-out are not confirmed. This removes the rejected credential so you can sign in again.",
+                [
+                  { text: "Cancel", style: "cancel" },
+                  {
+                    text: "Remove sign-in",
+                    style: "destructive",
+                    onPress: () => void identity.discardRejectedSignIn?.(),
+                  },
+                ],
+              )
+            }
+          />
         )}
         {identity.cleanupPending && (
           <NativeAction

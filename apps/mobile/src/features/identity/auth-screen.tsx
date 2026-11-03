@@ -101,7 +101,13 @@ export function AuthScreen({ mode }: { mode: AuthMode }): React.JSX.Element {
           : "Keep your account private and protected."
       }
     >
+      <Feedback error={identity.sessionError} notice={identity.sessionNotice} />
       <Feedback error={validation || flow.error} notice={flow.notice} />
+      {flow.stage.step === "email-request" && (
+        <AppText>
+          Continue to send a verification code for this sign-in attempt.
+        </AppText>
+      )}
       {credentials && (
         <NativeField
           label="Email address"
@@ -178,6 +184,7 @@ export function AuthScreen({ mode }: { mode: AuthMode }): React.JSX.Element {
               : "Continue"
           }
           pending={flow.pending}
+          disabled={identity.googlePending}
           onPress={() => void submit()}
         />
         {flow.stage.step === "email" && (

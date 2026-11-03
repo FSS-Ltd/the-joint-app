@@ -34,13 +34,13 @@ export function CreateHousehold(): React.JSX.Element {
       operation.setError("Name your household using 1–80 characters.");
       return;
     }
-    await operation.run(async (signal) => {
+    await operation.run(async (signal, lifetime) => {
       await identity.api.createHousehold(
         parsed.data.name,
         key(parsed.data.name),
         signal,
       );
-      if (!signal.aborted) await identity.refresh();
+      if (lifetime.active()) await identity.refresh();
     });
   }
   return (
@@ -91,14 +91,14 @@ export function InviteAdult({
       operation.setError("Enter the other adult’s email address.");
       return;
     }
-    await operation.run(async (signal) => {
+    await operation.run(async (signal, lifetime) => {
       const result = await identity.api.invite(
         membership.householdId,
         parsed.data.email,
         key(`${membership.householdId}:${parsed.data.email}`),
         signal,
       );
-      if (!signal.aborted) {
+      if (lifetime.active()) {
         setLink(`familyfund://invitation?token=${result.token}`);
         operation.setNotice(
           "Invitation ready. Share it privately with the invited adult. It expires in seven days.",
@@ -161,9 +161,9 @@ export function AcceptInvitation(): React.JSX.Element | null {
   if (!token) return null;
   async function accept() {
     if (!token) return;
-    await operation.run(async (signal) => {
+    await operation.run(async (signal, lifetime) => {
       await identity.api.acceptInvitation(token, signal);
-      if (!signal.aborted) {
+      if (lifetime.active()) {
         identity.clearInvitation();
         await identity.refresh();
       }
