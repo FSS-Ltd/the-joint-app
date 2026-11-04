@@ -7,14 +7,14 @@ Part of the [canonical feature tree](../../FEATURE_TREE.md). Status describes th
 ## NATIVE_FINANCE — Native financial journeys
 
 - **Status:** `planned`. **Purpose:** Deliver scoped home/accounts, activity/imports, budgets, wealth/goals and privacy screens over existing authoritative services.
-- **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) — `IOS4 — Home and accounts`.
+- **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) — `IOS4 — Home and accounts`; [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) — `IOS10a — Wealth, goals, contributions and projection experience`.
 - **Canonical implementation:** No runtime implementation yet; use the cited plan.
-- **Depends on / reuses:** [ACCOUNTS](finance.md#accounts), [ACTIVITY](finance.md#activity), [GOALS](finance.md#goals), [IMPORTS](finance.md#imports), [NATIVE_AUTH](identity.md#native_auth), [PRIVACY](platform.md#privacy), [SPENDING](finance.md#spending), [WEALTH](finance.md#wealth).
+- **Depends on / reuses:** [ACCOUNTS](finance.md#accounts), [ACTIVITY](finance.md#activity), [ALLOCATIONS](finance.md#allocations), [CONTRIBUTIONS](finance.md#contributions), [FUNDING](finance.md#funding), [GOALS](finance.md#goals), [IMPORTS](finance.md#imports), [NATIVE_AUTH](identity.md#native_auth), [PRIVACY](platform.md#privacy), [PROJECTIONS](finance.md#projections), [SPENDING](finance.md#spending), [WEALTH](finance.md#wealth).
 - **Used by:** [MARKETING](planned.md#marketing), [RELEASE](planned.md#release).
 - **Permission / data boundary:** Current mobile routes contain identity/onboarding only. Reuse shared contracts and native primitives; never port browser cookies or duplicate server rules.
 - **Verification references:** No executable feature acceptance established; the linked plan defines the required evidence.
 - **Graphify navigation:** scopes `features; future runtime nodes are absent`; query `NATIVE_FINANCE` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_NATIVE_FINANCE`.
-- **Debug / reuse / limits:** IOS3–IOS10a delivery remains gated. Existing API/web feature entries describe working behavior separately.
+- **Debug / reuse / limits:** IOS3–IOS10a delivery remains gated. Existing API/web feature entries describe working behavior separately. IOS10a explicitly reuses merged 3B/3C funding, allocation and contribution APIs plus the planned IOS8/9 projection engine/API. These are planned native dependencies; FUNDING/ALLOCATIONS/CONTRIBUTIONS remain implemented and PROJECTIONS remains partial.
 
 <a id="recurring"></a>
 

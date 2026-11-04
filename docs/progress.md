@@ -1369,8 +1369,8 @@ not production readiness. Existing backend/web features are distinguished from
 planned native finance, projection engine, billing, companion and release work.
 
 Installed Graphify produced six bounded AST scopes covering 477 detected runtime
-files, with four sensitive-file exclusions, plus a feature graph with 275 nodes
-and 464 directed edges. The local project-wide index records source revision and content
+files, with four sensitive-file exclusions, plus a feature graph with 276 nodes
+and 470 directed edges. The local project-wide index records source revision and content
 hashes. Generated outputs remain ignored; the tracked navigation guide records
 rebuild/refresh procedure, incomplete test/model/config/document extraction and
 AST ambiguity. No private journals, credentials, real financial data, provider
@@ -1387,5 +1387,12 @@ Application Security Engineer reviews before publication. Runtime suites are not
 rerun locally for this documentation-only unit; existing full CI remains required.
 The unchanged AGENTS.md link to RULES_RESEARCH.md is an existing missing-file gap,
 separate from the validated navigation links added here.
+The first independent code/document review identified two missing reuse
+relationships. The corrected tree retains both IMPORTS/EVENTS directions for
+distinct UI subscription and server status-read roles, and records IOS10a's
+planned reuse of FUNDING, ALLOCATIONS, CONTRIBUTIONS and PROJECTIONS. Existing
+implementation statuses are unchanged. The guide also records how to reconstruct
+the ignored feature graph/index from the tracked domain documents. These fixes
+still require final independent re-review before publication.
 PR publication, current-revision CI and actual merge are not yet claimed here.
 No IOS3 implementation or scaffold has started; NAV1 must merge before IOS3.

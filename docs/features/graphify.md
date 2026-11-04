@@ -80,6 +80,49 @@ from its contract types or a future implementation-plan paragraph.
 Use explicit task-boundary updates. This policy does not install watchers, Git
 hooks, paid services, external uploads or recurring polling.
 
+## Rebuild missing local maps
+
+The local inventory JSON and one-off extraction scripts are ignored working
+artifacts, not prerequisites shipped with a fresh checkout. Reconstruct them from
+the tracked tree and installed skill as follows:
+
+1. Enumerate tracked runtime code with `git ls-files` under the six scopes above.
+   For `shared`, select package `src/` code plus `apps/web/proxy.ts`. Preserve
+   repository-relative paths in a separate ignored snapshot for each scope;
+   apply the exclusions and sensitive-file detector before extraction. Check
+   corpus limits on each snapshot, then follow the skill's code-only AST,
+   clustering and export steps. Keep excluded-file counts, selected source paths
+   and SHA-256 content hashes; never replace exclusions with a broader scan.
+2. Read the four domain documents linked by `FEATURE_TREE.md`. For every explicit
+   feature anchor, retain its stable ID, name, status, entry points, canonical
+   implementation and `Depends on / reuses` links. Verify `Used by` is reciprocal;
+   resolve discrepancies against cited source rather than inventing an edge.
+3. Create a document node `feature_<ID>` per feature, with `source_file` set to its
+   domain document, `source_location` set to `#<lowercase-id>` and the declared
+   status. For each entry-point or canonical reference, create one source node
+   named `source_` plus the first 16 hexadecimal SHA-256 characters of
+   `<repository-relative-path>|<symbol>`. Preserve its source path and the first
+   matching symbol line when present; Markdown references are document nodes,
+   other references are code nodes. Tests remain linked evidence, not AST nodes.
+4. Add directed `depends_on` edges from each feature to its declared dependencies.
+   Add feature-to-source `specified_by` edges for planned features and
+   `implemented_by` edges otherwise; a partial feature's edges describe only its
+   documented foundation. Mark these document-extracted relationships
+   `EXTRACTED`, with confidence score `1.0` and the domain path/feature anchor.
+   Deduplicate source nodes by path/symbol and edges by source/target/relation.
+5. Cluster an undirected projection with Graphify's `build_from_json` and
+   `cluster`, but export the feature graph from a NetworkX `DiGraph` so opposite
+   dependencies survive. Use Graphify's `to_json`, `to_html` and report generation
+   for the feature output path above. Write `feature-dependencies.json` as the
+   ID-to-dependency-list index. Hash the four domain documents in the feature
+   manifest; add `FEATURE_TREE.md`, `AGENTS.md` and this guide to the project
+   index's feature-document hashes.
+6. Write `index.json` with the actual source revision, checked checkout revision,
+   runtime-change assessment and each scope's relative graph path, selected files,
+   detected/excluded counts, node/edge counts and source hashes. Validate paths,
+   anchors, source symbols, graph endpoints, reciprocal dependencies and all
+   hashes before querying. Record unknown semantic token cost explicitly.
+
 ## Known coverage and tooling limits
 
 - Tests, SQL migrations, Prisma models, configuration, design images and most
