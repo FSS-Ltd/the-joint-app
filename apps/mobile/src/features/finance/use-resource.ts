@@ -1,5 +1,5 @@
 import { statusSubscriptionQuery } from "@joint/contracts";
-import { useMemo, useRef, useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { NativeResourceController } from "../../events/resource";
 import {
   captureResourceScope,
@@ -12,7 +12,6 @@ import {
   needsFinanceReconciliation,
 } from "./errors";
 import { assertFinanceResult } from "./result";
-import { financeAuthorityKey } from "./scope";
 import type { FinanceResourceSnapshot, FinanceResourceResult } from "./state";
 import { useFinanceLifetime } from "./use-lifetime";
 
@@ -24,18 +23,7 @@ export function useFinanceResource<T>(
 ): FinanceResourceResult<T> {
   const finance = useNativeFinance();
   const key = statusSubscriptionQuery(selector);
-  const authorityKey = finance.authority
-    ? financeAuthorityKey(finance.authority)
-    : "";
-  const fullKey = JSON.stringify([authorityKey, key]);
-  const refused = useRef<{ key: string; message: string } | null>(null);
-  const cursor = useRef<{ key: string; authority: string } | null>(null);
-  if (selector.kind === "accounts" && selector.cursor !== undefined) {
-    if (!cursor.current || cursor.current.key !== key)
-      cursor.current = { key, authority: authorityKey };
-  } else cursor.current = null;
-  const cursorAllowed =
-    cursor.current === null || cursor.current.authority === authorityKey;
+  const memory = finance.identity.resources;
   // Scope keys capture the matching reader; render-created callbacks do not restart subscriptions.
   const store = useMemo(() => {
     const authority = finance.authority;
@@ -62,7 +50,7 @@ export function useFinanceResource<T>(
         if (controller || !scope || !authority || !finance.isCurrent(authority))
           return;
         active = true;
-        if (!cursorAllowed) {
+        if (!memory.canUseCursor(scope)) {
           publish({
             kind: "error",
             message: financeErrorMessage(
@@ -71,8 +59,9 @@ export function useFinanceResource<T>(
           });
           return;
         }
-        if (!force && refused.current?.key === fullKey) {
-          publish({ kind: "error", message: refused.current.message });
+        const refusal = memory.refusal(scope);
+        if (!force && refusal) {
+          publish({ kind: "error", message: financeErrorMessage(refusal) });
           return;
         }
         controller = new NativeResourceController({
@@ -85,7 +74,7 @@ export function useFinanceResource<T>(
           },
           receive(value) {
             if (current()) {
-              if (refused.current?.key === fullKey) refused.current = null;
+              memory.success(scope, value);
               publish({ kind: "ready", value });
             }
           },
@@ -98,12 +87,9 @@ export function useFinanceResource<T>(
             if (
               authority &&
               needsFinanceReconciliation(error) &&
-              refused.current?.key !== fullKey
+              error instanceof NativeApiError &&
+              memory.refuse(scope, error)
             ) {
-              refused.current = {
-                key: fullKey,
-                message: financeErrorMessage(error),
-              };
               void finance.reconcile(authority);
             }
           },
@@ -125,7 +111,7 @@ export function useFinanceResource<T>(
       },
     };
     return store;
-  }, [finance, key, fullKey, cursorAllowed]);
+  }, [finance, key, memory]);
   const visible = useFinanceLifetime(finance, finance.authority, store);
   const snapshot = useSyncExternalStore(
     store.subscribe,

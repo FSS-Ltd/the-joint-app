@@ -10,6 +10,10 @@ import {
   type PropsWithChildren,
 } from "react";
 import { AppState, View } from "react-native";
+import {
+  NativeFinanceResourceMemory,
+  observeFinanceResourceAuthority,
+} from "../finance/resource-memory";
 import { createNativeTransport } from "../../api/request";
 import { createIdentityApiFromTransport } from "./api";
 import { IdentityMutations } from "./mutations";
@@ -50,6 +54,7 @@ export function IdentityRuntime({
   const finance = useMemo(
     () => ({
       transport,
+      resources: new NativeFinanceResourceMemory(),
       getVerifiedIdentity: controller.getVerifiedIdentity,
       subscribe: controller.subscribe,
       revoke: (actor: string) => controller.revoke(actor),
@@ -99,9 +104,16 @@ export function IdentityRuntime({
   const previousActor = useRef<string | null>(null);
   useLayoutEffect(() => {
     controller.mount();
+    const stopResources = observeFinanceResourceAuthority(
+      controller,
+      finance.resources,
+    );
     if (AppState.currentState !== "active") controller.background();
-    return () => controller.dispose();
-  }, [controller]);
+    return () => {
+      stopResources();
+      controller.dispose();
+    };
+  }, [controller, finance.resources]);
   useLayoutEffect(
     () =>
       clerk.addListener(({ session: current }) => {

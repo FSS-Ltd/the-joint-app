@@ -55,6 +55,7 @@ it.each([403, 404])(
   "reconciles resource %i once without retrying an obsolete cursor",
   async (status) => {
     const f = await financeFixture();
+    f.issueCursor("old-cursor");
     const read = vi.fn(async () => {
       throw new NativeApiError(status);
     });
@@ -235,6 +236,7 @@ it("does not reopen a denied old cursor after identity reconciliation rerenders 
   const read = vi.fn(async () => {
     throw new NativeApiError(403);
   });
+  f.issueCursor("obsolete");
   const selector = { ...scope.selector, cursor: "obsolete" };
   const render = () => f.h.render(() => f.resource(selector, read));
   render();
@@ -334,6 +336,7 @@ it.each(["blur", "background"])(
 it("does not reuse an old page cursor after grant authority changes", async () => {
   const f = await financeFixture();
   const read = vi.fn(async () => "value");
+  f.issueCursor("captured-under-old-grant");
   const page = { ...scope.selector, cursor: "captured-under-old-grant" };
   f.h.render(() => f.resource(page, read));
   await flush();

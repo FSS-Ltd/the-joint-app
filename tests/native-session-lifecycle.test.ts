@@ -1,3 +1,4 @@
+import * as resourceMemory from "../apps/mobile/src/features/finance/resource-memory.js";
 import { createNativeTransport } from "./fixtures/native-api.js";
 import { IdentityMutations } from "../apps/mobile/src/features/identity/mutations.js";
 import { sessionActor } from "../apps/mobile/src/features/identity/provider-session.js";
@@ -229,6 +230,7 @@ it("ordinary runtime refresh cannot override background or undefined provider st
         addEventListener: () => ({ remove: () => {} }),
       },
       "../../api/request": { createNativeTransport: constructTransport },
+      "../finance/resource-memory": resourceMemory,
       "./api": { createIdentityApiFromTransport: composeIdentity },
       "./context": { IdentityContext: context },
       "./mutations": { IdentityMutations },
