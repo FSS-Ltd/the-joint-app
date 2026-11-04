@@ -1,0 +1,23 @@
+import { Stack } from "expo-router/stack";
+import { colors } from "@/theme/tokens";
+export default function HomeLayout(): React.JSX.Element {
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.forest },
+        headerTintColor: colors.ivory,
+        contentStyle: { backgroundColor: colors.forest },
+      }}
+    >
+      <Stack.Screen
+        name="index"
+        options={{ headerShown: false, title: "Home" }}
+      />
+      <Stack.Screen name="accounts/index" options={{ title: "Accounts" }} />
+      <Stack.Screen
+        name="accounts/[accountId]/index"
+        options={{ title: "Account" }}
+      />
+    </Stack>
+  );
+}

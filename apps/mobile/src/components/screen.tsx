@@ -12,7 +12,11 @@ import { colors, spacing } from "@/theme/tokens";
 export function Screen({
   children,
   compact = false,
-}: PropsWithChildren<{ compact?: boolean }>): React.JSX.Element {
+  scrollable = true,
+}: PropsWithChildren<{
+  compact?: boolean;
+  scrollable?: boolean;
+}>): React.JSX.Element {
   const { width } = useWindowDimensions();
   return (
     <View style={styles.shell}>
@@ -37,13 +41,25 @@ export function Screen({
         />
       </View>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView
-          contentContainerStyle={[styles.content, compact && styles.compact]}
-          automaticallyAdjustKeyboardInsets
-          keyboardShouldPersistTaps="handled"
-        >
-          {children}
-        </ScrollView>
+        {scrollable ? (
+          <ScrollView
+            contentContainerStyle={[styles.content, compact && styles.compact]}
+            automaticallyAdjustKeyboardInsets
+            keyboardShouldPersistTaps="handled"
+          >
+            {children}
+          </ScrollView>
+        ) : (
+          <View
+            style={[
+              styles.content,
+              styles.nonScroll,
+              compact && styles.compact,
+            ]}
+          >
+            {children}
+          </View>
+        )}
       </SafeAreaView>
     </View>
   );
@@ -84,5 +100,6 @@ const styles = StyleSheet.create({
     padding: spacing.medium,
     gap: spacing.section,
   },
+  nonScroll: { flex: 1 },
   compact: { gap: spacing.large },
 });
