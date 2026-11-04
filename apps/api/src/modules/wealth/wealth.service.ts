@@ -7,6 +7,7 @@ import type { AuthContext, WealthSummaryDto } from "@joint/contracts";
 import type { ScopedDatabase } from "@joint/database/scoped";
 import { valueAccounts } from "@joint/domain/wealth";
 import { readWealthScope } from "./wealth.repository.js";
+import { readWealthClock } from "./wealth-clock.js";
 
 export class WealthService {
   constructor(private readonly database: ScopedDatabase) {}
@@ -30,13 +31,7 @@ export class WealthService {
   ): Promise<{ summary: WealthSummaryDto; nextChangeAt: number }> {
     return this.database.withScope(context, async (tx) => {
       const accounts = await readWealthScope(tx, context, accountIds);
-      const [clock] = await tx.$queryRaw<
-        { today: string; now: Date; nextChangeAt: Date }[]
-      >`SELECT (statement_timestamp() AT TIME ZONE 'Europe/London')::date::text AS today,
-        statement_timestamp() AS now,
-        (((statement_timestamp() AT TIME ZONE 'Europe/London')::date + 1)::timestamp
-          AT TIME ZONE 'Europe/London') AS "nextChangeAt"`;
-      if (!clock) throw Error("Wealth evaluation clock unavailable");
+      const clock = await readWealthClock(tx);
       const result = valueAccounts({
         householdId: context.householdId,
         grantVersion: context.grantVersion,

@@ -9,6 +9,7 @@ import {
 } from "../packages/contracts/src/index.js";
 import * as repository from "../apps/api/src/modules/wealth/wealth.repository.js";
 import { WealthService } from "../apps/api/src/modules/wealth/wealth.service.js";
+import { readWealthClock } from "../apps/api/src/modules/wealth/wealth-clock.js";
 import { StatusResources } from "../apps/api/src/modules/events/status-resources.js";
 import {
   createStatusFixture,
@@ -345,11 +346,9 @@ it("returns the database London date and next midnight from the same evaluation 
     stream = await open();
   try {
     const observation = await observed.mock.results[0]?.value;
-    const [clock] = await fixture.owner.$queryRaw<
-      { today: string; nextChangeAt: Date }[]
-    >`SELECT (statement_timestamp() AT TIME ZONE 'Europe/London')::date::text AS today, (((statement_timestamp() AT TIME ZONE 'Europe/London')::date + 1)::timestamp AT TIME ZONE 'Europe/London') AS "nextChangeAt"`;
-    expect(observation.summary.asOfDate).toBe(clock?.today);
-    expect(observation.nextChangeAt).toBe(clock?.nextChangeAt.getTime());
+    const clock = await readWealthClock(fixture.owner);
+    expect(observation.summary.asOfDate).toBe(clock.today);
+    expect(observation.nextChangeAt).toBe(clock.nextChangeAt.getTime());
   } finally {
     await stream.close();
     observed.mockRestore();
@@ -361,12 +360,28 @@ it.each([
 ] as const)(
   "pins independent London DST answers at %s",
   async (instant, today, deadline, remainingHours) => {
-    // Independent fixed UTC answers pin the database timezone conversion used by WealthService.
-    const [clock] = await fixture.owner.$queryRaw<
-      { today: string; nextChangeAt: Date }[]
-    >`SELECT (${new Date(instant)}::timestamptz AT TIME ZONE 'Europe/London')::date::text AS today, (((${new Date(instant)}::timestamptz AT TIME ZONE 'Europe/London')::date + 1)::timestamp AT TIME ZONE 'Europe/London') AS "nextChangeAt"`;
-    expect(clock?.today).toBe(today);
-    expect(clock?.nextChangeAt.toISOString()).toBe(deadline);
+    // Execute production SQL, binding only its database clock calls to a fixed instant.
+    // No date/deadline expression or expected answer comes from a test SQL copy.
+    const clock = await readWealthClock({
+      $queryRaw<T>(query: TemplateStringsArray): Promise<T> {
+        expect(query).toHaveLength(1);
+        const fragments = query
+          .join("")
+          .split("statement_timestamp()")
+          .map((fragment, index) =>
+            index === 0 ? fragment : `::timestamptz${fragment}`,
+          );
+        expect(fragments.length).toBeGreaterThan(1);
+        const bound = Object.assign(fragments, { raw: [...fragments] });
+        return fixture.owner.$queryRaw<T>(
+          bound,
+          ...fragments.slice(1).map(() => new Date(instant)),
+        );
+      },
+    });
+    expect(clock.today).toBe(today);
+    expect(clock.now.toISOString()).toBe(instant);
+    expect(clock.nextChangeAt.toISOString()).toBe(deadline);
     expect((Date.parse(deadline) - Date.parse(instant)) / 3600000).toBe(
       remainingHours,
     );
