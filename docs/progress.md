@@ -1275,3 +1275,71 @@ storage/accessibility/store limits are preserved explicitly. No production
 identity, store submission, new product code or IOS3 work is included. This
 current-unit documentation update must receive both independent reviews and its
 own current-head CI/merge before any later delivery step.
+
+### IOS2 PR39 native CI compatibility correction — 4 November 2026
+
+[Draft PR39](https://github.com/FSS-Ltd/the-joint-app/pull/39) remains on current
+IOS2. At revision `924c6de33bb390f615ab1a0a10b954e16580d6a3`, Foundation checks
+succeeded but Native bundle checks failed in CI41740324178. The failure reproduced
+locally: Expo's online compatibility recommendations advanced eight SDK58 package
+versions after the earlier passing baseline. The candidate updates exactly those
+eight pins and the lockfile; the online dependency check and Doctor remain intact.
+No exclusions, offline override or CI waiver is introduced.
+
+The [acceptance record](joint-app/ios2-native-runtime-acceptance.md) lists the
+precise versions and separates baseline device observations from candidate checks.
+Frozen install, online alignment, Doctor20/20, root types, 591 units/84 files,
+lint and formatting pass locally; the root production build passes with cached
+outputs. Both standard-entry native exports, local native rebuilds and artifact
+inspections pass. Focused aligned-binary startup/form results and cleanup are
+recorded below; final current-diff reviews and new-revision CI remain required.
+No refreshed binary was installed while the manual walkthrough was pending.
+This is a correction within PR39, not a new phase or IOS3 implementation.
+
+### IOS2 PR39 manual report and native rebuild checkpoint — 4 November 2026
+
+The founder reported that the final Android local-logout, enlarged-text and
+TalkBack walkthrough passed, with settings restored. This supersedes the earlier
+pending-manual-result status. It is a user report on the original runtime binary,
+not an automated accessibility certification or an aligned-binary startup result.
+No repeat sign-in, factor enrollment, Copy or invitation acceptance is required.
+
+Both aligned native rebuilds and actual artifact inspections pass. Android has
+its normal Debug signature, expected ABI/SDK, unchanged eight permissions and
+safe-area/SVG codegen. iOS has both simulator architectures and strict ad-hoc
+signature verification without a developer identity or provisioning profile.
+Temporary native identifiers were restored byte-for-byte before handoff. The
+three existing dependency advisories remain disclosed; no clean-audit claim is
+made. Final independent reviews and fresh current-revision CI remain required.
+
+The user asked to finish and merge PR39 in this chat and hand the remaining app
+work to a new chat. This does not mark IOS2 or the full app complete before its
+remaining evidence and actual merge are verified, and no IOS3 work starts here.
+
+### IOS2 PR39 aligned startup and scoped cleanup — 4 November 2026
+
+The parent installed and inspected both rebuilt aligned binaries using the
+candidate's standard-entry JavaScript. iOS reached the empty styled Welcome home
+form. Android reached its expired-session gate with household content concealed;
+local sign-out then settled to the empty form with its expected fields/actions.
+The initial Android resume encountered an OS-level ANR before JavaScript, then
+startup passed after reducing host contention and restarting the same AVD without
+a wipe. These are focused aligned-binary observations; earlier signed flows and
+the founder-reported manual walkthrough retain their original-binary scope.
+
+The frozen exact-owner disposable-adult CLI cleanup and subsequent status check
+both reported deleted, with the null-password tombstone retained. The parent
+verified and removed only the matched device reverse mappings, stopped the owned
+Android guest and durable API launcher gracefully, confirmed the runner claim
+absent, stopped owned Metro/viewer processes and checked the relevant listeners
+were absent. The iOS simulator was shut down after inspection. The consumed
+owner-checked invitation capability file was retired without disclosure.
+No unrelated IDE project or original development account was removed.
+
+The same durable database/private journal are intentionally retained for handoff
+and reconciliation, not claimed purged. Historical unknown-key fixtures/tickets,
+native artifacts and active checkouts remain preserved for safe follow-up. A
+future permanent disposal requires its own concrete reviewed ownership checks.
+Current runtime checks and scoped cleanup are recorded; PR39 still requires both
+final independent reviews, successful latest-revision/required merge CI and an
+actual merge. The full app remains unfinished, and no IOS3 work starts here.
