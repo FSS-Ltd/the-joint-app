@@ -7,6 +7,14 @@ engineering and operations. Use the same standards whichever model is working.
 
 ## Load the relevant guidance
 
+- Read [FEATURE_TREE.md](FEATURE_TREE.md) before implementation decisions. It is
+  the canonical project-wide feature index; follow its domain links and inspect
+  the relevant source and tests before adding a parallel capability.
+- Invoke the installed `graphify` skill and use the
+  [Graphify navigation guide](docs/features/graphify.md) alongside the feature
+  tree. Reconcile stale graphs and feature entries before coding; refresh affected
+  scopes, dependencies and consumers after changes. Generated local graphs are
+  navigation aids, never evidence that behavior is implemented or tests passed.
 - Read [BUILD.md](BUILD.md) for implementation, debugging, code review,
   infrastructure and releases.
 - Read [STRATEGY.md](STRATEGY.md) for discovery, proposals, business analysis,
