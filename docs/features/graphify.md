@@ -126,9 +126,10 @@ the tracked tree and installed skill as follows:
 
 ## Known coverage and tooling limits
 
-- Tests, SQL migrations, Prisma models, configuration, design images and most
-  product documents are linked from the feature tree but are not AST-extracted
-  into these runtime graphs. Their implementation/permission evidence must be
+- Tests, SQL migrations, Prisma models, most configuration, design images and
+  most product documents are linked from the feature tree but are not AST-extracted
+  into these runtime graphs. The shared scope explicitly includes the database
+  Prisma configuration and seed entry points. Their implementation/permission evidence must be
   read directly. Native acceptance evidence is not copied into the graph.
 - Graphify's sensitive-file detector excluded four tracked runtime files across
   the six scopes. Do not disable it to obtain a larger count. Source verification

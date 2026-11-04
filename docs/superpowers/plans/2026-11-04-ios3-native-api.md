@@ -15,7 +15,7 @@
 - iOS first with Android support; IOS4 financial screens remain outside this unit.
 - Keep existing Clerk bearer verification, session/MFA deadlines, household/grant authority, RLS, optimistic versions and idempotency. Events never grant access.
 - Preserve identity API exports, messages and cleanup-ticket behavior. No duplicate bearer client or browser token/cookie bridge.
-- Commit before notifying; hints contain no financial data or credentials. No periodic state checks, standing database scans or automatic mutation retry.
+- Commit before notifying; hints contain no financial data or credentials. No periodic state checks, standing database scans or automatic mutation retry. The founder reiterated battery-safe live updates: no recurring database/API discovery calls, no resource reads caused by keepalive frames, and no native resource stream or timer that wakes resource-update network work in the background. Reconcile once after reconnect/foreground to catch missed changes.
 - Clear resource data before replacement after changed authority, background, identity change, invalidation or transport loss. Abort alone cannot undo a committed write.
 - Preserve private fixtures, journals, tickets and old native evidence. Do not repeat real-provider sign-in/MFA/invitation handoffs or create another provider adult.
 - Use safe synthetic tests and owned local resources. No EAS/cloud builds, production identity, store submission, deployment, hooks or watchers.
@@ -116,7 +116,7 @@ expect(repeatedOptions.headers["Idempotency-Key"]).toBe(originalKey);
 
 **Produces:** `readNativeStatusStream(selector, transport, signal, onSignal): Promise<void>` over explicit `expo/fetch` and shared strict decoder. Native account selectors are the current supported scope. A focused `NativeResourceController<T>` accepts explicit scope/read/receive/unavailable/failure dependencies and has `start`, `background`, `foreground`, `replaceAuthority`, `retry`, `close` only where exercised. The scope includes provider actor/session plus verified internal user/household/membership/grant epoch; no global hidden actor state.
 
-- [ ] Write failing tests for fragmented streaming before EOF, empty-only controls, wrong MIME/redirect, timeout/reader cancellation, callbacks after abort, startup, duplicate/out-of-order hints, reconnect catch-up and cleanup. Lifecycle tests cover background, actor/household/grant change, old token/read completion, interrupted mutations and zero idle discovery calls.
+- [ ] Write failing tests for fragmented streaming before EOF, empty-only controls, wrong MIME/redirect, timeout/reader cancellation, callbacks after abort, startup, duplicate/out-of-order hints, reconnect catch-up and cleanup. Count transport requests and resource reads over simulated idle time with keepalives before genuine expiry; both remain unchanged after initial setup. Repeated start must not duplicate a connection, and background/close must leave no network wakeup timer or active stream. Lifecycle tests cover background, actor/household/grant change, old token/read completion, interrupted mutations and zero idle discovery calls.
 
 ```ts
 expect(received).toEqual([]); // old-epoch response cannot publish after replacement
