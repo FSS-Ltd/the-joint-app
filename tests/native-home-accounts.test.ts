@@ -31,6 +31,11 @@ it("mounts actual Tabs only through the configured financial ready gate", () => 
   const tabs = Object.assign("tabs", { Screen: "tab" });
   const Workspace = load("navigation/workspace-layout.tsx", {
     "expo-router": { Tabs: tabs },
+    "react-native": { useWindowDimensions: () => ({ fontScale: 1 }) },
+    "react-native-safe-area-context": {
+      useSafeAreaInsets: () => ({ top: 0, bottom: 34, left: 0, right: 0 }),
+    },
+    "./navigation-tab-button": { NavigationTabButton: "tab-button" },
     "../identity/configured-entry": { ConfiguredEntry: "gate" },
     "../finance/provider": { NativeFinanceProvider: "finance" },
   }).WorkspaceLayout as () => unknown;

@@ -1,24 +1,39 @@
 import type { MeResponse } from "@joint/contracts";
 import { Tabs } from "expo-router";
+import { useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppText } from "@/components/app-text";
-import { colors } from "@/theme/tokens";
+import { colors, spacing } from "@/theme/tokens";
+import { NavigationTabButton } from "./navigation-tab-button";
 import { ConfiguredEntry } from "../identity/configured-entry";
 import { NativeFinanceProvider } from "../finance/provider";
 
 function ReadyWorkspace({ me }: { me: MeResponse }): React.JSX.Element {
+  const { fontScale } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  // Reserve icon, scaled label, button padding and OS inset in normal navigator layout.
+  const itemHeight = Math.max(44, 24 + 20 * fontScale + 12);
   return (
     <NativeFinanceProvider me={me}>
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: colors.action,
-          tabBarInactiveTintColor: colors.secondary,
+          tabBarInactiveTintColor: colors.ivory,
+          tabBarAllowFontScaling: true,
+          tabBarButton: (props) => <NavigationTabButton {...props} />,
+          tabBarItemStyle: {
+            marginHorizontal: spacing.small / 2,
+            marginVertical: spacing.small / 2,
+          },
           tabBarStyle: {
-            backgroundColor: colors.ivory,
-            borderTopWidth: 0,
+            backgroundColor: colors.forest,
+            borderWidth: 1,
+            borderColor: colors.border,
+            height: itemHeight + spacing.medium + insets.bottom,
             borderRadius: 32,
-            marginHorizontal: 16,
-            marginBottom: 8,
+            marginHorizontal: spacing.medium,
+            marginBottom: spacing.small,
           },
           tabBarLabelStyle: { fontSize: 14 },
         }}
@@ -28,7 +43,11 @@ function ReadyWorkspace({ me }: { me: MeResponse }): React.JSX.Element {
           options={{
             title: "Home",
             tabBarAccessibilityLabel: "Home",
-            tabBarIcon: () => <AppText accessible={false}>⌂</AppText>,
+            tabBarIcon: ({ color }) => (
+              <AppText accessible={false} style={{ color }}>
+                ⌂
+              </AppText>
+            ),
           }}
         />
         <Tabs.Screen
@@ -36,7 +55,11 @@ function ReadyWorkspace({ me }: { me: MeResponse }): React.JSX.Element {
           options={{
             title: "More",
             tabBarAccessibilityLabel: "More",
-            tabBarIcon: () => <AppText accessible={false}>•••</AppText>,
+            tabBarIcon: ({ color }) => (
+              <AppText accessible={false} style={{ color }}>
+                •••
+              </AppText>
+            ),
           }}
         />
       </Tabs>

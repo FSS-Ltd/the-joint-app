@@ -16,6 +16,23 @@ export function financeHooks() {
     a.length === b.length &&
     a.every((value, i) => Object.is(value, b[i]));
   const react = {
+    useState<T>(
+      initial: T | (() => T),
+    ): [T, (next: T | ((previous: T) => T)) => void] {
+      const i = index++;
+      slots[i] ??= {
+        value: typeof initial === "function" ? (initial as () => T)() : initial,
+      };
+      return [
+        slots[i].value as T,
+        (next) => {
+          slots[i]!.value =
+            typeof next === "function"
+              ? (next as (previous: T) => T)(slots[i]!.value as T)
+              : next;
+        },
+      ];
+    },
     useRef<T>(initial: T): { current: T } {
       const i = index++;
       slots[i] ??= { value: { current: initial } };

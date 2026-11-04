@@ -51,6 +51,13 @@ export class NativeIdentityController {
   };
   private publish(state: IdentityState): void {
     if (this.disposed) return;
+    // Activity acknowledges the same authority; real invalidations clear verified before a later ready publication.
+    if (
+      state.kind === "ready" &&
+      this.verified?.actor === this.actor &&
+      this.verified?.me === state.me
+    )
+      return;
     this.state = state;
     this.verified =
       state.kind === "ready" && this.actor
