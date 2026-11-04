@@ -1343,3 +1343,74 @@ future permanent disposal requires its own concrete reviewed ownership checks.
 Current runtime checks and scoped cleanup are recorded; PR39 still requires both
 final independent reviews, successful latest-revision/required merge CI and an
 actual merge. The full app remains unfinished, and no IOS3 work starts here.
+
+## NAV1 — Canonical feature tree and Graphify baseline — 4 November 2026
+
+Predecessor [PR39](https://github.com/FSS-Ltd/the-joint-app/pull/39) is
+host-confirmed merged into main at `5e5a63b1aec322fa06f47b31cbf01ca371c37b50`.
+Reviewed source `d795f09d1b8d663ed342e79ec9b44a3e2af01e0e` passed PR
+CI41777899568. Post-merge [CI41779002327](https://github.com/FSS-Ltd/the-joint-app/actions/runs/41779002327)
+finished successfully on the exact merged SHA: Foundation126405968258 and
+Native126405967941 both succeeded. Both job checkout logs identify that SHA.
+These host results supersede historical PR39-open statements above; recorded
+native/provider/device limitations and retained private evidence remain intact.
+
+The founder added a mandatory Graphify and persistent feature-tree policy.
+No equivalent project-wide tree existed in the verified base. NAV1 is a
+standalone prerequisite documentation unit on `build/nav1-feature-navigation`,
+not IOS3 implementation. See [plan](superpowers/plans/2026-11-04-feature-navigation-baseline.md)
+and [canonical tree](../FEATURE_TREE.md).
+
+The baseline inventories 45 stable feature IDs across identity/native, finance,
+platform/privacy/operations and planned/deferred scope. Entries link canonical
+source symbols, tests, permission boundaries and reciprocal directed dependency
+and consumer references. Implemented status describes the exact source scope,
+not production readiness. Existing backend/web features are distinguished from
+planned native finance, projection engine, billing, companion and release work.
+
+Installed Graphify produced six bounded AST scopes covering 477 detected runtime
+files, with four sensitive-file exclusions, plus a feature graph with 276 nodes
+and 470 directed edges. The local project-wide index records source revision and content
+hashes. Generated outputs remain ignored; the tracked navigation guide records
+rebuild/refresh procedure, incomplete test/model/config/document extraction and
+AST ambiguity. No private journals, credentials, real financial data, provider
+identities or native acceptance artifacts entered extraction. Earlier chats are
+not claimed updated. No watchers, hooks, polling or external upload was added.
+
+Reuse decision: preserve canonical identity, financial services, shared Zod
+contracts, exact money, scoped database and event/worker boundaries. The mapping
+adds no parallel product implementation, dependency, migration or runtime change.
+Local validation checks all feature IDs, source/test paths, named symbols, Markdown
+links/anchors, reciprocal dependencies and graph/source content hashes. Formatting
+and diff checks are required alongside independent final Code Reviewer and
+Application Security Engineer reviews before publication. Runtime suites are not
+rerun locally for this documentation-only unit; existing full CI remains required.
+The unchanged AGENTS.md link to RULES_RESEARCH.md is an existing missing-file gap,
+separate from the validated navigation links added here.
+The first independent code/document review identified two missing reuse
+relationships. The corrected tree retains both IMPORTS/EVENTS directions for
+distinct UI subscription and server status-read roles, and records IOS10a's
+planned reuse of FUNDING, ALLOCATIONS, CONTRIBUTIONS and PROJECTIONS. Existing
+implementation statuses are unchanged. The guide also records how to reconstruct
+the ignored feature graph/index from the tracked domain documents. These fixes
+still require final independent re-review before publication.
+PR publication, current-revision CI and actual merge are not yet claimed here.
+No IOS3 implementation or scaffold has started; NAV1 must merge before IOS3.
+
+NAV1 publication: [PR40](https://github.com/FSS-Ltd/the-joint-app/pull/40) is open
+against main from `build/nav1-feature-navigation`. Both independent final profiles
+cleared source `6201d503c5eb277461365b24fc96ddf21bc9d252` after the relationship
+corrections. Code review marked both P2 findings addressed; security found no
+remaining publication blocker. Local validation passed 45 feature IDs, 368
+source/test references, 214 symbols, 481 runtime hashes, directed graph/tree
+reconstruction, formatting and diff checks. Tests listed by the inventory remain
+source references; runtime suites were not rerun locally for this docs-only unit.
+
+The connector returned integration 403 for PR creation; the authenticated CLI
+created the authorized PR and it is attached to the current chat. Initial
+[CI41782828337](https://github.com/FSS-Ltd/the-joint-app/actions/runs/41782828337)
+was running Foundation checks and Native bundle checks at publication. This
+publication-evidence update requires current-revision CI again. No NAV1 CI
+success or merge is claimed; verify final head/test-merge checks and host merge
+before IOS3. Retained local graphs and review evidence remain needed for ongoing
+work, so the active worktree is preserved.
