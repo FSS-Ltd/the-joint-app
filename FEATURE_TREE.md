@@ -4,7 +4,7 @@ Canonical project-wide feature index. Read this tree and invoke the installed `g
 
 Baseline: runtime source at PR39 merge `5e5a63b1aec322fa06f47b31cbf01ca371c37b50`, inspected on 4 November 2026. NAV1 adds this missing inventory; earlier sessions are not claimed mapped. The source-backed domain pages and the [Graphify guide](docs/features/graphify.md) form one map, with stable feature IDs and reciprocal directed dependency/consumer links.
 
-Current IOS3 reconciliation: runtime source `2922503e636174dc04b14e4589f7cd1daa67a64f`. Account status observations, the shared decoder and bounded native transport/account adapter exist; native resource lifecycle and simulator acceptance remain pending. The current index has 46 stable feature IDs. Task-boundary map validation does not establish the outstanding database or native acceptance results.
+Current IOS3 reconciliation: runtime source `325b3f572ab320742b2dda5f6259ac68ea37f9f5`. Account observations, shared protocol, bounded native transport/account adapter and scoped foreground stream/resource lifecycle have unit, synthetic database and actual iOS transport/lifecycle evidence. The current index has 46 stable feature IDs. IOS3 remains unmerged pending final reviews and current CI; map validation is separate from runtime evidence.
 
 ## Reading status and connections
 
