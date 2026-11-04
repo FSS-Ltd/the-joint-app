@@ -233,3 +233,33 @@ it("keeps a revoked actor denied after mutation settlement", async () => {
   expect(api.readMe).toHaveBeenCalledTimes(1);
   controller.dispose();
 });
+it("exposes one stable verified ready pair and clears it before notifying invalidation", async () => {
+  const { api, controller } = fixture();
+  const getter = controller.getVerifiedIdentity;
+  expect(getter()).toBeNull();
+  api.readMe.mockResolvedValueOnce({
+    ...me,
+    membership: {
+      id: "00000000-0000-4000-8000-000000000002",
+      householdId: "00000000-0000-4000-8000-000000000003",
+      role: "ADMIN",
+      grantVersion: 4,
+      household: {
+        id: "00000000-0000-4000-8000-000000000003",
+        name: "Home",
+        baseCurrency: "GBP",
+        timezone: "Europe/London",
+        memberCount: 1,
+      },
+    },
+  });
+  await controller.identify("provider:session");
+  const verified = getter();
+  expect(verified?.actor).toBe("provider:session");
+  expect(getter()).toBe(verified);
+  const observed: unknown[] = [];
+  controller.subscribe(() => observed.push(getter()));
+  controller.background();
+  expect(observed).toEqual([null]);
+  controller.dispose();
+});

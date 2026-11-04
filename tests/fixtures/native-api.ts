@@ -32,3 +32,6 @@ export const IdentityApiError =
 export const createNativeTransport =
   transport.createNativeTransport as typeof import("../../apps/mobile/src/api/request.js").createNativeTransport;
 export { NativeApiError } from "../../apps/mobile/src/api/errors.js";
+
+export const createIdentityApiFromTransport =
+  api.createIdentityApiFromTransport as typeof import("../../apps/mobile/src/features/identity/api.js").createIdentityApiFromTransport;

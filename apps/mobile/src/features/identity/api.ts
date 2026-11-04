@@ -1,5 +1,5 @@
 import { createNativeTransport } from "../../api/request";
-import type { NativeSend } from "../../api/types";
+import type { NativeSend, NativeTransport } from "../../api/types";
 import { NativeApiError as IdentityApiError } from "../../api/errors";
 export {
   NativeApiError as IdentityApiError,
@@ -25,7 +25,12 @@ export function createIdentityApi(
   getToken: () => Promise<string | null>,
   send?: NativeSend,
 ) {
-  const transport = createNativeTransport(baseUrl, getToken, send);
+  return createIdentityApiFromTransport(
+    createNativeTransport(baseUrl, getToken, send),
+  );
+}
+
+export function createIdentityApiFromTransport(transport: NativeTransport) {
   function request<T>(
     path: string,
     schema: { parse(value: unknown): T },
@@ -119,4 +124,4 @@ export function createIdentityApi(
     },
   };
 }
-export type IdentityApi = ReturnType<typeof createIdentityApi>;
+export type IdentityApi = ReturnType<typeof createIdentityApiFromTransport>;

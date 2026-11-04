@@ -13,6 +13,11 @@ export type IdentityState =
       me: MeResponse;
     };
 
+export type VerifiedNativeIdentity = {
+  readonly actor: string;
+  readonly me: MeResponse;
+};
+
 type IdentityReads = {
   readMe(signal: AbortSignal): Promise<MeResponse>;
   readDeadline(signal: AbortSignal): Promise<SessionDeadline>;
@@ -22,6 +27,7 @@ type IdentityReads = {
 /** Identity-derived state is memory-only and fenced by actor, session and lifecycle. */
 export class NativeIdentityController {
   private state: IdentityState = { kind: "loading" };
+  private verified: VerifiedNativeIdentity | null = null;
   private readonly listeners = new Set<() => void>();
   private readonly revoked = new Set<string>();
   private actor: string | null | undefined;
@@ -38,6 +44,7 @@ export class NativeIdentityController {
     this.active = true;
   }
   getSnapshot = (): IdentityState => this.state;
+  getVerifiedIdentity = (): VerifiedNativeIdentity | null => this.verified;
   subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
@@ -45,6 +52,10 @@ export class NativeIdentityController {
   private publish(state: IdentityState): void {
     if (this.disposed) return;
     this.state = state;
+    this.verified =
+      state.kind === "ready" && this.actor
+        ? Object.freeze({ actor: this.actor, me: state.me })
+        : null;
     this.listeners.forEach((listener) => listener());
   }
   private cancel(): void {
@@ -179,9 +190,9 @@ export class NativeIdentityController {
   }
   dispose(): void {
     this.cancel();
-    this.disposed = true;
     this.actor = undefined;
-    this.state = { kind: "loading" };
+    this.publish({ kind: "loading" });
+    this.disposed = true;
     this.listeners.clear();
   }
 }
