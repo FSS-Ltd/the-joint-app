@@ -1,5 +1,9 @@
 import { BadRequestException } from "@nestjs/common";
-import { accountCursorSchema, type AuthContext } from "@joint/contracts";
+import {
+  accountCursorSchema,
+  type AccountResponse,
+  type AuthContext,
+} from "@joint/contracts";
 import type { Prisma } from "@joint/database/client";
 import type { ScopedDatabase } from "@joint/database/scoped";
 import type { IdentityVault } from "../identity/identity-vault.js";
@@ -21,7 +25,31 @@ export class AccountQueries {
     );
   }
   async list(context: AuthContext, limit: number, cursor?: string) {
-    const cursorContext = `accounts:${context.userId}:${context.membershipId}:${context.householdId}:${context.grantVersion}`;
+    const page = await this.page(context, limit, cursor);
+    return {
+      items: page.items,
+      nextCursor:
+        page.hasMore && page.last
+          ? this.vault.seal(
+              JSON.stringify(page.last),
+              this.cursorContext(context),
+            )
+          : null,
+    };
+  }
+  async observePage(
+    context: AuthContext,
+    limit: number,
+    cursor?: string,
+  ): Promise<{ items: AccountResponse[]; hasMore: boolean }> {
+    const { items, hasMore } = await this.page(context, limit, cursor);
+    return { items, hasMore };
+  }
+  private cursorContext(context: AuthContext): string {
+    return `accounts:${context.userId}:${context.membershipId}:${context.householdId}:${context.grantVersion}`;
+  }
+  private async page(context: AuthContext, limit: number, cursor?: string) {
+    const cursorContext = this.cursorContext(context);
     let after: Prisma.AccountWhereInput = {};
     if (cursor) {
       try {
@@ -50,16 +78,10 @@ export class AccountQueries {
       const last = page.at(-1);
       return {
         items: page.map((row) => projectAccount(row, context, partner)),
-        nextCursor:
-          rows.length > limit && last
-            ? this.vault.seal(
-                JSON.stringify({
-                  id: last.id,
-                  createdAt: last.createdAt.toISOString(),
-                }),
-                cursorContext,
-              )
-            : null,
+        hasMore: rows.length > limit,
+        last: last
+          ? { id: last.id, createdAt: last.createdAt.toISOString() }
+          : null,
       };
     });
   }

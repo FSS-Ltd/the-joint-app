@@ -1,10 +1,12 @@
 import { z } from "zod";
 export {
   statusSubscriptionSchema,
+  statusSubscriptionQuery,
   statusSignalSchema,
   statusSignalPayloadSchema,
 } from "./events.js";
 export type { StatusSubscription, StatusSignal } from "./events.js";
+export { createStatusDecoder } from "./status-protocol.js";
 export const healthSchema = z
   .object({ status: z.enum(["ok", "unavailable"]) })
   .strict();
