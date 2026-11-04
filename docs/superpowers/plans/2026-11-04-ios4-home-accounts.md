@@ -70,10 +70,10 @@
 - `useFinanceMutation<T>(targetKey:string)` returns discriminated idle/pending/success/error/uncertain state, `submit(execute:(signal:AbortSignal)=>Promise<T>)`, deliberate `retry()` and `reset()`. Retain only the same captured operation within its authority/target/focus lifetime; clear/abort on loss. UI captures immutable payload/key/version before submit. No automatic retry.
 - Add optional `ready?: (me:MeResponse)=>ReactNode` to ConfiguredEntry/IdentityEntry, invoked only after the existing full decision chain; household-required still renders AccountScreen.
 
-- [ ] Write RED authored-source tests in new `native-finance-authority.test.ts`, `native-finance-resource.test.ts`, `native-finance-mutations.test.ts` and existing identity gate/runtime tests.
-- [ ] Pin immediate provider/household/grant/account replacement, route blur/background, late token/read/write completion, captured401 versus resource403/404, coalesced hints and zero idle calls. A grant success refreshes identity and discards old cursors; permission loss reconciles authority once without an obsolete-cursor retry loop.
-- [ ] Implement the interfaces. Unknown dispatched writes remain uncertain; retries reuse the captured inputs. A new post-lifecycle attempt requires fresh authorized reads and user confirmation, not hidden replay. Map safe actionable version/MFA/scope/idempotency errors without upstream text.
-- [ ] Run native and identity regressions, relevant types, lint/format; inspect imports/exports and self-review. Commit and obtain independent acceptance before Task 3.
+- [x] Write RED authored-source tests in new `native-finance-authority.test.ts`, `native-finance-resource.test.ts`, `native-finance-mutations.test.ts` and existing identity gate/runtime tests.
+- [x] Pin immediate provider/household/grant/account replacement, route blur/background, late token/read/write completion, captured401 versus resource403/404, coalesced hints and zero idle calls. A grant success refreshes identity and discards old cursors; permission loss reconciles authority once without an obsolete-cursor retry loop.
+- [x] Implement the interfaces. Unknown dispatched writes remain uncertain; retries reuse the captured inputs. A new post-lifecycle attempt requires fresh authorized reads and user confirmation, not hidden replay. Map safe actionable version/MFA/scope/idempotency errors without upstream text.
+- [x] Run native and identity regressions, relevant types, lint/format; inspect imports/exports and self-review. Commit and obtain independent acceptance before Task 3.
 
 ## Task 3 — Native Home, account reads and real navigation
 
