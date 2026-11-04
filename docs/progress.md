@@ -1396,3 +1396,21 @@ the ignored feature graph/index from the tracked domain documents. These fixes
 still require final independent re-review before publication.
 PR publication, current-revision CI and actual merge are not yet claimed here.
 No IOS3 implementation or scaffold has started; NAV1 must merge before IOS3.
+
+NAV1 publication: [PR40](https://github.com/FSS-Ltd/the-joint-app/pull/40) is open
+against main from `build/nav1-feature-navigation`. Both independent final profiles
+cleared source `6201d503c5eb277461365b24fc96ddf21bc9d252` after the relationship
+corrections. Code review marked both P2 findings addressed; security found no
+remaining publication blocker. Local validation passed 45 feature IDs, 368
+source/test references, 214 symbols, 481 runtime hashes, directed graph/tree
+reconstruction, formatting and diff checks. Tests listed by the inventory remain
+source references; runtime suites were not rerun locally for this docs-only unit.
+
+The connector returned integration 403 for PR creation; the authenticated CLI
+created the authorized PR and it is attached to the current chat. Initial
+[CI41782828337](https://github.com/FSS-Ltd/the-joint-app/actions/runs/41782828337)
+was running Foundation checks and Native bundle checks at publication. This
+publication-evidence update requires current-revision CI again. No NAV1 CI
+success or merge is claimed; verify final head/test-merge checks and host merge
+before IOS3. Retained local graphs and review evidence remain needed for ongoing
+work, so the active worktree is preserved.
