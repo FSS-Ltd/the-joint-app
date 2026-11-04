@@ -51,5 +51,7 @@
 - [x] Extend lifecycle tests for clearing URI/key/code, no automatic creation and late opening completion; verify focused tests and mobile/test types.
 - [x] Inspect every changed file; run root checks, relevant integrations/browser coverage, exports/Doctor and native builds. Record any unavailable check honestly.
 - [x] Verify the actual native presentation with non-sensitive sample data; keep any local preview entry/configuration out of the committed diff.
-- [ ] Obtain independent Code Reviewer and Application Security Engineer review; resolve findings and recheck affected behavior.
-- [ ] Commit only intended source/docs/dependencies, raise the focused PR, inspect latest CI/test-merge evidence, and advance only after verified merge.
+- [x] Obtain independent Code Reviewer and Application Security Engineer review; resolve findings and recheck affected behavior.
+- [x] Commit only intended source/docs/dependencies, raise the focused PR, inspect latest CI/test-merge evidence, and advance only after verified merge.
+
+Delivery verified: [PR38](https://github.com/FSS-Ltd/the-joint-app/pull/38) merged at `84da2976d9246204559d81d1af74176c7cc80583` with successful current-revision and post-merge CI. Broader IOS2 configured-runtime acceptance remains open; see the [runtime acceptance record](../../joint-app/ios2-native-runtime-acceptance.md). This completed implementation checklist does not authorize IOS3.
