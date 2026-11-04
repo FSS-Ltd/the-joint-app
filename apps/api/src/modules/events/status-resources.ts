@@ -8,6 +8,7 @@ import type { AuthContext, StatusSubscription } from "@joint/contracts";
 import type { OwnerArchiveContext } from "@joint/database/archive";
 import type { DeletionRepository } from "@joint/database/deletion";
 import type { ImportQueries } from "../imports/import-queries.js";
+import type { AccountQueries } from "../accounts/account-queries.js";
 import type { ExportService } from "../exports/export.service.js";
 import type { IdentityAccess } from "../identity/identity.service.js";
 import { hashToken } from "../identity/identity-vault.js";
@@ -21,6 +22,7 @@ interface Services {
     "financeContext" | "actor" | "subscriptionExpiry"
   >;
   imports?: Pick<ImportQueries, "observe">;
+  accounts?: Pick<AccountQueries, "read" | "observePage">;
   exports?: Pick<ExportService, "status" | "archiveStatus">;
   deletions?: Pick<DeletionRepository, "status" | "statusDeadline">;
 }
@@ -81,6 +83,18 @@ export class StatusResources {
       );
     }
     const context = await financeContext(identity, auth, selector.householdId);
+    if (selector.kind === "account" || selector.kind === "accounts") {
+      if (!this.services.accounts) throw new ServiceUnavailableException();
+      const status =
+        selector.kind === "account"
+          ? await this.services.accounts.read(context, selector.id)
+          : await this.services.accounts.observePage(
+              context,
+              selector.limit,
+              selector.cursor,
+            );
+      return this.snapshot(token, context, status, null);
+    }
     if (selector.kind === "import") {
       if (!this.services.imports) throw new ServiceUnavailableException();
       const snapshot = await this.services.imports.observe(

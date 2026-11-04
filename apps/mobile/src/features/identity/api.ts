@@ -1,4 +1,10 @@
-import { isClerkAPIResponseError } from "@clerk/expo";
+import { createNativeTransport } from "../../api/request";
+import type { NativeSend } from "../../api/types";
+import { NativeApiError as IdentityApiError } from "../../api/errors";
+export {
+  NativeApiError as IdentityApiError,
+  nativeErrorMessage as identityError,
+} from "../../api/errors";
 import {
   acceptInviteSchema,
   authResultSchema,
@@ -14,56 +20,13 @@ import {
   sessionDeadlineSchema,
 } from "@joint/contracts";
 
-const messages: Record<string, string> = {
-  INVITATION_UNAVAILABLE:
-    "This invitation has expired or belongs to another verified email. Ask the organiser for a new invitation.",
-  HOUSEHOLD_FULL: "This household already has two adults.",
-  HOUSEHOLD_EXISTS:
-    "You already belong to a household. Refresh your account to continue.",
-  INVITE_SELF: "Invite the other adult using their own email address.",
-  ADMIN_REQUIRED: "Only the household organiser can invite another adult.",
-  MFA_REQUIRED: "Verify a fresh authenticator code before continuing.",
-  MFA_INVALID: "That authenticator code did not match. Try the next code.",
-};
-export class IdentityApiError extends Error {
-  constructor(
-    readonly status: number,
-    readonly code?: string,
-  ) {
-    super(
-      (code && messages[code]) ||
-        (status === 401
-          ? "Your session has ended. Sign in again."
-          : status === 403
-            ? "Your access has changed. Verify your account and try again."
-            : "We could not complete this request. Check your connection and try again."),
-    );
-  }
-}
-export function identityError(error: unknown): string {
-  return error instanceof IdentityApiError
-    ? error.message
-    : "We could not complete this request. Please try again.";
-}
-function errorCode(body: unknown): string | undefined {
-  if (
-    typeof body === "object" &&
-    body !== null &&
-    "error" in body &&
-    typeof body.error === "object" &&
-    body.error !== null &&
-    "code" in body.error &&
-    typeof body.error.code === "string"
-  )
-    return body.error.code;
-  return undefined;
-}
 export function createIdentityApi(
   baseUrl: string,
   getToken: () => Promise<string | null>,
-  send: typeof fetch = fetch,
+  send?: NativeSend,
 ) {
-  async function request<T>(
+  const transport = createNativeTransport(baseUrl, getToken, send);
+  function request<T>(
     path: string,
     schema: { parse(value: unknown): T },
     signal: AbortSignal,
@@ -71,66 +34,20 @@ export function createIdentityApi(
     key?: string,
     cleanupTicket?: string,
   ): Promise<T> {
-    const abort = new AbortController();
-    const cancel = () => abort.abort();
-    signal.addEventListener("abort", cancel, { once: true });
-    const timeout = setTimeout(cancel, 15000);
-    try {
-      if (signal.aborted) throw new IdentityApiError(0);
-      // Bound provider acquisition as well as the network request.
-      const token = cleanupTicket
-        ? null
-        : await Promise.race([
-            getToken().catch((error: unknown) => {
-              if (
-                isClerkAPIResponseError(error) &&
-                (error.status === 401 ||
-                  error.status === 403 ||
-                  (error.status === 404 &&
-                    error.errors.some(
-                      (item) => item.code === "session_not_found",
-                    )))
-              )
-                throw new IdentityApiError(401);
-              throw error;
-            }),
-            new Promise<never>((_, reject) =>
-              abort.signal.addEventListener(
-                "abort",
-                () => reject(new IdentityApiError(0)),
-                { once: true },
-              ),
-            ),
-          ]);
-      if (abort.signal.aborted) throw new IdentityApiError(0);
-      if (!cleanupTicket && !token) throw new IdentityApiError(401);
-      const headers: Record<string, string> = { Accept: "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
-      if (cleanupTicket) headers["X-Logout-Cleanup"] = cleanupTicket;
-      if (body) headers["Content-Type"] = "application/json";
-      if (key) headers["Idempotency-Key"] = idempotencyKeySchema.parse(key);
-      const response = await send(`${baseUrl}/v1/${path}`, {
-        method: body ? "POST" : "GET",
-        headers,
-        signal: abort.signal,
-        redirect: "error",
-        cache: "no-store",
-        credentials: "omit",
-        ...(body ? { body: JSON.stringify(body) } : {}),
-      });
-      const value: unknown = await response.json().catch(() => {
-        throw new IdentityApiError(response.ok ? 0 : response.status);
-      });
-      if (!response.ok)
-        throw new IdentityApiError(response.status, errorCode(value));
-      return schema.parse(value);
-    } catch (error) {
-      if (error instanceof IdentityApiError) throw error;
-      throw new IdentityApiError(0);
-    } finally {
-      clearTimeout(timeout);
-      signal.removeEventListener("abort", cancel);
-    }
+    return transport.request(path, schema, {
+      method: body ? "POST" : "GET",
+      signal,
+      ...(body ? { body } : {}),
+      ...(key ? { idempotencyKey: key } : {}),
+      ...(cleanupTicket
+        ? {
+            authorization: {
+              kind: "logout-cleanup",
+              ticket: cleanupTicket,
+            } as const,
+          }
+        : {}),
+    });
   }
   return {
     readMe: (signal: AbortSignal) => request("me", meResponseSchema, signal),

@@ -107,6 +107,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
     createIdentityAdapter(options);
   const scoped = new ScopedDatabase(database);
   const imports = new ImportQueries(scoped, vault);
+  const accounts = new AccountQueries(scoped, vault);
   const deletions = new DeletionRepository(database);
   const reports = new ReportService(scoped);
   const archive = new ArchiveDatabase(database);
@@ -133,6 +134,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
             resources: new StatusResources({
               identity,
               imports,
+              accounts,
               exports,
               deletions,
             }),
@@ -203,7 +205,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
     createClerkLogoutController(clerkLogout),
     createAccountsController({
       identity,
-      queries: new AccountQueries(scoped, vault),
+      queries: accounts,
       mutations: new AccountMutations(scoped, vault),
       grants: new AccountGrants(scoped),
     }),
