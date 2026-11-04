@@ -1414,3 +1414,42 @@ publication-evidence update requires current-revision CI again. No NAV1 CI
 success or merge is claimed; verify final head/test-merge checks and host merge
 before IOS3. Retained local graphs and review evidence remain needed for ongoing
 work, so the active worktree is preserved.
+
+## IOS3 — Native API and committed updates: entry checkpoint
+
+Predecessor [NAV1 PR40](https://github.com/FSS-Ltd/the-joint-app/pull/40) is
+host-confirmed merged into main at `5077bd019ea05fc01693af06617c0f9d04dee601`
+on 4 November 2026. Final reviewed head
+`13636ecf37a1911d7906e745bd45587cae9aad0a` passed
+[CI41783057579](https://github.com/FSS-Ltd/the-joint-app/actions/runs/41783057579):
+Foundation126418824920 and Native126418825191 both succeeded. Both checkout
+logs prove test merge `16da011788fa9c8969bac51ccc14ca91ceeb91c5` of the exact
+head into base `5e5a63b1aec322fa06f47b31cbf01ca371c37b50`. Results: 591 units,
+324 integrations, 181 browser tests, online Expo checks/Doctor20/20 and both
+native exports. Source, tested and actual merge trees are identical:
+`d5f7db12d7cf3f524911e7da9e2811e29d4ac437`. Live host reported CLEAN, no
+unresolved threads and zero required approvals. Protected normal merge used
+standing authority and an exact-head guard; no bypass or self-approval.
+
+The current worktree retains its needed ignored Graphify/review artifacts and is
+now on `build/ios3-native-api` at that verified merged base. The canonical feature
+tree and relevant Graphify nodes were read before interface decisions; source
+hashes and unchanged map coverage were reconciled. The Agents Orchestrator is
+performing a bounded read-only architecture/reuse audit. Frozen dependency
+installation passed under Node22.23.3; baseline build/tests and the exact IOS3
+file/interface brief are next. No product implementation has started here.
+
+Post-merge main [CI41784465145](https://github.com/FSS-Ltd/the-joint-app/actions/runs/41784465145)
+was running at entry and is not claimed successful. The required PR/current-head,
+test-merge and actual-merge delivery gate is satisfied. The full app remains
+unfinished. IOS4 cannot begin before IOS3's own review, current CI and merge.
+Private fixtures, historical tickets, provider accounts and both acceptance
+worktrees remain preserved; no real-provider handoff was repeated.
+
+IOS3 Task 1 source is committed locally at `58a8b81ec6d93f7befd23bb9ba9252503ec8a9ef`: account detail/page status selectors reuse AccountQueries projections and the pure decoder is canonical in contracts with web compatibility. Worker verification records 595 unit tests, package/test types, scoped lint/format and builds passing. Database integration and independent task acceptance remain pending; no IOS3 PR, merge or next internal task is claimed.
+
+Map reconciliation at that revision rebuilt API, shared and web-component scopes, removing moved decoder relationships from the web graph. Mobile, web routes and operations were content-hash verified unchanged. Six scopes cover 478 detected runtime files; four sensitive-file exclusions remain. Canonical feature entries now describe account observations, cursor-stable page fingerprints, decoder reuse and the partial NATIVE_API foundation. Existing source-backed feature IDs remain stable. Validation passed for 46 features, 250 canonical references, all 482 runtime hashes, graph endpoints, reciprocal dependencies, feature-document hashes and Markdown paths/anchors. Queries confirm AccountQueries.observePage and the decoder's contracts location; the stale web implementation node is absent. Formatting and diff checks pass.
+
+The disposable database runner remains unlaunched. Independent code/security reviews found descendant cleanup, uncertain Docker creation and an omitted mode-specific ambient environment guard. These must be fixed and re-reviewed before synthetic database verification. No retained acceptance data or real provider identity is involved.
+
+Live resumption check reconfirmed PR40 MERGED at `5077bd019ea05fc01693af06617c0f9d04dee601`; post-merge main CI41784465145 is completed SUCCESS on that exact revision. This supersedes the historical running-state note at entry.

@@ -9,6 +9,7 @@ deciding where to change behavior.
 
 The NAV1 baseline was extracted with the installed `graphify` skill from tracked
 runtime source at PR39 merge `5e5a63b1aec322fa06f47b31cbf01ca371c37b50`.
+IOS3 refreshed the affected API, shared and web-component scopes at runtime revision `58a8b81ec6d93f7befd23bb9ba9252503ec8a9ef`; unchanged scopes were reconciled through complete source hashes. The shared scope now includes the canonical status decoder. Per-scope extraction revisions remain explicit.
 The local project-wide index is `.local/graphify/project/index.json`. It records
 the source revision, selected file paths, excluded-file counts and graph paths.
 Generated outputs are intentionally ignored and contain no private runtime data.
@@ -21,7 +22,7 @@ feature documents remain available as the portable inventory.
 | `mobile`         | `apps/mobile/src/`, `apps/mobile/app/`                  |             48 | `.local/graphify/project/mobile/graphify-out/graph.json`         |
 | `web-routes`     | `apps/web/app/`                                         |             80 | `.local/graphify/project/web-routes/graphify-out/graph.json`     |
 | `web-components` | `apps/web/components/`, `apps/web/lib/`                 |            122 | `.local/graphify/project/web-components/graphify-out/graph.json` |
-| `shared`         | Runtime source in `packages/`, plus `apps/web/proxy.ts` |             68 | `.local/graphify/project/shared/graphify-out/graph.json`         |
+| `shared`         | Runtime source in `packages/`, plus `apps/web/proxy.ts` |             69 | `.local/graphify/project/shared/graphify-out/graph.json`         |
 | `operations`     | `apps/worker/src/`, `scripts/`                          |             38 | `.local/graphify/project/operations/graphify-out/graph.json`     |
 
 Each scope also has `graph.html`, `GRAPH_REPORT.md` and a source manifest beside
@@ -30,7 +31,7 @@ model tokens were used. The earlier identity/events graph was a smaller scoped
 map, not a historical whole-project inventory. NAV1 does not certify past chats.
 
 The source-backed feature inventory also produces
-`.local/graphify/project/features/graphify-out/graph.json`: 45 stable feature IDs,
+`.local/graphify/project/features/graphify-out/graph.json`: the current stable feature IDs,
 their declared dependencies and canonical source references. Its node IDs are
 `feature_AUTH`, `feature_ACCOUNTS` and so on. The feature graph JSON preserves directed edges. Its matching relationship index is
 `.local/graphify/project/feature-dependencies.json`; use it or the tracked tree
@@ -87,7 +88,7 @@ artifacts, not prerequisites shipped with a fresh checkout. Reconstruct them fro
 the tracked tree and installed skill as follows:
 
 1. Enumerate tracked runtime code with `git ls-files` under the six scopes above.
-   For `shared`, select package `src/` code plus `apps/web/proxy.ts`. Preserve
+   For `shared`, select package `src/` code, `packages/database/prisma.config.ts`, `packages/database/prisma/seed.ts` and `apps/web/proxy.ts`. Preserve
    repository-relative paths in a separate ignored snapshot for each scope;
    apply the exclusions and sensitive-file detector before extraction. Check
    corpus limits on each snapshot, then follow the skill's code-only AST,
