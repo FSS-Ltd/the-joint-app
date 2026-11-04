@@ -7,12 +7,14 @@ import {
   grantInputSchema,
   idempotencyKeySchema,
   quotedVersionSchema,
+  valuationInputSchema,
 } from "@joint/contracts";
 import type { NativeTransport } from "./types";
 
 type AccountInput = ReturnType<typeof accountCreateSchema.parse>;
 type AccountPatch = ReturnType<typeof accountPatchSchema.parse>;
 type GrantInput = ReturnType<typeof grantInputSchema.parse>;
+type ValuationInput = ReturnType<typeof valuationInputSchema.parse>;
 type AccountPage = { limit?: number; cursor?: string };
 
 function collection(householdId: string): string {
@@ -72,6 +74,26 @@ export function createAccountsApi(transport: NativeTransport) {
           method: "PATCH",
           signal,
           body: accountPatchSchema.parse(input),
+          version: version(expectedVersion),
+        },
+      );
+    },
+    value(
+      householdId: string,
+      accountId: string,
+      input: ValuationInput,
+      key: string,
+      expectedVersion: number,
+      signal: AbortSignal,
+    ) {
+      return transport.request(
+        `${resource(householdId, accountId)}/valuations`,
+        accountSchema,
+        {
+          method: "POST",
+          signal,
+          body: valuationInputSchema.parse(input),
+          idempotencyKey: idempotencyKeySchema.parse(key),
           version: version(expectedVersion),
         },
       );

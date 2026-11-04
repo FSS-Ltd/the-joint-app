@@ -21,7 +21,11 @@ export async function readNativeStatusStream(
   onSignal: (signal: StatusSignal) => void,
 ): Promise<void> {
   if (signal.aborted) throw new NativeApiError(0);
-  if (selector.kind !== "account" && selector.kind !== "accounts")
+  if (
+    selector.kind !== "account" &&
+    selector.kind !== "accounts" &&
+    selector.kind !== "wealth"
+  )
     throw new NativeApiError(400, "INVALID_STATUS_SELECTOR");
   const network = new AbortController();
   let connection: NativeStatusConnection | undefined;

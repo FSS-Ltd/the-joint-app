@@ -108,6 +108,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   const scoped = new ScopedDatabase(database);
   const imports = new ImportQueries(scoped, vault);
   const accounts = new AccountQueries(scoped, vault);
+  const wealth = new WealthService(scoped);
   const deletions = new DeletionRepository(database);
   const reports = new ReportService(scoped);
   const archive = new ArchiveDatabase(database);
@@ -135,6 +136,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
               identity,
               imports,
               accounts,
+              wealth,
               exports,
               deletions,
             }),
@@ -162,7 +164,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
     }),
     createGoalsController(goals),
     createGoalArchiveController(goals),
-    createWealthController({ identity, wealth: new WealthService(scoped) }),
+    createWealthController({ identity, wealth }),
     createPrivacyController({
       identity,
       privacy: new PrivacyService(deletions, journal),

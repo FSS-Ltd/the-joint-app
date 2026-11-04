@@ -1,8 +1,16 @@
 import { z } from "zod";
 import { accountListQuerySchema } from "./accounts.js";
+import { scopeQuerySchema } from "./reporting-primitives.js";
 
 const id = z.uuid();
 export const statusSubscriptionSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      kind: z.literal("wealth"),
+      householdId: id,
+      accountIds: scopeQuerySchema.transform((ids) => ids.join(",")).optional(),
+    })
+    .strict(),
   z.object({ kind: z.literal("account"), householdId: id, id }).strict(),
   z
     .object({

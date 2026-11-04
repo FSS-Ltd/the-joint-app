@@ -10,6 +10,7 @@ import type { DeletionRepository } from "@joint/database/deletion";
 import type { ImportQueries } from "../imports/import-queries.js";
 import type { AccountQueries } from "../accounts/account-queries.js";
 import type { ExportService } from "../exports/export.service.js";
+import type { WealthService } from "../wealth/wealth.service.js";
 import type { IdentityAccess } from "../identity/identity.service.js";
 import { hashToken } from "../identity/identity-vault.js";
 import { readIdentityToken } from "../../identity-header.js";
@@ -23,6 +24,7 @@ interface Services {
   >;
   imports?: Pick<ImportQueries, "observe">;
   accounts?: Pick<AccountQueries, "read" | "observePage">;
+  wealth?: Pick<WealthService, "observe">;
   exports?: Pick<ExportService, "status" | "archiveStatus">;
   deletions?: Pick<DeletionRepository, "status" | "statusDeadline">;
 }
@@ -83,6 +85,17 @@ export class StatusResources {
       );
     }
     const context = await financeContext(identity, auth, selector.householdId);
+    if (selector.kind === "wealth") {
+      if (!this.services.wealth) throw new ServiceUnavailableException();
+      const { summary, nextChangeAt } = await this.services.wealth.observe(
+        context,
+        selector.accountIds?.split(","),
+      );
+      // Evaluation time changes on every read; only durable evidence/date matters.
+      const { calculatedAt, ...status } = summary;
+      void calculatedAt;
+      return this.snapshot(token, context, status, nextChangeAt);
+    }
     if (selector.kind === "account" || selector.kind === "accounts") {
       if (!this.services.accounts) throw new ServiceUnavailableException();
       const status =
