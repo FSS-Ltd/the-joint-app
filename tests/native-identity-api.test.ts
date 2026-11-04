@@ -234,3 +234,113 @@ it.each(["not_found", "configuration_not_found"])(
     ).rejects.toMatchObject({ status: 0 });
   },
 );
+
+it.each(["deadline", "caller"] as const)(
+  "settles and cancels a stalled identity body on %s cancellation",
+  async (reason) => {
+    vi.useFakeTimers();
+    try {
+      const cancel = vi.fn();
+      const body = new ReadableStream<Uint8Array>({ cancel });
+      const caller = new AbortController();
+      const api = createIdentityApi(
+        apiUrl,
+        async () => "token",
+        async () => new Response(body),
+      );
+      let outcome = "pending";
+      const read = api.readMe(caller.signal).then(
+        () => {
+          outcome = "resolved";
+        },
+        () => {
+          outcome = "rejected";
+        },
+      );
+      await vi.advanceTimersByTimeAsync(0);
+      if (reason === "caller") caller.abort();
+      await vi.advanceTimersByTimeAsync(15000);
+      expect(outcome).toBe("rejected");
+      await read;
+      expect(cancel).toHaveBeenCalledOnce();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  },
+);
+
+it("cancels oversized JSON and never exposes upstream details", async () => {
+  const cancel = vi.fn();
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new Uint8Array(1048577));
+    },
+    cancel,
+  });
+  const api = createIdentityApi(
+    apiUrl,
+    async () => "token",
+    async () => new Response(body),
+  );
+  await expect(api.readMe(new AbortController().signal)).rejects.toBeInstanceOf(
+    IdentityApiError,
+  );
+  expect(cancel).toHaveBeenCalledOnce();
+});
+
+it("settles an ignored send cancellation and disposes a late response", async () => {
+  vi.useFakeTimers();
+  try {
+    let finish: ((response: Response) => void) | undefined;
+    const cancel = vi.fn();
+    const api = createIdentityApi(
+      apiUrl,
+      async () => "token",
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    let outcome = "pending";
+    const read = api.readMe(new AbortController().signal).catch(() => {
+      outcome = "rejected";
+    });
+    await vi.advanceTimersByTimeAsync(15000);
+    expect(outcome).toBe("rejected");
+    finish?.(new Response(new ReadableStream({ cancel })));
+    await read;
+    await vi.advanceTimersByTimeAsync(0);
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("retains cleanup-ticket authorization on only the retry endpoint", async () => {
+  const token = vi.fn(async () => "token");
+  const send = vi.fn<typeof fetch>(async () =>
+    Response.json({ state: "SIGNED_OUT" }),
+  );
+  const api = createIdentityApi(apiUrl, token, send);
+  await api.retryLogoutCleanup("v1.abc.def.ghi", new AbortController().signal);
+  expect(token).not.toHaveBeenCalled();
+  expect(send).toHaveBeenCalledWith(
+    `${apiUrl}/v1/auth/logout/retry`,
+    expect.objectContaining({
+      method: "POST",
+      body: "{}",
+      credentials: "omit",
+      redirect: "error",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "X-Logout-Cleanup": "v1.abc.def.ghi",
+      },
+    }),
+  );
+  expect(() =>
+    api.retryLogoutCleanup("invalid", new AbortController().signal),
+  ).toThrow();
+});
