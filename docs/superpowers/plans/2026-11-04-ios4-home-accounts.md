@@ -50,11 +50,11 @@
 - Add `AccountsApi.value(householdId:string, accountId:string, input:ValuationInput, key:string, expectedVersion:number, signal:AbortSignal):Promise<AccountResponse>` using existing valuationInputSchema, POST valuations, idempotency key and account If-Match.
 - NativeResourceScope/readNativeStatusStream admit wealth alongside account/accounts; their lifetime/error rules remain unchanged.
 
-- [ ] Write RED cases in `tests/status-resources.test.ts`, `native-accounts-api.test.ts`, new `native-wealth-api.test.ts` and `wealth-status.integration.ts`: canonical scope/serialization; selected/invisible/>50 scopes; volatile-clock silence; outside-page committed change; rollback and cross-tenant silence; revoked grants; known date deadline and cleanup.
-- [ ] Pin London deadline behavior with independent spring/fall DST answers. Confirm resource expiry wakes once and reauthorizes; keepalives and unchanged intervals cause no discovery reads.
-- [ ] Implement the interfaces by extending canonical services/transport, without a migration, duplicate money calculation or generic broadcast feed.
-- [ ] Run focused unit/contract/native checks, package/root-test types and scoped lint/format. Reuse an independently reviewed owned synthetic database runner or CI; never use local private env wrappers. Record actual database checks separately from mocked units.
-- [ ] Reopen changed files, self-review, commit Task 1 and obtain independent acceptance before Task 2.
+- [x] Write RED cases in `tests/status-resources.test.ts`, `native-accounts-api.test.ts`, new `native-wealth-api.test.ts` and `wealth-status.integration.ts`: canonical scope/serialization; selected/invisible/>50 scopes; volatile-clock silence; outside-page committed change; rollback and cross-tenant silence; revoked grants; known date deadline and cleanup.
+- [x] Pin London deadline behavior with independent spring/fall DST answers. Confirm resource expiry wakes once and reauthorizes; keepalives and unchanged intervals cause no discovery reads.
+- [x] Implement the interfaces by extending canonical services/transport, without a migration, duplicate money calculation or generic broadcast feed.
+- [x] Run focused unit/contract/native checks, package/root-test types and scoped lint/format. Reuse an independently reviewed owned synthetic database runner or CI; never use local private env wrappers. Record actual database checks separately from mocked units.
+- [x] Reopen changed files, self-review, commit Task 1 and obtain independent acceptance before Task 2.
 
 ## Task 2 — Finance authority and lifecycle integration
 
