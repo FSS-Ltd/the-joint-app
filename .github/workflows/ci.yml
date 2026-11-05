@@ -66,7 +66,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @joint/identity-runtime... build
+      - run: pnpm --filter '@joint/mobile^...' build
       - run: pnpm --filter @joint/mobile typecheck
       - run: pnpm --filter @joint/mobile check:dependencies
       - run: pnpm --filter @joint/mobile check:doctor
