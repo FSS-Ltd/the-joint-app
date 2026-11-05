@@ -5,14 +5,18 @@ import { NativeActions } from "@/components/native-actions";
 import { Screen } from "@/components/screen";
 import { AccountDetailScreen } from "./detail-screen";
 import { parseAccountRouteId } from "./route-id";
-export function AccountRoute(): React.JSX.Element {
+export function AccountRoute({
+  screen: AccountScreen = AccountDetailScreen,
+}: {
+  screen?: React.ComponentType<{ accountId: string }>;
+} = {}): React.JSX.Element {
   const { accountId } = useLocalSearchParams<{
     accountId?: string | string[];
   }>();
   const router = useRouter();
   const id = parseAccountRouteId(accountId);
   return id ? (
-    <AccountDetailScreen accountId={id} />
+    <AccountScreen accountId={id} />
   ) : (
     <Screen>
       <EmptyState

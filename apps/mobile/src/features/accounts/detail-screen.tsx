@@ -5,6 +5,7 @@ import { Panel } from "@/components/panel";
 import { Screen } from "@/components/screen";
 import { useNativeFinance } from "../finance/context";
 import { useFinanceResource } from "../finance/use-resource";
+import { OwnerActions } from "./owner-actions";
 import { AccountFacts } from "./account-facts";
 
 export function AccountDetailScreen({
@@ -40,6 +41,7 @@ export function AccountDetailScreen({
               {result.value.label}
             </AppText>
             <AccountFacts account={result.value} />
+            <OwnerActions account={result.value} />
             {result.value.access === "TOTALS" && (
               <AppText>
                 Only account values are shared with you. Transaction details are

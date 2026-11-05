@@ -26,6 +26,7 @@ it.each(["blur", "background"])(
       "../finance/context": { useNativeFinance: () => f.finance },
       "../finance/use-resource": { useFinanceResource: f.resource },
       "./account-facts": { AccountFacts: "facts" },
+      "./owner-actions": { OwnerActions: "owner-actions" },
     }).AccountDetailScreen as (props: { accountId: string }) => unknown;
     const render = () => f.h.render(() => Detail({ accountId: id }));
     render();

@@ -2,6 +2,7 @@ import { useMemo, useSyncExternalStore } from "react";
 import { useNativeFinance } from "./context";
 import {
   financeErrorMessage,
+  financeRecovery,
   NativeApiError,
   needsFinanceReconciliation,
 } from "./errors";
@@ -55,6 +56,7 @@ export function useFinanceMutation<T>(
               ? "uncertain"
               : "error",
           message: financeErrorMessage(error),
+          recovery: financeRecovery(error),
         });
         if (
           error instanceof NativeApiError &&

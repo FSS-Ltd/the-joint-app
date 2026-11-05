@@ -38,3 +38,20 @@ export function needsFinanceReconciliation(error: unknown): boolean {
       error.code === "INVALID_CURSOR")
   );
 }
+
+/** Narrow recovery instructions; never retain upstream payloads in UI state. */
+export function financeRecovery(
+  error: unknown,
+): "retry" | "reload" | "security" {
+  if (!(error instanceof NativeApiError) || error.outcome === "uncertain")
+    return "retry";
+  if (error.code === "MFA_REQUIRED" || error.code === "MFA_REAUTH_REQUIRED")
+    return "security";
+  if (
+    error.code === "VERSION_CONFLICT" ||
+    error.code === "IDEMPOTENCY_CONFLICT" ||
+    error.code === "RESOURCE_MISMATCH"
+  )
+    return "reload";
+  return "retry";
+}

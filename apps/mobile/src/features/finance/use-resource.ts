@@ -42,6 +42,8 @@ export function useFinanceResource<T>(
       active && authority !== null && finance.isCurrent(authority);
     const store = {
       getSnapshot: () => snapshot,
+      current: () =>
+        current() && snapshot.kind === "ready" ? snapshot.value : null,
       subscribe(listener: () => void) {
         listeners.add(listener);
         return () => listeners.delete(listener);
@@ -118,5 +120,10 @@ export function useFinanceResource<T>(
     store.getSnapshot,
     store.getSnapshot,
   );
-  return { ...(visible ? snapshot : loading), retry: store.retry };
+  return {
+    ...(visible ? snapshot : loading),
+    retry: store.retry,
+    current: () =>
+      visible && store.getSnapshot() === snapshot ? store.current() : null,
+  };
 }
