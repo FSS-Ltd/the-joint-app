@@ -207,6 +207,7 @@ it("revokes the current captured actor on401 but never publishes private unknown
   const state = render();
   expect(state.kind).toBe("error");
   expect("message" in state && state.message).not.toContain("private");
+  render().reset();
   await render().submit(async () => {
     throw new NativeApiError(401);
   });

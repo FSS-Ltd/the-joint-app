@@ -84,12 +84,8 @@ export function useFinanceMutation<T>(
         reset();
       },
       submit(execute: (signal: AbortSignal) => Promise<T>) {
-        if (
-          !current() ||
-          snapshot.kind === "pending" ||
-          snapshot.kind === "uncertain"
-        )
-          return Promise.resolve();
+        // New intents require an explicit reset after any settled outcome.
+        if (!current() || snapshot.kind !== "idle") return Promise.resolve();
         operation = execute;
         return run();
       },
