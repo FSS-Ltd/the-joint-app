@@ -20,6 +20,8 @@ export function financeErrorMessage(error: unknown): string {
     return "We could not complete this request. Please try again.";
   if (error.outcome === "uncertain")
     return "This change may have been saved. Check the latest account details before trying the same request again.";
+  if (error.status === 400 && error.code === "INVALID_INPUT")
+    return "Check the account details, amounts and evidence date. Discard this draft and reload to correct them before confirming again.";
   return (
     (error.code &&
       Object.hasOwn(messages, error.code) &&
@@ -48,6 +50,7 @@ export function financeRecovery(
   if (error.code === "MFA_REQUIRED" || error.code === "MFA_REAUTH_REQUIRED")
     return "security";
   if (
+    (error.status === 400 && error.code === "INVALID_INPUT") ||
     error.code === "VERSION_CONFLICT" ||
     error.code === "IDEMPOTENCY_CONFLICT" ||
     error.code === "RESOURCE_MISMATCH"
