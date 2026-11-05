@@ -1,4 +1,5 @@
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
+import type { MeResponse } from "@joint/contracts";
 import { MutationScreen } from "./mutation-screen";
 import { useSession } from "@clerk/expo";
 import { usePathname } from "expo-router";
@@ -12,7 +13,9 @@ import { SecurityScreen } from "./security-screen";
 import { PasswordTaskScreen } from "./password-task-screen";
 import { AccountScreen } from "./account-screen";
 import { SessionActions } from "./session-actions";
-export function IdentityEntry(): React.JSX.Element {
+export function IdentityEntry({
+  ready,
+}: { ready?: (me: MeResponse) => ReactNode } = {}): ReactNode {
   const identity = useIdentity(),
     { session } = useSession(),
     path = usePathname();
@@ -108,5 +111,9 @@ export function IdentityEntry(): React.JSX.Element {
       </IdentityFrame>
     );
   if (state.kind === "security-required") return <SecurityScreen />;
-  return <AccountScreen me={state.me} />;
+  return state.kind === "ready" && ready ? (
+    ready(state.me)
+  ) : (
+    <AccountScreen me={state.me} />
+  );
 }

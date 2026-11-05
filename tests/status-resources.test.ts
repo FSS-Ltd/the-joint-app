@@ -1,6 +1,11 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { StatusResources } from "../apps/api/src/modules/events/status-resources.js";
-import { statusSubscriptionSchema } from "../packages/contracts/src/events.js";
+import {
+  statusSubscriptionQuery,
+  statusSubscriptionSchema,
+} from "../packages/contracts/src/events.js";
+import { valueAccounts } from "../packages/domain/src/wealth/value-accounts.js";
+import { authorizeStatusObserver } from "../apps/api/src/modules/events/status-observer.js";
 import { accountSchema } from "../packages/contracts/src/accounts.js";
 
 const accountId = "e237d3d7-236f-4ec3-8454-c4e5504d397f";
@@ -277,3 +282,194 @@ it("retains an export deadline crossed while its status read is resolving", asyn
   await vi.advanceTimersByTimeAsync(50);
   expect((await reading).resourceExpiresAt).toBe(now + 20);
 });
+
+it("canonicalizes wealth selectors and rejects ambiguous, empty or oversized scopes", () => {
+  const second = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const selector = {
+    kind: "wealth" as const,
+    householdId: accountId,
+    accountIds: `${accountId.toUpperCase()},${second.toUpperCase()}`,
+  };
+  expect(statusSubscriptionSchema.parse(selector)).toEqual({
+    ...selector,
+    accountIds: `${second},${accountId}`,
+  });
+  expect(statusSubscriptionQuery(selector)).toBe(
+    `kind=wealth&householdId=${accountId}&accountIds=${second}%2C${accountId}`,
+  );
+  expect(
+    statusSubscriptionSchema.parse({ kind: "wealth", householdId: accountId }),
+  ).toEqual({ kind: "wealth", householdId: accountId });
+  for (const fields of [
+    { accountIds: "" },
+    { accountIds: `${accountId},${accountId.toUpperCase()}` },
+    { accountIds: [accountId, second] },
+    { accountIds: "bad" },
+    {
+      accountIds: Array.from(
+        { length: 51 },
+        (_, i) => `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`,
+      ).join(","),
+    },
+    { token: "secret" },
+    { id: accountId },
+    { kind: ["wealth", "wealth"] },
+  ])
+    expect(
+      statusSubscriptionSchema.safeParse({
+        kind: "wealth",
+        householdId: accountId,
+        ...fields,
+      }).success,
+    ).toBe(false);
+});
+
+function wealthFixture() {
+  const context = {
+    userId: "user",
+    sessionId: "session",
+    householdId: accountId,
+    membershipId: "member",
+    grantVersion: 0,
+    requestId: "request",
+    aal: "aal2" as const,
+    mfaAuthenticatedAt: Date.now(),
+    authenticatedAt: Date.now(),
+  };
+  const identity = {
+    financeContext: vi.fn(async () => context),
+    actor: vi.fn(async () => ({ ...context, emailHash: "opaque" })),
+    subscriptionExpiry: vi.fn(async () => Date.now() + 172800000),
+  };
+  const summary = valueAccounts({
+    householdId: accountId,
+    grantVersion: 0,
+    asOfDate: "2026-11-04",
+    calculatedAt: "2026-11-04T12:00:00.000Z",
+    accounts: [
+      {
+        id: accountId,
+        kind: "SAVINGS",
+        legalOwnerKind: "ADULT",
+        liquidity: "AVAILABLE",
+        totalsVersion: 1,
+        snapshot: null,
+      },
+    ],
+  });
+  const wealth = {
+    observe: vi.fn(async () => ({
+      summary,
+      nextChangeAt: Date.parse("2026-11-05T00:00:00.000Z"),
+    })),
+  };
+  const selector = { kind: "wealth" as const, householdId: accountId };
+  const auth = `Session ${"a".repeat(43)}`;
+  const resources = new StatusResources({ identity, wealth });
+  return { context, identity, summary, wealth, selector, auth, resources };
+}
+it("observes canonical wealth scope, ignores calculatedAt, and fingerprints dates, provenance and exclusions", async () => {
+  const f = wealthFixture();
+  const first = await f.resources.read(f.selector, f.auth);
+  expect(first.resourceExpiresAt).toBe(Date.parse("2026-11-05T00:00:00.000Z"));
+  f.wealth.observe.mockResolvedValueOnce({
+    summary: { ...f.summary, calculatedAt: "2026-11-04T12:01:00.000Z" },
+    nextChangeAt: first.resourceExpiresAt ?? 0,
+  });
+  expect((await f.resources.read(f.selector, f.auth)).fingerprint).toBe(
+    first.fingerprint,
+  );
+  for (const summary of [
+    { ...f.summary, asOfDate: "2026-11-05" },
+    { ...f.summary, scope: { ...f.summary.scope, grantVersion: 1 } },
+    {
+      ...f.summary,
+      scope: {
+        ...f.summary.scope,
+        accountIds: [],
+        sources: [],
+      },
+    },
+    {
+      ...f.summary,
+      scope: {
+        ...f.summary.scope,
+        sources: [{ accountId, totalsVersion: 2, valuationId: null }],
+      },
+    },
+    {
+      ...f.summary,
+      scope: {
+        ...f.summary.scope,
+        sources: [
+          {
+            accountId,
+            totalsVersion: 1,
+            valuationId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          },
+        ],
+      },
+    },
+    { ...f.summary, excludedReasons: [] },
+    {
+      ...f.summary,
+      adultNetWorth: { amountMinor: "0", currency: "GBP" as const },
+    },
+  ]) {
+    f.wealth.observe.mockResolvedValueOnce({
+      summary,
+      nextChangeAt: first.resourceExpiresAt ?? 0,
+    });
+    expect((await f.resources.read(f.selector, f.auth)).fingerprint).not.toBe(
+      first.fingerprint,
+    );
+  }
+  await f.resources.read({ ...f.selector, accountIds: accountId }, f.auth);
+  expect(f.wealth.observe).toHaveBeenLastCalledWith(f.context, [accountId]);
+  expect(f.wealth.observe).toHaveBeenNthCalledWith(1, f.context, undefined);
+  f.identity.financeContext.mockRejectedValueOnce(new Error("revoked"));
+  await expect(f.resources.read(f.selector, f.auth)).rejects.toThrow("revoked");
+  await expect(
+    new StatusResources({ identity: f.identity }).read(f.selector, f.auth),
+  ).rejects.toThrow("Service Unavailable");
+});
+it.each([false, true])(
+  "wakes at the known wealth date once, reauthorizes and clears timers (revoked=%s)",
+  async (revoked) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-04T23:59:59.000Z"));
+    const f = wealthFixture(),
+      send = vi.fn(() => true),
+      unsubscribe = vi.fn(),
+      close = vi.fn();
+    const observer = await authorizeStatusObserver({
+      source: { subscribe: () => unsubscribe },
+      read: () => f.resources.read(f.selector, f.auth),
+      send,
+      close,
+      denied: (error) => error instanceof Error && error.message === "revoked",
+    });
+    observer.start();
+    await vi.advanceTimersByTimeAsync(999);
+    expect(f.wealth.observe).toHaveBeenCalledOnce();
+    if (revoked)
+      f.identity.financeContext.mockRejectedValueOnce(new Error("revoked"));
+    else
+      f.wealth.observe.mockResolvedValue({
+        summary: { ...f.summary, asOfDate: "2026-11-05" },
+        nextChangeAt: Date.parse("2026-11-06T00:00:00.000Z"),
+      });
+    await vi.advanceTimersByTimeAsync(1);
+    expect(f.identity.financeContext).toHaveBeenCalledTimes(2);
+    expect(send.mock.calls).toEqual([
+      ["change"],
+      [revoked ? "invalidate" : "change"],
+    ]);
+    await vi.advanceTimersByTimeAsync(60000);
+    expect(f.identity.financeContext).toHaveBeenCalledTimes(2);
+    observer.close();
+    expect(unsubscribe).toHaveBeenCalledOnce();
+    expect(close).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+  },
+);

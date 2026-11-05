@@ -1,6 +1,11 @@
 import { providerError } from "./fixtures/clerk-sdk.js";
 import { expect, it, vi } from "vitest";
-import { createIdentityApi, IdentityApiError } from "./fixtures/native-api.js";
+import {
+  createIdentityApi,
+  createIdentityApiFromTransport,
+  createNativeTransport,
+  IdentityApiError,
+} from "./fixtures/native-api.js";
 import { readIdentityConfiguration } from "../apps/mobile/src/features/identity/configuration.js";
 import {
   NativeReturnGuard,
@@ -343,4 +348,19 @@ it("retains cleanup-ticket authorization on only the retry endpoint", async () =
   expect(() =>
     api.retryLogoutCleanup("invalid", new AbortController().signal),
   ).toThrow();
+});
+
+it("composes identity on the caller's common transport without a second token pipeline", async () => {
+  const send = vi.fn<typeof fetch>(async () =>
+    Response.json({ state: "SIGNED_OUT" }),
+  );
+  const token = vi.fn(async () => "shared-token");
+  const transport = createNativeTransport(apiUrl, token, send);
+  const api = createIdentityApiFromTransport(transport);
+  await api.logout("local", new AbortController().signal);
+  expect(token).toHaveBeenCalledOnce();
+  expect(send.mock.calls[0]?.[1]).toMatchObject({
+    headers: { Authorization: "Bearer shared-token" },
+    body: '{"scope":"local"}',
+  });
 });

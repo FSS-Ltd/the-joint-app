@@ -71,10 +71,10 @@ Order is strictly the listed IOS0 through IOS18 units, including each lettered s
 **Owns:** `packages/client/` only if extraction earns shared use, otherwise mobile `src/api/`; `src/events/`; narrowly scoped API event selectors and lifecycle tests.
 **Consumes:** Existing Zod DTOs, bearer verifier, optimistic versions and PostgreSQL notifications. **Produces:** Validated native reads/mutations and authenticated invalidation subscription.
 
-- [ ] Test unauthorized subscription, duplicate/out-of-order signals, grant revocation, interrupted writes and reconnect catch-up before implementation.
-- [ ] Implement bounded requests, safe errors, cancellation, idempotency and subscription cleanup. Reconcile startup/foreground/reconnect; event delivery follows commit; coalesce refreshes. No DOM/window/cookie assumptions or periodic state checks.
-- [ ] Prove zero idle discovery requests, rollback silence, prompt committed updates, tenant isolation, post-revocation denial and graceful shutdown. Run API/native integration suites and network inspection on simulator.
-- [ ] Review and deliver through gate.
+- [x] Test unauthorized subscription, duplicate/out-of-order signals, grant revocation, interrupted writes and reconnect catch-up before implementation.
+- [x] Implement bounded requests, safe errors, cancellation, idempotency and subscription cleanup. Reconcile startup/foreground/reconnect; event delivery follows commit; coalesce refreshes. No DOM/window/cookie assumptions or periodic state checks.
+- [x] Prove zero idle discovery requests, rollback silence, prompt committed updates, tenant isolation, post-revocation denial and graceful shutdown. Run API/native integration suites and network inspection on simulator.
+- [x] Review and deliver through gate.
 
 ### IOS4 — Home and accounts
 

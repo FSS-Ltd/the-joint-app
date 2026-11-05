@@ -1,1 +1,1 @@
-export { ConfiguredEntry as default } from "@/features/identity/configured-entry";
+export { LandingEntry as default } from "@/features/navigation/landing-entry";

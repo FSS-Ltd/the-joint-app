@@ -1,3 +1,4 @@
+import { formatGbpMinor } from "./money-format.js";
 import {
   moneySchema,
   aggregateMinorSchema,
@@ -240,10 +241,7 @@ export function formatAggregateMoney(money: AggregateMoney): string {
   return formatGbpMinor(aggregateValue(money.amountMinor));
 }
 /** Computed differences can be wider than their validated wire-money inputs. */
-export function formatGbpMinor(value: bigint): string {
-  const magnitude = value < 0n ? -value : value;
-  return `${value < 0n ? "-" : ""}£${new Intl.NumberFormat("en-GB").format(magnitude / 100n)}.${(magnitude % 100n).toString().padStart(2, "0")}`;
-}
+export { formatGbpMinor } from "./money-format.js";
 /** Only the final bounded visual dimension crosses into Number arithmetic. */
 export function chartRatio(value: string, total: string, scale = 1000): number {
   const numerator = aggregateValue(value);

@@ -253,3 +253,31 @@ it("does not acquire credentials for unsupported selectors or a pre-aborted call
   expect(token).not.toHaveBeenCalled();
   expect(vi.getTimerCount()).toBe(0);
 });
+
+it("admits canonical wealth streams without changing keepalive or abort cleanup", async () => {
+  const wire = nativeWire(),
+    abort = new AbortController(),
+    receive = vi.fn();
+  const done = readNativeStatusStream(
+    {
+      kind: "wealth",
+      householdId: selector.householdId,
+      accountIds: selector.householdId,
+    },
+    wire.transport,
+    abort.signal,
+    receive,
+  );
+  const rejected = expect(done).rejects.toMatchObject({ status: 0 });
+  await flush();
+  wire.emit("event: change\ndata: {}\n\n");
+  await flush();
+  expect(receive).toHaveBeenCalledWith("change");
+  wire.emit(": keepalive\n\n");
+  await flush();
+  expect(receive).toHaveBeenCalledOnce();
+  abort.abort();
+  await rejected;
+  expect(wire.connections[0]?.cancel).toHaveBeenCalledOnce();
+  expect(vi.getTimerCount()).toBe(0);
+});

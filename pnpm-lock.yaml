@@ -95,6 +95,9 @@ importers:
       '@joint/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@joint/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@joint/identity-runtime':
         specifier: workspace:*
         version: link:../../packages/identity-runtime

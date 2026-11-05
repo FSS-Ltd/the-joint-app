@@ -1,4 +1,5 @@
 import { moneySchema, type Money } from "@joint/contracts";
+import { formatGbpMinor } from "./money-format.js";
 
 /** Exact GBP boundary conversion: no floating point, rounding or locale guessing. */
 export function parseMoneyInput(input: string): Money {
@@ -18,8 +19,7 @@ export function parseMoneyInput(input: string): Money {
 }
 export function formatMoney(money: Money): string {
   const value = BigInt(moneySchema.parse(money).amountMinor);
-  const absolute = value < 0n ? -value : value;
-  return `${value < 0n ? "-" : ""}£${new Intl.NumberFormat("en-GB").format(absolute / 100n)}.${(absolute % 100n).toString().padStart(2, "0")}`;
+  return formatGbpMinor(value);
 }
 export function isLiabilityKind(kind: string): boolean {
   return ["CREDIT_CARD", "LOAN", "MORTGAGE", "OTHER_LIABILITY"].includes(kind);

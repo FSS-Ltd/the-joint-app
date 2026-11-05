@@ -9,7 +9,7 @@ deciding where to change behavior.
 
 The NAV1 baseline was extracted with the installed `graphify` skill from tracked
 runtime source at PR39 merge `5e5a63b1aec322fa06f47b31cbf01ca371c37b50`.
-IOS3 refreshed the affected API, shared and web-component scopes at runtime revision `58a8b81ec6d93f7befd23bb9ba9252503ec8a9ef`; unchanged scopes were reconciled through complete source hashes. The shared scope now includes the canonical status decoder. The mobile scope was then rebuilt at `2922503e636174dc04b14e4589f7cd1daa67a64f` for the common transport and platform send bindings; all other selected runtime hashes were verified unchanged. Task 3 rebuilt mobile again at `325b3f572ab320742b2dda5f6259ac68ea37f9f5` for stream/scope/resource code; other runtime hashes were verified unchanged. Per-scope extraction revisions remain explicit.
+IOS3 refreshed the affected API, shared and web-component scopes at runtime revision `58a8b81ec6d93f7befd23bb9ba9252503ec8a9ef`; unchanged scopes were reconciled through complete source hashes. The shared scope now includes the canonical status decoder. The mobile scope was then rebuilt at `2922503e636174dc04b14e4589f7cd1daa67a64f` for the common transport and platform send bindings; all other selected runtime hashes were verified unchanged. Task 3 rebuilt mobile again at `325b3f572ab320742b2dda5f6259ac68ea37f9f5` for stream/scope/resource code; other runtime hashes were verified unchanged. Per-scope extraction revisions remain explicit. IOS3 PR41 merged at `874e15260eff07bb8e56548269c3efefc82a6252`; the IOS4 entry checkout has the same reviewed tree, and its selected runtime hashes remain unchanged from extraction. IOS4 Task1 then rebuilt API, mobile and shared at `9ed898bb99316f45674284e348e47a6b2a48e508` for wealth observations/expiry and native adapters. Unchanged scopes were source-hash verified; the six scopes selected 495 runtime files and detected 491 after four sensitive-file exclusions. Task1 fix `f3b5bad0e598dd5381843b23765e5deae3e295a5` then rebuilt API for the shared production clock query used by DST tests; coverage at that boundary was 496 selected and 492 detected files, with the same four exclusions. Task2 then rebuilt mobile at `0c6447c4caa02a7c20d432dc2213cf8b8a12ca2d` for finance hooks/provider and the verified identity bridge. Fix `7c5e3d8cb9b134513fa50580acc1e8fd828d9fe0` rebuilt mobile again for runtime-owned recovery memory and its consumers. Task3 then rebuilt mobile at `1d897d461fcc82ccec2a2b50dff50c2aa090d644` for actual navigation, read screens and shared panels/list shell. Fix `7b0658230c100d2e68427c93dcc6c20d9e31b21a` rebuilt mobile again for stable ready publication and selected tab composition. Task4 phase1 `522a87c` then rebuilt mobile for account write screens, draft/intent helpers and rendered resource capture guards. Fix03a690e rebuilt mobile again for synchronous current-idle mutation admission; its 115 detected files retain 311 nodes and 341 edges. Fix48252ba rebuilt mobile for rejected-input recovery and shared for the canonical portable GBP helper. Shared now has70 detected files/211 nodes/310 edges; mobile remains115 files/311 nodes/341 edges. Current coverage is551 selected and547 detected files; unchanged scopes are source-hash verified. Both independent fix2 reviews approve product source. Fix3 binds physical package-directory roots and rejects metadata aliases; both independent scoped reviews approve this exact tooling. Actual native re-test remains pending.
 The local project-wide index is `.local/graphify/project/index.json`. It records
 the source revision, selected file paths, excluded-file counts and graph paths.
 Generated outputs are intentionally ignored and contain no private runtime data.
@@ -18,11 +18,11 @@ feature documents remain available as the portable inventory.
 
 | Scope            | Source coverage                                         | Detected files | Graph JSON, relative to project root                             |
 | ---------------- | ------------------------------------------------------- | -------------: | ---------------------------------------------------------------- |
-| `api`            | `apps/api/src/`                                         |            121 | `.local/graphify/project/api/graphify-out/graph.json`            |
-| `mobile`         | `apps/mobile/src/`, `apps/mobile/app/`                  |             60 | `.local/graphify/project/mobile/graphify-out/graph.json`         |
+| `api`            | `apps/api/src/`                                         |            122 | `.local/graphify/project/api/graphify-out/graph.json`            |
+| `mobile`         | `apps/mobile/src/`, `apps/mobile/app/`                  |            115 | `.local/graphify/project/mobile/graphify-out/graph.json`         |
 | `web-routes`     | `apps/web/app/`                                         |             80 | `.local/graphify/project/web-routes/graphify-out/graph.json`     |
 | `web-components` | `apps/web/components/`, `apps/web/lib/`                 |            122 | `.local/graphify/project/web-components/graphify-out/graph.json` |
-| `shared`         | Runtime source in `packages/`, plus `apps/web/proxy.ts` |             69 | `.local/graphify/project/shared/graphify-out/graph.json`         |
+| `shared`         | Runtime source in `packages/`, plus `apps/web/proxy.ts` |             70 | `.local/graphify/project/shared/graphify-out/graph.json`         |
 | `operations`     | `apps/worker/src/`, `scripts/`                          |             38 | `.local/graphify/project/operations/graphify-out/graph.json`     |
 
 Each scope also has `graph.html`, `GRAPH_REPORT.md` and a source manifest beside
@@ -40,6 +40,35 @@ manifest hashes the current domain documents, while the project index hashes
 both runtime source and feature documents. Inventory-agent token usage was not
 measured; it is not reported as zero semantic cost.
 
+## Native acceptance helper scope
+
+IOS4 also has a separate task-local authored-helper graph at
+`.local/graphify/project/native-acceptance/graphify-out/graph.json`.
+It maps 44 explicitly allowlisted code files from frozen fix3 manifest
+`89ba65071fbbcdfd6e720cff9e82b5720ec9fb4ca6567866f3f3341470e8e51b`,
+bound to production source `48252ba`. Its 142 nodes and 255 edges locate seed,
+paging, metrics, heartbeat, process, dependency-resolution and simulator/recheck helpers. The project index's
+`native_acceptance_tooling` entry records its exact source hashes separately;
+these files do not inflate the 551 selected runtime-source count.
+
+This scope was added at the current IOS4 coverage boundary, not retroactively
+claimed for earlier work. Extraction copies only the frozen authored code into
+a visible snapshot because Graphify skips hidden task directories, then restores
+the original repository-relative source references. Sensitive-file detection
+remains enabled; this extraction excluded zero files. No dependency tree,
+credentials, client data, run receipts, logs or private runtime evidence is
+copied into this graph. Structural extraction uses zero model tokens.
+
+The helper graph is local navigation, not proof of execution or server parity.
+Its source is retained in this task's ignored authored-source workspace; a fresh
+checkout cannot reconstruct it without those exact public helper artifacts.
+Continue using the tracked feature tree and six runtime scopes for portable
+product navigation. Refresh this optional scope from the next exact frozen
+authored-source manifest whenever those helpers change; validate its manifest,
+file hashes, source paths and graph endpoints before use.
+
+The first df6 native execution manifest omitted import-only workspace packages because its dependency resolver used CommonJS export resolution. The helper graph still binds its40 explicitly listed authored files; it does not prove complete runtime dependency coverage. The actual served source map identifies the exercised formatter. Required import-only package/source/build resolution is being corrected before re-test; preserve the historical manifest and evidence rather than claim it was complete.
+
 ## Query before deciding
 
 Run from the repository root, choosing the feature's scope and canonical symbol:
@@ -49,6 +78,7 @@ graphify query "identity subscription" --graph .local/graphify/project/api/graph
 graphify explain "NativeIdentityController" --graph .local/graphify/project/mobile/graphify-out/graph.json
 graphify query "allocation contribution" --graph .local/graphify/project/shared/graphify-out/graph.json --budget 1500
 graphify explain "ACCOUNTS" --graph .local/graphify/project/features/graphify-out/graph.json
+graphify query "paging metrics heartbeat" --graph .local/graphify/project/native-acceptance/graphify-out/graph.json --budget 1500
 ```
 
 Follow `source_file` and `source_location` into the checked-out implementation and

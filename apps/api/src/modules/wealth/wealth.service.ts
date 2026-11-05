@@ -7,6 +7,7 @@ import type { AuthContext, WealthSummaryDto } from "@joint/contracts";
 import type { ScopedDatabase } from "@joint/database/scoped";
 import { valueAccounts } from "@joint/domain/wealth";
 import { readWealthScope } from "./wealth.repository.js";
+import { readWealthClock } from "./wealth-clock.js";
 
 export class WealthService {
   constructor(private readonly database: ScopedDatabase) {}
@@ -14,12 +15,23 @@ export class WealthService {
     context: AuthContext,
     accountIds?: readonly string[],
   ): Promise<WealthSummaryDto> {
+    return (await this.evaluate(context, accountIds)).summary;
+  }
+
+  observe(
+    context: AuthContext,
+    accountIds?: readonly string[],
+  ): Promise<{ summary: WealthSummaryDto; nextChangeAt: number }> {
+    return this.evaluate(context, accountIds);
+  }
+
+  private evaluate(
+    context: AuthContext,
+    accountIds?: readonly string[],
+  ): Promise<{ summary: WealthSummaryDto; nextChangeAt: number }> {
     return this.database.withScope(context, async (tx) => {
       const accounts = await readWealthScope(tx, context, accountIds);
-      const [clock] = await tx.$queryRaw<
-        { today: string; now: Date }[]
-      >`SELECT (statement_timestamp() AT TIME ZONE 'Europe/London')::date::text AS today, statement_timestamp() AS now`;
-      if (!clock) throw Error("Wealth evaluation clock unavailable");
+      const clock = await readWealthClock(tx);
       const result = valueAccounts({
         householdId: context.householdId,
         grantVersion: context.grantVersion,
@@ -51,7 +63,7 @@ export class WealthService {
         JSON.stringify(sources) !== JSON.stringify(result.scope.sources)
       )
         throw new ConflictException({ error: { code: "SCOPE_CHANGED" } });
-      return result;
+      return { summary: result, nextChangeAt: clock.nextChangeAt.getTime() };
     });
   }
 }

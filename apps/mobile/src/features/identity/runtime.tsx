@@ -10,7 +10,12 @@ import {
   type PropsWithChildren,
 } from "react";
 import { AppState, View } from "react-native";
-import { createIdentityApi } from "./api";
+import {
+  NativeFinanceResourceMemory,
+  observeFinanceResourceAuthority,
+} from "../finance/resource-memory";
+import { createNativeTransport } from "../../api/request";
+import { createIdentityApiFromTransport } from "./api";
 import { IdentityMutations } from "./mutations";
 import { sessionActor } from "./provider-session";
 import { IdentityContext } from "./context";
@@ -29,19 +34,34 @@ export function IdentityRuntime({
 }>): React.JSX.Element {
   const { session, isLoaded } = useSession();
   const clerk = useClerk();
-  const api = useMemo(
+  const transport = useMemo(
     () =>
-      createIdentityApi(
+      createNativeTransport(
         configuration.apiUrl,
         async () => clerk.session?.getToken() ?? null,
       ),
     [configuration.apiUrl, clerk],
+  );
+  const api = useMemo(
+    () => createIdentityApiFromTransport(transport),
+    [transport],
   );
   const workflow = useMemo(
     () => new NativeWorkflow(() => AppState.currentState === "active"),
     [],
   );
   const controller = useMemo(() => new NativeIdentityController(api), [api]);
+  const finance = useMemo(
+    () => ({
+      transport,
+      resources: new NativeFinanceResourceMemory(),
+      getVerifiedIdentity: controller.getVerifiedIdentity,
+      subscribe: controller.subscribe,
+      revoke: (actor: string) => controller.revoke(actor),
+      refresh: () => controller.refresh(),
+    }),
+    [transport, controller],
+  );
   const mutations = useMemo(
     () =>
       new IdentityMutations({
@@ -84,9 +104,16 @@ export function IdentityRuntime({
   const previousActor = useRef<string | null>(null);
   useLayoutEffect(() => {
     controller.mount();
+    const stopResources = observeFinanceResourceAuthority(
+      controller,
+      finance.resources,
+    );
     if (AppState.currentState !== "active") controller.background();
-    return () => controller.dispose();
-  }, [controller]);
+    return () => {
+      stopResources();
+      controller.dispose();
+    };
+  }, [controller, finance.resources]);
   useLayoutEffect(
     () =>
       clerk.addListener(({ session: current }) => {
@@ -169,6 +196,7 @@ export function IdentityRuntime({
       value={{
         state,
         api,
+        finance,
         refresh: () => controller.refresh(),
         workflow,
         mutations,

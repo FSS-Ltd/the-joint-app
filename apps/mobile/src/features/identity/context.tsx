@@ -4,7 +4,11 @@ import type { NativeWorkflow } from "./workflow";
 import type { IdentityApi } from "./api";
 import type { IdentityState } from "./controller";
 
+import type { NativeIdentityBridge } from "./bridge";
+export type { NativeIdentityBridge } from "./bridge";
+
 export type IdentityContextValue = {
+  finance: NativeIdentityBridge;
   state: IdentityState;
   workflow: NativeWorkflow;
   mutations: IdentityMutations;

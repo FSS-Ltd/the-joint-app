@@ -178,3 +178,86 @@ it("rejects malformed account DTOs without returning unvalidated financial data"
     api.create(householdId, input, key, signal),
   ).rejects.toMatchObject({ outcome: "uncertain" });
 });
+
+const valuation = {
+  money: { amountMinor: "1000000", currency: "GBP" },
+  adultMoney: { amountMinor: "700000", currency: "GBP" },
+  asOfDate: "2026-11-04",
+} as const;
+it("posts canonical valuations with the caller's key, account version and abort signal", async () => {
+  const { api, send, signal } = fixture();
+  expect(
+    await api.value(householdId, accountId, valuation, key, 3, signal),
+  ).toEqual(account);
+  expect(send).toHaveBeenCalledOnce();
+  expect(JSON.parse(String(send.mock.calls[0]?.[1]?.body))).toEqual(valuation);
+  expect(send.mock.calls[0]?.[0]).toBe(
+    `https://api.example.test/v1/households/${householdId}/accounts/${accountId}/valuations`,
+  );
+  expect(send.mock.calls[0]?.[1]).toMatchObject({
+    method: "POST",
+    headers: { "Idempotency-Key": key, "If-Match": '"3"' },
+  });
+});
+it("rejects invalid valuations, IDs, keys and versions before credential acquisition", async () => {
+  const { api, token, send, signal } = fixture();
+  const actions = [
+    () => api.value("bad", accountId, valuation, key, 3, signal),
+    () => api.value(householdId, "bad", valuation, key, 3, signal),
+    () =>
+      api.value(
+        householdId,
+        accountId,
+        {
+          ...valuation,
+          adultMoney: { amountMinor: "1000001", currency: "GBP" },
+        },
+        key,
+        3,
+        signal,
+      ),
+    () =>
+      api.value(
+        householdId,
+        accountId,
+        { ...valuation, asOfDate: "2026-02-30" },
+        key,
+        3,
+        signal,
+      ),
+    () => api.value(householdId, accountId, valuation, "bad", 3, signal),
+    () => api.value(householdId, accountId, valuation, key, -1, signal),
+    () => api.value(householdId, accountId, valuation, key, 2147483648, signal),
+  ];
+  for (const action of actions)
+    await expect(Promise.resolve().then(action)).rejects.toThrow();
+  expect(token).not.toHaveBeenCalled();
+  expect(send).not.toHaveBeenCalled();
+});
+it("preserves valuation retry identity and never replays an uncertain or conflicting valuation", async () => {
+  const { api, send, signal } = fixture();
+  send.mockRejectedValueOnce(new Error("connection lost after commit"));
+  await expect(
+    api.value(householdId, accountId, valuation, key, 3, signal),
+  ).rejects.toMatchObject({ outcome: "uncertain" });
+  expect(send).toHaveBeenCalledOnce();
+  send.mockResolvedValueOnce(
+    Response.json({ error: { code: "VERSION_CONFLICT" } }, { status: 409 }),
+  );
+  await expect(
+    api.value(householdId, accountId, valuation, key, 3, signal),
+  ).rejects.toMatchObject({
+    status: 409,
+    code: "VERSION_CONFLICT",
+    outcome: "rejected",
+  });
+  expect(send).toHaveBeenCalledTimes(2);
+  for (const [, options] of send.mock.calls) {
+    expect(options?.body).toBe(send.mock.calls[0]?.[1]?.body);
+    expect(JSON.parse(String(options?.body))).toEqual(valuation);
+    expect(options?.headers).toMatchObject({
+      "Idempotency-Key": key,
+      "If-Match": '"3"',
+    });
+  }
+});

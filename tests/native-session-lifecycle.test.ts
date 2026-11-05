@@ -1,3 +1,5 @@
+import * as resourceMemory from "../apps/mobile/src/features/finance/resource-memory.js";
+import { createNativeTransport } from "./fixtures/native-api.js";
 import { IdentityMutations } from "../apps/mobile/src/features/identity/mutations.js";
 import { sessionActor } from "../apps/mobile/src/features/identity/provider-session.js";
 import { sessionFixture as fixture } from "./fixtures/native-session-harness.js";
@@ -204,6 +206,8 @@ it("ordinary runtime refresh cannot override background or undefined provider st
   };
   const context = { Provider: "provider" };
   const actions = { ...f.screen.render(), pending: { current: false } };
+  const constructTransport = vi.fn(createNativeTransport);
+  const composeIdentity = vi.fn(() => f.api);
   const runtime = sourceExports(
     "apps/mobile/src/features/identity/runtime.tsx",
     {
@@ -225,7 +229,9 @@ it("ordinary runtime refresh cannot override background or undefined provider st
         getInitialURL: async () => null,
         addEventListener: () => ({ remove: () => {} }),
       },
-      "./api": { createIdentityApi: () => f.api },
+      "../../api/request": { createNativeTransport: constructTransport },
+      "../finance/resource-memory": resourceMemory,
+      "./api": { createIdentityApiFromTransport: composeIdentity },
       "./context": { IdentityContext: context },
       "./mutations": { IdentityMutations },
       "./provider-session": { sessionActor },
@@ -244,8 +250,18 @@ it("ordinary runtime refresh cannot override background or undefined provider st
       runtime({ configuration: { apiUrl: "https://synthetic.test" } }),
     );
   render();
+  const bridge = (
+    elements(render())[0]?.props.value as {
+      finance: { transport: unknown; getVerifiedIdentity(): unknown };
+    }
+  ).finance;
+  expect(constructTransport).toHaveBeenCalledOnce();
+  expect(composeIdentity).toHaveBeenCalledOnce();
+  expect(bridge.transport).toBe(constructTransport.mock.results[0]?.value);
+  expect(composeIdentity).toHaveBeenCalledWith(bridge.transport);
   await Promise.resolve();
   emit?.({ session: undefined });
+  expect(bridge.getVerifiedIdentity()).toBeNull();
   const masked = elements(render())[0]?.props.value as {
     state: unknown;
     refresh(): Promise<void>;

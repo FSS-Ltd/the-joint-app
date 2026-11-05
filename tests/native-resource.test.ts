@@ -9,6 +9,10 @@ import {
   flush,
   deferred,
 } from "./fixtures/native-stream.js";
+import {
+  captureResourceScope,
+  sameResourceScope,
+} from "../apps/mobile/src/events/scope.js";
 import type { NativeResourceScope } from "../apps/mobile/src/events/scope.js";
 import { resourceFixture as setup } from "./fixtures/native-resource.js";
 
@@ -281,4 +285,44 @@ it("captures caller scope bytes and re-subscribes when the selected page changes
   );
   expect(test.send.mock.calls[1]?.[0]).toContain("limit=10");
   test.controller.close();
+});
+
+it("captures wealth scope canonically and compares the selected account set", () => {
+  const first = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    second = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const wealth = {
+    ...scope,
+    selector: {
+      kind: "wealth" as const,
+      householdId: scope.householdId,
+      accountIds: `${second.toUpperCase()},${first}`,
+    },
+  };
+  const captured = captureResourceScope(wealth);
+  expect(captured.selector).toEqual({
+    ...wealth.selector,
+    accountIds: `${first},${second}`,
+  });
+  expect(Object.isFrozen(captured.selector)).toBe(true);
+  expect(
+    sameResourceScope(
+      captured,
+      captureResourceScope({
+        ...wealth,
+        selector: { ...wealth.selector, accountIds: `${first},${second}` },
+      }),
+    ),
+  ).toBe(true);
+  expect(
+    sameResourceScope(
+      captured,
+      captureResourceScope({
+        ...wealth,
+        selector: { ...wealth.selector, accountIds: first },
+      }),
+    ),
+  ).toBe(false);
+  expect(() => captureResourceScope({ ...wealth, householdId: first })).toThrow(
+    "Invalid native resource scope",
+  );
 });

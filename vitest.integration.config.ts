@@ -5,6 +5,8 @@ const capacityFiles = [
   "tests/goal-allocation-events.integration.ts",
   "tests/contribution-events.integration.ts",
   "tests/status-transport.integration.ts",
+  // Database-wide status hints make concurrent fixture writes non-idle work.
+  "tests/wealth-status.integration.ts",
   // Global worker deadlines must be observed without concurrent fixture writes.
   "tests/worker-events.integration.ts",
   "tests/worker-lifecycle.integration.ts",
