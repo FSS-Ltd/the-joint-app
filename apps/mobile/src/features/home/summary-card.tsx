@@ -32,7 +32,6 @@ export function SummaryCard({
           style={{
             fontVariant: ["tabular-nums"],
             fontSize: 36,
-            lineHeight: 44,
           }}
         >
           {summary.adultNetWorth
