@@ -3,8 +3,10 @@ import { expect, it, vi } from "vitest";
 import * as contracts from "../packages/contracts/src/index.js";
 import * as domain from "../packages/domain/src/cash-flow.js";
 import * as inputs from "../apps/mobile/src/features/activity/annotation-input.js";
+import * as splits from "../apps/mobile/src/features/activity/split-input.js";
+import * as labels from "../apps/mobile/src/features/activity/kind-labels.js";
 import { load } from "./fixtures/native-read-ui.js";
-import { elements, press } from "./fixtures/native-source-harness.js";
+import { elements } from "./fixtures/native-source-harness.js";
 
 const base: contracts.TransactionResponse = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -25,98 +27,243 @@ const base: contracts.TransactionResponse = {
   note: { body: null, version: 0 },
   permissions: { canCorrect: true, canClassify: true, canNote: true },
 };
-function screen(
+type Tree = ReturnType<typeof elements>[number];
+/** Render function components too, so fields inside child components are visible. */
+function expand(tree: unknown): Tree[] {
+  return elements(tree).flatMap((element) =>
+    typeof element.type === "function"
+      ? [
+          element,
+          ...expand(
+            (element.type as (props: unknown) => unknown)(element.props),
+          ),
+        ]
+      : [element],
+  );
+}
+function session<D>(
   tx: contracts.TransactionResponse,
-  mutation = "idle",
-  cleared = false,
+  value: D,
+  overrides: Record<string, unknown> = {},
 ) {
-  const state = {
+  return {
     read: { kind: "ready", value: tx },
     draft: {
-      base: cleared ? null : tx,
-      value: inputs.annotationDraft(tx),
+      base: tx,
+      value,
       message: "",
       visible: true,
       invalidated: false,
       change: vi.fn(),
+      error: vi.fn(),
     },
-    mutation: { kind: mutation },
+    mutation: { kind: "idle" },
     allowed: true,
     editable: true,
     reload: vi.fn(),
     submit: vi.fn(),
+    ...overrides,
   };
+}
+function press(tree: unknown, label: string): void {
+  const action = byLabel(tree, label);
+  if (typeof action?.onPress !== "function")
+    throw new Error(`Missing action: ${label}`);
+  action.onPress();
+}
+const byLabel = (tree: unknown, label: string) =>
+  expand(tree).find((e) => e.props.label === label)?.props;
+
+function annotation(tx: contracts.TransactionResponse) {
+  const state = session(tx, inputs.annotationDraft(tx));
   const tree = (
     load("activity/annotation-screen.tsx", {
       "@joint/contracts": contracts,
-      "@joint/domain/cash-flow": domain,
-      "expo-router": { useRouter: () => ({ replace: vi.fn() }) },
       "@/components/native-field": { NativeField: "field" },
       "../accounts/account-choice": { AccountChoice: "choice" },
-      "../accounts/write-feedback": { WriteFeedback: "feedback" },
       "./annotation-input": inputs,
+      "./kind-labels": labels,
+      "./transaction-write-boundary": { TransactionWriteBoundary: "boundary" },
       "./use-annotation-write": { useAnnotationWrite: () => state },
     }).AnnotationScreen as (props: { transactionId: string }) => unknown
   )({ transactionId: tx.id });
   return { state, tree };
 }
+function splitScreen(
+  tx: contracts.TransactionResponse,
+  value = splits.splitsDraft(tx),
+) {
+  const state = session(tx, value);
+  const tree = (
+    load("activity/split-screen.tsx", {
+      "@joint/contracts": contracts,
+      "@joint/domain/cash-flow": domain,
+      "@/components/native-field": { NativeField: "field" },
+      "../accounts/account-choice": { AccountChoice: "choice" },
+      "./kind-labels": labels,
+      "./split-input": splits,
+      "./transaction-write-boundary": { TransactionWriteBoundary: "boundary" },
+      "./use-split-write": { useSplitWrite: () => state },
+    }).SplitScreen as (props: { transactionId: string }) => unknown
+  )({ transactionId: tx.id });
+  return { state, tree };
+}
+function boundary(state: ReturnType<typeof session>, mutation = "idle") {
+  const replace = vi.fn();
+  const tree = (
+    load("activity/transaction-write-boundary.tsx", {
+      "@joint/domain/cash-flow": domain,
+      "expo-router": { useRouter: () => ({ replace }) },
+      "../accounts/write-feedback": { WriteFeedback: "feedback" },
+      "./use-transaction-write": {},
+    }).TransactionWriteBoundary as (props: unknown) => unknown
+  )({
+    session: { ...state, mutation: { kind: mutation } },
+    transactionId: base.id,
+    title: "Title",
+    children: { type: "form", props: { label: "FORM" } },
+  });
+  return { tree, replace };
+}
 
-it("saves through the session and exposes every permitted field", () => {
-  const { state, tree } = screen(base);
+it("annotation saves through the session and exposes every permitted field", () => {
+  const { state, tree } = annotation(base);
   press(tree, "Save changes");
   expect(state.submit).toHaveBeenCalledOnce();
-  const labels = elements(tree).map((e) => e.props.label);
   for (const label of ["Category", "Classification", "Merchant", "Your note"])
-    expect(labels, label).toContain(label);
+    expect(byLabel(tree, label), label).toBeDefined();
 });
 
-it("locks category and kind on a paired row but leaves merchant and note editable", () => {
-  const { tree } = screen({
+it("annotation locks category and kind on a paired row but leaves merchant and note editable", () => {
+  const { tree } = annotation({
     ...base,
     transfer: { confirmed: true, id: base.id, canRemove: true },
   });
-  const byLabel = (label: string) =>
-    elements(tree).find((e) => e.props.label === label)?.props;
-  expect(byLabel("Category")?.editable).toBe(false);
-  expect(byLabel("Classification")?.disabled).toBe(true);
-  expect(byLabel("Merchant")?.editable).toBe(true);
-  expect(byLabel("Your note")?.editable).toBe(true);
+  expect(byLabel(tree, "Category")?.editable).toBe(false);
+  expect(byLabel(tree, "Classification")?.disabled).toBe(true);
+  expect(byLabel(tree, "Merchant")?.editable).toBe(true);
+  expect(byLabel(tree, "Your note")?.editable).toBe(true);
 });
 
-it("offers an explicit reload instead of a blank screen after the draft is cleared", () => {
-  const { state, tree } = screen(base, "idle", true);
-  expect(elements(tree).some((e) => e.props.label === "Save changes")).toBe(
-    false,
+it("split screen edits exact amounts, shows what is left and saves through the session", () => {
+  const tx = {
+    ...base,
+    money: { amountMinor: "-1000", currency: "GBP" as const },
+  };
+  const { state, tree } = splitScreen(tx, {
+    lines: [
+      { category: "", amount: "-7.05", classificationKind: "EXPENSE" },
+      { category: "", amount: "", classificationKind: "EXPENSE" },
+    ],
+  });
+  expect(JSON.stringify(expand(tree).map((e) => e.props.children))).toContain(
+    "Left to allocate",
   );
+  const amount = byLabel(tree, "Component 2 amount in GBP")?.onChangeText as (
+    value: string,
+  ) => void;
+  amount("-2.95");
+  expect(state.draft.change).toHaveBeenCalledWith({
+    lines: [
+      { category: "", amount: "-7.05", classificationKind: "EXPENSE" },
+      { category: "", amount: "-2.95", classificationKind: "EXPENSE" },
+    ],
+  });
+  press(tree, "Save split");
+  expect(state.submit).toHaveBeenCalledWith();
+  expect(expand(tree).some((e) => e.props.label === "Clear split")).toBe(false);
+});
+
+it("split screen adds up to twenty components, removes beyond two and clears an existing split explicitly", () => {
+  const saved = {
+    ...base,
+    money: { amountMinor: "-1000", currency: "GBP" as const },
+    splits: ["-500", "-300", "-200"].map((amountMinor, position) => ({
+      id: `2222222${position}-2222-4222-8222-222222222222`,
+      position,
+      category: null,
+      money: { amountMinor, currency: "GBP" as const },
+      classificationKind: "EXPENSE" as const,
+    })),
+  };
+  const { state, tree } = splitScreen(saved);
+  press(tree, "Remove component 3");
+  expect(state.draft.change).toHaveBeenCalledWith({
+    lines: splits.splitsDraft(saved).lines.slice(0, 2),
+  });
+  press(tree, "Clear split");
+  expect(state.submit).toHaveBeenCalledWith({ lines: [] });
+  const full = splitScreen(saved, {
+    lines: Array.from(
+      { length: 20 },
+      () => splits.splitsDraft(saved).lines[0]!,
+    ),
+  });
+  expect(byLabel(full.tree, "Add component")?.disabled).toBe(true);
+});
+
+it("boundary offers an explicit reload instead of a blank screen after the draft is cleared", () => {
+  const state = session(base, {});
+  state.draft.base = null as never;
+  const { tree } = boundary(state);
+  expect(expand(tree).some((e) => e.props.label === "FORM")).toBe(false);
   press(tree, "Reload transaction");
   expect(state.reload).toHaveBeenCalledOnce();
 });
 
-it("hides the form after success so the saved outcome is the only action", () => {
-  const { tree } = screen(base, "success");
-  expect(elements(tree).some((e) => e.props.label === "Save changes")).toBe(
-    false,
-  );
+it("boundary hides the form after success and shows the form while editing", () => {
+  const state = session(base, {});
+  expect(
+    expand(boundary(state, "success").tree).some(
+      (e) => e.props.label === "FORM",
+    ),
+  ).toBe(false);
+  expect(
+    expand(boundary(state).tree).some((e) => e.props.label === "FORM"),
+  ).toBe(true);
 });
 
-it("wires the detail entry, thin route and stack screen without polling", () => {
+it("boundary shows view-only with a way back, access errors with a retry, and checking while hidden", () => {
+  const viewer = session(base, {}, { allowed: false });
+  const view = boundary(viewer);
+  press(view.tree, "Back to transaction");
+  expect(view.replace).toHaveBeenCalledWith(`/activity/${base.id}`);
+  const failed = session(base, {}, { read: { kind: "error", message: "x" } });
+  press(boundary(failed).tree, "Retry transaction access");
+  expect(failed.reload).toHaveBeenCalledOnce();
+  const hidden = session(base, {});
+  hidden.draft.visible = false;
+  expect(JSON.stringify(boundary(hidden).tree)).toContain("Checking access");
+});
+
+it("wires detail entries, thin routes and stack screens without polling", () => {
   const root = "apps/mobile";
-  expect(
-    readFileSync(
-      `${root}/src/features/activity/transaction-detail-screen.tsx`,
-      "utf8",
-    ),
-  ).toContain("Edit classification and note");
-  expect(
-    readFileSync(
-      `${root}/app/(workspace)/activity/[transactionId]/annotate.tsx`,
-      "utf8",
-    ),
-  ).toContain("screen={AnnotationScreen}");
-  expect(
-    readFileSync(`${root}/app/(workspace)/activity/_layout.tsx`, "utf8"),
-  ).toContain("[transactionId]/annotate");
-  for (const file of ["annotation-screen.tsx", "use-annotation-write.ts"])
+  const detail = readFileSync(
+    `${root}/src/features/activity/transaction-detail-screen.tsx`,
+    "utf8",
+  );
+  expect(detail).toContain("Edit classification and note");
+  expect(detail).toContain("Split across categories");
+  for (const [route, screen] of [
+    ["annotate", "AnnotationScreen"],
+    ["splits", "SplitScreen"],
+  ] as const) {
+    expect(
+      readFileSync(
+        `${root}/app/(workspace)/activity/[transactionId]/${route}.tsx`,
+        "utf8",
+      ),
+    ).toContain(`screen={${screen}}`);
+    expect(
+      readFileSync(`${root}/app/(workspace)/activity/_layout.tsx`, "utf8"),
+    ).toContain(`[transactionId]/${route}`);
+  }
+  for (const file of [
+    "annotation-screen.tsx",
+    "split-screen.tsx",
+    "transaction-write-boundary.tsx",
+    "use-transaction-write.ts",
+  ])
     expect(
       readFileSync(`${root}/src/features/activity/${file}`, "utf8"),
     ).not.toMatch(/setInterval|setTimeout/);
