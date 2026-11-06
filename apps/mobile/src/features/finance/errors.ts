@@ -14,6 +14,10 @@ const messages: Readonly<Record<string, string>> = {
   AUTHORITY_CHANGED: "Your account access changed. Reload before continuing.",
   RESOURCE_MISMATCH:
     "We could not verify these account details. Reload before continuing.",
+  CLASSIFICATION_LOCKED:
+    "This transaction is paired or split, so its category and kind are fixed. Reload to see its current state.",
+  INVALID_CLASSIFICATION:
+    "That classification does not fit this amount. Discard this draft and reload to choose another.",
 };
 export function financeErrorMessage(error: unknown): string {
   if (!(error instanceof NativeApiError))
@@ -53,7 +57,9 @@ export function financeRecovery(
     (error.status === 400 && error.code === "INVALID_INPUT") ||
     error.code === "VERSION_CONFLICT" ||
     error.code === "IDEMPOTENCY_CONFLICT" ||
-    error.code === "RESOURCE_MISMATCH"
+    error.code === "RESOURCE_MISMATCH" ||
+    error.code === "CLASSIFICATION_LOCKED" ||
+    error.code === "INVALID_CLASSIFICATION"
   )
     return "reload";
   return "retry";

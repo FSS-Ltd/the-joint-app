@@ -1,16 +1,31 @@
-import type { AccountResponse } from "@joint/contracts";
 import { useRouter } from "expo-router";
 import { AppText } from "@/components/app-text";
 import { NativeAction } from "@/components/native-action";
 import { NativeActions } from "@/components/native-actions";
 import { useIdentity } from "../identity/context";
 import type { FinanceMutationResult } from "../finance/state";
-export function WriteFeedback({
+export interface WriteOutcome {
+  saved: string;
+  open: string;
+  openHref(id: string): string;
+  check: string;
+  checkHref: string;
+}
+const accountOutcome: WriteOutcome = {
+  saved: "Saved. Open the account to review its latest details.",
+  open: "Open saved account",
+  openHref: (id) => `/home/accounts/${id}`,
+  check: "Check account list",
+  checkHref: "/home/accounts",
+};
+export function WriteFeedback<T extends { id: string }>({
   mutation,
   reload,
+  outcome = accountOutcome,
 }: {
-  mutation: FinanceMutationResult<AccountResponse>;
+  mutation: FinanceMutationResult<T>;
   reload(): void;
+  outcome?: WriteOutcome;
 }): React.JSX.Element | null {
   const router = useRouter(),
     identity = useIdentity();
@@ -22,15 +37,11 @@ export function WriteFeedback({
   if (mutation.kind === "success")
     return (
       <>
-        <AppText accessibilityLiveRegion="polite">
-          Saved. Open the account to review its latest details.
-        </AppText>
+        <AppText accessibilityLiveRegion="polite">{outcome.saved}</AppText>
         <NativeActions>
           <NativeAction
-            label="Open saved account"
-            onPress={() =>
-              router.replace(`/home/accounts/${mutation.value.id}`)
-            }
+            label={outcome.open}
+            onPress={() => router.replace(outcome.openHref(mutation.value.id))}
           />
         </NativeActions>
       </>
@@ -66,9 +77,9 @@ export function WriteFeedback({
         )}
         {mutation.kind === "uncertain" && (
           <NativeAction
-            label="Check account list"
+            label={outcome.check}
             tone="secondary"
-            onPress={() => router.replace("/home/accounts")}
+            onPress={() => router.replace(outcome.checkHref)}
           />
         )}
       </NativeActions>

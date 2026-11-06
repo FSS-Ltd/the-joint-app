@@ -35,13 +35,13 @@ export function canWriteAccount(
     ]
   );
 }
-function capturedAuthority(finance: NativeFinanceContextValue) {
+export function capturedAuthority(finance: NativeFinanceContextValue) {
   const authority = finance.authority;
   if (!authority || !finance.isCurrent(authority))
     throw new NativeApiError(409, "AUTHORITY_CHANGED");
   return authority;
 }
-function assertActive(
+export function assertActive(
   finance: NativeFinanceContextValue,
   authority: NonNullable<NativeFinanceContextValue["authority"]>,
   signal: AbortSignal,
