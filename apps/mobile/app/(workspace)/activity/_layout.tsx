@@ -19,6 +19,10 @@ export default function ActivityLayout(): React.JSX.Element {
         name="[transactionId]/annotate"
         options={{ title: "Edit transaction" }}
       />
+      <Stack.Screen
+        name="[transactionId]/splits"
+        options={{ title: "Split transaction" }}
+      />
     </Stack>
   );
 }

@@ -18,6 +18,8 @@ const messages: Readonly<Record<string, string>> = {
     "This transaction is paired or split, so its category and kind are fixed. Reload to see its current state.",
   INVALID_CLASSIFICATION:
     "That classification does not fit this amount. Discard this draft and reload to choose another.",
+  INVALID_SPLITS:
+    "Those split amounts were not accepted. Discard this draft and reload to enter them again.",
 };
 export function financeErrorMessage(error: unknown): string {
   if (!(error instanceof NativeApiError))
@@ -59,7 +61,8 @@ export function financeRecovery(
     error.code === "IDEMPOTENCY_CONFLICT" ||
     error.code === "RESOURCE_MISMATCH" ||
     error.code === "CLASSIFICATION_LOCKED" ||
-    error.code === "INVALID_CLASSIFICATION"
+    error.code === "INVALID_CLASSIFICATION" ||
+    error.code === "INVALID_SPLITS"
   )
     return "reload";
   return "retry";

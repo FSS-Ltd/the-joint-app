@@ -7,6 +7,7 @@ import { NativeActions } from "@/components/native-actions";
 import { Panel } from "@/components/panel";
 import { Screen } from "@/components/screen";
 import { annotationFields } from "./annotation-input";
+import { splitsAllowed } from "./split-input";
 import { useTransactionRead } from "./use-transaction-read";
 
 /** Read-only facts plus the entry to the write screens the server permits. */
@@ -23,14 +24,30 @@ export function TransactionDetailScreen({
         {state.kind === "ready" ? (
           <>
             <TransactionFacts transaction={state.value} />
-            {Object.values(annotationFields(state.value)).some(Boolean) && (
+            {(Object.values(annotationFields(state.value)).some(Boolean) ||
+              splitsAllowed(state.value)) && (
               <NativeActions>
-                <NativeAction
-                  label="Edit classification and note"
-                  onPress={() =>
-                    router.push(`/activity/${state.value.id}/annotate`)
-                  }
-                />
+                {Object.values(annotationFields(state.value)).some(Boolean) && (
+                  <NativeAction
+                    label="Edit classification and note"
+                    onPress={() =>
+                      router.push(`/activity/${state.value.id}/annotate`)
+                    }
+                  />
+                )}
+                {splitsAllowed(state.value) && (
+                  <NativeAction
+                    label={
+                      state.value.splits.length > 0
+                        ? "Edit split"
+                        : "Split across categories"
+                    }
+                    tone="secondary"
+                    onPress={() =>
+                      router.push(`/activity/${state.value.id}/splits`)
+                    }
+                  />
+                )}
               </NativeActions>
             )}
           </>
