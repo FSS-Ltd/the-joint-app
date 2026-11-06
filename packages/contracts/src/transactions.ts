@@ -78,7 +78,7 @@ export const transactionListSchema = z
     nextCursor: z.string().nullable(),
   })
   .strict();
-export const transactionListQuerySchema = z
+export const transactionListQueryBase = z
   .object({
     accountId: z.uuid(),
     limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -92,7 +92,7 @@ export const transactionListQuerySchema = z
       .optional(),
     classificationKind: classificationKindSchema.optional(),
   })
-  .strict()
-  .refine(
-    (value) => !(value.category !== undefined && value.uncategorized === true),
-  );
+  .strict();
+export const transactionListQuerySchema = transactionListQueryBase.refine(
+  (value) => !(value.category !== undefined && value.uncategorized === true),
+);

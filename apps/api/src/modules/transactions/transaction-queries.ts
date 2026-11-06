@@ -1,5 +1,9 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
-import { accountCursorSchema, type AuthContext } from "@joint/contracts";
+import {
+  accountCursorSchema,
+  type AuthContext,
+  type TransactionResponse,
+} from "@joint/contracts";
 import type { Prisma } from "@joint/database/client";
 import type { ScopedDatabase } from "@joint/database/scoped";
 import type { IdentityVault } from "../identity/identity-vault.js";
@@ -33,6 +37,43 @@ export class TransactionQueries {
     cursor?: string,
     filters: ActivityFilters = {},
   ) {
+    const page = await this.page(context, accountId, limit, cursor, filters);
+    return {
+      items: page.items,
+      nextCursor:
+        page.hasMore && page.last
+          ? this.vault.seal(JSON.stringify(page.last), page.aad)
+          : null,
+    };
+  }
+  async observePage(
+    context: AuthContext,
+    accountId: string,
+    limit: number,
+    cursor?: string,
+    filters: ActivityFilters = {},
+  ): Promise<{ items: TransactionResponse[]; hasMore: boolean }> {
+    const { items, hasMore } = await this.page(
+      context,
+      accountId,
+      limit,
+      cursor,
+      filters,
+    );
+    return { items, hasMore };
+  }
+  private async page(
+    context: AuthContext,
+    accountId: string,
+    limit: number,
+    cursor: string | undefined,
+    filters: ActivityFilters,
+  ): Promise<{
+    items: TransactionResponse[];
+    hasMore: boolean;
+    last: { id: string; createdAt: string } | null;
+    aad: string;
+  }> {
     const filterKey = JSON.stringify([
       filters.month ?? null,
       filters.search ?? null,
@@ -84,16 +125,11 @@ export class TransactionQueries {
         items: page.map((row) =>
           projectTransaction(row, owned, paired.has(row.id)),
         ),
-        nextCursor:
-          rows.length > limit && last
-            ? this.vault.seal(
-                JSON.stringify({
-                  id: last.id,
-                  createdAt: last.bookedDate.toISOString(),
-                }),
-                aad,
-              )
-            : null,
+        hasMore: rows.length > limit,
+        last: last
+          ? { id: last.id, createdAt: last.bookedDate.toISOString() }
+          : null,
+        aad,
       };
     });
   }

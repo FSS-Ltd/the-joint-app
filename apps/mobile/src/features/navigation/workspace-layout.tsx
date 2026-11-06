@@ -50,6 +50,7 @@ function ReadyWorkspace({ me }: { me: MeResponse }): React.JSX.Element {
             ),
           }}
         />
+        <Tabs.Screen name="activity" options={{ href: null }} />
         <Tabs.Screen
           name="more"
           options={{

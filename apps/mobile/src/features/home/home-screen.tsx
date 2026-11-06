@@ -44,6 +44,10 @@ export function HomeContent(): React.JSX.Element {
               onPress={() => router.push("/home/accounts")}
             />
             <NativeAction
+              label="Open activity"
+              onPress={() => router.push("/activity")}
+            />
+            <NativeAction
               label="Choose summary accounts"
               tone="secondary"
               onPress={() => setSelecting(true)}
