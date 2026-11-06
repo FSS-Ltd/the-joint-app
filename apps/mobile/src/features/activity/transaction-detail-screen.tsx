@@ -8,6 +8,7 @@ import { Panel } from "@/components/panel";
 import { Screen } from "@/components/screen";
 import { annotationFields } from "./annotation-input";
 import { splitsAllowed } from "./split-input";
+import { transferLinkAllowed, transferRemovable } from "./transfer-input";
 import { useTransactionRead } from "./use-transaction-read";
 
 /** Read-only facts plus the entry to the write screens the server permits. */
@@ -16,7 +17,6 @@ export function TransactionDetailScreen({
 }: {
   transactionId: string;
 }): React.JSX.Element {
-  const router = useRouter();
   const { state, reload } = useTransactionRead(transactionId);
   return (
     <Screen>
@@ -24,32 +24,7 @@ export function TransactionDetailScreen({
         {state.kind === "ready" ? (
           <>
             <TransactionFacts transaction={state.value} />
-            {(Object.values(annotationFields(state.value)).some(Boolean) ||
-              splitsAllowed(state.value)) && (
-              <NativeActions>
-                {Object.values(annotationFields(state.value)).some(Boolean) && (
-                  <NativeAction
-                    label="Edit classification and note"
-                    onPress={() =>
-                      router.push(`/activity/${state.value.id}/annotate`)
-                    }
-                  />
-                )}
-                {splitsAllowed(state.value) && (
-                  <NativeAction
-                    label={
-                      state.value.splits.length > 0
-                        ? "Edit split"
-                        : "Split across categories"
-                    }
-                    tone="secondary"
-                    onPress={() =>
-                      router.push(`/activity/${state.value.id}/splits`)
-                    }
-                  />
-                )}
-              </NativeActions>
-            )}
+            <TransactionActions transaction={state.value} />
           </>
         ) : state.kind === "loading" ? (
           <AppText accessibilityLiveRegion="polite">
@@ -65,6 +40,62 @@ export function TransactionDetailScreen({
         )}
       </Panel>
     </Screen>
+  );
+}
+
+/** Each entry appears only when the server grants the right and the row's state allows it. */
+function TransactionActions({
+  transaction,
+}: {
+  transaction: TransactionResponse;
+}): React.JSX.Element | null {
+  const router = useRouter();
+  const go = (path: string) => () =>
+    router.push(`/activity/${transaction.id}/${path}`);
+  const canAnnotate = Object.values(annotationFields(transaction)).some(
+    Boolean,
+  );
+  if (
+    !canAnnotate &&
+    !splitsAllowed(transaction) &&
+    !transferLinkAllowed(transaction) &&
+    !transferRemovable(transaction)
+  )
+    return null;
+  return (
+    <NativeActions>
+      {canAnnotate && (
+        <NativeAction
+          label="Edit classification and note"
+          onPress={go("annotate")}
+        />
+      )}
+      {splitsAllowed(transaction) && (
+        <NativeAction
+          label={
+            transaction.splits.length > 0
+              ? "Edit split"
+              : "Split across categories"
+          }
+          tone="secondary"
+          onPress={go("splits")}
+        />
+      )}
+      {transferLinkAllowed(transaction) && (
+        <NativeAction
+          label="Link a transfer"
+          tone="secondary"
+          onPress={go("transfer")}
+        />
+      )}
+      {transferRemovable(transaction) && (
+        <NativeAction
+          label="Remove transfer pair"
+          tone="secondary"
+          onPress={go("remove-transfer")}
+        />
+      )}
+    </NativeActions>
   );
 }
 
