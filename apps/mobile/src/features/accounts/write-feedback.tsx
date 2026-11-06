@@ -43,7 +43,8 @@ export function WriteFeedback({
           <NativeAction
             label="Verify authenticator"
             onPress={() => {
-              mutation.reset();
+              // Discard the pre-MFA draft and re-read before another submission.
+              reload();
               identity.workflow.showSecurity(true);
               router.push("/more");
             }}

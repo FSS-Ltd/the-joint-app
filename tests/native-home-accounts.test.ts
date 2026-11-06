@@ -178,6 +178,8 @@ it("renders server totals beyond int64 and keeps missing evidence unavailable", 
     "£92,233,720,368,547,758.08",
   );
   expect(text(card({ summary: populated }))).toContain("Unavailable");
+  // A pinned line height cannot follow Dynamic Type and clips the headline figure.
+  expect(text(card({ summary: populated }))).not.toContain('"lineHeight"');
   const Coverage = coverage.SummaryCoverage as (props: {
     summary: typeof summary;
   }) => unknown;

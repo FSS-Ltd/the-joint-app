@@ -178,6 +178,7 @@ it("MFA recovery opens the real security flow and known rejection permits explic
     workflow = { showSecurity: vi.fn() },
     reset = vi.fn(),
     retry = vi.fn(),
+    mfaReload = vi.fn(),
     reload = vi.fn();
   const Feedback = load("accounts/write-feedback.tsx", {
     "expo-router": { useRouter: () => router },
@@ -192,13 +193,15 @@ it("MFA recovery opens the real security flow and known rejection permits explic
         reset,
         retry,
       },
-      reload,
+      reload: mfaReload,
     }),
     "Verify authenticator",
   );
   expect(workflow.showSecurity).toHaveBeenCalledWith(true);
   expect(router.push).toHaveBeenCalledWith("/more");
   expect(retry).not.toHaveBeenCalled();
+  // A pre-MFA draft must not stay submittable against the version it held.
+  expect(mfaReload).toHaveBeenCalledOnce();
   press(
     Feedback({
       mutation: {
