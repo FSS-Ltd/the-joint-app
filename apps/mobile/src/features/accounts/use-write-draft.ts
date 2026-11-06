@@ -6,15 +6,15 @@ import { useFinanceLifetime } from "../finance/use-lifetime";
 import type { WriteDraft } from "./write-state";
 
 /** Ephemeral form data belongs to one authorized route lifetime, never durable storage. */
-export function useWriteDraft<T>(
+export function useWriteDraft<T, B = AccountResponse>(
   targetKey: string,
   empty: () => T,
-): WriteDraft<T> {
+): WriteDraft<T, B> {
   const finance = useNativeFinance();
   const store = useMemo(() => {
     let active = false;
     const blank = (): Pick<
-      WriteDraft<T>,
+      WriteDraft<T, B>,
       "base" | "value" | "message" | "invalidated"
     > => ({
       base: null,
@@ -51,7 +51,7 @@ export function useWriteDraft<T>(
       invalidate() {
         publish({ ...blank(), invalidated: true });
       },
-      initialize(base: AccountResponse, value: T) {
+      initialize(base: B, value: T) {
         if (current() && !snapshot.base && !snapshot.invalidated)
           publish({ base, value, message: "", invalidated: false });
       },

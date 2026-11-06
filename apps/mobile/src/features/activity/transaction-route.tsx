@@ -12,14 +12,18 @@ export function parseTransactionRouteId(value: unknown): string | null {
   return parsed.success ? parsed.data.toLowerCase() : null;
 }
 
-export function TransactionRoute(): React.JSX.Element {
+export function TransactionRoute({
+  screen: TransactionScreen = TransactionDetailScreen,
+}: {
+  screen?: (props: { transactionId: string }) => React.JSX.Element;
+} = {}): React.JSX.Element {
   const { transactionId } = useLocalSearchParams<{
     transactionId?: string | string[];
   }>();
   const router = useRouter();
   const id = parseTransactionRouteId(transactionId);
   return id ? (
-    <TransactionDetailScreen transactionId={id} />
+    <TransactionScreen transactionId={id} />
   ) : (
     <Screen>
       <EmptyState

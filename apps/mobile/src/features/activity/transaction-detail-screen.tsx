@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useRouter } from "expo-router";
 import type { TransactionResponse } from "@joint/contracts";
 import { formatAggregateMoney } from "@joint/domain/cash-flow";
 import { AppText } from "@/components/app-text";
@@ -6,44 +6,34 @@ import { NativeAction } from "@/components/native-action";
 import { NativeActions } from "@/components/native-actions";
 import { Panel } from "@/components/panel";
 import { Screen } from "@/components/screen";
-import { useNativeFinance } from "../finance/context";
-import { financeErrorMessage } from "../finance/errors";
+import { annotationFields } from "./annotation-input";
+import { useTransactionRead } from "./use-transaction-read";
 
-type DetailState =
-  | { kind: "loading" }
-  | { kind: "ready"; value: TransactionResponse }
-  | { kind: "error"; message: string };
-
-/** One fenced read per authority; no polling and no implicit retry. */
+/** Read-only facts plus the entry to the write screens the server permits. */
 export function TransactionDetailScreen({
   transactionId,
 }: {
   transactionId: string;
 }): React.JSX.Element {
-  const finance = useNativeFinance();
-  const authority = finance.authority;
-  const [state, setState] = useState<DetailState>({ kind: "loading" });
-  const [attempt, setAttempt] = useState(0);
-  useEffect(() => {
-    if (!authority) return;
-    const controller = new AbortController();
-    setState({ kind: "loading" });
-    void finance.transactions
-      .read(authority.householdId, transactionId, controller.signal)
-      .then((value) => {
-        if (!controller.signal.aborted) setState({ kind: "ready", value });
-      })
-      .catch((error: unknown) => {
-        if (!controller.signal.aborted)
-          setState({ kind: "error", message: financeErrorMessage(error) });
-      });
-    return () => controller.abort();
-  }, [authority, finance, transactionId, attempt]);
+  const router = useRouter();
+  const { state, reload } = useTransactionRead(transactionId);
   return (
     <Screen>
       <Panel>
         {state.kind === "ready" ? (
-          <TransactionFacts transaction={state.value} />
+          <>
+            <TransactionFacts transaction={state.value} />
+            {Object.values(annotationFields(state.value)).some(Boolean) && (
+              <NativeActions>
+                <NativeAction
+                  label="Edit classification and note"
+                  onPress={() =>
+                    router.push(`/activity/${state.value.id}/annotate`)
+                  }
+                />
+              </NativeActions>
+            )}
+          </>
         ) : state.kind === "loading" ? (
           <AppText accessibilityLiveRegion="polite">
             Loading transaction…
@@ -52,10 +42,7 @@ export function TransactionDetailScreen({
           <>
             <AppText accessibilityLiveRegion="polite">{state.message}</AppText>
             <NativeActions>
-              <NativeAction
-                label="Reload transaction"
-                onPress={() => setAttempt((value) => value + 1)}
-              />
+              <NativeAction label="Reload transaction" onPress={reload} />
             </NativeActions>
           </>
         )}

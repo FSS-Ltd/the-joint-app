@@ -4,14 +4,14 @@ import type {
   FinanceResourceResult,
 } from "../finance/state";
 import type { AccountOperation, AccountWrite } from "./write-intent";
-export interface WriteDraft<T> {
-  base: AccountResponse | null;
+export interface WriteDraft<T, B = AccountResponse> {
+  base: B | null;
   value: T;
   message: string;
   visible: boolean;
   invalidated: boolean;
   invalidate(): void;
-  initialize(base: AccountResponse, value: T): void;
+  initialize(base: B, value: T): void;
   change(value: T): void;
   clear(): void;
   error(message: string): void;
