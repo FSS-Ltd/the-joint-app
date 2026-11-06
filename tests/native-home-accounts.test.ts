@@ -50,11 +50,16 @@ it("mounts actual Tabs only through the configured financial ready gate", () => 
   )({});
   const tree = Ready.type(Ready.props);
   expect(elements(tree)[0]?.type).toBe("finance");
+  const tabsByName = elements(tree).filter((e) => e.type === "tab");
+  expect(tabsByName.map((e) => e.props.name)).toEqual([
+    "home",
+    "activity",
+    "more",
+  ]);
+  // Activity is reachable from Home/More without a placeholder tab.
   expect(
-    elements(tree)
-      .filter((e) => e.type === "tab")
-      .map((e) => e.props.name),
-  ).toEqual(["home", "more"]);
+    tabsByName.find((e) => e.props.name === "activity")?.props.options,
+  ).toMatchObject({ href: null });
 });
 
 it("rejects missing, malformed and array account route IDs before mounting a reader", () => {
