@@ -4,7 +4,24 @@ import * as errors from "../apps/mobile/src/features/finance/errors.js";
 import * as result from "../apps/mobile/src/features/finance/result.js";
 import { financeFixture } from "./fixtures/native-finance.js";
 import { sourceExports } from "./fixtures/native-source-harness.js";
-import type { AnnotationSession } from "../apps/mobile/src/features/activity/use-annotation-write.js";
+
+/** Local shape: importing the hook module would pull React Native globals into the root test project. */
+interface AnnotationSession {
+  allowed: boolean;
+  editable: boolean;
+  draft: {
+    value: {
+      category: string;
+      classificationKind: string;
+      merchant: string;
+      note: string;
+    };
+    message: string;
+    invalidated: boolean;
+    change(value: AnnotationSession["draft"]["value"]): void;
+  };
+  submit(): Promise<void>;
+}
 
 beforeEach(() => {
   vi.useFakeTimers();
