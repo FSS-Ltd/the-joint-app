@@ -11,6 +11,7 @@ import type { ImportQueries } from "../imports/import-queries.js";
 import type { AccountQueries } from "../accounts/account-queries.js";
 import type { ExportService } from "../exports/export.service.js";
 import type { WealthService } from "../wealth/wealth.service.js";
+import type { TransactionQueries } from "../transactions/transaction-queries.js";
 import type { IdentityAccess } from "../identity/identity.service.js";
 import { hashToken } from "../identity/identity-vault.js";
 import { readIdentityToken } from "../../identity-header.js";
@@ -25,6 +26,7 @@ interface Services {
   imports?: Pick<ImportQueries, "observe">;
   accounts?: Pick<AccountQueries, "read" | "observePage">;
   wealth?: Pick<WealthService, "observe">;
+  transactions?: Pick<TransactionQueries, "observePage">;
   exports?: Pick<ExportService, "status" | "archiveStatus">;
   deletions?: Pick<DeletionRepository, "status" | "statusDeadline">;
 }
@@ -106,6 +108,32 @@ export class StatusResources {
               selector.limit,
               selector.cursor,
             );
+      return this.snapshot(token, context, status, null);
+    }
+    if (selector.kind === "transactions") {
+      if (!this.services.transactions) throw new ServiceUnavailableException();
+      const {
+        kind,
+        householdId,
+        accountId,
+        limit,
+        cursor,
+        uncategorized,
+        ...rest
+      } = selector;
+      void kind;
+      void householdId;
+      const filters =
+        uncategorized === undefined
+          ? rest
+          : { ...rest, uncategorized: uncategorized === "true" };
+      const status = await this.services.transactions.observePage(
+        context,
+        accountId,
+        limit,
+        cursor,
+        filters,
+      );
       return this.snapshot(token, context, status, null);
     }
     if (selector.kind === "import") {

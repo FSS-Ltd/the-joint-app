@@ -108,6 +108,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   const scoped = new ScopedDatabase(database);
   const imports = new ImportQueries(scoped, vault);
   const accounts = new AccountQueries(scoped, vault);
+  const transactions = new TransactionQueries(scoped, vault);
   const wealth = new WealthService(scoped);
   const deletions = new DeletionRepository(database);
   const reports = new ReportService(scoped);
@@ -137,6 +138,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
               imports,
               accounts,
               wealth,
+              transactions,
               exports,
               deletions,
             }),
@@ -213,7 +215,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
     }),
     createTransactionsController({
       identity,
-      queries: new TransactionQueries(scoped, vault),
+      queries: transactions,
       mutations: new TransactionMutations(scoped, vault),
       annotations: new TransactionAnnotations(scoped),
       splits: new TransactionSplits(scoped),

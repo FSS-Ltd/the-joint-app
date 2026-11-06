@@ -7,6 +7,7 @@ import {
 import { valueAccounts } from "../packages/domain/src/wealth/value-accounts.js";
 import { authorizeStatusObserver } from "../apps/api/src/modules/events/status-observer.js";
 import { accountSchema } from "../packages/contracts/src/accounts.js";
+import type { TransactionResponse } from "../packages/contracts/src/transactions.js";
 
 const accountId = "e237d3d7-236f-4ec3-8454-c4e5504d397f";
 
@@ -473,3 +474,127 @@ it.each([false, true])(
     expect(vi.getTimerCount()).toBe(0);
   },
 );
+
+const transactionId = "11111111-1111-4111-8111-111111111111";
+const transactionPage: TransactionResponse = {
+  id: transactionId,
+  accountId,
+  bookedDate: "2026-11-04",
+  money: { amountMinor: "-125", currency: "GBP" },
+  description: "Synthetic coffee",
+  source: "MANUAL",
+  version: 1,
+  createdAt: "2026-11-04T10:00:00.000Z",
+  category: null,
+  classificationKind: null,
+  effectiveKind: null,
+  classificationConfirmed: false,
+  splits: [],
+  transfer: null,
+  merchant: null,
+  note: { body: null, version: 0 },
+  permissions: { canCorrect: true, canClassify: true, canNote: true },
+};
+function transactionContext() {
+  return {
+    userId: "user",
+    sessionId: "session",
+    householdId: accountId,
+    membershipId: "member",
+    grantVersion: 0,
+    requestId: "request-a",
+    aal: "aal2" as const,
+    mfaAuthenticatedAt: Date.now(),
+    authenticatedAt: Date.now(),
+  };
+}
+
+it("requires an account for a transaction selector and rejects unknown or ambiguous fields", () => {
+  expect(
+    statusSubscriptionSchema.parse({
+      kind: "transactions",
+      householdId: accountId,
+      accountId,
+    }),
+  ).toMatchObject({ kind: "transactions", limit: 50 });
+  for (const value of [
+    { kind: "transactions", householdId: accountId },
+    {
+      kind: "transactions",
+      householdId: accountId,
+      accountId,
+      topic: "activity",
+    },
+    {
+      kind: "transactions",
+      householdId: accountId,
+      accountId,
+      category: "Food",
+      uncategorized: "true",
+    },
+    { kind: "transactions", householdId: accountId, accountId, limit: 201 },
+  ])
+    expect(statusSubscriptionSchema.safeParse(value).success).toBe(false);
+});
+
+it("observes one bounded transaction page and stays silent for request-only differences", async () => {
+  const context = transactionContext();
+  const identity = {
+    financeContext: vi.fn(async () => context),
+    actor: vi.fn(async () => ({ ...context, emailHash: "opaque" })),
+    subscriptionExpiry: vi.fn(async () => 1900000000000),
+  };
+  const transactions = {
+    observePage: vi.fn(async () => ({
+      items: [transactionPage],
+      hasMore: true,
+    })),
+  };
+  const resources = new StatusResources({ identity, transactions });
+  const auth = `Session ${"a".repeat(43)}`;
+  const selector = {
+    kind: "transactions" as const,
+    householdId: accountId,
+    accountId,
+    limit: 2,
+    cursor: "opaque",
+    month: "2026-11" as const,
+  };
+  const first = await resources.read(selector, auth);
+  expect(first).toMatchObject({
+    resourceExpiresAt: null,
+    credentialExpiresAt: 1900000000000,
+    expiryEvent: "renew",
+  });
+  expect(transactions.observePage).toHaveBeenCalledWith(
+    context,
+    accountId,
+    2,
+    "opaque",
+    { month: "2026-11" },
+  );
+  identity.financeContext.mockResolvedValueOnce({
+    ...context,
+    requestId: "request-b",
+  });
+  expect((await resources.read(selector, auth)).fingerprint).toBe(
+    first.fingerprint,
+  );
+  transactions.observePage.mockResolvedValueOnce({
+    items: [{ ...transactionPage, version: 2 }],
+    hasMore: true,
+  });
+  expect((await resources.read(selector, auth)).fingerprint).not.toBe(
+    first.fingerprint,
+  );
+  identity.financeContext.mockResolvedValueOnce({
+    ...context,
+    grantVersion: 1,
+  });
+  expect((await resources.read(selector, auth)).fingerprint).not.toBe(
+    first.fingerprint,
+  );
+  await expect(
+    new StatusResources({ identity }).read(selector, auth),
+  ).rejects.toThrow("Service Unavailable");
+});
