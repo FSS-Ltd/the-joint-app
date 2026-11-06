@@ -18,6 +18,8 @@ interface AnnotationSession {
     };
     message: string;
     invalidated: boolean;
+    base: { version: number } | null;
+    clear(): void;
     change(value: AnnotationSession["draft"]["value"]): void;
   };
   submit(): Promise<void>;
@@ -153,5 +155,16 @@ it("never opens a draft for a viewer", async () => {
   expect(view.draft.invalidated).toBe(true);
   await view.submit();
   expect(s.annotate).not.toHaveBeenCalled();
+  s.f.close();
+});
+
+it("does not re-seed a cleared draft from the stale read, then seeds the fresh version", async () => {
+  const s = await setup(row);
+  s.render().draft.change({ ...s.render().draft.value, merchant: "Cafe" });
+  s.render().draft.clear();
+  expect(s.render().draft.base).toBeNull();
+  s.setLive({ ...row, version: 9 });
+  s.render();
+  expect(s.render().draft.base?.version).toBe(9);
   s.f.close();
 });

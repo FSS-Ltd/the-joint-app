@@ -60,7 +60,6 @@ export function useAnnotationWrite(transactionId: string): AnnotationSession {
   }, [
     transaction,
     allowed,
-    draft.base,
     draft.initialize,
     draft.invalidate,
     mutation.reset,
