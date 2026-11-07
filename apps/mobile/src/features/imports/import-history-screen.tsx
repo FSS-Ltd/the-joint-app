@@ -49,15 +49,18 @@ export function ImportHistoryScreen({
             description="Imports for this account appear here once a file has been uploaded."
           />
         )}
-        {state.kind === "ready" &&
-          state.items.map((batch) => (
-            <NativeAction
-              key={batch.id}
-              label={`${stateLabels[batch.state]} · ${new Date(batch.createdAt).toLocaleDateString("en-GB")} · ${count(batch.totalRows)} rows`}
-              tone="secondary"
-              onPress={() => router.push(`/imports/${batch.id}`)}
-            />
-          ))}
+        {state.kind === "ready" && state.items.length > 0 && (
+          <NativeActions>
+            {state.items.map((batch) => (
+              <NativeAction
+                key={batch.id}
+                label={`${stateLabels[batch.state]} · ${new Date(batch.createdAt).toLocaleDateString("en-GB")} · ${count(batch.totalRows)} rows`}
+                tone="secondary"
+                onPress={() => router.push(`/imports/${batch.id}`)}
+              />
+            ))}
+          </NativeActions>
+        )}
         {history.moreError && (
           <AppText accessibilityLiveRegion="polite">
             {history.moreError}

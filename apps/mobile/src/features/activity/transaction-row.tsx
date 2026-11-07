@@ -2,6 +2,7 @@ import type { TransactionResponse } from "@joint/contracts";
 import { formatAggregateMoney } from "@joint/domain/cash-flow";
 import { AppText } from "@/components/app-text";
 import { NativeAction } from "@/components/native-action";
+import { NativeActions } from "@/components/native-actions";
 import { Panel } from "@/components/panel";
 
 /** Render only server projections; amounts stay exact integer strings. */
@@ -39,11 +40,13 @@ export function TransactionRow({
           : ""}
         {transaction.note.body ? " · Note" : ""}
       </AppText>
-      <NativeAction
-        label={`Open ${transaction.description}`}
-        tone="text"
-        onPress={() => onOpen(transaction.id)}
-      />
+      <NativeActions>
+        <NativeAction
+          label={`Open ${transaction.description}`}
+          tone="text"
+          onPress={() => onOpen(transaction.id)}
+        />
+      </NativeActions>
     </Panel>
   );
 }
