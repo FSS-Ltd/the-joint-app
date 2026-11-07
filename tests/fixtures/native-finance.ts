@@ -23,6 +23,7 @@ import { nativeWire, scope } from "./native-stream.js";
 import * as accountAdapters from "../../apps/mobile/src/api/accounts.js";
 import * as wealthAdapters from "../../apps/mobile/src/api/wealth.js";
 import * as transactionAdapters from "../../apps/mobile/src/api/transactions.js";
+import * as importAdapters from "../../apps/mobile/src/api/imports.js";
 import { jsxBoundary, sourceExports } from "./native-source-harness.js";
 
 export const financeMe: MeResponse = {
@@ -94,6 +95,7 @@ export async function financeFixture(getToken?: () => Promise<string>) {
         "../../api/accounts": accountAdapters,
         "../../api/wealth": wealthAdapters,
         "../../api/transactions": transactionAdapters,
+        "../../api/imports": importAdapters,
         "./scope": scopeHelpers,
         "./context": { FinanceContext: { Provider: "finance" } },
       },

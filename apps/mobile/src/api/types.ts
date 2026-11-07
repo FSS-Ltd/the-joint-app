@@ -23,16 +23,24 @@ export interface NativeSendOptions {
   credentials: "omit";
   redirect: "error";
   cache: "no-store";
-  body?: string;
+  body?: string | Uint8Array<ArrayBuffer>;
 }
 export type NativeSend = (
   url: string,
   options: NativeSendOptions,
 ) => Promise<NativeResponse>;
+export interface NativeCsvUpload {
+  bytes: Uint8Array<ArrayBuffer>;
+  accountId: string;
+  /** Already URI-encoded JSON mapping header, if the endpoint takes one. */
+  mapping?: string;
+}
 export interface NativeRequestOptions {
   method: NativeMethod;
   signal: AbortSignal;
   body?: object;
+  /** Raw CSV upload; mutually exclusive with `body` and POST only. */
+  csv?: NativeCsvUpload;
   idempotencyKey?: string;
   version?: number;
   authorization?:

@@ -2,6 +2,7 @@ import type { MeResponse } from "@joint/contracts";
 import { useMemo, useSyncExternalStore, type PropsWithChildren } from "react";
 import { createAccountsApi } from "../../api/accounts";
 import { createWealthApi } from "../../api/wealth";
+import { createImportsApi } from "../../api/imports";
 import { createTransactionsApi } from "../../api/transactions";
 import { useIdentity } from "../identity/context";
 import { FinanceContext, type NativeFinanceContextValue } from "./context";
@@ -26,6 +27,7 @@ export function NativeFinanceProvider({
       accounts: createAccountsApi(identity.transport),
       wealth: createWealthApi(identity.transport),
       transactions: createTransactionsApi(identity.transport),
+      imports: createImportsApi(identity.transport),
     }),
     [identity],
   );
