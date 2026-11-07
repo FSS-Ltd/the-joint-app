@@ -61,9 +61,15 @@ it("mounts actual Tabs only through the configured financial ready gate", () => 
   // hidden tab in expo-router 58 that router.push cannot reach, so only the button is hidden.
   for (const name of ["activity", "imports"]) {
     const options = tabsByName.find((e) => e.props.name === name)?.props
-      .options as { href?: unknown; tabBarButton?: () => unknown };
+      .options as {
+      href?: unknown;
+      tabBarButton?: () => unknown;
+      tabBarItemStyle?: { display?: string };
+    };
     expect(options.href).toBeUndefined();
     expect(options.tabBarButton?.()).toBeNull();
+    // display none is what removes the flex slot and the accessibility subtree.
+    expect(options.tabBarItemStyle?.display).toBe("none");
   }
 });
 

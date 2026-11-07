@@ -63,9 +63,9 @@ it("keeps the Activity and Imports workspace routes navigable", () => {
   );
   // expo-router 58 turns `href: null` into a hidden tab that router.push cannot reach.
   expect(layout).not.toMatch(/href:\s*null/);
-  expect(layout).toMatch(
-    /const hiddenTab = \{[^}]*tabBarButton:\s*\(\)\s*=>\s*null/,
-  );
+  const hidden = /const hiddenTab = \{([\s\S]*?)\};/.exec(layout)?.[1] ?? "";
+  expect(hidden).toMatch(/tabBarButton:\s*\(\)\s*=>\s*null/);
+  expect(hidden).toMatch(/display:\s*"none"/);
   for (const name of ["activity", "imports"])
     expect(layout).toContain(
       `<Tabs.Screen name="${name}" options={hiddenTab} />`,
