@@ -10,6 +10,8 @@ export function ImportBatchBoundary<D>({
   title,
   saved,
   pending,
+  viewOnly = "This import can no longer be reviewed or committed.",
+  header,
   children,
 }: {
   session: EntityWriteSession<ImportBatchResponse, D, ImportBatchResponse>;
@@ -17,6 +19,8 @@ export function ImportBatchBoundary<D>({
   title: string;
   saved: string;
   pending: string;
+  viewOnly?: string;
+  header?: (batch: ImportBatchResponse) => ReactNode;
   children: ReactNode;
 }): React.JSX.Element {
   const batch = `/imports/${batchId}`;
@@ -24,7 +28,8 @@ export function ImportBatchBoundary<D>({
     <EntityWriteBoundary
       session={session}
       title={title}
-      viewOnly="This import can no longer be reviewed or committed."
+      viewOnly={viewOnly}
+      header={header}
       retryLabel="Retry import access"
       reloadLabel="Reload import"
       backHref={batch}

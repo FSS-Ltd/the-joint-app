@@ -4,6 +4,8 @@ import * as contracts from "../packages/contracts/src/index.js";
 import * as mapping from "../apps/mobile/src/features/imports/import-mapping.js";
 import * as result from "../apps/mobile/src/features/finance/result.js";
 import * as accountRouteId from "../apps/mobile/src/features/accounts/route-id.js";
+import * as actionInput from "../apps/mobile/src/features/imports/action-input.js";
+import * as stateLabels from "../apps/mobile/src/features/imports/import-state-labels.js";
 import { load } from "./fixtures/native-read-ui.js";
 import {
   byLabel,
@@ -175,6 +177,8 @@ it("boundary covers checking, errors, non-owners, a cleared draft and success", 
 function batchScreen(state: unknown) {
   return (
     load(`${feature}import-batch-screen.tsx`, {
+      "./import-state-labels": stateLabels,
+      "./action-input": actionInput,
       "expo-router": { useRouter: () => ({ replace: vi.fn() }) },
       "./use-import-batch": { useImportBatch: () => state },
     }).ImportBatchScreen as (props: { batchId: string }) => unknown
@@ -191,6 +195,12 @@ const batch = {
   committedRows: 0,
   failureCode: null,
   originalAvailable: true,
+  permissions: {
+    canCommit: false,
+    canRollback: false,
+    canRestore: false,
+    canDeleteOriginal: false,
+  },
 };
 
 it("batch screen reports state, progress and counts without an action it cannot take yet", () => {
@@ -282,6 +292,7 @@ function route(params: Record<string, unknown>) {
       useRouter: () => ({ replace }),
     },
     "./import-batch-screen": { ImportBatchScreen: "batch" },
+    "./import-history-screen": { ImportHistoryScreen: "history" },
     "./import-screen": { ImportScreen: "upload" },
     "../accounts/route-id": accountRouteId,
   }) as Record<string, () => unknown>;

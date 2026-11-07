@@ -4,6 +4,8 @@ import * as contracts from "../packages/contracts/src/index.js";
 import * as domain from "../packages/domain/src/cash-flow.js";
 import * as labels from "../apps/mobile/src/features/imports/reject-labels.js";
 import { effectHarness } from "./fixtures/native-effect-harness.js";
+import * as actionInput from "../apps/mobile/src/features/imports/action-input.js";
+import * as stateLabels from "../apps/mobile/src/features/imports/import-state-labels.js";
 import { load } from "./fixtures/native-read-ui.js";
 import {
   byLabel,
@@ -249,6 +251,8 @@ function batchScreen(value: Record<string, unknown>) {
   const push = vi.fn();
   const tree = (
     load(`${feature}import-batch-screen.tsx`, {
+      "./import-state-labels": stateLabels,
+      "./action-input": actionInput,
       "expo-router": { useRouter: () => ({ replace: vi.fn(), push }) },
       "./use-import-batch": {
         useImportBatch: () => ({
