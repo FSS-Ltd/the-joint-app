@@ -23,6 +23,14 @@ export default function ActivityLayout(): React.JSX.Element {
         name="[transactionId]/splits"
         options={{ title: "Split transaction" }}
       />
+      <Stack.Screen
+        name="[transactionId]/transfer"
+        options={{ title: "Link transfer" }}
+      />
+      <Stack.Screen
+        name="[transactionId]/remove-transfer"
+        options={{ title: "Remove transfer" }}
+      />
     </Stack>
   );
 }

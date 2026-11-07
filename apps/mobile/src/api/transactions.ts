@@ -7,6 +7,9 @@ import {
   transactionPatchSchema,
   transactionSchema,
   transactionSplitsSchema,
+  transferConfirmSchema,
+  transferRemoveSchema,
+  transferResultSchema,
   type ClassificationKind,
   type TransactionResponse,
 } from "@joint/contracts";
@@ -26,6 +29,9 @@ export interface ActivityQuery {
 
 function collection(householdId: string): string {
   return `households/${idempotencyKeySchema.parse(householdId)}/transactions`;
+}
+function transfers(householdId: string): string {
+  return `households/${idempotencyKeySchema.parse(householdId)}/transfers`;
 }
 function item(householdId: string, id: string): string {
   return `${collection(householdId)}/${idempotencyKeySchema.parse(id)}`;
@@ -126,6 +132,46 @@ export function createTransactionsApi(transport: NativeTransport) {
           method: "PUT",
           body: transactionSplitsSchema.parse(input),
           version,
+          signal,
+        },
+      );
+    },
+    confirmTransfer(
+      householdId: string,
+      input: unknown,
+      idempotencyKey: string,
+      signal: AbortSignal,
+    ) {
+      return transport.request(
+        `${transfers(householdId)}/confirm`,
+        transferResultSchema,
+        {
+          method: "POST",
+          body: transferConfirmSchema.parse(input),
+          idempotencyKey,
+          signal,
+        },
+      );
+    },
+    readTransfer(householdId: string, id: string, signal: AbortSignal) {
+      return transport.request(
+        `${transfers(householdId)}/${idempotencyKeySchema.parse(id)}`,
+        transferResultSchema,
+        { method: "GET", signal },
+      );
+    },
+    removeTransfer(
+      householdId: string,
+      id: string,
+      input: unknown,
+      signal: AbortSignal,
+    ) {
+      return transport.request(
+        `${transfers(householdId)}/${idempotencyKeySchema.parse(id)}`,
+        transferResultSchema,
+        {
+          method: "DELETE",
+          body: transferRemoveSchema.parse(input),
           signal,
         },
       );

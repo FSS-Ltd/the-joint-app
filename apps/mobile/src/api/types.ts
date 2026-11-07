@@ -15,7 +15,7 @@ export interface NativeResponse {
   readonly headers: { get(name: string): string | null };
   readonly body: NativeBody | null;
 }
-export type NativeMethod = "GET" | "POST" | "PATCH" | "PUT";
+export type NativeMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 export interface NativeSendOptions {
   method: NativeMethod;
   headers: Record<string, string>;

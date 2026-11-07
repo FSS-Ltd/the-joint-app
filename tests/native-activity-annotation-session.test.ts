@@ -39,6 +39,17 @@ interface SplitSession {
   submit(override?: SplitSession["draft"]["value"]): Promise<void>;
 }
 
+interface LinkSession {
+  allowed: boolean;
+  draft: { message: string; change(value: { counterpart: unknown }): void };
+  submit(): Promise<void>;
+}
+interface RemoveSession {
+  allowed: boolean;
+  draft: { message: string };
+  submit(override?: { pair: unknown }): Promise<void>;
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.setSystemTime(0);
@@ -68,12 +79,32 @@ async function setup(initial: contracts.TransactionResponse) {
   const f = await financeFixture();
   let live = initial;
   const annotate = vi.fn(async () => live);
+  const confirmTransfer = vi.fn<(...args: unknown[]) => Promise<unknown>>(
+    async () => ({
+      id: "33333333-3333-4333-8333-333333333333",
+      from: live,
+      to: live,
+    }),
+  );
+  const removeTransfer = vi.fn<(...args: unknown[]) => Promise<unknown>>(
+    async () => ({
+      id: "33333333-3333-4333-8333-333333333333",
+      from: live,
+      to: live,
+    }),
+  );
   const replaceSplits = vi.fn<(...args: unknown[]) => Promise<typeof live>>(
     async () => live,
   );
   f.replaceFinance({
     ...f.finance,
-    transactions: { ...f.finance.transactions, annotate, replaceSplits },
+    transactions: {
+      ...f.finance.transactions,
+      annotate,
+      replaceSplits,
+      confirmTransfer: confirmTransfer as never,
+      removeTransfer: removeTransfer as never,
+    },
   });
   const deps = {
     react: f.h.react,
@@ -163,6 +194,49 @@ async function setup(initial: contracts.TransactionResponse) {
       "./use-transaction-write": generic,
     },
   ).useSplitWrite as (id: string) => SplitSession;
+  const transferInput = sourceExports(
+    "apps/mobile/src/features/activity/transfer-input.ts",
+    { "@joint/contracts": contracts },
+  );
+  const transferIntent = sourceExports(
+    "apps/mobile/src/features/activity/transfer-intent.ts",
+    {
+      "@joint/contracts": contracts,
+      "../finance/errors": errors,
+      "../accounts/write-intent": sourceExports(
+        "apps/mobile/src/features/accounts/write-intent.ts",
+        {
+          "@joint/contracts": contracts,
+          "../finance/result": result,
+          "../finance/errors": errors,
+        },
+      ),
+      "./transfer-input": transferInput,
+    },
+  );
+  const transferHooks = sourceExports(
+    "apps/mobile/src/features/activity/use-transfer-write.ts",
+    {
+      "expo-crypto": {
+        randomUUID: () => "99999999-9999-4999-8999-999999999999",
+      },
+      "./transfer-input": transferInput,
+      "./transfer-intent": transferIntent,
+      "./use-transaction-write": generic,
+    },
+  );
+  const renderLink = () =>
+    f.h.render(() =>
+      (transferHooks.useTransferLinkWrite as (id: string) => LinkSession)(
+        initial.id,
+      ),
+    );
+  const renderRemove = () =>
+    f.h.render(() =>
+      (transferHooks.useTransferRemoveWrite as (id: string) => RemoveSession)(
+        initial.id,
+      ),
+    );
   const renderSplit = () => f.h.render(() => splitHook(initial.id));
   const render = () => f.h.render(() => hook(initial.id));
   render();
@@ -170,6 +244,10 @@ async function setup(initial: contracts.TransactionResponse) {
     f,
     annotate,
     replaceSplits,
+    confirmTransfer,
+    removeTransfer,
+    renderLink,
+    renderRemove,
     renderSplit,
     render,
     setLive: (next: contracts.TransactionResponse) => (live = next),
@@ -295,4 +373,81 @@ it("clears an existing split with an explicit empty submission, and refuses a pa
   await view.submit({ lines: [] });
   expect(paired.replaceSplits).not.toHaveBeenCalled();
   paired.f.close();
+});
+
+const mate: contracts.TransactionResponse = {
+  ...row,
+  id: "22222222-2222-4222-8222-222222222222",
+  accountId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  money: { amountMinor: "125", currency: "GBP" },
+  version: 8,
+};
+const paired = (tx: contracts.TransactionResponse) => ({
+  ...tx,
+  transfer: {
+    confirmed: true,
+    id: "33333333-3333-4333-8333-333333333333",
+    canRemove: true,
+  },
+});
+
+it("confirms a chosen pair once with both versions and one captured key, and refuses an empty choice", async () => {
+  const s = await setup(row);
+  s.renderLink();
+  await s.renderLink().submit();
+  expect(s.confirmTransfer).not.toHaveBeenCalled();
+  expect(s.renderLink().draft.message).not.toBe("");
+  s.renderLink().draft.change({ counterpart: mate });
+  await s.renderLink().submit();
+  expect(s.confirmTransfer).toHaveBeenCalledOnce();
+  expect(s.confirmTransfer.mock.calls[0]).toMatchObject([
+    s.f.finance.authority.householdId,
+    {
+      fromTransactionId: row.id,
+      toTransactionId: mate.id,
+      fromVersion: 3,
+      toVersion: 8,
+    },
+    "99999999-9999-4999-8999-999999999999",
+    expect.any(AbortSignal),
+  ]);
+  s.f.close();
+});
+
+it("never offers the link to a paired row or a viewer", async () => {
+  const pairedRow = await setup(paired(row));
+  expect(pairedRow.renderLink().allowed).toBe(false);
+  pairedRow.f.close();
+  const viewer = await setup({
+    ...row,
+    permissions: { canCorrect: false, canClassify: false, canNote: false },
+  });
+  expect(viewer.renderLink().allowed).toBe(false);
+  viewer.f.close();
+});
+
+it("removes a pair only from the explicitly submitted pair whose versions match the open row", async () => {
+  const s = await setup(paired(row));
+  s.renderRemove();
+  await s.renderRemove().submit();
+  expect(s.removeTransfer).not.toHaveBeenCalled();
+  const pair = {
+    id: "33333333-3333-4333-8333-333333333333",
+    from: paired(row),
+    to: paired(mate),
+  };
+  await s
+    .renderRemove()
+    .submit({ pair: { ...pair, from: { ...paired(row), version: 9 } } });
+  expect(s.removeTransfer).not.toHaveBeenCalled();
+  expect(s.renderRemove().draft.message).not.toBe("");
+  await s.renderRemove().submit({ pair });
+  expect(s.removeTransfer).toHaveBeenCalledOnce();
+  expect(s.removeTransfer.mock.calls[0]).toMatchObject([
+    s.f.finance.authority.householdId,
+    "33333333-3333-4333-8333-333333333333",
+    { fromVersion: 3, toVersion: 8 },
+    expect.any(AbortSignal),
+  ]);
+  s.f.close();
 });

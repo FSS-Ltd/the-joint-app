@@ -6,7 +6,12 @@ import * as inputs from "../apps/mobile/src/features/activity/annotation-input.j
 import * as splits from "../apps/mobile/src/features/activity/split-input.js";
 import * as labels from "../apps/mobile/src/features/activity/kind-labels.js";
 import { load } from "./fixtures/native-read-ui.js";
-import { elements } from "./fixtures/native-source-harness.js";
+import {
+  byLabel,
+  expand,
+  press,
+  session,
+} from "./fixtures/native-activity-ui.js";
 
 const base: contracts.TransactionResponse = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -27,53 +32,6 @@ const base: contracts.TransactionResponse = {
   note: { body: null, version: 0 },
   permissions: { canCorrect: true, canClassify: true, canNote: true },
 };
-type Tree = ReturnType<typeof elements>[number];
-/** Render function components too, so fields inside child components are visible. */
-function expand(tree: unknown): Tree[] {
-  return elements(tree).flatMap((element) =>
-    typeof element.type === "function"
-      ? [
-          element,
-          ...expand(
-            (element.type as (props: unknown) => unknown)(element.props),
-          ),
-        ]
-      : [element],
-  );
-}
-function session<D>(
-  tx: contracts.TransactionResponse,
-  value: D,
-  overrides: Record<string, unknown> = {},
-) {
-  return {
-    read: { kind: "ready", value: tx },
-    draft: {
-      base: tx,
-      value,
-      message: "",
-      visible: true,
-      invalidated: false,
-      change: vi.fn(),
-      error: vi.fn(),
-    },
-    mutation: { kind: "idle" },
-    allowed: true,
-    editable: true,
-    reload: vi.fn(),
-    submit: vi.fn(),
-    ...overrides,
-  };
-}
-function press(tree: unknown, label: string): void {
-  const action = byLabel(tree, label);
-  if (typeof action?.onPress !== "function")
-    throw new Error(`Missing action: ${label}`);
-  action.onPress();
-}
-const byLabel = (tree: unknown, label: string) =>
-  expand(tree).find((e) => e.props.label === label)?.props;
-
 function annotation(tx: contracts.TransactionResponse) {
   const state = session(tx, inputs.annotationDraft(tx));
   const tree = (
