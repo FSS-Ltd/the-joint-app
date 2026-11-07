@@ -139,13 +139,19 @@ async function setup(initial: contracts.TransactionResponse) {
     ),
     "./annotation-input": input,
   });
-  const generic = sourceExports(
-    "apps/mobile/src/features/activity/use-transaction-write.ts",
+  const entity = sourceExports(
+    "apps/mobile/src/features/writes/use-entity-write.ts",
     {
       ...deps,
       "../accounts/use-write-draft": draft,
       "../finance/errors": errors,
       "../finance/use-mutation": { useFinanceMutation: f.mutation },
+    },
+  );
+  const generic = sourceExports(
+    "apps/mobile/src/features/activity/use-transaction-write.ts",
+    {
+      "../writes/use-entity-write": entity,
       "./use-transaction-read": {
         useTransactionRead: () => ({
           state: { kind: "ready", value: live },

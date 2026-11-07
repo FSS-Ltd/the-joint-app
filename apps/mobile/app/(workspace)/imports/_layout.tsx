@@ -15,7 +15,15 @@ export default function ImportsLayout(): React.JSX.Element {
         name="upload/[accountId]"
         options={{ title: "Import a CSV" }}
       />
-      <Stack.Screen name="[batchId]" options={{ title: "Import" }} />
+      <Stack.Screen name="[batchId]/index" options={{ title: "Import" }} />
+      <Stack.Screen
+        name="[batchId]/review"
+        options={{ title: "Review rows" }}
+      />
+      <Stack.Screen
+        name="[batchId]/commit"
+        options={{ title: "Commit import" }}
+      />
     </Stack>
   );
 }
