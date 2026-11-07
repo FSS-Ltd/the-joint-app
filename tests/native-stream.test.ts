@@ -281,3 +281,28 @@ it("admits canonical wealth streams without changing keepalive or abort cleanup"
   expect(wire.connections[0]?.cancel).toHaveBeenCalledOnce();
   expect(vi.getTimerCount()).toBe(0);
 });
+
+it("opens a status stream for an import batch and refuses an export selector", async () => {
+  const batch = "11111111-1111-4111-8111-111111111111";
+  const wire = nativeWire(),
+    abort = new AbortController();
+  const open = readNativeStatusStream(
+    { kind: "import", householdId: selector.householdId, id: batch },
+    wire.transport,
+    abort.signal,
+    () => {},
+  );
+  const closed = expect(open).rejects.toMatchObject({ status: 0 });
+  await flush();
+  expect(String(wire.send.mock.calls[0]?.[0])).toContain("kind=import");
+  abort.abort();
+  await closed;
+  await expect(
+    readNativeStatusStream(
+      { kind: "export", householdId: selector.householdId, id: batch },
+      wire.transport,
+      new AbortController().signal,
+      () => {},
+    ),
+  ).rejects.toMatchObject({ code: "INVALID_STATUS_SELECTOR" });
+});

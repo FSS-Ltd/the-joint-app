@@ -25,7 +25,8 @@ export async function readNativeStatusStream(
     selector.kind !== "account" &&
     selector.kind !== "accounts" &&
     selector.kind !== "wealth" &&
-    selector.kind !== "transactions"
+    selector.kind !== "transactions" &&
+    selector.kind !== "import"
   )
     throw new NativeApiError(400, "INVALID_STATUS_SELECTOR");
   const network = new AbortController();

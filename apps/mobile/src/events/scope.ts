@@ -14,7 +14,7 @@ export interface NativeResourceScope {
   readonly grantVersion: number;
   readonly selector: Extract<
     StatusSubscription,
-    { kind: "account" | "accounts" | "wealth" | "transactions" }
+    { kind: "account" | "accounts" | "wealth" | "transactions" | "import" }
   >;
 }
 
@@ -26,7 +26,8 @@ export function captureResourceScope(
     (selector.kind !== "account" &&
       selector.kind !== "accounts" &&
       selector.kind !== "wealth" &&
-      selector.kind !== "transactions") ||
+      selector.kind !== "transactions" &&
+      selector.kind !== "import") ||
     selector.householdId !== scope.householdId ||
     !scope.actor ||
     !Number.isSafeInteger(scope.grantVersion) ||

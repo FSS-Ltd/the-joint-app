@@ -50,6 +50,8 @@ export function effectHarness() {
       });
     },
   };
+  // Layout effects are ordered like effects in this emulation.
+  Object.assign(react, { useLayoutEffect: react.useEffect });
   return {
     react,
     render<T>(hook: () => T): T {

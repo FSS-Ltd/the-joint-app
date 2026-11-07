@@ -13,7 +13,7 @@ export function assertFinanceResult(
   if ("householdId" in value && value.householdId !== scope.householdId)
     throw new NativeApiError(409, "RESOURCE_MISMATCH");
   if (
-    scope.selector.kind === "account" &&
+    (scope.selector.kind === "account" || scope.selector.kind === "import") &&
     "id" in value &&
     value.id !== scope.selector.id
   )

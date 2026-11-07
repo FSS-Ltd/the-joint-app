@@ -326,3 +326,37 @@ it("captures wealth scope canonically and compares the selected account set", ()
     "Invalid native resource scope",
   );
 });
+
+it("admits one import batch as a native resource and still rejects other batch kinds", () => {
+  const batch = "11111111-1111-4111-8111-111111111111";
+  const importScope = {
+    ...scope,
+    selector: {
+      kind: "import" as const,
+      householdId: scope.householdId,
+      id: batch,
+    },
+  };
+  const captured = captureResourceScope(importScope);
+  expect(captured.selector).toEqual(importScope.selector);
+  expect(Object.isFrozen(captured.selector)).toBe(true);
+  expect(sameResourceScope(captured, captureResourceScope(importScope))).toBe(
+    true,
+  );
+  expect(() =>
+    captureResourceScope({
+      ...importScope,
+      selector: { ...importScope.selector, householdId: batch },
+    }),
+  ).toThrow("Invalid native resource scope");
+  expect(() =>
+    captureResourceScope({
+      ...importScope,
+      selector: {
+        kind: "export" as const,
+        householdId: scope.householdId,
+        id: batch,
+      },
+    } as never),
+  ).toThrow("Invalid native resource scope");
+});

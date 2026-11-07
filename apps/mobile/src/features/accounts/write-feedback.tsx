@@ -10,6 +10,7 @@ export interface WriteOutcome {
   openHref(id: string): string;
   check: string;
   checkHref: string;
+  pending?: string;
 }
 const accountOutcome: WriteOutcome = {
   saved: "Saved. Open the account to review its latest details.",
@@ -32,7 +33,9 @@ export function WriteFeedback<T extends { id: string }>({
   if (mutation.kind === "idle") return null;
   if (mutation.kind === "pending")
     return (
-      <AppText accessibilityLiveRegion="polite">Saving your change…</AppText>
+      <AppText accessibilityLiveRegion="polite">
+        {outcome.pending ?? "Saving your change…"}
+      </AppText>
     );
   if (mutation.kind === "success")
     return (

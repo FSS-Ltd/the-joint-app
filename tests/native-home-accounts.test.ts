@@ -54,11 +54,15 @@ it("mounts actual Tabs only through the configured financial ready gate", () => 
   expect(tabsByName.map((e) => e.props.name)).toEqual([
     "home",
     "activity",
+    "imports",
     "more",
   ]);
   // Activity is reachable from Home/More without a placeholder tab.
   expect(
     tabsByName.find((e) => e.props.name === "activity")?.props.options,
+  ).toMatchObject({ href: null });
+  expect(
+    tabsByName.find((e) => e.props.name === "imports")?.props.options,
   ).toMatchObject({ href: null });
 });
 
