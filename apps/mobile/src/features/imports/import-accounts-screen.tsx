@@ -95,6 +95,11 @@ export function ImportAccountsScreen(): React.JSX.Element {
             label="Continue"
             onPress={() => router.push(`/imports/upload/${account.id}`)}
           />
+          <NativeAction
+            label="View import history"
+            tone="secondary"
+            onPress={() => router.push(`/imports/history/${account.id}`)}
+          />
         </NativeActions>
       </Panel>
     </Screen>

@@ -4,6 +4,7 @@ import { NativeAction } from "@/components/native-action";
 import { NativeActions } from "@/components/native-actions";
 import { Screen } from "@/components/screen";
 import { ImportBatchScreen } from "./import-batch-screen";
+import { ImportHistoryScreen } from "./import-history-screen";
 import { ImportScreen } from "./import-screen";
 import { parseAccountRouteId } from "../accounts/route-id";
 
@@ -30,6 +31,13 @@ export function ImportUploadRoute(): React.JSX.Element {
   }>();
   const id = parseAccountRouteId(accountId);
   return id ? <ImportScreen accountId={id} /> : <InvalidLink />;
+}
+export function ImportHistoryRoute(): React.JSX.Element {
+  const { accountId } = useLocalSearchParams<{
+    accountId?: string | string[];
+  }>();
+  const id = parseAccountRouteId(accountId);
+  return id ? <ImportHistoryScreen accountId={id} /> : <InvalidLink />;
 }
 export function ImportBatchRoute({
   screen: BatchScreen = ImportBatchScreen,

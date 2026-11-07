@@ -30,6 +30,8 @@ const messages: Readonly<Record<string, string>> = {
     "This preview expired. Go back and start a new import to upload the file again.",
   PREVIEW_STALE:
     "Activity changed after this preview. Go back and start a new import to upload the file again before committing.",
+  IMPORT_PROTECTED:
+    "This import has later changes or notes, so it cannot be rolled back.",
   IMPORT_BUSY:
     "Another import is still being added. Wait for it to finish, then try again.",
   INVALID_SPLITS:
@@ -82,6 +84,7 @@ export function financeRecovery(
     error.code === "IMPORT_NOT_READY" ||
     error.code === "IMPORT_EXPIRED" ||
     error.code === "PREVIEW_STALE" ||
+    error.code === "IMPORT_PROTECTED" ||
     error.code === "INVALID_TRANSFER"
   )
     return "reload";

@@ -5,18 +5,10 @@ import { NativeAction } from "@/components/native-action";
 import { NativeActions } from "@/components/native-actions";
 import { Panel } from "@/components/panel";
 import { Screen } from "@/components/screen";
+import { actionAllowed } from "./action-input";
+import { stateLabels } from "./import-state-labels";
 import { useImportBatch } from "./use-import-batch";
 
-const stateLabels: Record<ImportBatchResponse["state"], string> = {
-  QUEUED: "Waiting to start",
-  PREVIEWING: "Checking rows",
-  READY: "Preview ready",
-  COMMITTING: "Adding rows to activity",
-  COMMITTED: "Imported",
-  ROLLED_BACK: "Rolled back",
-  FAILED: "Failed",
-  EXPIRED: "Expired",
-};
 const count = (value: number) => value.toLocaleString("en-GB");
 
 export function ImportBatchScreen({
@@ -44,6 +36,9 @@ export function ImportBatchScreen({
           </>
         )}
         {batch.kind === "ready" && <BatchFacts batch={batch.value} />}
+        {batch.kind === "ready" && (
+          <BatchLifecycleActions batchId={batchId} batch={batch.value} />
+        )}
         {batch.kind === "ready" &&
           batch.value.state === "READY" &&
           batch.value.permissions.canCommit && (
@@ -103,5 +98,42 @@ function BatchFacts({
           : "The uploaded original is no longer retained."}
       </AppText>
     </>
+  );
+}
+
+/** Rollback, restore and original deletion, each only when the server grants it. */
+function BatchLifecycleActions({
+  batchId,
+  batch,
+}: {
+  batchId: string;
+  batch: ImportBatchResponse;
+}): React.JSX.Element | null {
+  const router = useRouter();
+  const go = (path: string) => () => router.push(`/imports/${batchId}/${path}`);
+  const rollback = actionAllowed(batch, "rollback");
+  const restore = actionAllowed(batch, "restore");
+  const original = actionAllowed(batch, "original");
+  if (!rollback && !restore && !original) return null;
+  return (
+    <NativeActions>
+      {rollback && (
+        <NativeAction
+          label="Roll back import"
+          tone="secondary"
+          onPress={go("rollback")}
+        />
+      )}
+      {restore && (
+        <NativeAction label="Restore import" onPress={go("restore")} />
+      )}
+      {original && (
+        <NativeAction
+          label="Delete the uploaded file"
+          tone="secondary"
+          onPress={go("original")}
+        />
+      )}
+    </NativeActions>
   );
 }
