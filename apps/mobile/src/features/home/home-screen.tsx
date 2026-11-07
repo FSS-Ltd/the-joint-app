@@ -48,6 +48,11 @@ export function HomeContent(): React.JSX.Element {
               onPress={() => router.push("/activity")}
             />
             <NativeAction
+              label="Import transactions"
+              tone="secondary"
+              onPress={() => router.push("/imports")}
+            />
+            <NativeAction
               label="Choose summary accounts"
               tone="secondary"
               onPress={() => setSelecting(true)}

@@ -40,7 +40,7 @@ manifest hashes the current domain documents, while the project index hashes
 both runtime source and feature documents. Inventory-agent token usage was not
 measured; it is not reported as zero semantic cost.
 
-IOS5 step 3a rebuilt the mobile scope from a fresh worktree snapshot (131 files including routes, 347 nodes, 376 edges at 3a; 366 nodes, 398 edges after 3b; 391 nodes, 425 edges after 3c; 398 nodes, 431 edges after 4a) because the earlier `.local` graphs were not present in this checkout; other scopes were not rebuilt here and are not claimed current for this revision.
+IOS5 step 3a rebuilt the mobile scope from a fresh worktree snapshot (131 files including routes, 347 nodes, 376 edges at 3a; 366 nodes, 398 edges after 3b; 391 nodes, 425 edges after 3c; 398 nodes, 431 edges after 4a; see the progress record for 4b) because the earlier `.local` graphs were not present in this checkout; other scopes were not rebuilt here and are not claimed current for this revision.
 
 ## Native acceptance helper scope
 
