@@ -313,7 +313,7 @@ it("wires routes, tab, Home entry and the dependencies", () => {
   for (const [file, symbol] of [
     ["imports/index.tsx", "ImportAccountsScreen"],
     ["imports/upload/[accountId].tsx", "ImportUploadRoute"],
-    ["imports/[batchId].tsx", "ImportBatchRoute"],
+    ["imports/[batchId]/index.tsx", "ImportBatchRoute"],
   ] as const)
     expect(
       readFileSync(`${root}/app/(workspace)/${file}`, "utf8"),

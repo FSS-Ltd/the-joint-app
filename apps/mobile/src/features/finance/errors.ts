@@ -20,6 +20,18 @@ const messages: Readonly<Record<string, string>> = {
     "That classification does not fit this amount. Discard this draft and reload to choose another.",
   INVALID_TRANSFER:
     "Those entries cannot be paired as a transfer. Discard this draft and reload to choose again.",
+  IMPORT_REVIEW_REQUIRED:
+    "Choose Keep or Skip for every possible overlap before committing. Reload to see what is left.",
+  IMPORT_REJECTS_UNCONFIRMED:
+    "Confirm that the rejected rows will not be imported. Reload, then confirm again.",
+  IMPORT_NOT_READY:
+    "This import is not ready for that. Reload to see its latest state.",
+  IMPORT_EXPIRED:
+    "This preview expired. Go back and start a new import to upload the file again.",
+  PREVIEW_STALE:
+    "Activity changed after this preview. Go back and start a new import to upload the file again before committing.",
+  IMPORT_BUSY:
+    "Another import is still being added. Wait for it to finish, then try again.",
   INVALID_SPLITS:
     "Those split amounts were not accepted. Discard this draft and reload to enter them again.",
 };
@@ -65,6 +77,11 @@ export function financeRecovery(
     error.code === "CLASSIFICATION_LOCKED" ||
     error.code === "INVALID_CLASSIFICATION" ||
     error.code === "INVALID_SPLITS" ||
+    error.code === "IMPORT_REVIEW_REQUIRED" ||
+    error.code === "IMPORT_REJECTS_UNCONFIRMED" ||
+    error.code === "IMPORT_NOT_READY" ||
+    error.code === "IMPORT_EXPIRED" ||
+    error.code === "PREVIEW_STALE" ||
     error.code === "INVALID_TRANSFER"
   )
     return "reload";

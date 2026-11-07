@@ -44,6 +44,21 @@ export function ImportBatchScreen({
           </>
         )}
         {batch.kind === "ready" && <BatchFacts batch={batch.value} />}
+        {batch.kind === "ready" &&
+          batch.value.state === "READY" &&
+          batch.value.permissions.canCommit && (
+            <NativeActions>
+              <NativeAction
+                label="Review rows"
+                onPress={() => router.push(`/imports/${batchId}/review`)}
+              />
+              <NativeAction
+                label="Commit import"
+                tone="secondary"
+                onPress={() => router.push(`/imports/${batchId}/commit`)}
+              />
+            </NativeActions>
+          )}
         <NativeActions>
           <NativeAction
             label="Back to imports"

@@ -31,8 +31,12 @@ export function ImportUploadRoute(): React.JSX.Element {
   const id = parseAccountRouteId(accountId);
   return id ? <ImportScreen accountId={id} /> : <InvalidLink />;
 }
-export function ImportBatchRoute(): React.JSX.Element {
+export function ImportBatchRoute({
+  screen: BatchScreen = ImportBatchScreen,
+}: {
+  screen?: React.ComponentType<{ batchId: string }>;
+} = {}): React.JSX.Element {
   const { batchId } = useLocalSearchParams<{ batchId?: string | string[] }>();
   const id = parseAccountRouteId(batchId);
-  return id ? <ImportBatchScreen batchId={id} /> : <InvalidLink />;
+  return id ? <BatchScreen batchId={id} /> : <InvalidLink />;
 }

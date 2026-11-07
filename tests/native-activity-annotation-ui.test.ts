@@ -68,11 +68,15 @@ function splitScreen(
 }
 function boundary(state: ReturnType<typeof session>, mutation = "idle") {
   const replace = vi.fn();
+  const shared = load("writes/entity-write-boundary.tsx", {
+    "expo-router": { useRouter: () => ({ replace }) },
+    "../accounts/write-feedback": { WriteFeedback: "feedback" },
+    "./use-entity-write": {},
+  });
   const tree = (
     load("activity/transaction-write-boundary.tsx", {
       "@joint/domain/cash-flow": domain,
-      "expo-router": { useRouter: () => ({ replace }) },
-      "../accounts/write-feedback": { WriteFeedback: "feedback" },
+      "../writes/entity-write-boundary": shared,
       "./use-transaction-write": {},
     }).TransactionWriteBoundary as (props: unknown) => unknown
   )({
@@ -81,7 +85,12 @@ function boundary(state: ReturnType<typeof session>, mutation = "idle") {
     title: "Title",
     children: { type: "form", props: { label: "FORM" } },
   });
-  return { tree, replace };
+  // The wrapper only forwards to the shared boundary; render that boundary's own output.
+  const element = tree as {
+    type: (props: unknown) => unknown;
+    props: unknown;
+  };
+  return { tree: element.type(element.props), replace };
 }
 
 it("annotation saves through the session and exposes every permitted field", () => {
