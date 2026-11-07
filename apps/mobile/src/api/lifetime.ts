@@ -1,13 +1,20 @@
 import { NativeApiError } from "./errors";
 
+export const requestDeadlineMs = 15000;
+/** Enough for a maximum-size CSV on a slow link; JSON requests keep the short deadline. */
+export const csvUploadDeadlineMs = 120000;
+
 /** One explicit operation owns its deadline, cancellation and asynchronous fences. */
 export class RequestLifetime {
   readonly controller = new AbortController();
   private readonly timeout: ReturnType<typeof setTimeout>;
   private readonly cancel = () => this.close();
 
-  constructor(private readonly caller: AbortSignal) {
-    this.timeout = setTimeout(this.cancel, 15000);
+  constructor(
+    private readonly caller: AbortSignal,
+    deadlineMs = requestDeadlineMs,
+  ) {
+    this.timeout = setTimeout(this.cancel, deadlineMs);
     caller.addEventListener("abort", this.cancel, { once: true });
     if (caller.aborted) this.close();
   }

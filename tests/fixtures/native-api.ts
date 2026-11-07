@@ -5,12 +5,17 @@ import * as errors from "../../apps/mobile/src/api/errors.js";
 import * as body from "../../apps/mobile/src/api/body.js";
 import * as statusConnection from "../../apps/mobile/src/api/status-connection.js";
 import * as lifetime from "../../apps/mobile/src/api/lifetime.js";
+const csvRequest = sourceExports("apps/mobile/src/api/csv-request.ts", {
+  "@joint/contracts": contracts,
+  "./errors": errors,
+});
 const transport = sourceExports("apps/mobile/src/api/request.ts", {
   "@joint/contracts": contracts,
   "@clerk/expo": { isClerkAPIResponseError: sdkErrors.isClerkAPIResponseError },
   "./send": {
     nativeSend: (...args: Parameters<typeof fetch>) => fetch(...args),
   },
+  "./csv-request": csvRequest,
   "./errors": errors,
   "./body": body,
   "./lifetime": lifetime,

@@ -6,9 +6,10 @@ import {
   statusSubscriptionQuery,
 } from "@joint/contracts";
 import { discardBody, maximumJsonBytes, readJson } from "./body";
+import { csvRequest } from "./csv-request";
 import { errorCode, NativeApiError } from "./errors";
 import { statusConnection } from "./status-connection";
-import { RequestLifetime } from "./lifetime";
+import { csvUploadDeadlineMs, RequestLifetime } from "./lifetime";
 import type {
   NativeRequestOptions,
   NativeResponse,
@@ -89,12 +90,22 @@ export function createNativeTransport(
       (path !== "auth/logout/retry" || options.method !== "POST")
     )
       throw new NativeApiError(401);
+    if (
+      options.csv &&
+      (options.body !== undefined || options.method !== "POST")
+    )
+      throw new NativeApiError(0);
+    const csv = options.csv ? csvRequest(options.csv) : undefined;
     const body =
-      options.body === undefined ? undefined : JSON.stringify(options.body);
+      csv !== undefined
+        ? csv.body
+        : options.body === undefined
+          ? undefined
+          : JSON.stringify(options.body);
     if (options.method === "GET" && body !== undefined)
       throw new NativeApiError(0);
     if (
-      body !== undefined &&
+      typeof body === "string" &&
       new TextEncoder().encode(body).byteLength > maximumJsonBytes
     )
       throw new NativeApiError(0);
@@ -109,7 +120,8 @@ export function createNativeTransport(
     const headers = await headersFor(options, lifetime);
     lifetime.check();
     headers.Accept = accept;
-    if (body !== undefined) headers["Content-Type"] = "application/json";
+    if (csv) Object.assign(headers, csv.headers);
+    else if (body !== undefined) headers["Content-Type"] = "application/json";
     if (key !== undefined) headers["Idempotency-Key"] = key;
     if (version !== undefined) headers["If-Match"] = version;
     onSend();
@@ -134,7 +146,10 @@ export function createNativeTransport(
       options: NativeRequestOptions,
     ): Promise<T> {
       options = { ...options };
-      const lifetime = new RequestLifetime(options.signal);
+      const lifetime = new RequestLifetime(
+        options.signal,
+        options.csv ? csvUploadDeadlineMs : undefined,
+      );
       let sent = false;
       let status = 0;
       try {

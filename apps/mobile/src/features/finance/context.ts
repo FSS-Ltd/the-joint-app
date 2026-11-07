@@ -1,6 +1,7 @@
 import { createContext, useContext } from "react";
 import type { AccountsApi } from "../../api/accounts";
 import type { WealthApi } from "../../api/wealth";
+import type { ImportsApi } from "../../api/imports";
 import type { TransactionsApi } from "../../api/transactions";
 import type { NativeIdentityBridge } from "../identity/bridge";
 import type { NativeFinanceAuthority } from "./scope";
@@ -11,6 +12,7 @@ export interface NativeFinanceContextValue {
   readonly accounts: AccountsApi;
   readonly wealth: WealthApi;
   readonly transactions: TransactionsApi;
+  readonly imports: ImportsApi;
   isCurrent(authority: NativeFinanceAuthority): boolean;
   reconcile(authority: NativeFinanceAuthority): Promise<void>;
 }
