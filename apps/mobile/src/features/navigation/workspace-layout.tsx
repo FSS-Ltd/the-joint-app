@@ -8,6 +8,13 @@ import { NavigationTabButton } from "./navigation-tab-button";
 import { ConfiguredEntry } from "../identity/configured-entry";
 import { NativeFinanceProvider } from "../finance/provider";
 
+// Reachable from Home links but absent from the bar. A null href hides a tab in expo-router 58
+// in a way that router.push cannot reach, so hide the button instead.
+const hiddenTab = {
+  tabBarButton: () => null,
+  tabBarItemStyle: { display: "none" as const },
+};
+
 function ReadyWorkspace({ me }: { me: MeResponse }): React.JSX.Element {
   const { fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -50,8 +57,8 @@ function ReadyWorkspace({ me }: { me: MeResponse }): React.JSX.Element {
             ),
           }}
         />
-        <Tabs.Screen name="activity" options={{ href: null }} />
-        <Tabs.Screen name="imports" options={{ href: null }} />
+        <Tabs.Screen name="activity" options={hiddenTab} />
+        <Tabs.Screen name="imports" options={hiddenTab} />
         <Tabs.Screen
           name="more"
           options={{
