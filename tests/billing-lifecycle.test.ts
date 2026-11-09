@@ -578,19 +578,18 @@ describe("Billing Lifecycle & Security", () => {
   });
 
   describe("Worker Due-Time Subscription Reconciliation", () => {
-    it("expires past-effective and past-grace subscriptions", async () => {
+    it("expires past-effective and past-grace subscriptions via security definer", async () => {
       let executedSql = "";
       const mockDatabase = {
-        $executeRaw: async (query: unknown) => {
+        $queryRaw: async (query: unknown) => {
           executedSql = JSON.stringify(query);
-          return 2;
+          return [{ expired: 2 }];
         },
       } as unknown as PrismaClient;
 
       const count = await maintainSubscriptions(mockDatabase);
       expect(count).toBe(2);
-      expect(executedSql).toContain("EXPIRED");
-      expect(executedSql).toContain("Subscription");
+      expect(executedSql).toContain("expire_subscriptions");
     });
   });
 });

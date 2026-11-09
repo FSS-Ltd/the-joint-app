@@ -67,6 +67,31 @@ REVOKE ALL ON app."Subscription", app."SubscriptionAudit" FROM PUBLIC, joint_app
 REVOKE ALL ON SEQUENCE app."SubscriptionAudit_id_seq" FROM PUBLIC, joint_app_runtime;
 GRANT SELECT ON app."Subscription" TO joint_app_runtime;
 
+CREATE FUNCTION app.expire_subscriptions() RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog AS $$
+DECLARE affected integer;
+BEGIN
+  WITH expired AS (
+    SELECT id FROM app."Subscription"
+    WHERE status IN ('ACTIVE', 'GRACE_PERIOD', 'CANCELED')
+      AND "effectiveUntil" < clock_timestamp()
+      AND ("graceUntil" IS NULL OR "graceUntil" < clock_timestamp())
+    LIMIT 100
+    FOR UPDATE SKIP LOCKED
+  )
+  UPDATE app."Subscription" s
+  SET status = 'EXPIRED', "updatedAt" = clock_timestamp()
+  FROM expired x
+  WHERE s.id = x.id;
+
+  GET DIAGNOSTICS affected = ROW_COUNT;
+  RETURN affected;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION app.expire_subscriptions() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app.expire_subscriptions() TO joint_app_runtime;
+
 ALTER TABLE app."Subscription" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app."Subscription" FORCE ROW LEVEL SECURITY;
 ALTER TABLE app."SubscriptionAudit" ENABLE ROW LEVEL SECURITY;
