@@ -59,20 +59,26 @@ export function useCompanion({
       const approvedDevice = list.find((d) => d.status === "APPROVED");
       if (approvedDevice) {
         setGrantsLoading(true);
-        const gList = await devicesApi.getAccountGrants(
-          householdId,
-          approvedDevice.id,
-        );
-        setGrants(gList);
-        setGrantsLoading(false);
+        try {
+          const gList = await devicesApi.getAccountGrants(
+            householdId,
+            approvedDevice.id,
+          );
+          setGrants(gList);
+        } finally {
+          setGrantsLoading(false);
+        }
       } else {
         setGrants([]);
       }
 
       setJobsLoading(true);
-      const jList = await devicesApi.listInsightJobs(householdId);
-      setJobs(jList);
-      setJobsLoading(false);
+      try {
+        const jList = await devicesApi.listInsightJobs(householdId);
+        setJobs(jList);
+      } finally {
+        setJobsLoading(false);
+      }
 
       if (accountsApi) {
         const accList = await accountsApi.list(
@@ -80,7 +86,8 @@ export function useCompanion({
           { limit: 100 },
           new AbortController().signal,
         );
-        setAccounts(accList.items.map((i) => ({ id: i.id, name: i.label })));
+        const owned = accList.items.filter((i) => i.ownership === "OWNED");
+        setAccounts(owned.map((i) => ({ id: i.id, name: i.label })));
       }
     } catch (err) {
       setStatusNotice({
@@ -179,7 +186,13 @@ export function useCompanion({
           deviceId,
           [{ accountId, permission }],
         );
-        setGrants(updated);
+        setGrants((prev) => {
+          const map = new Map(prev.map((g) => [g.accountId, g]));
+          for (const item of updated) {
+            map.set(item.accountId, item);
+          }
+          return Array.from(map.values());
+        });
         setStatusNotice({
           text: "Account consent updated.",
           tone: "success",

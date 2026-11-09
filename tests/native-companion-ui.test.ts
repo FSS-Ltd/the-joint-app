@@ -44,7 +44,7 @@ describe("Native Companion UI & API Client (IOS13c)", () => {
     expect(result[0]!.name).toBe("MacBook Air");
     expect(result[0]!.status).toBe("APPROVED");
     expect(mockTransport.request).toHaveBeenCalledWith(
-      `v1/households/${mockHouseholdId}/devices`,
+      `households/${mockHouseholdId}/devices`,
       expect.anything(),
       expect.objectContaining({ method: "GET" }),
     );
@@ -67,7 +67,7 @@ describe("Native Companion UI & API Client (IOS13c)", () => {
     expect(res.pairingCode).toBe("847291");
     expect(res.pairingCode).toHaveLength(6);
     expect(mockTransport.request).toHaveBeenCalledWith(
-      `v1/households/${mockHouseholdId}/devices/pairing`,
+      `households/${mockHouseholdId}/devices/pairing`,
       expect.anything(),
       expect.objectContaining({
         method: "POST",
@@ -104,7 +104,7 @@ describe("Native Companion UI & API Client (IOS13c)", () => {
 
     expect(res.status).toBe("APPROVED");
     expect(mockTransport.request).toHaveBeenCalledWith(
-      `v1/households/${mockHouseholdId}/devices/${mockDeviceId}/approve`,
+      `households/${mockHouseholdId}/devices/${mockDeviceId}/approve`,
       expect.anything(),
       expect.objectContaining({
         method: "POST",
@@ -144,7 +144,7 @@ describe("Native Companion UI & API Client (IOS13c)", () => {
     );
     expect(updated[0]!.permission).toBe("TOTALS");
     expect(mockTransport.request).toHaveBeenLastCalledWith(
-      `v1/households/${mockHouseholdId}/devices/${mockDeviceId}/account-grants`,
+      `households/${mockHouseholdId}/devices/${mockDeviceId}/account-grants`,
       expect.anything(),
       expect.objectContaining({
         method: "PUT",
@@ -162,7 +162,7 @@ describe("Native Companion UI & API Client (IOS13c)", () => {
     await api.revokeDevice(mockHouseholdId, mockDeviceId);
 
     expect(mockTransport.request).toHaveBeenCalledWith(
-      `v1/households/${mockHouseholdId}/devices/${mockDeviceId}`,
+      `households/${mockHouseholdId}/devices/${mockDeviceId}`,
       expect.anything(),
       expect.objectContaining({ method: "DELETE" }),
     );

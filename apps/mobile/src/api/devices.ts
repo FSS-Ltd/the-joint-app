@@ -1,6 +1,8 @@
 import {
   deviceDtoSchema,
+  startPairingRequestSchema,
   startPairingResponseSchema,
+  createInsightJobRequestSchema,
   insightJobDtoSchema,
   deviceListSchema,
   deviceAccountGrantsListSchema,
@@ -27,7 +29,7 @@ export function createDevicesApi(transport: NativeTransport) {
     ): Promise<DeviceDto[]> {
       const cleanHouseholdId = idempotencyKeySchema.parse(householdId);
       return transport.request(
-        `v1/households/${cleanHouseholdId}/devices`,
+        `households/${cleanHouseholdId}/devices`,
         deviceListSchema,
         {
           method: "GET",
@@ -42,12 +44,15 @@ export function createDevicesApi(transport: NativeTransport) {
       signal?: AbortSignal,
     ): Promise<StartPairingResponse> {
       const cleanHouseholdId = idempotencyKeySchema.parse(householdId);
+      const body = startPairingRequestSchema.parse(
+        name !== undefined ? { name } : {},
+      );
       return transport.request(
-        `v1/households/${cleanHouseholdId}/devices/pairing`,
+        `households/${cleanHouseholdId}/devices/pairing`,
         startPairingResponseSchema,
         {
           method: "POST",
-          body: { name },
+          body,
           signal: signal ?? new AbortController().signal,
         },
       );
@@ -62,7 +67,7 @@ export function createDevicesApi(transport: NativeTransport) {
       const cleanHouseholdId = idempotencyKeySchema.parse(householdId);
       const cleanDeviceId = idempotencyKeySchema.parse(deviceId);
       return transport.request(
-        `v1/households/${cleanHouseholdId}/devices/${cleanDeviceId}/approve`,
+        `households/${cleanHouseholdId}/devices/${cleanDeviceId}/approve`,
         deviceDtoSchema,
         {
           method: "POST",
@@ -80,7 +85,7 @@ export function createDevicesApi(transport: NativeTransport) {
       const cleanHouseholdId = idempotencyKeySchema.parse(householdId);
       const cleanDeviceId = idempotencyKeySchema.parse(deviceId);
       return transport.request(
-        `v1/households/${cleanHouseholdId}/devices/${cleanDeviceId}/account-grants`,
+        `households/${cleanHouseholdId}/devices/${cleanDeviceId}/account-grants`,
         deviceAccountGrantsListSchema,
         {
           method: "GET",
@@ -98,7 +103,7 @@ export function createDevicesApi(transport: NativeTransport) {
       const cleanHouseholdId = idempotencyKeySchema.parse(householdId);
       const cleanDeviceId = idempotencyKeySchema.parse(deviceId);
       return transport.request(
-        `v1/households/${cleanHouseholdId}/devices/${cleanDeviceId}/account-grants`,
+        `households/${cleanHouseholdId}/devices/${cleanDeviceId}/account-grants`,
         deviceAccountGrantsListSchema,
         {
           method: "PUT",
@@ -116,7 +121,7 @@ export function createDevicesApi(transport: NativeTransport) {
       const cleanHouseholdId = idempotencyKeySchema.parse(householdId);
       const cleanDeviceId = idempotencyKeySchema.parse(deviceId);
       return transport.request(
-        `v1/households/${cleanHouseholdId}/devices/${cleanDeviceId}`,
+        `households/${cleanHouseholdId}/devices/${cleanDeviceId}`,
         emptyResponseSchema,
         {
           method: "DELETE",
@@ -131,7 +136,7 @@ export function createDevicesApi(transport: NativeTransport) {
     ): Promise<InsightJobDto[]> {
       const cleanHouseholdId = idempotencyKeySchema.parse(householdId);
       return transport.request(
-        `v1/households/${cleanHouseholdId}/insights/jobs`,
+        `households/${cleanHouseholdId}/insights/jobs`,
         insightJobListSchema,
         {
           method: "GET",
@@ -146,12 +151,13 @@ export function createDevicesApi(transport: NativeTransport) {
       signal?: AbortSignal,
     ): Promise<InsightJobDto> {
       const cleanHouseholdId = idempotencyKeySchema.parse(householdId);
+      const body = createInsightJobRequestSchema.parse(input);
       return transport.request(
-        `v1/households/${cleanHouseholdId}/insights/jobs`,
+        `households/${cleanHouseholdId}/insights/jobs`,
         insightJobDtoSchema,
         {
           method: "POST",
-          body: input,
+          body,
           signal: signal ?? new AbortController().signal,
         },
       );
@@ -165,7 +171,7 @@ export function createDevicesApi(transport: NativeTransport) {
       const cleanHouseholdId = idempotencyKeySchema.parse(householdId);
       const cleanJobId = idempotencyKeySchema.parse(jobId);
       return transport.request(
-        `v1/households/${cleanHouseholdId}/insights/jobs/${cleanJobId}`,
+        `households/${cleanHouseholdId}/insights/jobs/${cleanJobId}`,
         insightJobDtoSchema,
         {
           method: "GET",

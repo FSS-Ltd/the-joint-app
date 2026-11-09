@@ -1,6 +1,7 @@
 import {
   ActivityIndicator,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   View,
@@ -50,6 +51,7 @@ export function CompanionScreen({
     createJobPending,
     statusNotice,
     clearStatusNotice,
+    loadDevices,
     startPairing,
     approveDevice,
     revokeDevice,
@@ -63,7 +65,16 @@ export function CompanionScreen({
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={() => void loadDevices()}
+            tintColor={colors.action}
+          />
+        }
+      >
         {onBack && (
           <NativeActions>
             <NativeAction label="Back" tone="text" compact onPress={onBack} />
