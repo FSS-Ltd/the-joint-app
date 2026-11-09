@@ -27,9 +27,11 @@ type Path =
   | `/v1/households/${string}/reports/spending`
   | `/v1/households/${string}/categories`
   | `/v1/households/${string}/budgets/${string}`
-  | `/v1/households/${string}/transfers/${string}`;
+  | `/v1/households/${string}/transfers/${string}`
+  | "/v1/staff/analytics/metrics"
+  | "/v1/staff/analytics/retention-cohorts";
 const allowedPath =
-  /^\/v1\/(?:auth\/(?:session|signup|login|verify|recovery|password|logout(?:\/retry)?|link-legacy|mfa\/(?:enroll|verify))|me|households(?:\/[0-9a-f-]{36}\/(?:invitations|accounts(?:\/[0-9a-f-]{36}(?:\/(?:valuations|coverage\/\d{4}-\d{2}|grants\/[0-9a-f-]{36}))?)?|imports(?:\/(?:inspect|preview|[0-9a-f-]{36}(?:\/(?:rows|review|commit|original))?))?|reports\/spending|categories|budgets\/\d{4}-\d{2}|transfers\/(?:confirm|[0-9a-f-]{36})|transactions(?:\/[0-9a-f-]{36}(?:\/(?:annotation|splits))?)?))?|invitations\/accept)$/i;
+  /^\/v1\/(?:auth\/(?:session|signup|login|verify|recovery|password|logout(?:\/retry)?|link-legacy|mfa\/(?:enroll|verify))|me|staff\/analytics\/(?:metrics|retention-cohorts)|households(?:\/[0-9a-f-]{36}\/(?:invitations|accounts(?:\/[0-9a-f-]{36}(?:\/(?:valuations|coverage\/\d{4}-\d{2}|grants\/[0-9a-f-]{36}))?)?|imports(?:\/(?:inspect|preview|[0-9a-f-]{36}(?:\/(?:rows|review|commit|original))?))?|reports\/spending|categories|budgets\/\d{4}-\d{2}|transfers\/(?:confirm|[0-9a-f-]{36})|transactions(?:\/[0-9a-f-]{36}(?:\/(?:annotation|splits))?)?))?|invitations\/accept)$/i;
 const safeErrors: Record<string, string> = {
   INVALID_SCOPE: "Choose between one and fifty available accounts.",
   SCOPE_SELECTION_REQUIRED: "Choose up to fifty accounts for this report.",
@@ -173,14 +175,22 @@ export async function upstream(
       knownMessage ??
       (status === 401
         ? "Sign-in failed or your session has expired. Check your details and try again."
-        : status === 429
-          ? "Too many requests. Please wait a moment and try again."
-          : status === 503
-            ? "This service is unavailable. Please try again shortly."
-            : "This request could not be completed. Check your details and try again.");
+        : status === 403
+          ? "Staff authority required to access commercial metrics."
+          : status === 429
+            ? "Too many requests. Please wait a moment and try again."
+            : status === 503
+              ? "This service is unavailable. Please try again shortly."
+              : "This request could not be completed. Check your details and try again.");
     throw new BffError(
       status,
-      knownMessage ? code : status === 401 ? "UNAUTHORIZED" : "REQUEST_FAILED",
+      knownMessage
+        ? code
+        : status === 401
+          ? "UNAUTHORIZED"
+          : status === 403
+            ? "FORBIDDEN"
+            : "REQUEST_FAILED",
       message,
     );
   }
