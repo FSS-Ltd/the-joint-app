@@ -24,3 +24,7 @@ export function formatMoney(money: Money): string {
 export function isLiabilityKind(kind: string): boolean {
   return ["CREDIT_CARD", "LOAN", "MORTGAGE", "OTHER_LIABILITY"].includes(kind);
 }
+
+export * from "./spending/precedence.js";
+export * from "./spending/recurring-costs.js";
+export * from "./spending/baselines.js";

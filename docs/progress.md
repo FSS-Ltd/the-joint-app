@@ -1792,3 +1792,42 @@ Local checks (Node 22.23.3):
 - Prettier clean (`pnpm format:check`).
 - Mobile bundle exports clean (`pnpm --filter @joint/mobile bundle:ios` and `bundle:android`).
 - Feature tree updated in `docs/features/platform.md` (`#exports`, `#privacy`, `#archive`) and `docs/features/identity.md` (`#native_api`).
+
+Host merge verified: [PR54](https://github.com/FSS-Ltd/the-joint-app/pull/54) was merged into `main` at 2026-11-09T12:16:35Z at commit `e4a5b604615b8c25e0bfa27c8185c5482b0f938f`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS7a and closes PR54.
+
+## IOS7b - Recurring categories and complete-month baselines
+
+Predecessor verified on the host before starting: [PR54](https://github.com/FSS-Ltd/the-joint-app/pull/54) merged at `e4a5b604615b8c25e0bfa27c8185c5482b0f938f`. Step IOS7b starts from that merge on branch `feat/ios7b-recurring-baselines`.
+
+Deliverables implemented and verified:
+
+- Domain logic and arithmetic (`packages/domain/src/spending/`):
+  - Category precedence (`precedence.ts`): explicit transaction override > enabled owner rule > provider category > null/uncategorized.
+  - Recurring costs detection (`recurring-costs.ts`): pure detector over booked consumption transactions across 180 days (minimum 3 occurrences, weekly 6-8 day gap, monthly 25-35 day gap, variable amounts with median and mean estimates, refund and transfer exclusions, and overlapping proposed reductions combiner).
+  - Complete-month baselines (`baselines.ts`): deterministic 3, 6, and 12 complete-month baselines requiring verified complete account coverage. Flags missing months as incomplete data, counts genuine zero-income complete months, and computes nearest-rank 25th percentile for 12-month variable income.
+- Database schema and migration (`packages/database/`):
+  - Added `CategorisationRule` model with relation fields on `Household` and `Membership`.
+  - Migration `20261109120000_categorisation_rules` creates table `app.CategorisationRule` with RLS policies (`rule_read`, `rule_create`, `rule_update`, `rule_delete`) restricted to household and author membership.
+- Shared contracts (`packages/contracts/src/`):
+  - Added schemas and DTOs: `categorisationRuleCreateSchema`, `categorisationRuleUpdateSchema`, `categorisationRuleSchema`, `categorisationRulesResponseSchema`, `recurringCandidateSchema`, `recurringCostsResponseSchema`, `monthBaselineWindowSchema`, `baselinesReportSchema`.
+- API services and controllers (`apps/api/src/modules/`):
+  - `CategorisationRulesService` and `CategorisationRulesController` (`/v1/households/:householdId/categorisation-rules`): rule CRUD with `categorisation.automation` capability check on create/update, author ownership enforcement, and free read/delete access on downgrade.
+  - `RecurringCostsReportService` and `BaselinesReportService`: wired into `ReportsController` (`GET recurring-costs`, `GET reports/baselines`).
+- Native mobile integration and UI (`apps/mobile/`):
+  - API methods: `readRecurringCosts`, `readBaselines`, `listRules`, `createRule`, `deleteRule` in `apps/mobile/src/api/spending.ts`.
+  - `RecurringCard` (`apps/mobile/src/features/budgets/recurring-card.tsx`): candidate rows, cadence badge, variable bill badge, formatted median amount, and empty state.
+  - `BaselinesCard` (`apps/mobile/src/features/budgets/baselines-card.tsx`): proposed baseline spend/income highlight, 3/6/12 month complete window comparisons, 25th percentile conservative estimate, and insufficient history guidance.
+  - `useRecurringData` (`apps/mobile/src/features/budgets/use-recurring-data.ts`): reactive lifetime-fenced hook with 401 revocation and reconciliation.
+  - Integrated into `BudgetScreen` and added rule creation control in `TransactionDetailScreen`.
+- Local verification suites:
+  - 1,061 unit tests passing across all 140 test files (`pnpm test`).
+  - Added `tests/recurring-costs-and-baselines.test.ts` (18/18 tests passed).
+  - Added `tests/categorisation-rules.integration.ts` (6/6 tests passed).
+  - Added `tests/recurring-costs-api.integration.ts` (2/2 tests passed).
+  - Added `tests/native-recurring-ui.test.ts` (4/4 tests passed).
+  - Verified structure guards: `tests/native-structure-guards.test.ts` (2/2 tests passed, 0 stray actions).
+  - Full typecheck clean (`pnpm typecheck`).
+  - ESLint clean (`pnpm lint`).
+  - Prettier clean (`pnpm format:check`).
+  - Native iOS and Android bundle exports clean (`pnpm --filter @joint/mobile bundle:ios` and `bundle:android`).
+  - Feature tree updated in `FEATURE_TREE.md` and `docs/features/finance.md` (`#recurring`).

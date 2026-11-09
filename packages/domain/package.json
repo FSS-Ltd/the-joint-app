@@ -27,6 +27,10 @@
     "./goals": {
       "types": "./dist/goals/index.d.ts",
       "import": "./dist/goals/index.js"
+    },
+    "./spending": {
+      "types": "./dist/spending/index.d.ts",
+      "import": "./dist/spending/index.js"
     }
   },
   "scripts": {

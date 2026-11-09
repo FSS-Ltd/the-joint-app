@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import type { TransactionResponse } from "@joint/contracts";
 import { formatAggregateMoney } from "@joint/domain/cash-flow";
@@ -6,6 +8,7 @@ import { NativeAction } from "@/components/native-action";
 import { NativeActions } from "@/components/native-actions";
 import { Panel } from "@/components/panel";
 import { Screen } from "@/components/screen";
+import { useNativeFinance } from "../finance/context";
 import { annotationFields } from "./annotation-input";
 import { splitsAllowed } from "./split-input";
 import { transferLinkAllowed, transferRemovable } from "./transfer-input";
@@ -50,52 +53,112 @@ function TransactionActions({
   transaction: TransactionResponse;
 }): React.JSX.Element | null {
   const router = useRouter();
+  const { authority, spending } = useNativeFinance();
+  const [ruleStatus, setRuleStatus] = useState<string | null>(null);
+  const [creatingRule, setCreatingRule] = useState(false);
+
   const go = (path: string) => () =>
     router.push(`/activity/${transaction.id}/${path}`);
   const canAnnotate = Object.values(annotationFields(transaction)).some(
     Boolean,
   );
+  const canCreateRule =
+    transaction.category !== null &&
+    (transaction.merchant !== null ||
+      transaction.description.trim().length > 0);
+
+  const handleCreateRule = async () => {
+    if (!authority || creatingRule) return;
+    const merchantPattern =
+      transaction.merchant?.trim() || transaction.description.trim();
+    if (!merchantPattern || !transaction.category) return;
+    setCreatingRule(true);
+    setRuleStatus(null);
+    try {
+      await spending.createRule(authority.householdId, {
+        merchantPattern,
+        category: transaction.category,
+        priority: 100,
+        enabled: true,
+      });
+      setRuleStatus(`Automated future categorisation for ${merchantPattern}.`);
+    } catch (err: unknown) {
+      const errorObj = err as { status?: number; message?: string };
+      if (
+        errorObj?.status === 403 ||
+        errorObj?.message?.includes("CAPABILITY_UNAVAILABLE")
+      ) {
+        setRuleStatus("Plus plan required to automate categorisation rules.");
+      } else {
+        setRuleStatus("Could not create rule. Try again later.");
+      }
+    } finally {
+      setCreatingRule(false);
+    }
+  };
+
   if (
     !canAnnotate &&
+    !canCreateRule &&
     !splitsAllowed(transaction) &&
     !transferLinkAllowed(transaction) &&
     !transferRemovable(transaction)
   )
     return null;
+
   return (
-    <NativeActions>
-      {canAnnotate && (
-        <NativeAction
-          label="Edit classification and note"
-          onPress={go("annotate")}
-        />
-      )}
-      {splitsAllowed(transaction) && (
-        <NativeAction
-          label={
-            transaction.splits.length > 0
-              ? "Edit split"
-              : "Split across categories"
-          }
+    <View style={styles.actionsContainer}>
+      <NativeActions>
+        {canAnnotate && (
+          <NativeAction
+            label="Edit classification and note"
+            onPress={go("annotate")}
+          />
+        )}
+        {canCreateRule && (
+          <NativeAction
+            label="Automate rule for this merchant"
+            tone="secondary"
+            pending={creatingRule}
+            onPress={handleCreateRule}
+          />
+        )}
+        {splitsAllowed(transaction) && (
+          <NativeAction
+            label={
+              transaction.splits.length > 0
+                ? "Edit split"
+                : "Split across categories"
+            }
+            tone="secondary"
+            onPress={go("splits")}
+          />
+        )}
+        {transferLinkAllowed(transaction) && (
+          <NativeAction
+            label="Link a transfer"
+            tone="secondary"
+            onPress={go("transfer")}
+          />
+        )}
+        {transferRemovable(transaction) && (
+          <NativeAction
+            label="Remove transfer pair"
+            tone="secondary"
+            onPress={go("remove-transfer")}
+          />
+        )}
+      </NativeActions>
+      {ruleStatus && (
+        <AppText
+          accessibilityLiveRegion="polite"
           tone="secondary"
-          onPress={go("splits")}
-        />
+          style={styles.ruleStatus}
+        >
+          {ruleStatus}
+        </AppText>
       )}
-      {transferLinkAllowed(transaction) && (
-        <NativeAction
-          label="Link a transfer"
-          tone="secondary"
-          onPress={go("transfer")}
-        />
-      )}
-      {transferRemovable(transaction) && (
-        <NativeAction
-          label="Remove transfer pair"
-          tone="secondary"
-          onPress={go("remove-transfer")}
-        />
-      )}
-    </NativeActions>
+    </View>
   );
 }
 
@@ -155,3 +218,13 @@ function TransactionFacts({
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  actionsContainer: {
+    gap: 8,
+  },
+  ruleStatus: {
+    fontSize: 13,
+    paddingTop: 4,
+  },
+});

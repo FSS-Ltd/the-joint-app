@@ -27,7 +27,11 @@ import { TransactionMutations } from "../transactions/transaction-mutations.js";
 import { TransactionAnnotations } from "../transactions/transaction-annotations.js";
 import { TransactionSplits } from "../transactions/transaction-splits.js";
 import { ReportService } from "../reports/report.service.js";
+import { RecurringCostsService } from "../reports/recurring-costs.service.js";
+import { BaselinesService } from "../reports/baselines.service.js";
 import { CategoriesService } from "../categories/category.service.js";
+import { CategorisationRulesService } from "../categories/rules.service.js";
+import { createCategorisationRulesController } from "../categories/rules.controller.js";
 import { BudgetMutations } from "../budgets/budget-mutations.js";
 import { AccountCoverage } from "../accounts/account-coverage.js";
 import { createReportsController } from "../reports/reports.controller.js";
@@ -83,6 +87,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       createAccountsController(),
       createImportsController(),
       createTransactionsController(),
+      createCategorisationRulesController(),
       createReportsController(),
       createWealthController(),
       createFundingEvidenceController(),
@@ -112,6 +117,10 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   const wealth = new WealthService(scoped);
   const deletions = new DeletionRepository(database);
   const reports = new ReportService(scoped);
+  const recurring = new RecurringCostsService(scoped);
+  const baselines = new BaselinesService(scoped);
+  const entitlements = new EntitlementService(scoped);
+  const rules = new CategorisationRulesService(scoped, entitlements);
   const archive = new ArchiveDatabase(database);
   const journal = options.privacyJournalPath
     ? new PrivacyJournal(options.privacyJournalPath)
@@ -184,7 +193,11 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
     createArchiveExportsController(exports ? { identity, exports } : undefined),
     createEntitlementsController({
       identity,
-      entitlements: new EntitlementService(scoped),
+      entitlements,
+    }),
+    createCategorisationRulesController({
+      identity,
+      rules,
     }),
     createTransfersController({
       identity,
@@ -194,6 +207,8 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       identity,
       reports,
       categories: new CategoriesService(scoped),
+      recurring,
+      baselines,
     }),
     createBudgetsController({
       identity,

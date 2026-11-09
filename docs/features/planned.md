@@ -18,18 +18,6 @@ Part of the [canonical feature tree](../../FEATURE_TREE.md). Status describes th
 
 <a id="recurring"></a>
 
-## RECURRING — Recurring categories and complete-month baselines
-
-- **Status:** `planned`. **Purpose:** Confirm recurring rules and deterministic 3/6/12 complete-month baselines.
-- **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) — `IOS7b — Recurring categories and complete-month baselines`.
-- **Canonical implementation:** No runtime implementation yet; use the cited plan.
-- **Depends on / reuses:** [ACTIVITY](finance.md#activity), [ENTITLEMENTS](platform.md#entitlements), [SPENDING](finance.md#spending).
-- **Used by:** [SAVINGS](planned.md#savings).
-- **Permission / data boundary:** Manual overrides, variable income confirmation, transfers/refunds and missing months must remain explicit.
-- **Verification references:** No executable feature acceptance established; the linked plan defines the required evidence.
-- **Graphify navigation:** scopes `features; future runtime nodes are absent`; query `RECURRING` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_RECURRING`.
-- **Debug / reuse / limits:** No recurring engine or native rule UI is claimed. Extend existing annotation/cadence contracts under IOS7b.
-
 <a id="savings"></a>
 
 ## SAVINGS — Savings impact and goal timeline feedback

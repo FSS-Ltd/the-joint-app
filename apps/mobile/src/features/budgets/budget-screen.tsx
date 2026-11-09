@@ -11,11 +11,14 @@ import { colors } from "@/theme/tokens";
 import { useNativeFinance } from "../finance/context";
 import { financeAuthorityKey } from "../finance/scope";
 import { CapCard } from "./cap-card";
+import { RecurringCard } from "./recurring-card";
+import { BaselinesCard } from "./baselines-card";
 import { BudgetEditor } from "./budget-editor";
 import { categoryActual } from "./cap-math";
 import { currentMobileMonth, previousMonth, nextMonth } from "./month-helpers";
 import { MonthSelector } from "./month-selector";
 import { useSpendingReport } from "./use-spending-report";
+import { useRecurringData } from "./use-recurring-data";
 
 export function CapList({
   report,
@@ -30,6 +33,7 @@ export function CapList({
 }): React.JSX.Element {
   const router = useRouter();
   const { spending } = useNativeFinance();
+  const recurringData = useRecurringData();
   const lines = report.budget?.lines ?? [];
 
   if (report.scope.length === 0) {
@@ -96,6 +100,14 @@ export function CapList({
         onSaved={onBudgetSaved}
         onReload={onReload}
       />
+
+      {recurringData.recurring && (
+        <RecurringCard candidates={recurringData.recurring.candidates} />
+      )}
+
+      {recurringData.baselines && (
+        <BaselinesCard report={recurringData.baselines} />
+      )}
     </>
   );
 }
