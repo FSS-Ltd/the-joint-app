@@ -113,6 +113,7 @@ model User {
   auditEvents AuditEvent[]
   pairedDevices Device[]
   insightJobs InsightJob[]
+  staffMembers StaffMember[]
   @@schema("app")
 }
 model Membership {
@@ -1240,5 +1241,61 @@ model InsightJob {
   @@index([householdId, status])
   @@index([status, leaseExpiresAt])
   @@index([assignedDeviceId, status])
+  @@schema("app")
+}
+
+enum StaffRole {
+  ANALYTICS_VIEWER
+  STAFF_ADMIN
+  @@schema("app")
+}
+
+model StaffMember {
+  id              String      @id @default(uuid()) @db.Uuid
+  userId          String      @db.Uuid
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role            StaffRole   @default(ANALYTICS_VIEWER)
+  grantedByUserId String?     @db.Uuid
+  revokedAt       DateTime?   @db.Timestamptz(3)
+  createdAt       DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime    @updatedAt @db.Timestamptz(3)
+
+  auditEvents     StaffAudit[]
+
+  @@unique([userId, role])
+  @@index([userId, revokedAt])
+  @@schema("app")
+}
+
+model StaffAudit {
+  id              BigInt      @id @default(autoincrement())
+  staffMemberId   String      @db.Uuid
+  staffMember     StaffMember @relation(fields: [staffMemberId], references: [id], onDelete: Restrict)
+  userId          String      @db.Uuid
+  action          String      @db.VarChar(120)
+  targetResource  String?     @db.VarChar(120)
+  createdAt       DateTime    @default(now()) @db.Timestamptz(3)
+
+  @@index([userId, createdAt])
+  @@index([staffMemberId, createdAt])
+  @@schema("app")
+}
+
+model AnalyticsLifecycleEvent {
+  id              String      @id @default(uuid()) @db.Uuid
+  eventId         String      @unique @db.VarChar(120)
+  eventType       String      @db.VarChar(80)
+  eventVersion    Int         @default(1)
+  opaqueSubjectId String      @db.VarChar(64)
+  subjectType     String      @db.VarChar(20)
+  occurredAt      DateTime    @db.Timestamptz(3)
+  isSandbox       Boolean     @default(false)
+  isTestAccount   Boolean     @default(false)
+  payload         Json
+  createdAt       DateTime    @default(now()) @db.Timestamptz(3)
+
+  @@index([eventType, occurredAt])
+  @@index([opaqueSubjectId, occurredAt])
+  @@index([isSandbox, isTestAccount, occurredAt])
   @@schema("app")
 }

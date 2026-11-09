@@ -27,3 +27,6 @@ packages/database/src/generated/
 apps/mobile/.expo/
 apps/mobile/ios/
 apps/mobile/android/
+
+# Local Graphify outputs
+graphify-out/

@@ -62,17 +62,17 @@ Part of the [canonical feature tree](../../FEATURE_TREE.md). Status describes th
 
 <a id="staff"></a>
 
-## STAFF — Staff authority and aggregate commercial analytics
+## STAFF - Staff authority and aggregate commercial analytics
 
-- **Status:** `planned`. **Purpose:** Collect minimal lifecycle evidence and show bounded revenue, churn and retention aggregates.
-- **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) — `IOS14 — Staff authorization and minimal analytics collection`.
-- **Canonical implementation:** No runtime implementation yet; use the cited plan.
+- **Status:** `implemented`. **Purpose:** Collect minimal lifecycle evidence and show bounded revenue, churn and retention aggregates.
+- **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) - `IOS14 - Staff authorization and minimal analytics collection`; [apps/api/src/modules/staff/staff.controller.ts](../../apps/api/src/modules/staff/staff.controller.ts).
+- **Canonical implementation:** [packages/contracts/src/staff.ts](../../packages/contracts/src/staff.ts), [apps/api/src/modules/staff/](../../apps/api/src/modules/staff/), [packages/database/prisma/migrations/20261109210000_staff_authorization_and_analytics/migration.sql](../../packages/database/prisma/migrations/20261109210000_staff_authorization_and_analytics/migration.sql).
 - **Depends on / reuses:** [AUTH](identity.md#auth), [BILLING](planned.md#billing), [DATABASE](platform.md#database), [EVENTS](platform.md#events).
-- **Used by:** No implemented consumer identified; future callers must reuse this boundary.
-- **Permission / data boundary:** Separate audited staff authority; household/purchaser roles do not grant access. Suppress cohorts below five server-side and prevent differencing.
-- **Verification references:** No executable feature acceptance established; the linked plan defines the required evidence.
-- **Graphify navigation:** scopes `features; future runtime nodes are absent`; query `STAFF` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_STAFF`.
-- **Debug / reuse / limits:** IOS14/15 are planned. No staff route, production collection or household-finance drill-down exists here.
+- **Used by:** [IOS15 dashboard](../../superpowers/plans/2026-11-02-ios-only-delivery.md).
+- **Permission / data boundary:** Separate audited staff authority; household/purchaser roles do not grant access. Suppress cohorts below five server-side and prevent differencing. Sensitive financial data rejected from analytics payloads.
+- **Verification references:** [tests/staff-analytics.test.ts](../../tests/staff-analytics.test.ts).
+- **Graphify navigation:** scopes `api, contracts, database`; query `StaffAuthService` or `StaffAnalyticsService` or inspect canonical source paths. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_STAFF`.
+- **Debug / reuse / limits:** Implemented under IOS14. Provides least-privilege audited staff access (`ANALYTICS_VIEWER`, `STAFF_ADMIN`), minimal versioned lifecycle and billing events with opaque identifiers, pure metrics engine (MRR, churn, activation, turnover, retention cohorts), and server-side cell suppression (< 5 threshold). Reusable by future staff dashboard (IOS15).
 
 <a id="marketing"></a>
 

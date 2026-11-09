@@ -91,6 +91,9 @@ import {
 import { DevicesService } from "../devices/devices.service.js";
 import { DeviceAuthService } from "../devices/device-auth.service.js";
 import { InsightJobsService } from "../devices/insight-jobs.service.js";
+import { createStaffController } from "../staff/staff.controller.js";
+import { StaffAuthService } from "../staff/staff-auth.service.js";
+import { StaffAnalyticsService } from "../staff/staff-analytics.service.js";
 export type AuthOptions = IdentityAdapterOptions & {
   events?: StatusEventHub;
   clerkWebhook?: { signingSecret: string; instanceId: string };
@@ -131,6 +134,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       createDevicesController(),
       createInsightJobsController(),
       createCompanionController(),
+      createStaffController(),
     ];
   const { database } = options;
   const { identity, vault, legacyLinker, clerkLogout } =
@@ -310,6 +314,10 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       devices: new DevicesService(database, entitlements),
       deviceAuth: new DeviceAuthService(database),
       insightJobs: new InsightJobsService(database, entitlements),
+    }),
+    createStaffController({
+      auth: new StaffAuthService(database, identity),
+      analytics: new StaffAnalyticsService(database),
     }),
   ];
 }
