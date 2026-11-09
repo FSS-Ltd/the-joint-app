@@ -70,6 +70,8 @@ import { createGoalArchiveController } from "../goals/goal-archive.controller.js
 import { FundingEvidenceService } from "../funding-evidence/funding-evidence.service.js";
 import { createFundingEvidenceController } from "../funding-evidence/funding-evidence.controller.js";
 import { createFundingArchiveController } from "../funding-evidence/funding-archive.controller.js";
+import { ProjectionsService } from "../projections/projections.service.js";
+import { createProjectionsController } from "../projections/projections.controller.js";
 import { createEventsController } from "../events/events.controller.js";
 import { StatusResources } from "../events/status-resources.js";
 import type { StatusEventHub } from "../events/status-hub.js";
@@ -106,6 +108,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       createArchiveExportsController(),
       createPrivacyController(),
       createLeaveController(),
+      createProjectionsController(),
     ];
   const { database } = options;
   const { identity, vault, legacyLinker, clerkLogout } =
@@ -136,6 +139,10 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   const allocations = {
     identity,
     allocations: new GoalAllocationService(scoped, archive, vault),
+  };
+  const projections = {
+    identity,
+    projections: new ProjectionsService(scoped, archive, vault, entitlements),
   };
   return [
     createEventsController(
@@ -175,6 +182,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
     }),
     createGoalsController(goals),
     createGoalArchiveController(goals),
+    createProjectionsController(projections),
     createWealthController({ identity, wealth }),
     createPrivacyController({
       identity,

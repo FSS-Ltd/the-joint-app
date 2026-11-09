@@ -1864,3 +1864,37 @@ Deliverables implemented and verified:
 - Independent test suites (`tests/projection-engine.test.ts`):
   - 16 comprehensive unit test cases covering rounding boundaries, hashing stability, golden milestones (ADR-007 / ADR-012), leap years, all calculation statuses, cash breakdown conservation, monotonicity, and a 600-month stress test under 10ms.
 - Feature tree updated in `docs/features/finance.md` (`#projections`).
+
+Host merge verified: [PR56](https://github.com/FSS-Ltd/the-joint-app/pull/56) was merged into `main` at 2026-11-09T13:46:19Z at commit `2aafa26`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS8 and closes PR56.
+
+## IOS9 - Projection persistence and permission-safe API
+
+Predecessor verified on the host before starting: [PR56](https://github.com/FSS-Ltd/the-joint-app/pull/56) merged at `2aafa26`. Step IOS9 starts from that merge on branch `feat/ios9-projection-persistence-api`.
+
+Deliverables implemented and verified:
+
+- Database migration (`packages/database/prisma/migrations/20261109150000_projection_persistence/migration.sql`):
+  - Created `app.write_scenario`, `app.read_scenario`, `app.list_scenarios` with SECURITY DEFINER and tenancy/membership fencing.
+  - Created `app.write_projection_run`, `app.read_projection_run`, `app.list_projection_runs` with atomic ProjectionRun and ProjectionSource persistence in a single transaction.
+  - Resolves source valuations and datasetVersion internally without direct table SELECT queries from runtime role.
+  - Source re-authorisation and staleness detection: evaluates account visibility and flags `PARTIAL_SOURCE` or `STALE_VALUATION` warnings.
+  - Revoked all and granted EXECUTE to `joint_app_runtime`.
+- Shared contracts (`packages/contracts/src/projections.ts`):
+  - Request schemas: `createBasicProjectionRunRequestSchema`, `createScenarioRequestSchema`, `createAdvancedProjectionRunRequestSchema`.
+  - Response DTOs: `scenarioListDtoSchema`, `projectionRunListDtoSchema`, `ScenarioListDto`, `ProjectionRunListDto`.
+  - Re-exported from `@joint/projections` and built across packages.
+- API service and controller (`apps/api/src/modules/projections/`):
+  - `ProjectionsService`: encapsulates `createBasicRun`, `createScenario`, `createAdvancedRun`, `readScenario`, `listScenarios`, `readRun`, `listRuns`.
+  - Capability gating: `projections.basic` for free tier; `projections.advanced` capability check via EntitlementService for scenarios and advanced runs.
+  - Request replay and idempotency caching via `RequestReplay` and `IdentityVault`.
+  - Downgrade preservation: existing scenarios and runs remain readable after subscription expiration.
+  - `ProjectionsController`: REST endpoints under `/v1/households/:householdId/goals/:goalId/projections` and `/v1/households/:householdId/goals/:goalId/scenarios`.
+  - Registered in `IdentityModule`.
+- Local verification:
+  - Integration suite: `tests/projection-api.integration.ts` (5/5 tests passed).
+  - Full unit test suite: 1,077/1,077 tests passed across all 141 files (`pnpm test`).
+  - Strict type checks: `pnpm typecheck` passed (19/19 turbo tasks and test tsconfig).
+  - Linter: `pnpm lint` passed with zero errors.
+  - Prettier: `pnpm format:check` passed clean.
+  - Native iOS and Android bundle exports passed (`bundle:ios` and `bundle:android`).
+  - Feature documentation updated in `docs/features/finance.md` (`#projections`).

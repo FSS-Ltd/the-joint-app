@@ -59,6 +59,9 @@ importers:
       '@joint/entitlements':
         specifier: workspace:*
         version: link:../../packages/entitlements
+      '@joint/projections':
+        specifier: workspace:*
+        version: link:../../packages/projections
       '@nestjs/common':
         specifier: 12.2.0
         version: 12.2.0(reflect-metadata@0.2.2)(rxjs@7.8.2)

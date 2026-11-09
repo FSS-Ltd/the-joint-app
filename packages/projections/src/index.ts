@@ -3,6 +3,13 @@ export type {
   ProjectionResultV1,
   ProjectionRunDto,
   ScenarioDto,
+  BasicProjectionInput,
+  AdvancedProjectionInput,
+  ScenarioListDto,
+  ProjectionRunListDto,
+  CreateBasicProjectionRunRequest,
+  CreateScenarioRequest,
+  CreateAdvancedProjectionRunRequest,
 } from "@joint/contracts";
 
 export {
