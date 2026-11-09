@@ -53,6 +53,27 @@ function importScreen(state: ReturnType<typeof flow>) {
       "./import-boundary": { ImportBoundary: "boundary" },
       "./mapping-fields": { MappingFields: "mapping" },
       "./use-import-flow": { useImportFlow: () => state },
+      "../statements/use-statement-converter": {
+        useStatementConverter: () => ({
+          state: {
+            status: "idle",
+            errorMessage: null,
+            file: null,
+            rows: [],
+            reconciliation: null,
+            pageCount: 0,
+          },
+          pickAndExtract: vi.fn(),
+          toggleRowExcluded: vi.fn(),
+          updateRow: vi.fn(),
+          generateCsvAndHandoff: vi.fn(),
+          cancel: vi.fn(),
+          reset: vi.fn(),
+        }),
+      },
+      "../statements/statement-review-screen": {
+        StatementReviewScreen: () => null,
+      },
     }).ImportScreen as (props: { accountId: string }) => unknown
   )({ accountId: "a" });
   return tree;

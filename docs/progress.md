@@ -2211,3 +2211,72 @@ Host merge verified: [PR66](https://github.com/FSS-Ltd/the-joint-app/pull/66) wa
 ## IOS16: Marketing and web household cutover
 
 Predecessor verified on the host before starting: [PR66](https://github.com/FSS-Ltd/the-joint-app/pull/66) merged at `fa2ff16`. Step IOS16 starts from that merge on branch `feat/ios16-marketing-web-cutover`.
+
+Deliverables implemented and verified:
+
+- Web App Manifest & Offline Shell Realignment:
+  - Aligned `apps/web/app/manifest.ts` with `start_url: "/"` pointing to public root instead of retired desktop dashboard.
+  - Aligned `apps/web/public/offline.html` with explicit iOS cutover notice and verified retry action link pointing to root `/`.
+- Public Marketing Presence (`/`):
+  - Authored truthful marketing content in `apps/web/components/marketing/content.ts` reflecting delivered capabilities (joint budgeting, spending caps, wealth projections, local AI companion, UK/EU privacy-first storage, transparent subscription plans).
+  - Built accessible UI components with Design Craft tokens in `apps/web/components/marketing/`:
+    - `hero.tsx`, `features.tsx`, `pricing.tsx`, `trust.tsx`, `footer.tsx`, `marketing.css`, and root page host `apps/web/app/page.tsx` (`<MarketingPage />`).
+    - Standard skip link, brand header navigation, environment status badge, and keyboard sequence matching accessibility contracts.
+- Web Household Cutover & Migration Regression Reference:
+  - Transitioned desktop household finance routes (`/dashboard`, `/accounts`, `/accounts/[id]`, `/activity`, `/activity/[transactionId]`, `/budgets`, `/review`, `/imports`, `/imports/[batchId]`, `/household`) to point users to native iOS experience with accessible `CutoverNoticeBanner`.
+  - Preserved underlying household workspace DOM components as migration regression reference per `docs/decisions/ios-only-product.md:13,53` ensuring all 181 desktop Playwright browser tests in `pnpm test:e2e` pass green in CI.
+  - Authored dedicated `/cutover` route (`apps/web/app/cutover/page.tsx`) rendering standalone `CutoverNotice` component.
+  - Preserved essential web auth (`/sign-in`, `/sign-up`, `/sign-out`, `/recovery`), account security (`/security`), privacy management (`/settings/privacy`), statutory GDPR deletion (`/privacy/deletion`), full archive export (`/archive`), and verified invitations (`/join`).
+- Staff Endpoint Isolation:
+  - Zero staff analytics endpoints or references exposed in public marketing content or footer navigation.
+- Verification & Reviews:
+  - Authored unit/integration tests in `tests/marketing-cutover.test.ts` (11 tests).
+  - All 154 unit test suites passed (1,365 tests).
+  - Monorepo typecheck clean (21 tasks across 12 packages).
+  - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
+  - Formatter: `pnpm format:check` passed clean.
+  - Web production build: Next.js Turbopack build passed clean.
+  - Mobile iOS bundle: `pnpm --filter @joint/mobile bundle:ios` passed clean.
+  - Independent Code Reviewer and Independent AppSec Reviewer both granted formal APPROVE verdicts.
+
+Host merge verified: [PR67](https://github.com/FSS-Ltd/the-joint-app/pull/67) was merged into `main` at commit `6a12f4a`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS16 and closes PR67.
+
+## IOS17a: Local statement-to-CSV converter
+
+Predecessor verified on the host before starting: [PR67](https://github.com/FSS-Ltd/the-joint-app/pull/67) merged at `6a12f4a`. Step IOS17a starts from that merge on branch `feat/ios17a-statement-converter`.
+
+Deliverables implemented and verified:
+
+- Architecture & Local-Only Boundary:
+  - Authored design doc `docs/superpowers/plans/2026-11-09-ios17a-statement-converter.md` adhering to decision `docs/decisions/statement-to-csv-converter.md` (STMT1).
+  - Enforced zero network statement transmission: all PDF parsing, text extraction, token classification, and balance reconciliation execute in memory on device. Zero cloud upload or third-party AI exposure.
+- Intake Validation & Binary Parsing:
+  - `apps/mobile/src/features/statements/statement-converter.ts`:
+    - `validateStatementFile`: validates `.pdf` extension, local `file:///` URI, path traversal defense, and 10 MiB upper bound.
+    - `extractTextFromPdfBytes`: parses stream objects, text matrices, text commands, detects encrypted PDFs (`/Encrypt`) without throwing, and validates non-empty and 10 MiB byte limits.
+- Layout Parser & Arithmetic Integrity:
+  - Supports both single-column signed amounts and split debit/credit column tables using header column offset slicing.
+  - Implements exact minor-unit integer arithmetic using `BigInt` via `parseAmountToMinor` and `formatMinorToAmountString`.
+  - Normalizes UK/US date formats to ISO-8601 (`YYYY-MM-DD`); flags ambiguous day/month dates with `confidence: "needs_review"`.
+- Summary Reconciliation & Injection Defense:
+  - `reconcileStatementRows`: verifies mathematical invariant (`opening + credits - debits == closing balance`).
+  - `escapeCsvField`: neutralizes CSV formula injection triggers (`=`, `+`, `-`, `@`, `\t`, `\r`, and Unicode control prefixes) and wraps tabs and quotes per RFC-4180.
+  - `convertRowsToCsv`: formats non-excluded rows into canonical CSV format (`Date,Description,Amount,Currency`).
+- Ephemeral Cache Hygiene:
+  - `apps/mobile/src/features/statements/statement-picker.ts`: stages selected PDFs in `Paths.cache.uri` and discards them immediately via `discardStatementFile` after extraction, upon cancellation, or on error.
+- Accessible Review UI & Flow Handoff:
+  - `apps/mobile/src/features/statements/statement-review-screen.tsx`: responsive review screen built with repository design tokens, displaying statement metadata, summary reconciliation card, confidence badges, row exclusion toggles, and conversion action.
+  - `apps/mobile/src/features/statements/use-statement-converter.ts`: reactive hook managing converter states, cancellation, row exclusions, and handoff.
+  - `apps/mobile/src/features/imports/use-import-flow.ts`: added `loadGeneratedCsv` to consume generated statement CSVs in-memory directly into the import draft.
+  - `apps/mobile/src/features/imports/import-screen.tsx`: integrated "Convert from PDF Statement" action and review flow.
+- Feature Tree & Verification:
+  - Updated `FEATURE_TREE.md` line 34 and `docs/features/planned.md#statements` status to `implemented`.
+  - Synchronized knowledge graph via `graphify update .`.
+  - Authored comprehensive test suite in `tests/statement-converter.test.ts` (14 tests).
+  - Updated `tests/native-import-ui.test.ts` (10 tests).
+  - All 155 test suites passed (1,377 tests).
+  - Monorepo typecheck clean (21 tasks across 12 packages).
+  - Monorepo lint clean (0 errors, 0 warnings).
+  - Code formatter clean (Prettier).
+  - Mobile iOS bundle clean: `pnpm --filter @joint/mobile bundle:ios` generated `dist/ios`.
+  - Independent Code Reviewer and Independent AppSec Reviewer both granted formal APPROVE verdicts.

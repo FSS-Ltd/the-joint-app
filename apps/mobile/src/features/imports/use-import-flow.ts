@@ -43,6 +43,10 @@ export interface ImportFlow {
   editAgain(): void;
   busy: "reading" | "inspecting" | null;
   chooseFile(): Promise<void>;
+  loadGeneratedCsv(file: {
+    name: string;
+    bytes: Uint8Array<ArrayBuffer>;
+  }): void;
   inspect(): Promise<void>;
   changeMapping(mapping: MappingDraft): void;
   submit(): Promise<void>;
@@ -162,6 +166,17 @@ export function useImportFlow(accountId: string): ImportFlow {
       end(controller);
     }
   }
+  function loadGeneratedCsv(file: {
+    name: string;
+    bytes: Uint8Array<ArrayBuffer>;
+  }): void {
+    if (!editable) return;
+    if (live.current) {
+      draft.change({ file, inspection: null, mapping: emptyMapping });
+    } else if (!revoked.current) {
+      pending.current = file;
+    }
+  }
   async function inspect(): Promise<void> {
     const authority = finance.authority;
     const file = latest.current.file;
@@ -235,6 +250,7 @@ export function useImportFlow(accountId: string): ImportFlow {
     editAgain,
     busy,
     chooseFile,
+    loadGeneratedCsv,
     inspect,
     changeMapping,
     submit,

@@ -90,17 +90,17 @@ Part of the [canonical feature tree](../../FEATURE_TREE.md). Status describes th
 
 <a id="statements"></a>
 
-## STATEMENTS — Local reviewed statement conversion
+## STATEMENTS: Local reviewed statement conversion
 
-- **Status:** `planned`. **Purpose:** Extract bounded PDF/OCR rows with editable source-linked review and explicit CSV handoff.
-- **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) — `IOS17a / IOS17b — Statement conversion and rehearsal`.
-- **Canonical implementation:** [docs/decisions/statement-to-csv-converter.md](../../docs/decisions/statement-to-csv-converter.md).
+- **Status:** `implemented`. **Purpose:** Extract bounded PDF/OCR rows with editable source-linked review, summary reconciliation, and explicit CSV handoff to import flow.
+- **Entry points:** [apps/mobile/src/features/imports/import-screen.tsx](../../apps/mobile/src/features/imports/import-screen.tsx), [apps/mobile/src/features/statements/use-statement-converter.ts](../../apps/mobile/src/features/statements/use-statement-converter.ts), [docs/superpowers/plans/2026-11-09-ios17a-statement-converter.md](../../docs/superpowers/plans/2026-11-09-ios17a-statement-converter.md).
+- **Canonical implementation:** [apps/mobile/src/features/statements/statement-converter.ts](../../apps/mobile/src/features/statements/statement-converter.ts), [apps/mobile/src/features/statements/statement-picker.ts](../../apps/mobile/src/features/statements/statement-picker.ts), [apps/mobile/src/features/statements/statement-review-screen.tsx](../../apps/mobile/src/features/statements/statement-review-screen.tsx).
 - **Depends on / reuses:** [IMPORTS](finance.md#imports), [MONEY](finance.md#money), [PRIVACY](platform.md#privacy).
-- **Used by:** [REHEARSAL](planned.md#rehearsal).
-- **Permission / data boundary:** Local processing, no cloud statements, no universal bank coverage, no automatic import or invented financial values.
-- **Verification references:** No executable feature acceptance established; the linked plan defines the required evidence.
-- **Graphify navigation:** scopes `features; future runtime nodes are absent`; query `` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_STATEMENTS`.
-- **Debug / reuse / limits:** No converter implementation is claimed; existing CSV parsing remains canonical.
+- **Used by:** [IMPORTS](finance.md#imports), [REHEARSAL](planned.md#rehearsal).
+- **Permission / data boundary:** Local on-device extraction only. Zero cloud statement upload or third-party AI transmission. Ephemeral cache cleanup of picked PDF files. Formula injection defense (=, +, -, @).
+- **Verification references:** [tests/statement-converter.test.ts](../../tests/statement-converter.test.ts), [tests/native-import-ui.test.ts](../../tests/native-import-ui.test.ts).
+- **Graphify navigation:** scopes `features; mobile statement converter and import UI`; query `STATEMENTS` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_STATEMENTS`.
+- **Debug / reuse / limits:** Converts PDF statements directly into canonical CSV format for consumption by existing `useImportFlow`.
 
 <a id="rehearsal"></a>
 
