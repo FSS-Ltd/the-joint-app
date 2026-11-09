@@ -88,6 +88,14 @@ function fixture() {
       "../privacy/archive-screen": { ArchiveScreen: "archive" },
       "../privacy/privacy-screen": { PrivacyScreen: "privacy" },
       "../billing/billing-screen": { BillingScreen: "billing" },
+      "../companion/companion-screen": { CompanionScreen: "companion" },
+      "../../api/devices": {
+        createDevicesApi: () => ({
+          listDevices: () => Promise.resolve([]),
+          getAccountGrants: () => Promise.resolve([]),
+          listInsightJobs: () => Promise.resolve([]),
+        }),
+      },
       "../../api/billing": {
         createBillingApi: () => ({ getSubscription: () => Promise.resolve() }),
       },

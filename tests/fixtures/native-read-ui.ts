@@ -33,6 +33,14 @@ const common = {
   "@/components/brand-mark": { BrandMark: "brand" },
   "@/theme/tokens": { colors: {}, corners: {}, spacing: {} },
   "../billing/billing-screen": { BillingScreen: "billing" },
+  "../companion/companion-screen": { CompanionScreen: "companion" },
+  "../../api/devices": {
+    createDevicesApi: () => ({
+      listDevices: () => Promise.resolve([]),
+      getAccountGrants: () => Promise.resolve([]),
+      listInsightJobs: () => Promise.resolve([]),
+    }),
+  },
   "../../api/billing": {
     createBillingApi: () => ({ getSubscription: () => Promise.resolve() }),
   },

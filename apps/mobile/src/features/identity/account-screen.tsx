@@ -13,6 +13,8 @@ import { ArchiveScreen } from "../privacy/archive-screen";
 import { PrivacyScreen } from "../privacy/privacy-screen";
 import { BillingScreen } from "../billing/billing-screen";
 import { createBillingApi } from "../../api/billing";
+import { CompanionScreen } from "../companion/companion-screen";
+import { createDevicesApi } from "../../api/devices";
 import { useIdentity } from "./context";
 import { SecurityScreen } from "./security-screen";
 import { SessionActions } from "./session-actions";
@@ -32,6 +34,14 @@ export function AccountScreen({ me }: { me: MeResponse }): React.JSX.Element {
       <BillingScreen
         householdId={me.membership?.household.id ?? me.user.id}
         billingApi={createBillingApi(identity.finance.transport)}
+        onBack={() => workflow.showView("account")}
+      />
+    );
+  if (workflow.view === "companion")
+    return (
+      <CompanionScreen
+        householdId={me.membership?.household.id ?? me.user.id}
+        devicesApi={createDevicesApi(identity.finance.transport)}
         onBack={() => workflow.showView("account")}
       />
     );
@@ -96,6 +106,11 @@ export function AccountScreen({ me }: { me: MeResponse }): React.JSX.Element {
         </>
       )}
       <NativeActions>
+        <NativeAction
+          label="Local companion (Mac)"
+          tone="secondary"
+          onPress={() => workflow.showView("companion")}
+        />
         <NativeAction
           label="Subscription and billing"
           tone="secondary"

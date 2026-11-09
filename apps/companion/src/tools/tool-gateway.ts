@@ -305,7 +305,7 @@ export class ToolGateway {
           schema: "projection-input" as const,
           schemaVersion: 1 as const,
           mode: "ADVANCED" as const,
-          scenarioId: "00000000-0000-0000-0000-000000000001",
+          scenarioId: "00000000-0000-0000-0000-000000000000",
           targetBasis: "FIXED_NOMINAL" as const,
           opening: {
             amountMinor: currentSavingsMinor,
@@ -321,8 +321,8 @@ export class ToolGateway {
           withdrawals: [],
           fixedFees: [],
           tax: [],
-          grossAnnualRate: ((input.annualRateBps ?? 400) / 10000).toFixed(4),
-          inflationAnnualRate: "0.0200",
+          grossAnnualRate: ((input.annualRateBps ?? 400) / 10000).toString(),
+          inflationAnnualRate: "0.02",
           proportionalFeeAnnualRate: "0.0025",
           rateProvenance: {
             growth: {
