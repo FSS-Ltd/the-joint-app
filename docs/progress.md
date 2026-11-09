@@ -2142,3 +2142,42 @@ Deliverables implemented and verified:
   - Monorepo build and typecheck: 21/21 turbo tasks clean (`pnpm turbo run build typecheck`).
   - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
   - Formatter: `pnpm format:check` passed clean.
+
+Host merge verified: [PR64](https://github.com/FSS-Ltd/the-joint-app/pull/64) was merged into `main` at commit `57c8a9b`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS13c and closes PR64.
+
+## IOS14: Staff authorization and minimal analytics collection
+
+Predecessor verified on the host before starting: [PR64](https://github.com/FSS-Ltd/the-joint-app/pull/64) merged at `57c8a9b`. Step IOS14 starts from that merge on branch `feat/ios14-staff-authorization-analytics`.
+
+Deliverables implemented and verified:
+
+- Staff Contracts (`packages/contracts/src/staff.ts`):
+  - Defined staff roles (`ANALYTICS_VIEWER`, `STAFF_ADMIN`) and context schemas.
+  - Lifecycle event input schema with 64-character SHA-256 hexadecimal constraint on `opaqueSubjectId`.
+  - Pinned metrics query and summary schemas (active paid households, MRR, gross collected revenue, refunds, net collected revenue, paying-household churn, activation, and user turnover with explicit `denominatorZero: true`).
+  - Retention cohort query and response schemas with server-side cell suppression flag.
+- Database Schema & Migration (`packages/database/prisma/`):
+  - Added `StaffRole` enum (`ANALYTICS_VIEWER`, `STAFF_ADMIN`).
+  - Added `StaffMember` model with revocation and grantor tracking.
+  - Added `StaffAudit` model with `onDelete: Restrict` foreign key constraint to ensure immutable audit trails.
+  - Added `AnalyticsLifecycleEvent` model with deduplication index on `eventId` and bounded retention querying.
+  - Added migration `20261109210000_staff_authorization_and_analytics`.
+- API Services & Controller (`apps/api/src/modules/staff/`):
+  - `metrics-engine.ts`: Pure computation engine for MRR, churn, turnover, activation, and retention cohorts with server-side cell suppression (< 5 threshold) and sandbox filtering. Anchored ISO week rollover calculation.
+  - `staff-auth.service.ts`: Resolves verified session actors, verifies explicit active staff authority with multi-role precedence (`STAFF_ADMIN` over `ANALYTICS_VIEWER`), denies regular adults and purchasers, and records immutable audit records in `StaffAudit`.
+  - `staff-analytics.service.ts`: Enforces recursive inspection against `FORBIDDEN_STEM_ROOTS` (blocking bank balances, account numbers, sort codes, merchants, descriptions, and user prompts), idempotent event ingestion, and 90-day raw event purging.
+  - `staff.controller.ts`: Endpoints `/v1/staff/analytics/metrics`, `/v1/staff/analytics/retention-cohorts`, and `/v1/staff/analytics/events` with explicit `targetResource` tracking.
+- Test Coverage (`tests/staff-analytics.test.ts`):
+  - 30 unit tests covering staff role verification, purchaser/adult denial, immediate revocation, multi-role resolution, compound sensitive key and nested array rejection, non-hex opaque ID rejection, MRR calculation, churn calculation, turnover calculation, zero denominator handling, sandbox exclusion, retention cohorts with cell suppression (< 5 threshold), ISO week boundary rollover, controller integration, and 90-day purging.
+- Full Verification:
+  - Unit tests: 30/30 passed (`pnpm test tests/staff-analytics.test.ts`).
+  - Monorepo typecheck: 12/12 packages passed clean (`pnpm typecheck`).
+  - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
+  - Mobile iOS bundle: `pnpm --filter @joint/mobile bundle:ios` passed clean.
+  - Specialist Reviews: Approved by Independent Code Reviewer and Independent AppSec Reviewer.
+
+Host merge verified: [PR65](https://github.com/FSS-Ltd/the-joint-app/pull/65) was merged into `main` at commit `3b93dee`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS14 and closes PR65.
+
+## IOS15: Staff revenue, churn and retention dashboard
+
+Predecessor verified on the host before starting: [PR65](https://github.com/FSS-Ltd/the-joint-app/pull/65) merged at `3b93dee`. Step IOS15 starts from that merge on branch `feat/ios15-staff-analytics-dashboard`.

@@ -64,15 +64,15 @@ Part of the [canonical feature tree](../../FEATURE_TREE.md). Status describes th
 
 ## STAFF - Staff authority and aggregate commercial analytics
 
-- **Status:** `implemented`. **Purpose:** Collect minimal lifecycle evidence and show bounded revenue, churn and retention aggregates.
-- **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) - `IOS14 - Staff authorization and minimal analytics collection`; [apps/api/src/modules/staff/staff.controller.ts](../../apps/api/src/modules/staff/staff.controller.ts).
-- **Canonical implementation:** [packages/contracts/src/staff.ts](../../packages/contracts/src/staff.ts), [apps/api/src/modules/staff/](../../apps/api/src/modules/staff/), [packages/database/prisma/migrations/20261109210000_staff_authorization_and_analytics/migration.sql](../../packages/database/prisma/migrations/20261109210000_staff_authorization_and_analytics/migration.sql).
+- **Status:** `implemented`. **Purpose:** Collect minimal lifecycle evidence, enforce staff authorization, and show bounded revenue, churn and retention aggregates.
+- **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) - `IOS14 - Staff authorization and minimal analytics collection`; [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) - `IOS15 - Staff revenue, churn and retention dashboard`; [apps/api/src/modules/staff/staff.controller.ts](../../apps/api/src/modules/staff/staff.controller.ts); [apps/web/app/staff/page.tsx](../../apps/web/app/staff/page.tsx); [apps/web/app/api/staff/](../../apps/web/app/api/staff/).
+- **Canonical implementation:** [packages/contracts/src/staff.ts](../../packages/contracts/src/staff.ts), [apps/api/src/modules/staff/](../../apps/api/src/modules/staff/), [apps/web/components/staff/](../../apps/web/components/staff/), [apps/web/lib/server/staff-routes.ts](../../apps/web/lib/server/staff-routes.ts), [packages/database/prisma/migrations/20261109210000_staff_authorization_and_analytics/migration.sql](../../packages/database/prisma/migrations/20261109210000_staff_authorization_and_analytics/migration.sql).
 - **Depends on / reuses:** [AUTH](identity.md#auth), [BILLING](planned.md#billing), [DATABASE](platform.md#database), [EVENTS](platform.md#events).
-- **Used by:** [IOS15 dashboard](../../superpowers/plans/2026-11-02-ios-only-delivery.md).
+- **Used by:** Staff leadership and commercial operations.
 - **Permission / data boundary:** Separate audited staff authority; household/purchaser roles do not grant access. Suppress cohorts below five server-side and prevent differencing. Sensitive financial data rejected from analytics payloads.
-- **Verification references:** [tests/staff-analytics.test.ts](../../tests/staff-analytics.test.ts).
-- **Graphify navigation:** scopes `api, contracts, database`; query `StaffAuthService` or `StaffAnalyticsService` or inspect canonical source paths. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_STAFF`.
-- **Debug / reuse / limits:** Implemented under IOS14. Provides least-privilege audited staff access (`ANALYTICS_VIEWER`, `STAFF_ADMIN`), minimal versioned lifecycle and billing events with opaque identifiers, pure metrics engine (MRR, churn, activation, turnover, retention cohorts), and server-side cell suppression (< 5 threshold). Reusable by future staff dashboard (IOS15).
+- **Verification references:** [tests/staff-analytics.test.ts](../../tests/staff-analytics.test.ts); [tests/staff-dashboard.test.ts](../../tests/staff-dashboard.test.ts).
+- **Graphify navigation:** scopes `api, contracts, database, web`; query `StaffAuthService` or `StaffAnalyticsService` or `StaffDashboardScreen` or inspect canonical source paths. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_STAFF`.
+- **Debug / reuse / limits:** Implemented under IOS14 and IOS15. Provides least-privilege audited staff access (`ANALYTICS_VIEWER`, `STAFF_ADMIN`), minimal versioned lifecycle and billing events with opaque identifiers, pure metrics engine (MRR, churn, activation, turnover, retention cohorts), server-side cell suppression (< 5 threshold), web BFF routes, and responsive staff dashboard UI.
 
 <a id="marketing"></a>
 
