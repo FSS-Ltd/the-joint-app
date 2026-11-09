@@ -1,2 +1,2 @@
-export * from "./use-companion.js";
-export * from "./companion-screen.js";
+export * from "./use-companion";
+export * from "./companion-screen";

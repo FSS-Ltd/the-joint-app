@@ -7,8 +7,8 @@ import type {
   InsightJobDto,
   StartPairingResponse,
 } from "@joint/contracts";
-import type { DevicesApi } from "../../api/devices.js";
-import type { AccountsApi } from "../../api/accounts.js";
+import type { DevicesApi } from "../../api/devices";
+import type { AccountsApi } from "../../api/accounts";
 
 export interface CompanionStatusNotice {
   readonly text: string;

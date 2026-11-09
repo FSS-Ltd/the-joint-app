@@ -19,7 +19,7 @@ import {
 } from "@joint/contracts";
 
 export type { DeviceAccountPermission };
-import type { NativeTransport } from "./types.js";
+import type { NativeTransport } from "./types";
 
 export function createDevicesApi(transport: NativeTransport) {
   return {

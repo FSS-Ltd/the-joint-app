@@ -1,7 +1,7 @@
 import { router } from "expo-router";
-import { useIdentity } from "@/features/identity/context.js";
-import { CompanionScreen } from "@/features/companion/companion-screen.js";
-import { createDevicesApi } from "@/api/devices.js";
+import { useIdentity } from "@/features/identity/context";
+import { CompanionScreen } from "@/features/companion/companion-screen";
+import { createDevicesApi } from "@/api/devices";
 
 export default function CompanionRoute(): React.JSX.Element | null {
   const { state, finance } = useIdentity();
