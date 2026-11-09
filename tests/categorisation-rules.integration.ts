@@ -35,9 +35,9 @@ describe("categorisation rules integration and authority", () => {
     };
   }
 
-  const alice = makeActor(householdId, 1);
-  const bob = makeActor(householdId, 2);
-  const charlie = makeActor(otherHouseholdId, 1);
+  const alice = makeActor(householdId);
+  const bob = makeActor(householdId);
+  const charlie = makeActor(otherHouseholdId);
 
   beforeAll(async () => {
     await owner.household.createMany({
