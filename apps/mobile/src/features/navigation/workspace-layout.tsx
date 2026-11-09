@@ -61,6 +61,7 @@ function ReadyWorkspace({ me }: { me: MeResponse }): React.JSX.Element {
         <Tabs.Screen name="imports" options={hiddenTab} />
         <Tabs.Screen name="budgets" options={hiddenTab} />
         <Tabs.Screen name="review" options={hiddenTab} />
+        <Tabs.Screen name="goals" options={hiddenTab} />
         <Tabs.Screen
           name="more"
           options={{

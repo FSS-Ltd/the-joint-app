@@ -25,6 +25,7 @@ import * as wealthAdapters from "../../apps/mobile/src/api/wealth.js";
 import * as transactionAdapters from "../../apps/mobile/src/api/transactions.js";
 import * as importAdapters from "../../apps/mobile/src/api/imports.js";
 import * as spendingAdapters from "../../apps/mobile/src/api/spending.js";
+import * as goalsAdapters from "../../apps/mobile/src/api/goals.js";
 import { jsxBoundary, sourceExports } from "./native-source-harness.js";
 
 export const financeMe: MeResponse = {
@@ -98,6 +99,7 @@ export async function financeFixture(getToken?: () => Promise<string>) {
         "../../api/transactions": transactionAdapters,
         "../../api/imports": importAdapters,
         "../../api/spending": spendingAdapters,
+        "../../api/goals": goalsAdapters,
         "./scope": scopeHelpers,
         "./context": { FinanceContext: { Provider: "finance" } },
       },

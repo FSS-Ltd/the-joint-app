@@ -14,6 +14,8 @@ export const householdId = "00000000-0000-4000-8000-000000000001";
 const native = {
   View: "view",
   FlatList: "list",
+  Pressable: "pressable",
+  ScrollView: "scrollview",
   StyleSheet: { create: <T>(styles: T) => styles },
 };
 const common = {

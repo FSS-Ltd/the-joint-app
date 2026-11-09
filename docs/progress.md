@@ -1898,3 +1898,40 @@ Deliverables implemented and verified:
   - Prettier: `pnpm format:check` passed clean.
   - Native iOS and Android bundle exports passed (`bundle:ios` and `bundle:android`).
   - Feature documentation updated in `docs/features/finance.md` (`#projections`).
+
+Host merge verified: [PR57](https://github.com/FSS-Ltd/the-joint-app/pull/57) was merged into `main` at commit `8d2f3db`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS9 and closes PR57.
+
+## IOS10a - Wealth, goals, contributions and projection experience
+
+Predecessor verified on the host before starting: [PR57](https://github.com/FSS-Ltd/the-joint-app/pull/57) merged at `8d2f3db`. Step IOS10a starts from that merge on branch `feat/ios10a-wealth-goals-projections`.
+
+Deliverables implemented and verified:
+
+- Native goals and projections API client (`apps/mobile/src/api/goals.ts`):
+  - Created `createGoalsApi` with methods: `listGoals`, `readGoal`, `writeGoal`, `readAllocations`, `writeAllocations`, `readContributionPlan`, `writeContributionPlan`, `createBasicProjection`, `listProjections`, `readProjection`, `createScenario`, `listScenarios`, `readScenario`, `createAdvancedProjection`.
+  - Wired into `NativeFinanceContextValue` and `NativeFinanceProvider`.
+- Reactive feature hooks and components (`apps/mobile/src/features/goals/`):
+  - `useGoalsData`: Lifetime-fenced hook fetching household goals with automatic 401 reconciliation.
+  - `useGoalDetailData`: Reactive store fetching goal detail, allocations, contribution plan, and projection runs.
+  - `GoalProgressCard`: Accessible progress card with high-contrast bar, percentage funded, target, and remaining amounts.
+  - `ProjectionBreakdownCard`: Trajectory card with status explanations (`already_achieved`, `reachable`, `beyond_horizon`, `depleted`, `budget_deficit`, `unreachable_under_assumptions`), stat grid, accessible milestone trajectory table, and warnings.
+  - `AllocationEditorCard`: Allocation view showing earmarked accounts, fixed amounts, ratio percentages, and total allocated.
+  - `ContributionPlanCard`: Monthly contribution schedule view showing scheduled monthly rate and effective dates.
+  - `GoalsScreen`: Household goals overview with summary metrics and goal list.
+  - `GoalDetailScreen`: Comprehensive goal screen integrating cards and projection calculation action.
+- Navigation routes and workspace integration:
+  - Created `apps/mobile/app/(workspace)/goals/_layout.tsx` (Stack navigator with dark header).
+  - Created `apps/mobile/app/(workspace)/goals/index.tsx` (exporting `GoalsScreen`).
+  - Created `apps/mobile/app/(workspace)/goals/[goalId].tsx` (exporting `GoalDetailScreen`).
+  - Registered hidden tab in `apps/mobile/src/features/navigation/workspace-layout.tsx`.
+  - Added "Open goals and projections" action in `apps/mobile/src/features/home/home-screen.tsx`.
+- Comprehensive test coverage:
+  - `tests/native-goals-api.test.ts`: 10/10 tests passing for client methods and validation.
+  - `tests/native-wealth-goals-ui.test.ts`: 16/16 tests passing for UI components, progress bars, accessibility labels, and status explanations.
+  - `tests/native-structure-guards.test.ts`: 2/2 tests passing (confirming hidden tab navigation and SwiftUI host wrapping).
+- Full verification:
+  - Unit test suite: 1,103/1,103 tests passed across all 143 files (`pnpm test`).
+  - Typecheck: 19/19 turbo packages and root test tsconfig clean (`pnpm typecheck`).
+  - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
+  - Formatter: `pnpm format:check` passed clean.
+  - Native iOS and Android bundle exports passed (`bundle:ios` and `bundle:android`).
