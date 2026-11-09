@@ -144,6 +144,7 @@ interface MockDb {
       where: { id: string };
       data: Partial<MockPairingCode>;
     }) => Promise<MockPairingCode>;
+    delete: (args: { where: { id: string } }) => Promise<MockPairingCode>;
   };
   deviceSession: {
     create: (args: {
@@ -164,6 +165,7 @@ interface MockDb {
       where: { id: string };
       data: Partial<MockSession>;
     }) => Promise<MockSession>;
+    delete: (args: { where: { id: string } }) => Promise<MockSession>;
     updateMany: (args: {
       where: { deviceId?: string; revokedAt?: null };
       data: Partial<MockSession>;
@@ -359,6 +361,12 @@ function createInMemoryDatabase(): MockDb {
         pairingCodes[idx] = { ...pairingCodes[idx]!, ...args.data };
         return pairingCodes[idx]!;
       },
+      delete: async (args: { where: { id: string } }) => {
+        const idx = pairingCodes.findIndex((p) => p.id === args.where.id);
+        if (idx === -1) throw new Error("Pairing code not found");
+        const removed = pairingCodes.splice(idx, 1)[0]!;
+        return removed;
+      },
     },
     deviceSession: {
       create: async (args) => {
@@ -380,7 +388,10 @@ function createInMemoryDatabase(): MockDb {
             return false;
           if (args.where.revokedAt === null && s.revokedAt !== null)
             return false;
-          if (args.where.nonceExpiresAt?.gt && s.nonceExpiresAt <= new Date())
+          if (
+            args.where.nonceExpiresAt?.gt &&
+            (!s.nonceExpiresAt || s.nonceExpiresAt <= new Date())
+          )
             return false;
           if (args.where.expiresAt?.gt && s.expiresAt <= new Date())
             return false;
@@ -398,6 +409,12 @@ function createInMemoryDatabase(): MockDb {
         if (idx === -1) throw new Error("Session not found");
         sessions[idx] = { ...sessions[idx]!, ...args.data };
         return sessions[idx]!;
+      },
+      delete: async (args: { where: { id: string } }) => {
+        const idx = sessions.findIndex((s) => s.id === args.where.id);
+        if (idx === -1) throw new Error("Session not found");
+        const removed = sessions.splice(idx, 1)[0]!;
+        return removed;
       },
       updateMany: async (args) => {
         let count = 0;
@@ -419,7 +436,10 @@ function createInMemoryDatabase(): MockDb {
         const before = sessions.length;
         sessions = sessions.filter((s) => {
           if (args.where.nonce && !s.nonce) return true;
-          if (args.where.nonceExpiresAt?.lt && s.nonceExpiresAt >= new Date())
+          if (
+            args.where.nonceExpiresAt?.lt &&
+            (!s.nonceExpiresAt || s.nonceExpiresAt < new Date())
+          )
             return true;
           return false;
         });
@@ -847,7 +867,7 @@ describe("Companion Protocol, Consent and Background Jobs (IOS13a)", () => {
         pairingCode,
         name: "Mac Studio",
         publicKey: keypair.publicKey,
-        proofOfPossession: "valid-proof-longer-than-32-chars-test",
+        proofOfPossession: signWithPrivateKey(keypair.privateKey, pairingCode),
       });
       await devicesService.approveDevice(contextA, deviceId, {
         fingerprint: keypair.fingerprint,
@@ -1120,6 +1140,111 @@ describe("Companion Protocol, Consent and Background Jobs (IOS13a)", () => {
       expect(report2.recoveredLeases).toBe(0);
       const rechecked2 = db._getJobs().find((j) => j.id === job1.id)!;
       expect(rechecked2.status).toBe("FAILED");
+    });
+
+    it("rejects pairing with invalid cryptographic proof of possession and burns pairing code", async () => {
+      // Revoke the active device first so household has available pairing capacity
+      await devicesService.revokeDevice(contextA, deviceId);
+
+      const probeKeypair = generateTestKeyPair();
+      const { pairingCode } = await devicesService.startPairing(contextA, {
+        name: "Security Probe Device",
+      });
+
+      // Submit invalid/arbitrary proof
+      await expect(
+        deviceAuthService.completePairing({
+          pairingCode,
+          name: "Security Probe Device",
+          publicKey: probeKeypair.publicKey,
+          proofOfPossession: Buffer.from(
+            "invalid-forged-signature-attempt",
+          ).toString("base64"),
+        }),
+      ).rejects.toThrow("Invalid proof of key possession.");
+
+      // Verify the pairing code is burned and cannot be reused
+      await expect(
+        deviceAuthService.completePairing({
+          pairingCode,
+          name: "Security Probe Device",
+          publicKey: probeKeypair.publicKey,
+          proofOfPossession: signWithPrivateKey(
+            probeKeypair.privateKey,
+            pairingCode,
+          ),
+        }),
+      ).rejects.toThrow("Invalid or expired pairing code.");
+    });
+
+    it("rejects session challenge when signature is forged or invalid", async () => {
+      const { nonce } = await deviceAuthService.createSessionChallenge({
+        deviceId,
+      });
+
+      // Sign with a different/unrelated keypair
+      const impostorKeypair = generateTestKeyPair();
+      const forgedSignature = signWithPrivateKey(
+        impostorKeypair.privateKey,
+        nonce,
+      );
+
+      await expect(
+        deviceAuthService.authenticateSession({
+          deviceId,
+          nonce,
+          signature: forgedSignature,
+        }),
+      ).rejects.toThrow("Cryptographic challenge verification failed.");
+    });
+
+    it("rejects job completion when result signature is tampered", async () => {
+      const devContext =
+        await deviceAuthService.authenticateDeviceToken(deviceToken);
+
+      const job = await insightJobsService.createJob(contextA, {
+        audienceScope: "HOUSEHOLD",
+        featureType: "SPEND_SUMMARY",
+        parameters: {},
+        promptText: "Confidential financial analysis question",
+      });
+
+      // Verify prompt is encrypted with authenticated envelope, not plaintext or base64
+      const jobRow = db._getJobs().find((j) => j.id === job.id)!;
+      expect(jobRow.promptCiphertext).toBeDefined();
+      expect(jobRow.promptCiphertext).not.toContain(
+        "Confidential financial analysis question",
+      );
+      const parsedEnvelope = JSON.parse(jobRow.promptCiphertext!);
+      expect(parsedEnvelope.envelopeCiphertext).toBeDefined();
+      expect(parsedEnvelope.envelopeTag).toBeDefined();
+      expect(parsedEnvelope.envelopeIv).toBeDefined();
+
+      const claim = await insightJobsService.claimJob(devContext, {
+        deviceId,
+        maxBatchSize: 1,
+      });
+      const envelope = await insightJobsService.getEvidenceEnvelope(
+        devContext,
+        job.id,
+      );
+
+      // Attempt completion with an invalid/forged signature
+      const impostorKey = generateTestKeyPair();
+      const forgedSig = signWithPrivateKey(
+        impostorKey.privateKey,
+        envelope.evidenceHash + ":" + JSON.stringify({ summary: "tampered" }),
+      );
+
+      await expect(
+        insightJobsService.completeJob(devContext, job.id, {
+          leaseToken: claim.leaseToken!,
+          evidenceHash: envelope.evidenceHash,
+          grantVersion: envelope.grantVersion,
+          resultPayload: { summary: "tampered" },
+          signature: forgedSig,
+        }),
+      ).rejects.toThrow("Result cryptographic signature verification failed.");
     });
   });
 });

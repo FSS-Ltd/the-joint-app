@@ -117,11 +117,39 @@ CREATE POLICY maintenance ON app."DeviceSession" TO CURRENT_USER USING (true) WI
 CREATE POLICY maintenance ON app."DeviceAccountGrant" TO CURRENT_USER USING (true) WITH CHECK (true);
 CREATE POLICY maintenance ON app."InsightJob" TO CURRENT_USER USING (true) WITH CHECK (true);
 
-CREATE POLICY device_runtime ON app."Device" TO joint_app_runtime USING (true) WITH CHECK (true);
-CREATE POLICY device_pairing_code_runtime ON app."DevicePairingCode" TO joint_app_runtime USING (true) WITH CHECK (true);
+CREATE POLICY device_runtime ON app."Device" TO joint_app_runtime USING (
+  nullif(current_setting('joint.household_id', true), '') IS NULL
+  OR "householdId" = nullif(current_setting('joint.household_id', true), '')::uuid
+) WITH CHECK (
+  nullif(current_setting('joint.household_id', true), '') IS NULL
+  OR "householdId" = nullif(current_setting('joint.household_id', true), '')::uuid
+);
+
+CREATE POLICY device_pairing_code_runtime ON app."DevicePairingCode" TO joint_app_runtime USING (
+  nullif(current_setting('joint.household_id', true), '') IS NULL
+  OR "householdId" = nullif(current_setting('joint.household_id', true), '')::uuid
+) WITH CHECK (
+  nullif(current_setting('joint.household_id', true), '') IS NULL
+  OR "householdId" = nullif(current_setting('joint.household_id', true), '')::uuid
+);
+
 CREATE POLICY device_session_runtime ON app."DeviceSession" TO joint_app_runtime USING (true) WITH CHECK (true);
-CREATE POLICY device_account_grant_runtime ON app."DeviceAccountGrant" TO joint_app_runtime USING (true) WITH CHECK (true);
-CREATE POLICY insight_job_runtime ON app."InsightJob" TO joint_app_runtime USING (true) WITH CHECK (true);
+
+CREATE POLICY device_account_grant_runtime ON app."DeviceAccountGrant" TO joint_app_runtime USING (
+  nullif(current_setting('joint.user_id', true), '') IS NULL
+  OR "ownerUserId" = nullif(current_setting('joint.user_id', true), '')::uuid
+) WITH CHECK (
+  nullif(current_setting('joint.user_id', true), '') IS NULL
+  OR "ownerUserId" = nullif(current_setting('joint.user_id', true), '')::uuid
+);
+
+CREATE POLICY insight_job_runtime ON app."InsightJob" TO joint_app_runtime USING (
+  nullif(current_setting('joint.household_id', true), '') IS NULL
+  OR "householdId" = nullif(current_setting('joint.household_id', true), '')::uuid
+) WITH CHECK (
+  nullif(current_setting('joint.household_id', true), '') IS NULL
+  OR "householdId" = nullif(current_setting('joint.household_id', true), '')::uuid
+);
 
 DO $$ DECLARE blocked_role text; BEGIN
   FOREACH blocked_role IN ARRAY ARRAY['anon','authenticated'] LOOP

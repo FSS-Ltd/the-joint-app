@@ -22,6 +22,16 @@ export function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+export function getCompanionEnvelopeKey(seed?: string): Buffer {
+  const secret =
+    seed ||
+    process.env.COMPANION_ENVELOPE_KEY ||
+    process.env.AUTH_TOKEN_SECRET ||
+    process.env.DATABASE_URL ||
+    "joint_companion_envelope_secure_seed_fallback";
+  return createHash("sha256").update(secret).digest();
+}
+
 export function verifyDeviceSignature(
   publicKey: string,
   data: string | Buffer,

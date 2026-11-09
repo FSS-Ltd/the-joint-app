@@ -49,15 +49,17 @@ export class DeviceAuthService {
 
     const fingerprint = computeFingerprint(request.publicKey);
 
-    // Verify proof of possession (signature of code or proof string)
-    const validProof =
-      verifyDeviceSignature(
-        request.publicKey,
-        request.pairingCode,
-        request.proofOfPossession,
-      ) || request.proofOfPossession.length >= 32;
+    // Strictly verify cryptographic proof of possession (signature over pairing code)
+    const validProof = verifyDeviceSignature(
+      request.publicKey,
+      request.pairingCode,
+      request.proofOfPossession,
+    );
 
     if (!validProof) {
+      await this.prisma.devicePairingCode.delete({
+        where: { id: pairing.id },
+      });
       throw new BadRequestException("Invalid proof of key possession.");
     }
 
@@ -168,15 +170,17 @@ export class DeviceAuthService {
       throw new ForbiddenException("Device is not approved.");
     }
 
-    // Verify signature over the challenge nonce
-    const signatureValid =
-      verifyDeviceSignature(
-        sessionRecord.device.publicKey,
-        request.nonce,
-        request.signature,
-      ) || request.signature.length >= 32;
+    // Strictly verify signature over the challenge nonce
+    const signatureValid = verifyDeviceSignature(
+      sessionRecord.device.publicKey,
+      request.nonce,
+      request.signature,
+    );
 
     if (!signatureValid) {
+      await this.prisma.deviceSession.delete({
+        where: { id: sessionRecord.id },
+      });
       throw new UnauthorizedException(
         "Cryptographic challenge verification failed.",
       );

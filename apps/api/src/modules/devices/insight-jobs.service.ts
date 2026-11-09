@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import type { Prisma, PrismaClient } from "@joint/database/client";
 import type {
   AuthContext,
@@ -25,13 +25,9 @@ import type { EntitlementService } from "../entitlements/entitlement.service.js"
 import type { AuthenticatedDeviceContext } from "./device-auth.service.js";
 import {
   encryptEvidenceEnvelope,
+  getCompanionEnvelopeKey,
   verifyDeviceSignature,
 } from "./device-crypto.js";
-
-// Deterministic AES-256 key derived for envelope transport in this environment
-const ENVELOPE_KEY = createHash("sha256")
-  .update("joint_companion_envelope_key_v1")
-  .digest();
 
 interface JobDbRow {
   id: string;
@@ -71,10 +67,15 @@ interface PermittedDeviceGrant {
 
 @Injectable()
 export class InsightJobsService {
+  private readonly envelopeKey: Buffer;
+
   constructor(
     private readonly prisma: PrismaClient,
     private readonly entitlements: EntitlementService,
-  ) {}
+    envelopeKey?: Buffer,
+  ) {
+    this.envelopeKey = envelopeKey || getCompanionEnvelopeKey();
+  }
 
   async createJob(
     context: AuthContext,
@@ -88,6 +89,13 @@ export class InsightJobsService {
     }
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const promptEnvelope = request.promptText
+      ? encryptEvidenceEnvelope(
+          { text: request.promptText },
+          `${context.householdId}:${context.userId}`,
+          this.envelopeKey,
+        )
+      : null;
 
     const job = await this.prisma.insightJob.create({
       data: {
@@ -96,8 +104,8 @@ export class InsightJobsService {
         audienceScope: request.audienceScope,
         featureType: request.featureType,
         parameters: request.parameters as Prisma.InputJsonValue,
-        promptCiphertext: request.promptText
-          ? Buffer.from(request.promptText).toString("base64")
+        promptCiphertext: promptEnvelope
+          ? JSON.stringify(promptEnvelope)
           : null,
         expiresAt,
         status: "QUEUED",
@@ -309,7 +317,7 @@ export class InsightJobsService {
     const envelope = encryptEvidenceEnvelope(
       evidenceData,
       aadContext,
-      ENVELOPE_KEY,
+      this.envelopeKey,
     );
 
     // Save evidenceHash to job
@@ -471,15 +479,14 @@ export class InsightJobsService {
       );
     }
 
-    // Verify cryptographic signature of the result payload and evidence hash
+    // Strictly verify cryptographic signature of the result payload and evidence hash
     const payloadBytes =
       request.evidenceHash + ":" + JSON.stringify(request.resultPayload);
-    const validSignature =
-      verifyDeviceSignature(
-        deviceContext.publicKey,
-        payloadBytes,
-        request.signature,
-      ) || request.signature.length >= 32;
+    const validSignature = verifyDeviceSignature(
+      deviceContext.publicKey,
+      payloadBytes,
+      request.signature,
+    );
 
     if (!validSignature) {
       throw new BadRequestException(
