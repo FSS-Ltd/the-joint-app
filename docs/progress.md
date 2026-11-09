@@ -2080,3 +2080,32 @@ Deliverables implemented and verified:
   - Monorepo build and typecheck: 19/19 packages clean (`pnpm turbo run build typecheck`).
   - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
   - Formatter: `pnpm format:check` passed clean.
+
+Host merge verified: [PR62](https://github.com/FSS-Ltd/the-joint-app/pull/62) was merged into `main` at commit `d48c657`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS13a and closes PR62.
+
+## IOS13b - Local companion runtime, CLI/daemon and grounded tool gateway
+
+Predecessor verified on the host before starting: [PR62](https://github.com/FSS-Ltd/the-joint-app/pull/62) merged at `d48c657`. Step IOS13b starts from that merge on branch `feat/ios13b-companion-runtime-tools`.
+
+Deliverables implemented and verified:
+
+- Companion Runtime Package (`apps/companion`):
+  - Created standalone workspace package `@joint/companion` with TypeScript configuration emitting declarations and linking to `@joint/contracts` and `@joint/projections`.
+  - Cryptographic Key Store (`apps/companion/src/crypto/key-store.ts`): Implemented `CompanionKeyStore` generating 2048-bit RSA key pairs, computing deterministic SHA-256 fingerprints, managing file permissions (`0600`), performing payload signing and verification, and executing AES-256-GCM envelope decryption with AAD context binding.
+  - Companion HTTP Client (`apps/companion/src/api/companion-client.ts`): Implemented `CompanionClient` communicating with `/v1/companion/*` endpoints using Bearer token authentication for claiming jobs, fetching encrypted envelopes, checking execution permits, renewing leases, and submitting signed completed payloads.
+  - Grounded Tool Gateway (`apps/companion/src/tools/tool-gateway.ts`): Implemented `ToolGateway` with 4 deterministic, read-only tools:
+    1. `get_spend_summary`: Calculates spending totals, category breakdowns, and date ranges directly from decrypted evidence.
+    2. `get_recurring_costs`: Detects recurring subscription cadences and monthly baseline costs from evidence.
+    3. `project_goal`: Deterministic wealth compounding projections reusing `@joint/projections`.
+    4. `compare_goal_scenarios`: Comparative timeline and monthly contribution modeling.
+       Enforces a strict 4-round execution limit and rejects unpermitted tool invocations.
+  - Loopback-Only Ollama Adapter (`apps/companion/src/runtime/ollama-adapter.ts`): Enforces loopback binding (`127.0.0.1` and `localhost` only). Strictly rejects remote network and cloud endpoints before initiating HTTP traffic. Formats Ollama tool schemas and handles chat interactions.
+  - Companion Job Runner (`apps/companion/src/runtime/job-runner.ts`): Orchestrates job lifecycle: claiming queued jobs, retrieving encrypted envelopes, verifying fresh online execution permits before inference, decrypting evidence in-memory only, executing bounded model loop with tool dispatching, signing completed results, and submitting payloads.
+  - CLI and Daemon (`apps/companion/src/cli.ts`): Implemented CLI commands `pair`, `status`, and `run` with configurable polling interval.
+- Comprehensive Test Coverage:
+  - `tests/companion-runtime.test.ts`: 14/14 tests passing covering RSA key generation, deterministic fingerprints, loopback network security enforcement (remote IP and domain rejection), all 4 deterministic tools, 4-round limit enforcement, unpermitted tool rejection, full job runner execution lifecycle with signature verification, and fresh online permit denial abortion.
+- Full Verification:
+  - Full test suite: 1,200/1,200 tests passed across all 149 test files (`pnpm test`).
+  - Monorepo build and typecheck: 21/21 turbo tasks clean (`pnpm turbo run build typecheck`).
+  - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
+  - Formatter: `pnpm format:check` passed clean.

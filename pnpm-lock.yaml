@@ -84,6 +84,15 @@ importers:
         specifier: 7.8.2
         version: 7.8.2
 
+  apps/companion:
+    dependencies:
+      '@joint/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@joint/projections':
+        specifier: workspace:*
+        version: link:../../packages/projections
+
   apps/mobile:
     dependencies:
       '@clerk/expo':
