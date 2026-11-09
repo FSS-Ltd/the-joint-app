@@ -1,4 +1,11 @@
 import { SpendingScreen } from "../../components/spending";
-export default function Page() {
-  return <SpendingScreen mode="dashboard" />;
+import { CutoverNoticeBanner } from "../../components/cutover/cutover-banner";
+
+export default function DashboardPage() {
+  return (
+    <>
+      <CutoverNoticeBanner routeName="Dashboard" />
+      <SpendingScreen mode="dashboard" />
+    </>
+  );
 }

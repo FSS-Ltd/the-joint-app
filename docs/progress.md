@@ -2181,3 +2181,33 @@ Host merge verified: [PR65](https://github.com/FSS-Ltd/the-joint-app/pull/65) wa
 ## IOS15: Staff revenue, churn and retention dashboard
 
 Predecessor verified on the host before starting: [PR65](https://github.com/FSS-Ltd/the-joint-app/pull/65) merged at `3b93dee`. Step IOS15 starts from that merge on branch `feat/ios15-staff-analytics-dashboard`.
+
+Deliverables implemented and verified:
+
+- Web Gateway & Upstream Extension (`apps/web/lib/server/upstream.ts`):
+  - Allowed `/v1/staff/analytics/metrics` and `/v1/staff/analytics/retention-cohorts` with HTTP 403 mapped to `FORBIDDEN` and explicit safe message "Staff authority required to access commercial metrics.".
+- Web BFF Route Logic (`apps/web/lib/server/staff-routes.ts`):
+  - Enforced session token verification, default MTD date resolution, ISO timestamp validation, and safe upstream delegation.
+  - Implemented Next.js route handlers in `apps/web/app/api/staff/metrics/route.ts` and `apps/web/app/api/staff/retention-cohorts/route.ts`.
+- Presentation & Formatting (`apps/web/components/staff/presentation.ts`):
+  - `formatCurrencyMinor`, percentage calculations with zero-denominator handling (`rateText: "N/A"`), and cell suppression (< 5 threshold) hiding underlying active user counts completely.
+- UI Components (`apps/web/components/staff/`):
+  - Metrics cards, cohort table with horizontal scrolling, preset date filters (MTD, Prior Month, Trailing 30 Days), London timezone indicator, freshness timestamp, manual refresh button, 401 sign-in view, and 403 refusal view.
+  - Accessible design craft styles in `staff.css`.
+  - Next.js page host in `apps/web/app/staff/page.tsx`.
+- Test Coverage (`tests/staff-dashboard.test.ts`):
+  - 14 tests covering presentation logic, suppression badges, API routes, unauthorized refusal, forbidden refusal, and upstream delegation.
+- Full Verification:
+  - Full test suite: 1,354/1,354 passed (`pnpm test`).
+  - Monorepo build and typecheck: clean across all 12 packages (`pnpm typecheck`).
+  - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
+  - Formatter: `pnpm format:check` passed clean.
+  - Web production build: Next.js Turbopack build passed clean.
+  - Mobile iOS bundle: `pnpm --filter @joint/mobile bundle:ios` passed clean.
+  - Specialist Reviews: Approved by Independent Code Reviewer and Independent AppSec Reviewer.
+
+Host merge verified: [PR66](https://github.com/FSS-Ltd/the-joint-app/pull/66) was merged into `main` at commit `fa2ff16`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS15 and closes PR66.
+
+## IOS16: Marketing and web household cutover
+
+Predecessor verified on the host before starting: [PR66](https://github.com/FSS-Ltd/the-joint-app/pull/66) merged at `fa2ff16`. Step IOS16 starts from that merge on branch `feat/ios16-marketing-web-cutover`.

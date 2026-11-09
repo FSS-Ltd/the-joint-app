@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "The Family Fund App",
     short_name: "Family Fund",
     description:
-      "Household finance with individual privacy. Local development.",
-    start_url: "/dashboard",
+      "Household finance with individual privacy. Official web portal for account security and privacy controls.",
+    start_url: "/",
     display: "standalone",
     background_color: "#f7f5ef",
     theme_color: "#244f42",

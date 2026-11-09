@@ -1,4 +1,11 @@
 import { Activity } from "../../components/activity";
-export default function Page() {
-  return <Activity />;
+import { CutoverNoticeBanner } from "../../components/cutover/cutover-banner";
+
+export default function ActivityPage() {
+  return (
+    <>
+      <CutoverNoticeBanner routeName="Activity" />
+      <Activity />
+    </>
+  );
 }

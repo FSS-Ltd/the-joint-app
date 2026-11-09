@@ -76,17 +76,17 @@ Part of the [canonical feature tree](../../FEATURE_TREE.md). Status describes th
 
 <a id="marketing"></a>
 
-## MARKETING — Marketing and household-web retirement
+## MARKETING: Marketing and household-web retirement
 
-- **Status:** `planned`. **Purpose:** Present delivered capabilities and preserve required billing/security/privacy recovery during native cutover.
-- **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) — `IOS16 — Marketing and web household cutover`.
-- **Canonical implementation:** No runtime implementation yet; use the cited plan.
+- **Status:** `implemented`. **Purpose:** Present delivered capabilities and preserve required billing/security/privacy recovery during native cutover.
+- **Entry points:** [apps/web/app/page.tsx](../../apps/web/app/page.tsx) - Public marketing landing page; [apps/web/components/cutover/cutover-notice.tsx](../../apps/web/components/cutover/cutover-notice.tsx) - Safe cutover notice for retired desktop finance pages; [docs/superpowers/plans/2026-11-09-ios16-marketing-web-cutover.md](../../docs/superpowers/plans/2026-11-09-ios16-marketing-web-cutover.md) - Delivery design doc.
+- **Canonical implementation:** [apps/web/components/marketing/](../../apps/web/components/marketing/) (marketing page presentation and content), [apps/web/components/cutover/cutover-notice.tsx](../../apps/web/components/cutover/cutover-notice.tsx) (cutover notice component).
 - **Depends on / reuses:** [BILLING](planned.md#billing), [NATIVE_FINANCE](planned.md#native_finance), [PRIVACY](platform.md#privacy), [WEB_AUTH](identity.md#web_auth).
-- **Used by:** No implemented consumer identified; future callers must reuse this boundary.
-- **Permission / data boundary:** Keep existing family web routes until parity and recovery evidence pass. Never retire authoritative Nest endpoints merely to remove pages.
-- **Verification references:** No executable feature acceptance established; the linked plan defines the required evidence.
-- **Graphify navigation:** scopes `features; future runtime nodes are absent`; query `MARKETING` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_MARKETING`.
-- **Debug / reuse / limits:** Existing web is a retained finance reference. Do not label it a delivered marketing/subscription/staff site.
+- **Used by:** Web public visitors, legacy bookmark holders, and prospective subscribers.
+- **Permission / data boundary:** Retired desktop finance routes render pure static cutover notices with zero financial data payloads. Authentication, MFA security, GDPR archive export, statutory deletion, and staff analytics remain active and securely isolated.
+- **Verification references:** [tests/marketing-cutover.test.ts](../../tests/marketing-cutover.test.ts).
+- **Graphify navigation:** scopes `features; web components and cutover routes`; query `MARKETING` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_MARKETING`.
+- **Debug / reuse / limits:** Web public portal is an authoritative marketing, security, privacy, and staff entry point. Desktop finance routes redirect or render the native cutover notice.
 
 <a id="statements"></a>
 

@@ -1,9 +1,16 @@
 import { AccountDetail } from "../../../components/accounts/detail";
-export default async function AccountPage({
+import { CutoverNoticeBanner } from "../../../components/cutover/cutover-banner";
+
+export default async function AccountDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <AccountDetail accountId={id} />;
+  return (
+    <>
+      <CutoverNoticeBanner routeName="Account Details" />
+      <AccountDetail accountId={id} />
+    </>
+  );
 }

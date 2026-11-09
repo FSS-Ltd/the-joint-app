@@ -1,9 +1,16 @@
 import { TransactionDetail } from "../../../components/activity/detail";
-export default async function Page({
+import { CutoverNoticeBanner } from "../../../components/cutover/cutover-banner";
+
+export default async function TransactionDetailPage({
   params,
 }: {
   params: Promise<{ transactionId: string }>;
 }) {
   const { transactionId } = await params;
-  return <TransactionDetail transactionId={transactionId} />;
+  return (
+    <>
+      <CutoverNoticeBanner routeName="Transaction Details" />
+      <TransactionDetail transactionId={transactionId} />
+    </>
+  );
 }
