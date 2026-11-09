@@ -12,7 +12,11 @@ import { colors, spacing, corners } from "@/theme/tokens";
 import { useNativeFinance } from "../finance/context";
 import { financeAuthorityKey } from "../finance/scope";
 import { CoverageCard } from "./coverage-card";
+import { MonthEndSurplusCard } from "./month-end-surplus-card";
 import { sortedCategoriesBySpend } from "./review-helpers";
+import { categoryActual } from "../budgets/cap-math";
+import { SavingsImpactCard } from "../budgets/savings-impact-card";
+import { useGoalsData } from "../goals/use-goals-data";
 import {
   currentMobileMonth,
   previousMonth,
@@ -249,6 +253,7 @@ export function MonthlyReviewContent(): React.JSX.Element | null {
   const { authority, spending } = useNativeFinance();
   const [month, setMonth] = useState(currentMobileMonth);
   const result = useSpendingReport(month);
+  const goalsResult = useGoalsData();
 
   if (!authority) return null;
 
@@ -302,6 +307,21 @@ export function MonthlyReviewContent(): React.JSX.Element | null {
         ) : (
           <>
             <CashFlowSummary report={result.value} />
+            <SavingsImpactCard
+              scheduledSavingsMinor="0"
+              capLines={(result.value.budget?.lines ?? []).map((line) => ({
+                limitMinor: line.limit.amountMinor,
+                actualMinor: categoryActual(result.value, line.category)
+                  .amountMinor,
+              }))}
+            />
+            <MonthEndSurplusCard
+              report={result.value}
+              goals={goalsResult.goals}
+              onConfirmAllocation={(goalId) => {
+                router.push(`/goals/${goalId}`);
+              }}
+            />
             <CoverageCard
               report={result.value}
               householdId={authority.householdId}

@@ -464,6 +464,7 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
       },
       "../finance/scope": { financeAuthorityKey: () => "auth-1" },
       "./cap-card": { CapCard: "cap-card" },
+      "./savings-impact-card": { SavingsImpactCard: "savings-impact-card" },
       "./recurring-card": { RecurringCard: "recurring-card" },
       "./baselines-card": { BaselinesCard: "baselines-card" },
       "./use-recurring-data": {

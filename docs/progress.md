@@ -1935,3 +1935,36 @@ Deliverables implemented and verified:
   - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
   - Formatter: `pnpm format:check` passed clean.
   - Native iOS and Android bundle exports passed (`bundle:ios` and `bundle:android`).
+
+Host merge verified: [PR58](https://github.com/FSS-Ltd/the-joint-app/pull/58) was merged into `main` at commit `7a45c5a`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS10a and closes PR58.
+
+## IOS10b - Savings impact and goal timeline feedback
+
+Predecessor verified on the host before starting: [PR58](https://github.com/FSS-Ltd/the-joint-app/pull/58) merged at `7a45c5a`. Step IOS10b starts from that merge on branch `feat/ios10b-savings-goal-timeline-feedback`.
+
+Deliverables implemented and verified:
+
+- Domain math modules:
+  - `apps/mobile/src/features/budgets/savings-impact.ts`:
+    - `calculateCategoryVariance`: Exact integer math for category caps (pins £50/£35, £50/£50, £50/£65 states).
+    - `calculateHouseholdSavingsImpact`: Computes net overspend/underspend across budget caps. Confirmed £200 savings with £15 net overspend yields qualified £185. Underspend in one cap offsets overspend in another without double deductions across goals or fictitious cash creation.
+- Insufficiency gates and timeline feedback:
+  - `apps/mobile/src/features/goals/goal-timeline-feedback.ts`:
+    - `evaluateGoalTimelineFeedback`: Amount-only mode enforced when target, opening balance, contribution schedule, or account access are incomplete or unreviewed. Prevents projecting reachable dates or inventing disposable cash from unspent budget caps.
+  - `apps/mobile/src/features/goals/goal-timeline-feedback-card.tsx`:
+    - Accessible card rendering amount-only status or active projection model with explicit explanations.
+- Month-end surplus allocation:
+  - `apps/mobile/src/features/review/month-end-surplus-card.tsx`:
+    - Renders in `MonthlyReviewScreen`. Locks when period coverage is incomplete. Allows selecting an active goal and confirming allocation of verified unspent allowance without creating bank transfers or observed transactions.
+- Screen integration:
+  - `apps/mobile/src/features/budgets/budget-screen.tsx`: Integrates `SavingsImpactCard` summarizing net cap variance and qualified savings.
+  - `apps/mobile/src/features/review/monthly-review-screen.tsx`: Integrates `SavingsImpactCard` and `MonthEndSurplusCard`.
+  - `apps/mobile/src/features/goals/goal-detail-screen.tsx`: Integrates `GoalTimelineFeedbackCard`.
+- Comprehensive test coverage:
+  - `tests/native-savings-impact.test.ts`: 18/18 tests passing covering category variance pinning, household savings impact aggregation, insufficiency gates, and component rendering.
+- Full verification:
+  - Full test suite: 1,121/1,121 tests passed across all 144 test files (`pnpm test`).
+  - Typecheck: 19/19 turbo packages and root test tsconfig clean (`pnpm typecheck`).
+  - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
+  - Formatter: `pnpm format:check` passed clean.
+  - Native iOS and Android bundle exports passed (`bundle:ios` and `bundle:android`).

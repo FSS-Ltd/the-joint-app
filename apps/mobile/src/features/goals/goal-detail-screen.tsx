@@ -13,6 +13,7 @@ import { colors, spacing } from "@/theme/tokens";
 import { useNativeFinance } from "../finance/context";
 import { useGoalDetailData } from "./use-goal-detail-data";
 import { GoalProgressCard } from "./goal-progress-card";
+import { GoalTimelineFeedbackCard } from "./goal-timeline-feedback-card";
 import { ProjectionBreakdownCard } from "./projection-breakdown-card";
 import { AllocationEditorCard } from "./allocation-editor-card";
 import { ContributionPlanCard } from "./contribution-plan-card";
@@ -130,6 +131,18 @@ export function GoalDetailScreen({
       ) : (
         <View style={styles.contentStack}>
           <GoalProgressCard goal={goal} allocatedMinor={allocatedMinor} />
+
+          <GoalTimelineFeedbackCard
+            inputs={{
+              targetMinor: goal.target.amountMinor,
+              allocatedMinor: String(allocatedMinor),
+              monthlyContributionMinor: contributions?.plans.find(
+                (p) => p.plan.goalId === goalId,
+              )?.plan.monthlyContributions[0]?.amount.amountMinor,
+              hasOpeningBalance: allocations !== null,
+              sourceAccessRevoked: allocations === null && !loading,
+            }}
+          />
 
           {latestProjection ? (
             <>

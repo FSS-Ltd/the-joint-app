@@ -11,6 +11,7 @@ import { colors } from "@/theme/tokens";
 import { useNativeFinance } from "../finance/context";
 import { financeAuthorityKey } from "../finance/scope";
 import { CapCard } from "./cap-card";
+import { SavingsImpactCard } from "./savings-impact-card";
 import { RecurringCard } from "./recurring-card";
 import { BaselinesCard } from "./baselines-card";
 import { BudgetEditor } from "./budget-editor";
@@ -35,6 +36,10 @@ export function CapList({
   const { spending } = useNativeFinance();
   const recurringData = useRecurringData();
   const lines = report.budget?.lines ?? [];
+  const capLines = lines.map((line) => ({
+    limitMinor: line.limit.amountMinor,
+    actualMinor: categoryActual(report, line.category).amountMinor,
+  }));
 
   if (report.scope.length === 0) {
     return (
@@ -71,6 +76,8 @@ export function CapList({
           </AppText>
         </Panel>
       )}
+
+      <SavingsImpactCard scheduledSavingsMinor="0" capLines={capLines} />
 
       <Panel>
         <AppText variant="label" tone="secondary">
