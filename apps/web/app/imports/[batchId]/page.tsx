@@ -1,9 +1,10 @@
-import { ImportDetail } from "../../../components/imports/detail";
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ batchId: string }>;
-}) {
-  const { batchId } = await params;
-  return <ImportDetail batchId={batchId} />;
+import { CutoverNotice } from "../../../components/cutover/cutover-notice";
+
+export default function ImportDetailPage() {
+  return (
+    <CutoverNotice
+      pageTitle="Import Batch Details Have Moved to iOS"
+      previousRouteName="Import Batch"
+    />
+  );
 }

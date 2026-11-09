@@ -1,4 +1,10 @@
-import { AccountList } from "../../components/accounts/list";
+import { CutoverNotice } from "../../components/cutover/cutover-notice";
+
 export default function AccountsPage() {
-  return <AccountList />;
+  return (
+    <CutoverNotice
+      pageTitle="Account Balances Have Moved to iOS"
+      previousRouteName="Accounts"
+    />
+  );
 }

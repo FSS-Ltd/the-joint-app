@@ -1,4 +1,10 @@
-import { Household } from "../../components/identity/household";
+import { CutoverNotice } from "../../components/cutover/cutover-notice";
+
 export default function HouseholdPage() {
-  return <Household />;
+  return (
+    <CutoverNotice
+      pageTitle="Household Settings Have Moved to iOS"
+      previousRouteName="Household"
+    />
+  );
 }
