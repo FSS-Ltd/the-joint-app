@@ -88,7 +88,7 @@ describe("IOS16 Marketing and Web Household Cutover", () => {
   describe("3. Truthful Marketing Copy & Value Proposition", () => {
     it("features accurate headline and core position without pre-alpha placeholders", () => {
       expect(marketingCopy.hero.title).toBe(
-        "A shared view of your family money, with complete individual privacy.",
+        "A clearer view of your money, together.",
       );
       expect(marketingCopy.hero.eyebrow).toBe(
         "Household Finance with True Privacy",

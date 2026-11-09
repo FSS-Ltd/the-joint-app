@@ -47,8 +47,7 @@ export interface MarketingContent {
 export const marketingCopy: MarketingContent = {
   hero: {
     eyebrow: "Household Finance with True Privacy",
-    title:
-      "A shared view of your family money, with complete individual privacy.",
+    title: "A clearer view of your money, together.",
     description:
       "Built for partners and households who want joint clarity on shared bills and savings without exposing individual discretionary spending or surrendering financial data to advertising brokers.",
     primaryCta: {

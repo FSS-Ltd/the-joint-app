@@ -1,5 +1,6 @@
 import React from "react";
 import "./marketing.css";
+import { Brand } from "../brand";
 import { MarketingHero } from "./hero";
 import { MarketingFeatures } from "./features";
 import { MarketingPricing } from "./pricing";
@@ -9,12 +10,23 @@ import { MarketingFooter } from "./footer";
 export function MarketingPage(): React.ReactElement {
   return (
     <div className="marketing-container">
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
       <header className="marketing-header">
         <div className="marketing-header-inner">
-          <a href="/" className="marketing-brand">
-            The Family Fund
-          </a>
+          <Brand />
+          <span className="environment-label">In development</span>
           <nav className="marketing-nav" aria-label="Main Navigation">
+            <a
+              href="https://github.com/FSS-Ltd/the-joint-app"
+              className="marketing-nav-link"
+            >
+              Follow development on GitHub <span aria-hidden="true">↗</span>
+            </a>
+            <a href="/sign-in" className="marketing-nav-link">
+              Sign in to your household <span aria-hidden="true">↗</span>
+            </a>
             <a href="#features" className="marketing-nav-link">
               Capabilities
             </a>
@@ -23,9 +35,6 @@ export function MarketingPage(): React.ReactElement {
             </a>
             <a href="#security" className="marketing-nav-link">
               Security
-            </a>
-            <a href="/sign-in" className="marketing-nav-link">
-              Sign In
             </a>
             <a
               href="https://apps.apple.com/app/the-family-fund"
