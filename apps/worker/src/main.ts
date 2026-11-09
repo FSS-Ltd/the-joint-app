@@ -13,6 +13,7 @@ import { workerNextDelay } from "@joint/database/worker-deadlines";
 import { createWorkerScheduler } from "./scheduler.js";
 import { createImportHandlers } from "./imports/handlers.js";
 import { maintainImports } from "./import-maintenance.js";
+import { maintainSubscriptions } from "./billing-maintenance.js";
 import { createExportHandlers } from "./handlers/export.handler.js";
 import { maintainExports } from "@joint/database/export-maintenance";
 import { DeletionRepository } from "@joint/database/deletion";
@@ -54,6 +55,7 @@ async function main(): Promise<void> {
     async () => {
       await maintainImports(orm);
       await maintainExports(orm);
+      await maintainSubscriptions(orm);
       if (deletion && !abort.signal.aborted)
         await processDeletion(
           deletion.repository,
