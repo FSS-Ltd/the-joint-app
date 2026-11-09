@@ -4,6 +4,7 @@ import type { WealthApi } from "../../api/wealth";
 import type { ImportsApi } from "../../api/imports";
 import type { TransactionsApi } from "../../api/transactions";
 import type { SpendingApi } from "../../api/spending";
+import type { GoalsApi } from "../../api/goals";
 import type { NativeIdentityBridge } from "../identity/bridge";
 import type { NativeFinanceAuthority } from "./scope";
 
@@ -15,6 +16,7 @@ export interface NativeFinanceContextValue {
   readonly transactions: TransactionsApi;
   readonly imports: ImportsApi;
   readonly spending: SpendingApi;
+  readonly goals: GoalsApi;
   isCurrent(authority: NativeFinanceAuthority): boolean;
   reconcile(authority: NativeFinanceAuthority): Promise<void>;
 }

@@ -66,7 +66,7 @@ it("keeps hidden workspace routes navigable", () => {
   const hidden = /const hiddenTab = \{([\s\S]*?)\};/.exec(layout)?.[1] ?? "";
   expect(hidden).toMatch(/tabBarButton:\s*\(\)\s*=>\s*null/);
   expect(hidden).toMatch(/display:\s*"none"/);
-  for (const name of ["activity", "imports", "budgets", "review"])
+  for (const name of ["activity", "imports", "budgets", "review", "goals"])
     expect(layout).toContain(
       `<Tabs.Screen name="${name}" options={hiddenTab} />`,
     );

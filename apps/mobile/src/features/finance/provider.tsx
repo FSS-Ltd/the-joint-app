@@ -5,6 +5,7 @@ import { createWealthApi } from "../../api/wealth";
 import { createImportsApi } from "../../api/imports";
 import { createTransactionsApi } from "../../api/transactions";
 import { createSpendingApi } from "../../api/spending";
+import { createGoalsApi } from "../../api/goals";
 import { useIdentity } from "../identity/context";
 import { FinanceContext, type NativeFinanceContextValue } from "./context";
 import {
@@ -30,6 +31,7 @@ export function NativeFinanceProvider({
       transactions: createTransactionsApi(identity.transport),
       imports: createImportsApi(identity.transport),
       spending: createSpendingApi(identity.transport),
+      goals: createGoalsApi(identity.transport),
     }),
     [identity],
   );

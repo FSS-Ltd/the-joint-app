@@ -48,6 +48,10 @@ export function HomeContent(): React.JSX.Element {
               onPress={() => router.push("/activity")}
             />
             <NativeAction
+              label="Open goals and projections"
+              onPress={() => router.push("/goals")}
+            />
+            <NativeAction
               label="View budget caps"
               onPress={() => router.push("/budgets")}
             />
