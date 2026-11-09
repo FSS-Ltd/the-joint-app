@@ -362,7 +362,24 @@ describe("CoverageCard & MonthlyReviewScreen source-harness component tests", ()
       },
       "../finance/scope": { financeAuthorityKey: () => "auth-1" },
       "./coverage-card": { CoverageCard: "coverage-card" },
+      "./month-end-surplus-card": {
+        MonthEndSurplusCard: "month-end-surplus-card",
+      },
       "./review-helpers": load("review/review-helpers.ts"),
+      "../budgets/cap-math": {
+        categoryActual: () => ({ amountMinor: "0", currency: "GBP" }),
+      },
+      "../budgets/savings-impact-card": {
+        SavingsImpactCard: "savings-impact-card",
+      },
+      "../goals/use-goals-data": {
+        useGoalsData: () => ({
+          goals: [],
+          loading: false,
+          error: null,
+          reload: vi.fn(),
+        }),
+      },
       "../budgets/month-helpers": load("budgets/month-helpers.ts"),
       "../budgets/month-selector": { MonthSelector: "month-selector" },
       "../budgets/use-spending-report": {

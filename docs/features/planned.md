@@ -20,17 +20,17 @@ Part of the [canonical feature tree](../../FEATURE_TREE.md). Status describes th
 
 <a id="savings"></a>
 
-## SAVINGS — Savings impact and goal timeline feedback
+## SAVINGS: Savings impact and goal timeline feedback
 
-- **Status:** `planned`. **Purpose:** Explain qualified cap savings and explicitly confirmed eligible goal allocations.
-- **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) — `IOS10b — Savings impact and goal timeline feedback`.
-- **Canonical implementation:** No runtime implementation yet; use the cited plan.
-- **Depends on / reuses:** [ALLOCATIONS](finance.md#allocations), [PROJECTIONS](finance.md#projections), [RECURRING](planned.md#recurring), [SPENDING](finance.md#spending).
-- **Used by:** No implemented consumer identified; future callers must reuse this boundary.
-- **Permission / data boundary:** Cap remainder is not disposable cash. No transfer, trade or observed contribution is created.
-- **Verification references:** No executable feature acceptance established; the linked plan defines the required evidence.
-- **Graphify navigation:** scopes `features; future runtime nodes are absent`; query `SAVINGS` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_SAVINGS`.
-- **Debug / reuse / limits:** IOS10b depends on existing cap presentation plus future projection and baseline units.
+- **Status:** `implemented`. **Purpose:** Explain qualified cap savings and explicitly confirmed eligible goal allocations.
+- **Entry points:** [apps/mobile/src/features/budgets/savings-impact-card.tsx](../../apps/mobile/src/features/budgets/savings-impact-card.tsx) - `SavingsImpactCard`; [apps/mobile/src/features/goals/goal-timeline-feedback-card.tsx](../../apps/mobile/src/features/goals/goal-timeline-feedback-card.tsx) - `GoalTimelineFeedbackCard`; [apps/mobile/src/features/review/month-end-surplus-card.tsx](../../apps/mobile/src/features/review/month-end-surplus-card.tsx) - `MonthEndSurplusCard`; [apps/mobile/src/features/budgets/budget-screen.tsx](../../apps/mobile/src/features/budgets/budget-screen.tsx) - `BudgetScreen`; [apps/mobile/src/features/review/monthly-review-screen.tsx](../../apps/mobile/src/features/review/monthly-review-screen.tsx) - `MonthlyReviewScreen`; [apps/mobile/src/features/goals/goal-detail-screen.tsx](../../apps/mobile/src/features/goals/goal-detail-screen.tsx) - `GoalDetailScreen`.
+- **Canonical implementation:** [apps/mobile/src/features/budgets/savings-impact.ts](../../apps/mobile/src/features/budgets/savings-impact.ts) - `calculateCategoryVariance`, `calculateHouseholdSavingsImpact`; [apps/mobile/src/features/goals/goal-timeline-feedback.ts](../../apps/mobile/src/features/goals/goal-timeline-feedback.ts) - `evaluateGoalTimelineFeedback`.
+- **Depends on / reuses:** [ALLOCATIONS](finance.md#allocations), [PROJECTIONS](finance.md#projections), [RECURRING](finance.md#recurring), [SPENDING](finance.md#spending).
+- **Used by:** [NATIVE_HOME](finance.md#native_home), [NATIVE_ACCOUNTS](finance.md#native_accounts), [REPORTS](finance.md#reports).
+- **Permission / data boundary:** Cap remainder is not disposable cash. No transfer, trade or observed contribution is created. Earmarking intention recorded only.
+- **Verification references:** [tests/native-savings-impact.test.ts](../../tests/native-savings-impact.test.ts); [tests/native-budgets-ui.test.ts](../../tests/native-budgets-ui.test.ts); [tests/native-review-ui.test.ts](../../tests/native-review-ui.test.ts).
+- **Graphify navigation:** scopes `mobile, shared`; query `calculateHouseholdSavingsImpact` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_SAVINGS`.
+- **Debug / reuse / limits:** Pure math in savings-impact.ts computes category variance and household qualified savings without double deductions across goals. Amount-only feedback protects goals lacking targets, opening balances or active contribution schedules. Month-end surplus allocation card locks when period coverage is incomplete.
 
 <a id="billing"></a>
 
