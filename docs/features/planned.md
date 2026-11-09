@@ -50,15 +50,15 @@ Part of the [canonical feature tree](../../FEATURE_TREE.md). Status describes th
 
 ## COMPANION — Local companion and grounded insights
 
-- **Status:** `planned`. **Purpose:** Pair an on-device local runtime and expose consented, read-only deterministic tools.
+- **Status:** `partial (IOS13a implemented)`. **Purpose:** Pair an on-device local runtime and expose consented, read-only deterministic tools.
 - **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) — `IOS13a / IOS13b / IOS13c — Local companion`.
-- **Canonical implementation:** [docs/joint-app/05-local-ai-and-projections.md](../../docs/joint-app/05-local-ai-and-projections.md).
+- **Canonical implementation:** [packages/contracts/src/devices.ts](../../packages/contracts/src/devices.ts), [apps/api/src/modules/devices/](../../apps/api/src/modules/devices/), [apps/worker/src/companion-maintenance.ts](../../apps/worker/src/companion-maintenance.ts), [docs/joint-app/05-local-ai-and-projections.md](../../docs/joint-app/05-local-ai-and-projections.md).
 - **Depends on / reuses:** [AUTH](identity.md#auth), [ENTITLEMENTS](platform.md#entitlements), [EVENTS](platform.md#events), [HOUSEHOLD](identity.md#household), [JOBS](platform.md#jobs), [REPORTS](finance.md#reports).
 - **Used by:** [REHEARSAL](planned.md#rehearsal).
 - **Permission / data boundary:** Per-adult consent, five-minute leases, encryption, revocation and no cloud fallback.
-- **Verification references:** No executable feature acceptance established; the linked plan defines the required evidence.
-- **Graphify navigation:** scopes `features; future runtime nodes are absent`; query `` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_COMPANION`.
-- **Debug / reuse / limits:** The historical local-model smoke is not a completed pairing/runtime/API/UI or evaluation. Follow IOS13a/b/c sequentially.
+- **Verification references:** [tests/companion-protocol.test.ts](../../tests/companion-protocol.test.ts).
+- **Graphify navigation:** scopes `api, worker, shared`; query `DevicesService` or inspect canonical source paths. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_COMPANION`.
+- **Debug / reuse / limits:** IOS13a protocol, per-adult account consent isolation, cryptographic session challenge, 5-minute bounded lease lifecycle, AES-256-GCM envelope encryption, and worker maintenance are implemented. Next steps: IOS13b runtime and tool gateway, then IOS13c evaluation and UI.
 
 <a id="staff"></a>
 

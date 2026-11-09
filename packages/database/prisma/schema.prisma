@@ -36,6 +36,8 @@ model Household {
   goals Goal[]
   contributionBudget ContributionBudget?
   categorisationRules CategorisationRule[]
+  devices Device[]
+  insightJobs InsightJob[]
   @@schema("app")
 }
 
@@ -109,6 +111,8 @@ model User {
   invitations Invitation[]
   requestKeys RequestKey[]
   auditEvents AuditEvent[]
+  pairedDevices Device[]
+  insightJobs InsightJob[]
   @@schema("app")
 }
 model Membership {
@@ -264,6 +268,7 @@ model Account {
   allocationState AccountAllocationState?
   allocationRevisions AccountAllocationRevision[]
   projectionSources ProjectionSource[]
+  deviceGrants DeviceAccountGrant[]
   @@unique([householdId, id])
   @@unique([householdId, id, currency])
   @@index([householdId, createdAt, id])
@@ -1090,5 +1095,150 @@ model ClerkWebhookEvent {
   occurredAt DateTime @db.Timestamptz(3)
   processedAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(3)
   @@id([issuer, eventId])
+  @@schema("app")
+}
+
+enum DeviceStatus {
+  PENDING
+  APPROVED
+  REVOKED
+  @@schema("app")
+}
+
+enum DeviceAccountPermission {
+  NONE
+  TOTALS
+  TRANSACTIONS
+  @@schema("app")
+}
+
+enum InsightJobStatus {
+  QUEUED
+  LEASED
+  RUNNING
+  VALIDATED
+  AVAILABLE
+  EXPIRED
+  CANCELLED
+  FAILED
+  REVOKED
+  @@schema("app")
+}
+
+enum InsightFeatureType {
+  SPEND_SUMMARY
+  RECURRING_COSTS
+  GOAL_PROJECTION
+  GOAL_COMPARISON
+  @@schema("app")
+}
+
+model Device {
+  id              String        @id @default(uuid()) @db.Uuid
+  householdId     String        @db.Uuid
+  household       Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  name            String
+  fingerprint     String
+  publicKey       String        @db.Text
+  keyVersion      Int           @default(1)
+  status          DeviceStatus  @default(PENDING)
+  pairedByUserId  String        @db.Uuid
+  pairedByUser    User          @relation(fields: [pairedByUserId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime      @updatedAt @db.Timestamptz(3)
+  lastSeenAt      DateTime?     @db.Timestamptz(3)
+
+  pairingCodes    DevicePairingCode[]
+  sessions        DeviceSession[]
+  accountGrants   DeviceAccountGrant[]
+  insightJobs     InsightJob[]
+
+  @@unique([householdId, fingerprint])
+  @@index([householdId, status])
+  @@schema("app")
+}
+
+model DevicePairingCode {
+  id          String    @id @default(uuid()) @db.Uuid
+  householdId String    @db.Uuid
+  code        String
+  fingerprint String
+  createdBy   String    @db.Uuid
+  expiresAt   DateTime  @db.Timestamptz(3)
+  consumedAt  DateTime? @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+
+  deviceId    String?   @db.Uuid
+  device      Device?   @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+
+  @@index([code, expiresAt])
+  @@schema("app")
+}
+
+model DeviceSession {
+  id             String    @id @default(uuid()) @db.Uuid
+  deviceId       String    @db.Uuid
+  device         Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  tokenHash      String    @unique
+  nonce          String?
+  nonceExpiresAt DateTime? @db.Timestamptz(3)
+  expiresAt      DateTime  @db.Timestamptz(3)
+  revokedAt      DateTime? @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([deviceId, expiresAt])
+  @@schema("app")
+}
+
+model DeviceAccountGrant {
+  id          String                  @id @default(uuid()) @db.Uuid
+  deviceId    String                  @db.Uuid
+  device      Device                  @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  accountId   String                  @db.Uuid
+  account     Account                 @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  ownerUserId String                  @db.Uuid
+  permission  DeviceAccountPermission @default(NONE)
+  createdAt   DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime                @updatedAt @db.Timestamptz(3)
+
+  @@unique([deviceId, accountId])
+  @@index([ownerUserId, deviceId])
+  @@schema("app")
+}
+
+model InsightJob {
+  id                 String             @id @default(uuid()) @db.Uuid
+  householdId        String             @db.Uuid
+  household          Household          @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  requesterUserId    String             @db.Uuid
+  requesterUser      User               @relation(fields: [requesterUserId], references: [id], onDelete: Cascade)
+  audienceScope      String
+  status             InsightJobStatus   @default(QUEUED)
+  featureType        InsightFeatureType
+  parameters         Json
+  promptCiphertext   String?            @db.Text
+  promptKeyId        String?
+
+  assignedDeviceId   String?            @db.Uuid
+  assignedDevice     Device?            @relation(fields: [assignedDeviceId], references: [id], onDelete: SetNull)
+
+  leaseToken         String?            @db.Uuid
+  leaseExpiresAt     DateTime?          @db.Timestamptz(3)
+  leaseRenewals      Int                @default(0)
+
+  attempts           Int                @default(0)
+  maxAttempts        Int                @default(2)
+
+  evidenceHash       String?
+  resultPayload      Json?
+  grantVersion       Int                @default(1)
+
+  createdAt          DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime           @updatedAt @db.Timestamptz(3)
+  expiresAt          DateTime           @db.Timestamptz(3)
+
+  @@index([householdId, status])
+  @@index([status, leaseExpiresAt])
+  @@index([assignedDeviceId, status])
   @@schema("app")
 }

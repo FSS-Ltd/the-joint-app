@@ -2041,3 +2041,42 @@ Deliverables implemented and verified:
   - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
   - Formatter: `pnpm format:check` passed clean.
   - Native iOS and Android bundle exports passed (`bundle:ios` and `bundle:android`).
+
+Host merge verified: [PR61](https://github.com/FSS-Ltd/the-joint-app/pull/61) was merged into `main` at commit `f2f425a`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS12 and closes PR61.
+
+## IOS13a - Local companion protocol, consent and background jobs
+
+Predecessor verified on the host before starting: [PR61](https://github.com/FSS-Ltd/the-joint-app/pull/61) merged at `f2f425a`. Step IOS13a starts from that merge on branch `feat/ios13a-companion-protocol-consent-jobs`.
+
+Deliverables implemented and verified:
+
+- Companion and Insight Job Contracts (`packages/contracts/src/devices.ts`):
+  - Defined Zod schemas and TypeScript types: `deviceStatusSchema`, `deviceAccountPermissionSchema`, `insightJobStatusSchema`, `insightFeatureTypeSchema`, `audienceScopeSchema`.
+  - Added request and response DTOs: `deviceDtoSchema`, `startPairingRequestSchema`, `startPairingResponseSchema`, `approveDeviceRequestSchema`, `completePairingRequestSchema`, `completePairingResponseSchema`, `sessionChallengeRequestSchema`, `sessionChallengeResponseSchema`, `deviceSessionRequestSchema`, `deviceSessionResponseSchema`, `updateDeviceAccountGrantsRequestSchema`, `deviceAccountGrantDtoSchema`, `createInsightJobRequestSchema`, `insightJobDtoSchema`, `companionClaimRequestSchema`, `companionClaimResponseSchema`, `companionEvidenceResponseSchema`, `companionPermitRequestSchema`, `companionPermitResponseSchema`, `companionRenewRequestSchema`, `companionRenewResponseSchema`, `companionCompleteRequestSchema`, `companionCompleteResponseSchema`.
+  - Exported schemas and types from `@joint/contracts`.
+- Database Schema and Migration:
+  - Added enums `DeviceStatus`, `DeviceAccountPermission`, `InsightJobStatus`, `InsightFeatureType`.
+  - Added models `Device`, `DevicePairingCode`, `DeviceSession`, `DeviceAccountGrant`, `InsightJob` with relations to `Household`, `User`, `Account`.
+  - Created migration `packages/database/prisma/migrations/20261109190000_companion_devices_and_jobs/migration.sql` with check constraints, foreign keys, indexes, and RLS policies.
+- Cryptographic Utilities (`apps/api/src/modules/devices/device-crypto.ts`):
+  - `generatePairingCode`: 6-digit numeric code generation.
+  - `computeFingerprint`: SHA-256 fingerprint generation.
+  - `hashToken`: SHA-256 token hashing for session tokens and lease tokens.
+  - `verifyDeviceSignature`: ECDSA and RSA signature verification with SHA-256 digest.
+  - `encryptEvidenceEnvelope` and `decryptEvidenceEnvelope`: Authenticated AES-256-GCM encryption with AAD context binding to job ID and device ID.
+- Companion Device Services (`apps/api/src/modules/devices/`):
+  - `DevicesService`: Manages device listing, pairing initiation with household companion cap checks, device approval, per-adult account consent grants, and immediate revocation terminating sessions and active leases.
+  - `DeviceAuthService`: Completes pairing, creates 5-minute session challenges with random nonces, authenticates signed challenges to issue 1-hour session tokens, and validates bearer tokens.
+  - `InsightJobsService`: Creates background jobs, issues 5-minute bounded leases, builds encrypted evidence envelopes with scoped grant intersections, checks fresh online execution permits, handles lease renewals (up to 15 minutes total), and completes jobs with privacy fence checking against mid-inference grant modifications.
+  - `DevicesController`, `InsightJobsController`, `CompanionController`: Express HTTP controllers exposing REST endpoints for adults and companion runtimes.
+  - Wired into `apps/api/src/modules/identity/identity.module.ts`.
+- Worker Due-Time Reconciliation (`apps/worker/src/companion-maintenance.ts`):
+  - Implemented `maintainCompanionJobs` to reset expired leased jobs (`LEASED` to `QUEUED`) and fail stale jobs exceeding 24 hours.
+  - Integrated into scheduler cycle in `apps/worker/src/main.ts`.
+- Comprehensive Protocol and Security Test Coverage (`tests/companion-protocol.test.ts`):
+  - 12/12 tests passing covering: pairing cap enforcement, fingerprint generation, RSA signature verification, AES-256-GCM envelope encryption, per-adult account consent isolation, session challenge authentication, 5-minute bounded lease lifecycle, mid-inference grant change privacy fencing, immediate device revocation, and worker due-time lease recovery.
+- Monorepo Verification:
+  - Full test suite: 1,183/1,183 tests passed across all 148 test files (`pnpm test`).
+  - Monorepo build and typecheck: 19/19 packages clean (`pnpm turbo run build typecheck`).
+  - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
+  - Formatter: `pnpm format:check` passed clean.
