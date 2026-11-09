@@ -5,7 +5,12 @@ import {
   quotedVersionSchema,
   statusSubscriptionQuery,
 } from "@joint/contracts";
-import { discardBody, maximumJsonBytes, readJson } from "./body";
+import {
+  discardBody,
+  maximumJsonBytes,
+  readCsvBytesBody,
+  readJson,
+} from "./body";
 import { csvRequest } from "./csv-request";
 import { errorCode, NativeApiError } from "./errors";
 import { statusConnection } from "./status-connection";
@@ -55,6 +60,12 @@ export function createNativeTransport(
       headers["X-Logout-Cleanup"] = ticket;
       return headers;
     }
+    if (options.authorization?.kind === "deletion-receipt") {
+      const token = options.authorization.token;
+      if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw new NativeApiError(401);
+      headers.Authorization = `Deletion ${token}`;
+      return headers;
+    }
     let token: string | null;
     try {
       token = await lifetime.wait(getToken());
@@ -88,6 +99,17 @@ export function createNativeTransport(
     if (
       options.authorization?.kind === "logout-cleanup" &&
       (path !== "auth/logout/retry" || options.method !== "POST")
+    )
+      throw new NativeApiError(401);
+    if (
+      options.authorization?.kind === "deletion-receipt" &&
+      (options.method !== "GET" ||
+        (!/^privacy\/deletion-requests\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+          path,
+        ) &&
+          !/^events\?(?:kind=deletion&id=[0-9a-fA-F-]{36}|id=[0-9a-fA-F-]{36}&kind=deletion)$/.test(
+            path,
+          )))
     )
       throw new NativeApiError(401);
     if (
@@ -186,13 +208,75 @@ export function createNativeTransport(
         lifetime.close();
       }
     },
-    async openStatus(selector, signal) {
+    async downloadCsv(path, signal) {
+      if (
+        !/^households\/[0-9a-fA-F-]{36}\/exports\/[0-9a-fA-F-]{36}\/download$/.test(
+          path,
+        ) &&
+        !/^me\/archive\/exports\/[0-9a-fA-F-]{36}\/download$/.test(path)
+      )
+        throw new NativeApiError(0);
+      const lifetime = new RequestLifetime(signal, csvUploadDeadlineMs);
+      let status = 0;
+      try {
+        const response = await dispatch(
+          path,
+          { method: "GET", signal },
+          lifetime,
+          () => {},
+          "text/csv",
+        );
+        status = response.status;
+        if (status < 200 || status >= 300) {
+          let code: string | undefined;
+          try {
+            const value = await readJson(response, lifetime);
+            code = errorCode(value);
+          } catch {
+            discardBody(response.body);
+          }
+          throw new NativeApiError(status, code);
+        }
+        const contentType =
+          response.headers
+            .get("content-type")
+            ?.split(";")[0]
+            ?.trim()
+            .toLowerCase() ?? "";
+        if (contentType !== "text/csv") {
+          discardBody(response.body);
+          throw new NativeApiError(0);
+        }
+        const bytes = await readCsvBytesBody(response, lifetime);
+        lifetime.check();
+        return bytes;
+      } catch (error) {
+        const failedStatus =
+          status >= 400
+            ? status
+            : error instanceof NativeApiError
+              ? error.status
+              : 0;
+        throw new NativeApiError(
+          failedStatus,
+          error instanceof NativeApiError ? error.code : undefined,
+          "rejected",
+        );
+      } finally {
+        lifetime.close();
+      }
+    },
+    async openStatus(selector, signal, authorization) {
       const lifetime = new RequestLifetime(signal);
       let response: NativeResponse | undefined;
       try {
         response = await dispatch(
           `events?${statusSubscriptionQuery(selector)}`,
-          { method: "GET", signal },
+          {
+            method: "GET",
+            signal,
+            ...(authorization ? { authorization } : {}),
+          },
           lifetime,
           () => {},
           "text/event-stream",

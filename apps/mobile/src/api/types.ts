@@ -44,7 +44,9 @@ export interface NativeRequestOptions {
   idempotencyKey?: string;
   version?: number;
   authorization?:
-    { kind: "bearer" } | { kind: "logout-cleanup"; ticket: string };
+    | { kind: "bearer" }
+    | { kind: "logout-cleanup"; ticket: string }
+    | { kind: "deletion-receipt"; token: string };
 }
 export interface NativeStatusConnection {
   readonly response: NativeResponse;
@@ -56,8 +58,13 @@ export interface NativeTransport {
     schema: { parse(value: unknown): T },
     options: NativeRequestOptions,
   ): Promise<T>;
+  downloadCsv?(
+    path: string,
+    signal: AbortSignal,
+  ): Promise<Uint8Array<ArrayBuffer>>;
   openStatus(
     selector: StatusSubscription,
     signal: AbortSignal,
+    authorization?: NativeRequestOptions["authorization"],
   ): Promise<NativeStatusConnection>;
 }

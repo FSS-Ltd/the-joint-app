@@ -85,6 +85,8 @@ function fixture() {
         }) => jsxBoundary.jsx("enrollment", { setup, onOpen }),
       },
       "./security-screen": { SecurityScreen: "security" },
+      "../privacy/archive-screen": { ArchiveScreen: "archive" },
+      "../privacy/privacy-screen": { PrivacyScreen: "privacy" },
       "./household-forms": {
         AcceptInvitation: "accept",
         CreateHousehold: "create",

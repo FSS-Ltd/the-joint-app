@@ -13,6 +13,7 @@ import { SecurityScreen } from "./security-screen";
 import { PasswordTaskScreen } from "./password-task-screen";
 import { AccountScreen } from "./account-screen";
 import { SessionActions } from "./session-actions";
+import { DeletionReceiptScreen } from "../privacy/deletion-receipt-screen";
 export function IdentityEntry({
   ready,
 }: { ready?: (me: MeResponse) => ReactNode } = {}): ReactNode {
@@ -24,6 +25,11 @@ export function IdentityEntry({
     identity.mutations.subscribe,
     identity.mutations.getSnapshot,
     identity.mutations.getSnapshot,
+  );
+  useSyncExternalStore(
+    identity.workflow.subscribe,
+    identity.workflow.getSnapshot,
+    identity.workflow.getSnapshot,
   );
   if (state.kind === "locked" && state.reason === "background")
     return (
@@ -40,6 +46,13 @@ export function IdentityEntry({
       (mutation.phase === "session" || state.kind !== "signed-out"))
   )
     return <MutationScreen />;
+  if (identity.workflow.deletionReceipt)
+    return (
+      <DeletionReceiptScreen
+        receipt={identity.workflow.deletionReceipt}
+        onClose={() => identity.workflow.setDeletionReceipt(null)}
+      />
+    );
   const task = session?.currentTask?.key;
   if (task === "reset-password") return <PasswordTaskScreen />;
   if (task === "setup-mfa") return <SecurityScreen />;

@@ -123,6 +123,7 @@ it.each(["expired capability", "malformed capability"])(
             ...f.screen.render(),
             state: f.controller.getSnapshot(),
             mutations: f.mutations,
+            workflow: f.workflow,
           }),
         },
         "@/components/app-text": { AppText: "text" },
@@ -133,6 +134,9 @@ it.each(["expired capability", "malformed capability"])(
         "./security-screen": { SecurityScreen: "security" },
         "./password-task-screen": { PasswordTaskScreen: "password" },
         "./account-screen": { AccountScreen: "account" },
+        "../privacy/deletion-receipt-screen": {
+          DeletionReceiptScreen: "deletion-receipt",
+        },
         "./session-actions": { SessionActions: "session" },
       },
     ).IdentityEntry as () => unknown;
@@ -230,6 +234,7 @@ it("ordinary runtime refresh cannot override background or undefined provider st
         addEventListener: () => ({ remove: () => {} }),
       },
       "../../api/request": { createNativeTransport: constructTransport },
+      "../../api/privacy": { createPrivacyApi: () => ({}) },
       "../finance/resource-memory": resourceMemory,
       "./api": { createIdentityApiFromTransport: composeIdentity },
       "./context": { IdentityContext: context },

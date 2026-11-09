@@ -7,7 +7,11 @@ const messages: Record<string, string> = {
   INVITE_SELF: "Invite the other adult using their own email address.",
   ADMIN_REQUIRED: "Only the household organiser can invite another adult.",
   MFA_REQUIRED: "Verify a fresh authenticator code before continuing.",
+  MFA_REAUTH_REQUIRED:
+    "Verify a fresh authenticator code in Account security, then try again.",
   MFA_INVALID: "That authenticator code did not match. Try the next code.",
+  PRIVACY_UNAVAILABLE:
+    "Privacy actions are temporarily unavailable. Please try again.",
 };
 export class NativeApiError extends Error {
   constructor(

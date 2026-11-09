@@ -63,6 +63,11 @@ it("never delegates to the financial ready renderer before the complete identity
       return state;
     },
     mutations: { subscribe: () => () => {}, getSnapshot: () => mutation },
+    workflow: {
+      subscribe: () => () => {},
+      getSnapshot: () => "idle::false:account:",
+      deletionReceipt: null,
+    },
     sessionPending: false,
   };
   const gate = sourceExports(
@@ -82,6 +87,9 @@ it("never delegates to the financial ready renderer before the complete identity
       "./security-screen": { SecurityScreen: "security" },
       "./password-task-screen": { PasswordTaskScreen: "password" },
       "./account-screen": { AccountScreen: "account" },
+      "../privacy/deletion-receipt-screen": {
+        DeletionReceiptScreen: "deletion-receipt",
+      },
       "./session-actions": { SessionActions: "session" },
       "@/components/app-text": { AppText: "text" },
       "@/components/identity-frame": { IdentityFrame: "frame" },

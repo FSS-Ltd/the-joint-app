@@ -18,6 +18,11 @@ export function financeGate(controller: NativeIdentityController) {
       subscribe: () => () => {},
       getSnapshot: () => ({ busy: false, quarantined: false, phase: "idle" }),
     },
+    workflow: {
+      subscribe: () => () => {},
+      getSnapshot: () => "idle::false:account:",
+      deletionReceipt: null,
+    },
     sessionPending: false,
   };
   return sourceExports("apps/mobile/src/features/identity/identity-entry.tsx", {
@@ -31,6 +36,9 @@ export function financeGate(controller: NativeIdentityController) {
     "./security-screen": { SecurityScreen: "security" },
     "./password-task-screen": { PasswordTaskScreen: "password" },
     "./account-screen": { AccountScreen: "account" },
+    "../privacy/deletion-receipt-screen": {
+      DeletionReceiptScreen: "deletion-receipt",
+    },
     "./session-actions": { SessionActions: "session" },
     "@/components/app-text": { AppText: "text" },
     "@/components/identity-frame": { IdentityFrame: "frame" },

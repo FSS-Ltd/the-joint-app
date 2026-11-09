@@ -15,6 +15,7 @@ import {
   observeFinanceResourceAuthority,
 } from "../finance/resource-memory";
 import { createNativeTransport } from "../../api/request";
+import { createPrivacyApi } from "../../api/privacy";
 import { createIdentityApiFromTransport } from "./api";
 import { IdentityMutations } from "./mutations";
 import { sessionActor } from "./provider-session";
@@ -46,6 +47,7 @@ export function IdentityRuntime({
     () => createIdentityApiFromTransport(transport),
     [transport],
   );
+  const privacy = useMemo(() => createPrivacyApi(transport), [transport]);
   const workflow = useMemo(
     () => new NativeWorkflow(() => AppState.currentState === "active"),
     [],
@@ -56,6 +58,7 @@ export function IdentityRuntime({
       transport,
       resources: new NativeFinanceResourceMemory(),
       getVerifiedIdentity: controller.getVerifiedIdentity,
+      getActor: controller.getActor,
       subscribe: controller.subscribe,
       revoke: (actor: string) => controller.revoke(actor),
       refresh: () => controller.refresh(),
@@ -196,6 +199,7 @@ export function IdentityRuntime({
       value={{
         state,
         api,
+        privacy,
         finance,
         refresh: () => controller.refresh(),
         workflow,

@@ -45,6 +45,7 @@ export class NativeIdentityController {
   }
   getSnapshot = (): IdentityState => this.state;
   getVerifiedIdentity = (): VerifiedNativeIdentity | null => this.verified;
+  getActor = (): string | null | undefined => this.actor;
   subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
