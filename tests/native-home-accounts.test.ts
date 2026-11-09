@@ -55,11 +55,13 @@ it("mounts actual Tabs only through the configured financial ready gate", () => 
     "home",
     "activity",
     "imports",
+    "budgets",
+    "review",
     "more",
   ]);
-  // Activity and Imports are reachable from Home without a tab in the bar. A null href is a
+  // Hidden tabs reachable from Home without a tab in the bar. A null href is a
   // hidden tab in expo-router 58 that router.push cannot reach, so only the button is hidden.
-  for (const name of ["activity", "imports"]) {
+  for (const name of ["activity", "imports", "budgets", "review"]) {
     const options = tabsByName.find((e) => e.props.name === name)?.props
       .options as {
       href?: unknown;

@@ -1704,3 +1704,49 @@ Two source-structure guards were added and were RED on main: no `NativeAction` w
 Observed after the fix on the exact fix commit: Home opens Activity and Import, the bar keeps its two tabs, and Activity renders its account chooser, search, month and classification filters and its transaction rows (checked at 50 rows from a 131-row account). Not exercised in the native run: the finance ready gate and authority loss. Not yet observed: the import history list with batches (it now renders in one non-virtualized host, so a long history grows the native column and may need a cap later) (fixed from the crash site and the code), VoiceOver, Dynamic Type, and every write and import scenario. Neither tab in the bar is highlighted while Activity or Import is open, because those routes have no tab; this is existing behaviour and is noted, not changed.
 
 Process notes for the next run: Metro does not pick up edits made after a session starts, so restart the session after each change. The harness' own end-of-run check races the closing of destroyed sockets and reports a spurious cleanup error; ports and processes were confirmed closed.
+
+Host merge verified: [PR52](https://github.com/FSS-Ltd/the-joint-app/pull/52) was merged into `main` by Jean-Fidele Ntagengwa at 2026-11-08T19:22:37Z at commit `0022cc7c9d0d5c19434ed42ef8b226402cf4375f`. Final head `b0dcda6a55da1408db86c62e07a38b02030ab21b` passed CI run 42418334441 (Foundation checks and Native bundle checks both SUCCESS). This completes IOS5 acceptance fix 1 and closes PR52.
+
+## IOS6 — Budgets, category caps and month-end review
+
+Predecessor verified on the host before starting: [PR52](https://github.com/FSS-Ltd/the-joint-app/pull/52) merged at `0022cc7c9d0d5c19434ed42ef8b226402cf4375f`. Step IOS6 starts from that merge on branch `build/ios6-budgets-review`.
+
+Deliverables implemented and verified:
+
+- Native `/budgets` workspace route (`BudgetScreen`, `BudgetContent`, `CapList`):
+  - Keyed by `financeAuthorityKey(authority)` and backed by `useSpendingReport(month)` (`apps/mobile/src/features/budgets/use-spending-report.ts`), which binds `useFinanceLifetime` to conceal cached data and abort in-flight reads on route blur, app backgrounding, or authority loss, revokes sessions on `401`, reconciles on `403`/`404`/`AUTHORITY_CHANGED`, and formats all errors through `financeErrorMessage`.
+  - Shared `MonthSelector` (`apps/mobile/src/features/budgets/month-selector.tsx`) with previous/next navigation and London-timezone month helpers.
+  - Empty-scope state ("Your picture starts with an account" / "Open accounts") when `report.scope.length === 0`.
+  - Category cap progress rulers (`CapCard`, `CapRuler`): `accessibilityRole="progressbar"` with spent/cap/balance context in `accessibilityValue.text`, steady red overage segment, and reduced-motion-friendly pulse animation subscribing to `AccessibilityInfo.isReduceMotionEnabled` and `reduceMotionChanged`.
+  - Saving-plan impact copy on overspend ("£X.XX less to put toward saving if other spending stays as planned. This comparison does not move money."), net refund notices, and month-end review callout ("Review the month before reallocating").
+  - Native `BudgetEditor` keyed by `${report.month}:${report.scopeKey}:${report.budget?.version ?? 0}`: numbered category and GBP decimal fields (`maxLength={80}`, 100-line cap, `categoryLabelSchema` validation), row clear/remove/add actions, `useFinanceLifetime` draft reset on blur/background, optimistic concurrency submission (`If-Match: budget.version`), and 412 conflict handling with an explicit "Reload budget" action.
+- Native `/review` workspace route (`MonthlyReviewScreen`, `MonthlyReviewContent`):
+  - Keyed by `financeAuthorityKey(authority)` and backed by `useSpendingReport(month)` and `MonthSelector`, with empty-scope guidance when `report.scope.length === 0`.
+  - Cash flow hero summary (`CashFlowSummary`): spending, confirmed income, and net cash movement with reviewed period status badge.
+  - Account-month history coverage attestation (`CoverageCard`): per-account ownership badge ("Yours" vs "Shared with you"), history confirmed/unconfirmed badge, coverage reasons mapping, `useFinanceLifetime` fencing, `401` revocation / `403`/`404` reconciliation, `financeErrorMessage` sanitization, 412 conflict "Reload review" recovery action, and toggle action strictly restricted to owned accounts (`ownership === "OWNED"`) and closed periods (`If-Match: coverage.version`).
+  - Category breakdown (`CategoryBreakdownSection`) sorted by spend magnitude with visual proportion bars, component counts, and refund distinctions.
+  - Six-month trend summary (`TrendSection`) with month-over-month comparison when both months have complete history.
+  - Cash movement bridge (`CashBridgeSection`) for transfers, debt service, principal flows, and unclassified cash.
+  - Actions and review panel showing `unreviewedCount` and `unclassifiedCount` alongside navigation actions to budget caps, activity, and CSV imports.
+- Shared API adapter (`createSpendingApi` in `apps/mobile/src/api/spending.ts`):
+  - Reuses existing NestJS spending report, budget upsert, coverage attestation, and categories endpoints with Zod schema validation and query serialization, wired into `NativeFinanceContextValue` and `NativeFinanceProvider`.
+- Structure guards and navigation:
+  - Hidden tabs `budgets` and `review` registered in `workspace-layout.tsx` without null hrefs.
+  - All `@expo/ui` SwiftUI actions enclosed within native `Host` / `NativeActions` containers, verified by `tests/native-structure-guards.test.ts`.
+  - Quick action links "View budget caps" and "Review this month" on Home screen.
+
+Independent reviews before PR creation:
+
+- Round 1 independent reviews by Application Security Engineer and Code Reviewer (plus `/design-craft` UI/accessibility audit) identified authority/lifecycle fencing gaps (`financeAuthorityKey`, `useFinanceLifetime`, `401` revocation, `403`/`404` reconciliation), raw `Error.message` exposure, missing `BudgetEditor` version keying and 412 reload buttons, empty-scope handling, `CapRuler` `progressbar` role, category length/count validation, and source-harness component tests.
+- All Round 1 findings were resolved and verified by Round 2 re-review from both the Application Security Engineer and Code Reviewer profiles with 0 remaining blockers.
+
+Local checks (Node 22.23.3):
+
+- 1,024 unit tests passing across all 135 test files (`pnpm test`).
+- 38 new tests in 3 IOS6 test files (`tests/native-budgets-api.test.ts`, `tests/native-budgets-ui.test.ts`, `tests/native-review-ui.test.ts`), including source-harness component and lifecycle tests.
+- Full monorepo typecheck clean (19/19 packages, `pnpm typecheck`).
+- Mobile package typecheck clean (`pnpm --filter @joint/mobile typecheck`).
+- ESLint clean (`pnpm lint`).
+- Prettier clean (`pnpm format:check`).
+- Mobile bundle exports clean (`pnpm --filter @joint/mobile bundle:ios` and `bundle:android`).
+- Feature tree updated in `docs/features/finance.md` with native SPENDING entries and verification paths. Local Graphify CLI environment (`.local/graphify`) is not provisioned in this checkout; documented per `docs/features/graphify.md`.

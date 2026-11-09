@@ -20,6 +20,7 @@ export default tseslint.config(
       "apps/mobile/android/**",
       "**/node_modules/**",
       "the-joint-app-plan/**",
+      "**/.claude/**",
       "**/next-env.d.ts",
     ],
   },

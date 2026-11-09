@@ -18,6 +18,7 @@ docs/private/
 .local/
 .superpowers/
 .playwright-mcp/
+.claude/
 
 # Reproducible Prisma client output
 packages/database/src/generated/
