@@ -40,3 +40,9 @@ export { NativeApiError } from "../../apps/mobile/src/api/errors.js";
 
 export const createIdentityApiFromTransport =
   api.createIdentityApiFromTransport as typeof import("../../apps/mobile/src/features/identity/api.js").createIdentityApiFromTransport;
+
+const privacy = sourceExports("apps/mobile/src/api/privacy.ts", {
+  "@joint/contracts": contracts,
+});
+export const createPrivacyApi =
+  privacy.createPrivacyApi as typeof import("../../apps/mobile/src/api/privacy.js").createPrivacyApi;

@@ -149,6 +149,42 @@ export function useSessionActions(
       setSessionNotice(unconfirmedNotice);
     });
   }
+  async function endRevokedSession(notice?: string): Promise<void> {
+    const original = session;
+    if (
+      !original ||
+      sessionActor(clerk.session) !== sessionActor(original) ||
+      pending.current ||
+      !storageLoaded
+    ) {
+      throw new Error("Session cleanup unavailable.");
+    }
+    const lease = workflow.capture();
+    if (!lease.active()) {
+      throw new Error("Session cleanup unavailable.");
+    }
+    pending.current = true;
+    setSessionPending(true);
+    setSessionError("");
+    try {
+      await mutations.run(async (scope) => {
+        const originalActor = sessionActor(original);
+        controller.conceal();
+        controller.revoke(originalActor ?? undefined);
+        await remove(original, scope);
+        if (notice) setSessionNotice(notice);
+      }, "session");
+    } catch (cause) {
+      if (lease.current())
+        setSessionError(
+          "This action could not finish. Your account remains protected. Please try again.",
+        );
+      throw cause;
+    } finally {
+      pending.current = false;
+      setSessionPending(false);
+    }
+  }
   async function cancelPendingSignIn(): Promise<void> {
     const original = session;
     if (
@@ -186,6 +222,7 @@ export function useSessionActions(
     storageFailed,
     pending,
     logout,
+    endRevokedSession,
     sessionPending,
     sessionError,
     sessionNotice,

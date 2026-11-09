@@ -9,6 +9,8 @@ import {
   CreateHousehold,
   InviteAdult,
 } from "./household-forms";
+import { ArchiveScreen } from "../privacy/archive-screen";
+import { PrivacyScreen } from "../privacy/privacy-screen";
 import { useIdentity } from "./context";
 import { SecurityScreen } from "./security-screen";
 import { SessionActions } from "./session-actions";
@@ -20,8 +22,26 @@ export function AccountScreen({ me }: { me: MeResponse }): React.JSX.Element {
     workflow.getSnapshot,
   );
   const [individual, setIndividual] = useState(false);
-  if (workflow.securityOpen)
+  if (workflow.securityOpen || workflow.view === "security")
     return <SecurityScreen onBack={() => workflow.showSecurity(false)} />;
+  if (workflow.view === "privacy")
+    return (
+      <PrivacyScreen
+        me={me}
+        onBack={() => workflow.showView("account")}
+        onOpenArchive={() => workflow.showView("archive")}
+        onOpenSecurity={() => workflow.showSecurity(true, "privacy")}
+      />
+    );
+  if (workflow.view === "archive")
+    return (
+      <ArchiveScreen
+        me={me}
+        onBack={() => workflow.showView("account")}
+        onOpenPrivacy={() => workflow.showView("privacy")}
+        onOpenSecurity={() => workflow.showSecurity(true, "archive")}
+      />
+    );
   return (
     <IdentityFrame
       title={me.membership?.household.name ?? "Your account, your choice."}
@@ -66,9 +86,19 @@ export function AccountScreen({ me }: { me: MeResponse }): React.JSX.Element {
       )}
       <NativeActions>
         <NativeAction
+          label="Privacy and data"
+          tone="secondary"
+          onPress={() => workflow.showView("privacy")}
+        />
+        <NativeAction
+          label="Owner archive"
+          tone="secondary"
+          onPress={() => workflow.showView("archive")}
+        />
+        <NativeAction
           label="Account security"
           tone="text"
-          onPress={() => workflow.showSecurity(true)}
+          onPress={() => workflow.showSecurity(true, "account")}
         />
       </NativeActions>
       <SessionActions />

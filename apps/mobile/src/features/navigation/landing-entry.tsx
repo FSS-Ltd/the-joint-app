@@ -6,7 +6,9 @@ import type { MeResponse } from "@joint/contracts";
 
 function ReadyLanding({ me }: { me: MeResponse }): React.JSX.Element {
   const { invitation, workflow } = useIdentity();
-  return invitation || workflow.securityOpen ? (
+  return invitation ||
+    workflow.securityOpen ||
+    (workflow.view !== undefined && workflow.view !== "account") ? (
     <AccountScreen me={me} />
   ) : (
     <Redirect href="/home" />

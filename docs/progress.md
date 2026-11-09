@@ -1750,3 +1750,45 @@ Local checks (Node 22.23.3):
 - Prettier clean (`pnpm format:check`).
 - Mobile bundle exports clean (`pnpm --filter @joint/mobile bundle:ios` and `bundle:android`).
 - Feature tree updated in `docs/features/finance.md` with native SPENDING entries and verification paths. Local Graphify CLI environment (`.local/graphify`) is not provisioned in this checkout; documented per `docs/features/graphify.md`.
+
+Host merge verified: [PR53](https://github.com/FSS-Ltd/the-joint-app/pull/53) was merged into `main` at 2026-11-09T09:20:21Z at commit `e438d59ae740438e900ed1b3aa418a77f8c00864`. Final head `cf527855d151dd113beee0044cba8c3596d90358` passed required CI checks (`CI/Foundation checks` and `CI/Native bundle checks` both SUCCESS). This completes IOS6 and closes PR53.
+
+## IOS7a — Household, security, portability and privacy
+
+Predecessor verified on the host before starting: [PR53](https://github.com/FSS-Ltd/the-joint-app/pull/53) merged at `e438d59ae740438e900ed1b3aa418a77f8c00864`. Step IOS7a starts from that merge on branch `feat/ios7a-household-privacy`.
+
+Deliverables implemented and verified:
+
+- Native transport and status stream extensions (`apps/mobile/src/api/types.ts`, `apps/mobile/src/api/body.ts`, `apps/mobile/src/api/errors.ts`, `apps/mobile/src/api/request.ts`, `apps/mobile/src/events/stream.ts`):
+  - Added `{ kind: "deletion-receipt"; token: string }` authorization (`Authorization: Deletion <token>`, validated against `/^[A-Za-z0-9_-]{43}$/`), strictly restricted to `GET privacy/deletion-requests/<uuid>` and `GET events?kind=deletion&id=<uuid>`.
+  - Added `downloadCsv(path, signal)` restricted to `households/<uuid>/exports/<uuid>/download` and `me/archive/exports/<uuid>/download`, enforcing `Content-Type: text/csv`, `csvUploadDeadlineMs`, `MAX_CSV_BYTES` (10 MiB), non-empty body, and fatal UTF-8 validation with stream reader cancellation on abort/error.
+  - Extended `readNativeStatusStream` to allow `export`, `archive-export`, and receipt-authorized `deletion` status selectors.
+  - Added safe user-facing messages for `MFA_REAUTH_REQUIRED` and `PRIVACY_UNAVAILABLE`.
+- Shared native privacy API adapter (`createPrivacyApi` in `apps/mobile/src/api/privacy.ts`):
+  - Wraps household CSV exports, owner archive account/transaction reads and archive CSV exports, entitlements reads, household exit (`POST me/household/leave`), account deletion request (`POST privacy/deletion-requests`), and deletion receipt status (`GET privacy/deletion-requests/:id`).
+- Native privacy, export, archive, and deletion receipt screens (`apps/mobile/src/features/privacy/`):
+  - `ExportFileRegistry` (`export-file.ts`): writes downloaded CSV exports exclusively to `Paths.cache` under `/^joint-export-[A-Za-z0-9-]+\.csv$/` with path-traversal protection, presents the native OS share sheet, and deletes temporary files immediately after share completion, app backgrounding, unmount, or authority loss.
+  - `watchPrivacyStatus` (`watch-status.ts`) and `useExportJob` (`use-export-job.ts`): event-driven SSE status watching, 1 to 50 account selection bounds, permission-scope invalidation (`permissionScope`), MFA recovery action, and native CSV sharing.
+  - `ExportPanel` (`export-panel.tsx`): selectable household or archived accounts, queue/running/completed/failed/expired status panel, MFA security link, and share action.
+  - `PrivacyContextCard` (`privacy-context-card.tsx`): shows Plus access vs Free essentials vs Privacy stays available, confirming privacy and export controls stay free after entitlement downgrade, and displays `No bank connections` (`Disconnect bank · unavailable`).
+  - `PrivacyActions` (`privacy-actions.tsx`): `Leave household` and `Delete my account` with explicit confirmation toggle, `Cancel` action, stable `requestId` per chosen action, MFA recovery link, and post-commit local session cleanup (`endRevokedSession`).
+  - `DeletionReceiptScreen` (`deletion-receipt-screen.tsx`): tracks `PENDING`, `PROVIDER_PENDING`, and `COMPLETED` deletion status using `Authorization: Deletion <statusToken>` and conceals sensitive receipt state on backgrounding or dismissal.
+  - `ArchiveScreen` (`archive-screen.tsx`) and `ArchiveActivity` (`archive-activity.tsx`): read-only archived owned accounts, latest valuation summary, paginated transactions with private author notes, and archived CSV export panel.
+  - Integrated into `AccountScreen`, `IdentityEntry`, `LandingEntry`, `IdentityRuntime`, and `NativeWorkflow` (`apps/mobile/src/features/identity/`), with `workflow.conceal()` resetting `deletionReceipt` on app backgrounding while preserving non-secret view state across authenticator app switches.
+- Unit and UI verification suites:
+  - Added `tests/native-privacy-api.test.ts`, `tests/native-privacy-ui.test.ts`, and `tests/native-archive-ui.test.ts`, and extended `tests/native-stream.test.ts`.
+
+Independent reviews before PR creation:
+
+- Round 1 independent reviews by Application Security Engineer and Code Reviewer identified session actor propagation (`actor={actor}` and `getActor()` for post-leave `household-required` state), `useIsFocused()` tab-blur fencing in `PrivacyScreen` and `ArchiveScreen`, `onDeletionReceipt` ordering after `await onEndSession` with `endRevokedSession` error propagation, `NativeWorkflow.conceal()` preserving `view`/`securityOpen` across authenticator app switches, `AppState` concealment inside `DeletionReceiptScreen`, `accessibilityLiveRegion="polite"` on export status updates, and omitting `message: uri` in `Share.share`.
+- All Round 1 findings were resolved and verified by Round 2 re-review from both the Application Security Engineer and Code Reviewer profiles with 0 remaining findings.
+
+Local checks (Node 22.23.3):
+
+- 1,039 unit tests passing across all 138 test files (`pnpm test`).
+- 19 new tests in IOS7a test suites (`tests/native-privacy-api.test.ts`, `tests/native-privacy-ui.test.ts`, `tests/native-archive-ui.test.ts`, and `tests/native-stream.test.ts`).
+- Full monorepo typecheck clean (19/19 tasks + `tsconfig.tests.json`, `pnpm typecheck`).
+- ESLint clean (`pnpm lint`).
+- Prettier clean (`pnpm format:check`).
+- Mobile bundle exports clean (`pnpm --filter @joint/mobile bundle:ios` and `bundle:android`).
+- Feature tree updated in `docs/features/platform.md` (`#exports`, `#privacy`, `#archive`) and `docs/features/identity.md` (`#native_api`).

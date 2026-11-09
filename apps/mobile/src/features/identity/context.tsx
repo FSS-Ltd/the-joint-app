@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import type { PrivacyApi } from "../../api/privacy";
 import type { IdentityMutations } from "./mutations";
 import type { NativeWorkflow } from "./workflow";
 import type { IdentityApi } from "./api";
@@ -13,9 +14,11 @@ export type IdentityContextValue = {
   workflow: NativeWorkflow;
   mutations: IdentityMutations;
   api: IdentityApi;
+  privacy?: PrivacyApi;
   refresh(): Promise<void>;
   interact(): void;
   logout(scope: "local" | "global"): Promise<void>;
+  endRevokedSession?(notice?: string): Promise<void>;
   retryCleanup(): Promise<void>;
   cleanupPending: boolean;
   sessionPending: boolean;

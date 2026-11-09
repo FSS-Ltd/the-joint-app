@@ -6,6 +6,7 @@ import {
 import { NativeApiError } from "../api/errors";
 import type {
   NativeReader,
+  NativeRequestOptions,
   NativeStatusConnection,
   NativeTransport,
 } from "../api/types";
@@ -19,6 +20,7 @@ export async function readNativeStatusStream(
   transport: NativeTransport,
   signal: AbortSignal,
   onSignal: (signal: StatusSignal) => void,
+  authorization?: NativeRequestOptions["authorization"],
 ): Promise<void> {
   if (signal.aborted) throw new NativeApiError(0);
   if (
@@ -26,7 +28,15 @@ export async function readNativeStatusStream(
     selector.kind !== "accounts" &&
     selector.kind !== "wealth" &&
     selector.kind !== "transactions" &&
-    selector.kind !== "import"
+    selector.kind !== "import" &&
+    selector.kind !== "export" &&
+    selector.kind !== "archive-export" &&
+    (selector.kind !== "deletion" || authorization?.kind !== "deletion-receipt")
+  )
+    throw new NativeApiError(400, "INVALID_STATUS_SELECTOR");
+  if (
+    authorization?.kind === "deletion-receipt" &&
+    selector.kind !== "deletion"
   )
     throw new NativeApiError(400, "INVALID_STATUS_SELECTOR");
   const network = new AbortController();
@@ -47,7 +57,11 @@ export async function readNativeStatusStream(
   signal.addEventListener("abort", cancel, { once: true });
   try {
     // openStatus owns the 15000ms token/handshake deadline, not the stream lifetime.
-    connection = await transport.openStatus(selector, network.signal);
+    connection = await transport.openStatus(
+      selector,
+      network.signal,
+      authorization,
+    );
     check();
     const { response } = connection;
     if (response.status < 200 || response.status >= 300)

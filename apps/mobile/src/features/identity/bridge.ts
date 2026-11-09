@@ -6,6 +6,7 @@ export interface NativeIdentityBridge {
   readonly transport: NativeTransport;
   readonly resources: NativeFinanceResourceMemory;
   getVerifiedIdentity(): VerifiedNativeIdentity | null;
+  getActor?(): string | null | undefined;
   subscribe(listener: () => void): () => void;
   revoke(actor: string): void;
   refresh(): Promise<void>;

@@ -1,9 +1,11 @@
+import type { DeletionReceipt } from "@joint/contracts";
 import {
   signInStage,
   signUpStage,
   type ClerkStage,
 } from "@joint/identity-runtime";
 export type AuthMode = "sign-in" | "sign-up" | "recovery";
+export type AccountView = "account" | "security" | "privacy" | "archive";
 type EmailKind = "signup" | "device" | "recovery";
 export type NativeAuthStage =
   ClerkStage | { step: "email-request"; kind: EmailKind };
@@ -35,8 +37,11 @@ export class NativeWorkflow {
   private revision = 0;
   private emails = new Map<AuthMode, EmailProgress>();
   private listeners = new Set<() => void>();
+  view: AccountView = "account";
+  private returnView: "account" | "privacy" | "archive" = "account";
   securityOpen = false;
   enrollmentPending = false;
+  deletionReceipt: DeletionReceipt | null = null;
   constructor(private readonly isActive: () => boolean = () => true) {}
   getSnapshot = (): number => this.revision;
   subscribe = (listener: () => void): (() => void) => {
@@ -54,10 +59,17 @@ export class NativeWorkflow {
     this.emails.clear();
     this.enrollmentPending = false;
     this.securityOpen = false;
+    this.view = "account";
+    this.returnView = "account";
+    if (actor !== null) this.deletionReceipt = null;
     this.changed();
   }
   conceal(): void {
     this.lifecycleEpoch++;
+    if (this.deletionReceipt !== null) {
+      this.deletionReceipt = null;
+      this.changed();
+    }
   }
   openAuth(mode: AuthMode): void {
     if (this.mode !== mode) {
@@ -81,8 +93,26 @@ export class NativeWorkflow {
         current() && lifecycle === this.lifecycleEpoch && this.isActive(),
     };
   }
-  showSecurity(value: boolean): void {
-    this.securityOpen = value;
+  showView(next: AccountView): void {
+    this.view = next;
+    this.securityOpen = next === "security";
+    if (next !== "security") this.returnView = next;
+    this.changed();
+  }
+  showSecurity(value: boolean, from?: "account" | "privacy" | "archive"): void {
+    if (value) {
+      if (from) this.returnView = from;
+      else if (this.view !== "security") this.returnView = this.view;
+      this.view = "security";
+      this.securityOpen = true;
+    } else {
+      this.view = this.returnView;
+      this.securityOpen = false;
+    }
+    this.changed();
+  }
+  setDeletionReceipt(receipt: DeletionReceipt | null): void {
+    this.deletionReceipt = receipt;
     this.changed();
   }
   setEnrollmentPending(value: boolean): void {
