@@ -1,0 +1,24 @@
+{
+  "name": "@joint/companion",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "joint-companion": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/cli.js"
+  },
+  "dependencies": {
+    "@joint/contracts": "workspace:*",
+    "@joint/projections": "workspace:*"
+  }
+}

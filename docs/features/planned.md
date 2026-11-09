@@ -50,15 +50,15 @@ Part of the [canonical feature tree](../../FEATURE_TREE.md). Status describes th
 
 ## COMPANION — Local companion and grounded insights
 
-- **Status:** `partial (IOS13a implemented)`. **Purpose:** Pair an on-device local runtime and expose consented, read-only deterministic tools.
+- **Status:** `partial (IOS13a and IOS13b implemented)`. **Purpose:** Pair an on-device local runtime and expose consented, read-only deterministic tools.
 - **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) — `IOS13a / IOS13b / IOS13c — Local companion`.
-- **Canonical implementation:** [packages/contracts/src/devices.ts](../../packages/contracts/src/devices.ts), [apps/api/src/modules/devices/](../../apps/api/src/modules/devices/), [apps/worker/src/companion-maintenance.ts](../../apps/worker/src/companion-maintenance.ts), [docs/joint-app/05-local-ai-and-projections.md](../../docs/joint-app/05-local-ai-and-projections.md).
-- **Depends on / reuses:** [AUTH](identity.md#auth), [ENTITLEMENTS](platform.md#entitlements), [EVENTS](platform.md#events), [HOUSEHOLD](identity.md#household), [JOBS](platform.md#jobs), [REPORTS](finance.md#reports).
+- **Canonical implementation:** [packages/contracts/src/devices.ts](../../packages/contracts/src/devices.ts), [apps/api/src/modules/devices/](../../apps/api/src/modules/devices/), [apps/worker/src/companion-maintenance.ts](../../apps/worker/src/companion-maintenance.ts), [apps/companion/](../../apps/companion/), [docs/joint-app/05-local-ai-and-projections.md](../../docs/joint-app/05-local-ai-and-projections.md).
+- **Depends on / reuses:** [AUTH](identity.md#auth), [ENTITLEMENTS](platform.md#entitlements), [EVENTS](platform.md#events), [HOUSEHOLD](identity.md#household), [JOBS](platform.md#jobs), [PROJECTIONS](finance.md#projections), [REPORTS](finance.md#reports).
 - **Used by:** [REHEARSAL](planned.md#rehearsal).
 - **Permission / data boundary:** Per-adult consent, five-minute leases, encryption, revocation and no cloud fallback.
-- **Verification references:** [tests/companion-protocol.test.ts](../../tests/companion-protocol.test.ts).
-- **Graphify navigation:** scopes `api, worker, shared`; query `DevicesService` or inspect canonical source paths. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_COMPANION`.
-- **Debug / reuse / limits:** IOS13a protocol, per-adult account consent isolation, cryptographic session challenge, 5-minute bounded lease lifecycle, AES-256-GCM envelope encryption, and worker maintenance are implemented. Next steps: IOS13b runtime and tool gateway, then IOS13c evaluation and UI.
+- **Verification references:** [tests/companion-protocol.test.ts](../../tests/companion-protocol.test.ts), [tests/companion-runtime.test.ts](../../tests/companion-runtime.test.ts).
+- **Graphify navigation:** scopes `api, worker, companion, shared`; query `CompanionJobRunner` or `DevicesService` or inspect canonical source paths. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_COMPANION`.
+- **Debug / reuse / limits:** IOS13a protocol (per-adult account consent isolation, cryptographic session challenge, 5-minute bounded lease lifecycle, AES-256-GCM envelope encryption, worker maintenance) and IOS13b runtime (apps/companion package, loopback-only OllamaAdapter, ToolGateway with 4 deterministic tools, CompanionJobRunner, CLI) are implemented. Next step: IOS13c native pairing screen, companion insights UI, and model evaluation harness.
 
 <a id="staff"></a>
 
