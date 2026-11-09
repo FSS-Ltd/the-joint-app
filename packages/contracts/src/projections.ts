@@ -93,6 +93,14 @@ const advancedInputSchema = z
       ),
   );
 
+export const basicProjectionInputSchema = basicInputSchema;
+export type BasicProjectionInput = z.infer<typeof basicProjectionInputSchema>;
+
+export const advancedProjectionInputSchema = advancedInputSchema;
+export type AdvancedProjectionInput = z.infer<
+  typeof advancedProjectionInputSchema
+>;
+
 export const projectionInputV1Schema = z.union([
   basicInputSchema,
   advancedInputSchema,
@@ -221,3 +229,53 @@ export const projectionRunDtoSchema = z
     );
   });
 export type ProjectionRunDto = z.infer<typeof projectionRunDtoSchema>;
+
+export const createBasicProjectionRunRequestSchema = z
+  .object({
+    goalId: z.uuid(),
+    input: basicInputSchema,
+  })
+  .strict();
+export type CreateBasicProjectionRunRequest = z.infer<
+  typeof createBasicProjectionRunRequestSchema
+>;
+
+export const createScenarioRequestSchema = z
+  .object({
+    goalId: z.uuid(),
+    input: advancedInputSchema,
+  })
+  .strict();
+export type CreateScenarioRequest = z.infer<typeof createScenarioRequestSchema>;
+
+export const createAdvancedProjectionRunRequestSchema = z
+  .object({
+    goalId: z.uuid(),
+    scenarioId: z.uuid(),
+  })
+  .strict();
+export type CreateAdvancedProjectionRunRequest = z.infer<
+  typeof createAdvancedProjectionRunRequestSchema
+>;
+
+export const scenarioListDtoSchema = z
+  .object({
+    schema: z.literal("scenario-list"),
+    schemaVersion: z.literal(1),
+    householdId: z.uuid(),
+    goalId: z.uuid(),
+    scenarios: z.array(scenarioDtoSchema),
+  })
+  .strict();
+export type ScenarioListDto = z.infer<typeof scenarioListDtoSchema>;
+
+export const projectionRunListDtoSchema = z
+  .object({
+    schema: z.literal("projection-run-list"),
+    schemaVersion: z.literal(1),
+    householdId: z.uuid(),
+    goalId: z.uuid(),
+    runs: z.array(projectionRunDtoSchema),
+  })
+  .strict();
+export type ProjectionRunListDto = z.infer<typeof projectionRunListDtoSchema>;
