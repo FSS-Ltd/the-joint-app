@@ -56,7 +56,7 @@ it("never renders a SwiftUI action outside a native host", () => {
   expect(stray).toEqual([]);
 });
 
-it("keeps the Activity and Imports workspace routes navigable", () => {
+it("keeps hidden workspace routes navigable", () => {
   const layout = readFileSync(
     "apps/mobile/src/features/navigation/workspace-layout.tsx",
     "utf8",
@@ -66,7 +66,7 @@ it("keeps the Activity and Imports workspace routes navigable", () => {
   const hidden = /const hiddenTab = \{([\s\S]*?)\};/.exec(layout)?.[1] ?? "";
   expect(hidden).toMatch(/tabBarButton:\s*\(\)\s*=>\s*null/);
   expect(hidden).toMatch(/display:\s*"none"/);
-  for (const name of ["activity", "imports"])
+  for (const name of ["activity", "imports", "budgets", "review"])
     expect(layout).toContain(
       `<Tabs.Screen name="${name}" options={hiddenTab} />`,
     );
