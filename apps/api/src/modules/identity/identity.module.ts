@@ -83,6 +83,14 @@ import {
   BillingService,
   type BillingServiceOptions,
 } from "../billing/billing.service.js";
+import {
+  createCompanionController,
+  createDevicesController,
+  createInsightJobsController,
+} from "../devices/devices.controller.js";
+import { DevicesService } from "../devices/devices.service.js";
+import { DeviceAuthService } from "../devices/device-auth.service.js";
+import { InsightJobsService } from "../devices/insight-jobs.service.js";
 export type AuthOptions = IdentityAdapterOptions & {
   events?: StatusEventHub;
   clerkWebhook?: { signingSecret: string; instanceId: string };
@@ -120,6 +128,9 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       createProjectionsController(),
       createBillingController(),
       createBillingWebhooksController(),
+      createDevicesController(),
+      createInsightJobsController(),
+      createCompanionController(),
     ];
   const { database } = options;
   const { identity, vault, legacyLinker, clerkLogout } =
@@ -282,5 +293,23 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
         ...options.billing,
       }),
     ),
+    createDevicesController({
+      identity,
+      devices: new DevicesService(database, entitlements),
+      deviceAuth: new DeviceAuthService(database),
+      insightJobs: new InsightJobsService(database, entitlements),
+    }),
+    createInsightJobsController({
+      identity,
+      devices: new DevicesService(database, entitlements),
+      deviceAuth: new DeviceAuthService(database),
+      insightJobs: new InsightJobsService(database, entitlements),
+    }),
+    createCompanionController({
+      identity,
+      devices: new DevicesService(database, entitlements),
+      deviceAuth: new DeviceAuthService(database),
+      insightJobs: new InsightJobsService(database, entitlements),
+    }),
   ];
 }
