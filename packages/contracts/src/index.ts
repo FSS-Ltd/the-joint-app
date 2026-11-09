@@ -133,3 +133,4 @@ export * from "./clerk.js";
 export * from "./billing.js";
 export * from "./session-activity.js";
 export * from "./devices.js";
+export * from "./staff.js";
