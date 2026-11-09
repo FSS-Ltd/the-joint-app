@@ -39,8 +39,9 @@ export interface OllamaTransport {
       stream?: boolean;
       options?: Record<string, unknown>;
     },
+    signal?: AbortSignal,
   ): Promise<OllamaChatResponse>;
-  checkHealth(baseUrl: string): Promise<boolean>;
+  checkHealth(baseUrl: string, signal?: AbortSignal): Promise<boolean>;
 }
 
 export class DefaultOllamaTransport implements OllamaTransport {
@@ -53,11 +54,13 @@ export class DefaultOllamaTransport implements OllamaTransport {
       stream?: boolean;
       options?: Record<string, unknown>;
     },
+    signal?: AbortSignal,
   ): Promise<OllamaChatResponse> {
     const res = await fetch(`${baseUrl}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...payload, stream: false }),
+      signal,
     });
 
     if (!res.ok) {
@@ -67,9 +70,9 @@ export class DefaultOllamaTransport implements OllamaTransport {
     return (await res.json()) as OllamaChatResponse;
   }
 
-  async checkHealth(baseUrl: string): Promise<boolean> {
+  async checkHealth(baseUrl: string, signal?: AbortSignal): Promise<boolean> {
     try {
-      const res = await fetch(`${baseUrl}/api/tags`, { method: "GET" });
+      const res = await fetch(`${baseUrl}/api/tags`, { method: "GET", signal });
       return res.ok;
     } catch {
       return false;
@@ -195,9 +198,20 @@ export class OllamaAdapter {
     const rawUrl = options.baseUrl || "http://127.0.0.1:11434";
     // Strict loopback validation
     const parsed = new URL(rawUrl);
-    if (parsed.hostname !== "127.0.0.1" && parsed.hostname !== "localhost") {
+    if (parsed.protocol !== "http:") {
       throw new Error(
-        `Ollama loopback security violation: host must be 127.0.0.1 or localhost, received "${parsed.hostname}". Cloud endpoints are prohibited.`,
+        `Ollama loopback security violation: protocol must be http:, received "${parsed.protocol}".`,
+      );
+    }
+    const isLoopback =
+      parsed.hostname === "127.0.0.1" ||
+      parsed.hostname === "localhost" ||
+      parsed.hostname === "[::1]" ||
+      parsed.hostname === "::1";
+
+    if (!isLoopback) {
+      throw new Error(
+        `Ollama loopback security violation: host must be loopback (127.0.0.1, localhost, or [::1]), received "${parsed.hostname}". Cloud endpoints are prohibited.`,
       );
     }
     this.baseUrl = rawUrl.replace(/\/+$/, "");
@@ -213,23 +227,28 @@ export class OllamaAdapter {
     return this.model;
   }
 
-  async isHealthy(): Promise<boolean> {
-    return this.transport.checkHealth(this.baseUrl);
+  async isHealthy(signal?: AbortSignal): Promise<boolean> {
+    return this.transport.checkHealth(this.baseUrl, signal);
   }
 
   async chat(
     messages: OllamaMessage[],
     tools: OllamaToolDefinition[] = GROUNDED_TOOL_DEFINITIONS,
+    signal?: AbortSignal,
   ): Promise<OllamaChatResponse> {
-    return this.transport.chat(this.baseUrl, {
-      model: this.model,
-      messages,
-      tools,
-      stream: false,
-      options: {
-        num_ctx: 4096, // 4,096-token context limit per spec
-        temperature: 0.1, // low temperature for deterministic insights
+    return this.transport.chat(
+      this.baseUrl,
+      {
+        model: this.model,
+        messages,
+        tools,
+        stream: false,
+        options: {
+          num_ctx: 4096, // 4,096-token context limit per spec
+          temperature: 0.1, // low temperature for deterministic insights
+        },
       },
-    });
+      signal,
+    );
   }
 }

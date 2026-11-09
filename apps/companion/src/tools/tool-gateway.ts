@@ -156,13 +156,13 @@ export class ToolGateway {
       }
     }
 
-    const categories = Array.from(categoryTotals.entries()).map(
-      ([categoryId, data]) => ({
+    const categories = Array.from(categoryTotals.entries())
+      .map(([categoryId, data]) => ({
         categoryId,
         totalMinor: data.total.toString(),
         count: data.count,
-      }),
-    );
+      }))
+      .sort((a, b) => a.categoryId.localeCompare(b.categoryId));
 
     return {
       totalSpentMinor: totalSpent.toString(),
@@ -176,8 +176,9 @@ export class ToolGateway {
     this.incrementRound();
 
     const lookback = input.lookbackMonths ?? 3;
+    const refTime = new Date(this.evidence.timestamp).getTime();
     const cutoff = new Date(
-      Date.now() - lookback * 30 * 24 * 60 * 60 * 1000,
+      refTime - lookback * 30 * 24 * 60 * 60 * 1000,
     ).toISOString();
 
     // Group debits by normalized description
@@ -246,6 +247,8 @@ export class ToolGateway {
       }
     }
 
+    items.sort((a, b) => a.description.localeCompare(b.description));
+
     return {
       recurringCount: items.length,
       totalMonthlyEstimatedMinor: totalMonthly.toString(),
@@ -255,16 +258,26 @@ export class ToolGateway {
 
   projectGoal(input: ProjectGoalInput): ProjectGoalResult {
     this.incrementRound();
+    return this.calculateProjectGoal(input);
+  }
 
-    const firstContributionDate = getMonthEndDate();
+  private calculateProjectGoal(input: ProjectGoalInput): ProjectGoalResult {
+    const referenceDate = new Date(this.evidence.timestamp);
+    const firstContributionDate = getMonthEndDate(referenceDate);
     const horizon = input.horizonMonths ?? 120; // 10 years default cap
     const isBasic = !input.annualRateBps || input.annualRateBps === 0;
+
+    const currentSavingsMinor = String(input.currentSavingsMinor || "0");
+    const monthlyContributionMinor = String(
+      input.monthlyContributionMinor || "0",
+    );
+    const targetAmountMinor = String(input.targetAmountMinor || "0");
 
     const monthlyContributions = [
       {
         fromMonth: 1,
         amount: {
-          amountMinor: input.monthlyContributionMinor,
+          amountMinor: monthlyContributionMinor,
           currency: "GBP" as const,
         },
       },
@@ -277,11 +290,11 @@ export class ToolGateway {
           mode: "BASIC" as const,
           targetBasis: "FIXED_NOMINAL" as const,
           opening: {
-            amountMinor: input.currentSavingsMinor,
+            amountMinor: currentSavingsMinor,
             currency: "GBP" as const,
           },
           target: {
-            amountMinor: input.targetAmountMinor,
+            amountMinor: targetAmountMinor,
             currency: "GBP" as const,
           },
           firstContributionDate,
@@ -295,11 +308,11 @@ export class ToolGateway {
           scenarioId: "00000000-0000-0000-0000-000000000001",
           targetBasis: "FIXED_NOMINAL" as const,
           opening: {
-            amountMinor: input.currentSavingsMinor,
+            amountMinor: currentSavingsMinor,
             currency: "GBP" as const,
           },
           target: {
-            amountMinor: input.targetAmountMinor,
+            amountMinor: targetAmountMinor,
             currency: "GBP" as const,
           },
           firstContributionDate,
@@ -338,16 +351,15 @@ export class ToolGateway {
     const isFeasible =
       res.status === "reachable" || res.status === "already_achieved";
     let projectedMonths = horizon;
-    if (res.firstQualifyingDate) {
-      const d = new Date(res.firstQualifyingDate);
-      const now = new Date();
-      const diffMs = d.getTime() - now.getTime();
-      projectedMonths = Math.max(
-        0,
-        Math.round(diffMs / (30 * 24 * 60 * 60 * 1000)),
-      );
-    } else if (res.status === "already_achieved") {
+    if (res.status === "already_achieved") {
       projectedMonths = 0;
+    } else if (res.firstQualifyingDate) {
+      const qualifyingPoint = res.series.find(
+        (s) => s.date === res.firstQualifyingDate,
+      );
+      if (qualifyingPoint) {
+        projectedMonths = qualifyingPoint.month;
+      }
     }
 
     return {
@@ -363,11 +375,15 @@ export class ToolGateway {
   compareGoalScenarios(input: CompareScenariosInput): CompareScenariosResult {
     this.incrementRound();
 
-    const projA = this.projectGoal(input.baseline);
-    const projB = this.projectGoal(input.alternative);
+    const projA = this.calculateProjectGoal(input.baseline);
+    const projB = this.calculateProjectGoal(input.alternative);
 
-    const baseContribution = BigInt(input.baseline.monthlyContributionMinor);
-    const altContribution = BigInt(input.alternative.monthlyContributionMinor);
+    const baseContribution = BigInt(
+      String(input.baseline.monthlyContributionMinor || "0"),
+    );
+    const altContribution = BigInt(
+      String(input.alternative.monthlyContributionMinor || "0"),
+    );
     const diffContribution = altContribution - baseContribution;
 
     return {

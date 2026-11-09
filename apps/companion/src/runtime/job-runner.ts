@@ -58,6 +58,18 @@ export class CompanionJobRunner {
       };
     }
 
+    if (
+      permit.currentGrantVersion !== undefined &&
+      permit.currentGrantVersion !== envelope.grantVersion
+    ) {
+      return {
+        jobId,
+        status: "ABORTED",
+        reason: `Account grant version changed (envelope=${envelope.grantVersion}, current=${permit.currentGrantVersion})`,
+        toolRounds: 0,
+      };
+    }
+
     // 3. Decrypt evidence envelope with AAD context binding
     const aadContext = `${jobId}:${deviceId}:${envelope.audienceScope}:${envelope.grantVersion}`;
     let decryptedEvidence: DecryptedEvidencePayload;
@@ -70,6 +82,16 @@ export class CompanionJobRunner {
         aadContext,
         this.envelopeKey,
       );
+
+      if (decrypted.evidenceHash !== envelope.evidenceHash) {
+        return {
+          jobId,
+          status: "FAILED",
+          reason: `Evidence hash mismatch: calculated ${decrypted.evidenceHash} but envelope declared ${envelope.evidenceHash}`,
+          toolRounds: 0,
+        };
+      }
+
       decryptedEvidence = decrypted.data;
     } catch (err) {
       return {
@@ -100,6 +122,7 @@ export class CompanionJobRunner {
     ];
 
     let finalAssistantText = "";
+    let completedTurn = false;
     let rounds = 0;
     const maxRounds = 4;
 
@@ -144,8 +167,18 @@ export class CompanionJobRunner {
       } else {
         // No more tool calls; assistant completed its response
         finalAssistantText = assistantMessage.content;
+        completedTurn = true;
         break;
       }
+    }
+
+    if (!completedTurn) {
+      return {
+        jobId,
+        status: "FAILED",
+        reason: "MAX_ROUNDS_EXCEEDED",
+        toolRounds: gateway.getRoundCount(),
+      };
     }
 
     if (!finalAssistantText && messages.length > 0) {

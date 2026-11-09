@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { CompanionClient } from "./api/companion-client.js";
 import { CompanionKeyStore } from "./crypto/key-store.js";
 import { OllamaAdapter } from "./runtime/ollama-adapter.js";
@@ -8,8 +10,19 @@ function getEnvelopeKey(): Buffer {
   const secret =
     process.env.COMPANION_ENVELOPE_KEY ||
     process.env.AUTH_TOKEN_SECRET ||
-    process.env.DATABASE_URL ||
-    "joint_companion_envelope_secure_seed_fallback";
+    process.env.DATABASE_URL;
+
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "Security Error: COMPANION_ENVELOPE_KEY is required in production environment.",
+      );
+    }
+    return createHash("sha256")
+      .update("joint_companion_envelope_secure_seed_fallback")
+      .digest();
+  }
+
   return createHash("sha256").update(secret).digest();
 }
 
@@ -137,13 +150,26 @@ export async function runCli(args: string[]): Promise<void> {
         `Starting companion job runner (mode: ${once ? "single-run" : "continuous"})...`,
       );
 
-      const result = await runner.claimAndExecuteNextJob(identity.deviceId);
-      if (result) {
-        console.log(
-          `Processed job ${result.jobId}: status=${result.status}, toolsCalled=${result.toolRounds}`,
-        );
-      } else {
-        console.log("No pending jobs found.");
+      let running = true;
+      const stop = () => {
+        running = false;
+        console.log("Shutting down companion runner...");
+      };
+      process.on("SIGINT", stop);
+      process.on("SIGTERM", stop);
+
+      while (running) {
+        const result = await runner.claimAndExecuteNextJob(identity.deviceId);
+        if (result) {
+          console.log(
+            `Processed job ${result.jobId}: status=${result.status}, toolsCalled=${result.toolRounds}`,
+          );
+        } else if (once) {
+          console.log("No pending jobs found.");
+        }
+
+        if (once || !running) break;
+        await new Promise((resolve) => setTimeout(resolve, 5000));
       }
       break;
     }

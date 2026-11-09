@@ -152,6 +152,13 @@ describe("Companion Runtime and Grounded Tools (IOS13b)", () => {
 
       const adapter2 = new OllamaAdapter({ baseUrl: "http://localhost:11434" });
       expect(adapter2.getBaseUrl()).toBe("http://localhost:11434");
+
+      const adapter3 = new OllamaAdapter({ baseUrl: "http://[::1]:11434" });
+      expect(adapter3.getBaseUrl()).toBe("http://[::1]:11434");
+
+      expect(() => {
+        new OllamaAdapter({ baseUrl: "https://127.0.0.1:11434" });
+      }).toThrow(/protocol must be http:/);
     });
 
     it("communicates through transport and receives tool calls", async () => {
@@ -348,6 +355,7 @@ describe("Companion Runtime and Grounded Tools (IOS13b)", () => {
       expect(comparison.alternativeMonths).toBe(10);
       expect(comparison.monthsDifference).toBe(-10); // 10 months faster
       expect(comparison.contributionDifferenceMinor).toBe("10000"); // +£100/mo
+      expect(gateway.getRoundCount()).toBe(1);
     });
 
     it("enforces hard limit of 4 tool execution rounds", () => {
@@ -589,6 +597,194 @@ describe("Companion Runtime and Grounded Tools (IOS13b)", () => {
         expect(res).not.toBeNull();
         expect(res!.status).toBe("ABORTED");
         expect(res!.reason).toContain("JOB_REVOKED");
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("halts processing if account grant version changed since envelope creation", async () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "joint-runner-test-"));
+      try {
+        const keyStore = new CompanionKeyStore(tempDir);
+        const envelopeKey = createHash("sha256").update("test_seed").digest();
+
+        const mockClient = {
+          claimJob: async () => ({
+            claimedJob: { id: "job-grant-changed", status: "LEASED" },
+            leaseToken: "lease-456",
+          }),
+          getEvidenceEnvelope: async () => ({
+            jobId: "job-grant-changed",
+            deviceId: "dev-1",
+            audienceScope: "HOUSEHOLD" as const,
+            grantVersion: 1,
+            envelopeCiphertext: "dGVzdA==",
+            envelopeIv: "dGVzdA==",
+            envelopeTag: "dGVzdA==",
+            evidenceHash: "hash",
+            expiresAt: new Date().toISOString(),
+          }),
+          checkPermit: async () => ({
+            permitted: true,
+            currentGrantVersion: 2, // Modified while queued
+          }),
+        };
+
+        const ollama = new OllamaAdapter({
+          transport: {
+            checkHealth: async () => true,
+            chat: async () => ({}) as unknown as OllamaChatResponse,
+          },
+        });
+        const runner = new CompanionJobRunner({
+          client: mockClient as unknown as CompanionClient,
+          keyStore,
+          ollama,
+          envelopeKey,
+        });
+
+        const res = await runner.claimAndExecuteNextJob("dev-1");
+        expect(res).not.toBeNull();
+        expect(res!.status).toBe("ABORTED");
+        expect(res!.reason).toContain("Account grant version changed");
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("fails job if decrypted evidenceHash does not match envelope declared hash", async () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "joint-runner-test-"));
+      try {
+        const keyStore = new CompanionKeyStore(tempDir);
+        const envelopeKey = createHash("sha256").update("test_seed").digest();
+
+        const payload: DecryptedEvidencePayload = {
+          jobId: "job-tampered-hash",
+          audienceScope: "HOUSEHOLD",
+          grantVersion: 1,
+          accounts: [],
+          timestamp: new Date().toISOString(),
+        };
+
+        const aad = "job-tampered-hash:dev-1:HOUSEHOLD:1";
+        const encrypted = encryptEvidenceEnvelope(payload, aad, envelopeKey);
+
+        const mockClient = {
+          claimJob: async () => ({
+            claimedJob: { id: "job-tampered-hash", status: "LEASED" },
+            leaseToken: "lease-789",
+          }),
+          getEvidenceEnvelope: async () => ({
+            jobId: "job-tampered-hash",
+            deviceId: "dev-1",
+            audienceScope: "HOUSEHOLD" as const,
+            grantVersion: 1,
+            envelopeCiphertext: encrypted.envelopeCiphertext,
+            envelopeIv: encrypted.envelopeIv,
+            envelopeTag: encrypted.envelopeTag,
+            evidenceHash: "mismatched_untrusted_hash_value",
+            expiresAt: new Date().toISOString(),
+          }),
+          checkPermit: async () => ({
+            permitted: true,
+            currentGrantVersion: 1,
+          }),
+        };
+
+        const ollama = new OllamaAdapter({
+          transport: {
+            checkHealth: async () => true,
+            chat: async () => ({}) as unknown as OllamaChatResponse,
+          },
+        });
+        const runner = new CompanionJobRunner({
+          client: mockClient as unknown as CompanionClient,
+          keyStore,
+          ollama,
+          envelopeKey,
+        });
+
+        const res = await runner.claimAndExecuteNextJob("dev-1");
+        expect(res).not.toBeNull();
+        expect(res!.status).toBe("FAILED");
+        expect(res!.reason).toContain("Evidence hash mismatch");
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("fails job if model exceeds maximum tool rounds without completing turn", async () => {
+      const tempDir = mkdtempSync(join(tmpdir(), "joint-runner-test-"));
+      try {
+        const keyStore = new CompanionKeyStore(tempDir);
+        const envelopeKey = createHash("sha256").update("test_seed").digest();
+
+        const payload: DecryptedEvidencePayload = {
+          jobId: "job-runaway-rounds",
+          audienceScope: "HOUSEHOLD",
+          grantVersion: 1,
+          accounts: [],
+          timestamp: new Date().toISOString(),
+        };
+
+        const aad = "job-runaway-rounds:dev-1:HOUSEHOLD:1";
+        const encrypted = encryptEvidenceEnvelope(payload, aad, envelopeKey);
+
+        const mockClient = {
+          claimJob: async () => ({
+            claimedJob: { id: "job-runaway-rounds", status: "LEASED" },
+            leaseToken: "lease-rounds",
+          }),
+          getEvidenceEnvelope: async () => ({
+            jobId: "job-runaway-rounds",
+            deviceId: "dev-1",
+            audienceScope: "HOUSEHOLD" as const,
+            grantVersion: 1,
+            envelopeCiphertext: encrypted.envelopeCiphertext,
+            envelopeIv: encrypted.envelopeIv,
+            envelopeTag: encrypted.envelopeTag,
+            evidenceHash: encrypted.evidenceHash,
+            expiresAt: new Date().toISOString(),
+          }),
+          checkPermit: async () => ({
+            permitted: true,
+            currentGrantVersion: 1,
+          }),
+        };
+
+        // Model that endlessly calls a tool without finishing turn
+        const runawayTransport: OllamaTransport = {
+          checkHealth: async () => true,
+          chat: async () => ({
+            done: true,
+            message: {
+              role: "assistant",
+              content: "",
+              tool_calls: [
+                {
+                  function: {
+                    name: "get_spend_summary",
+                    arguments: {},
+                  },
+                },
+              ],
+            },
+          }),
+        };
+
+        const ollama = new OllamaAdapter({ transport: runawayTransport });
+        const runner = new CompanionJobRunner({
+          client: mockClient as unknown as CompanionClient,
+          keyStore,
+          ollama,
+          envelopeKey,
+        });
+
+        const res = await runner.claimAndExecuteNextJob("dev-1");
+        expect(res).not.toBeNull();
+        expect(res!.status).toBe("FAILED");
+        expect(res!.reason).toBe("MAX_ROUNDS_EXCEEDED");
+        expect(res!.toolRounds).toBe(4);
       } finally {
         rmSync(tempDir, { recursive: true, force: true });
       }
