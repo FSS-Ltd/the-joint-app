@@ -11,11 +11,14 @@ import {
 } from "./household-forms";
 import { ArchiveScreen } from "../privacy/archive-screen";
 import { PrivacyScreen } from "../privacy/privacy-screen";
+import { BillingScreen } from "../billing/billing-screen";
+import { createBillingApi } from "../../api/billing";
 import { useIdentity } from "./context";
 import { SecurityScreen } from "./security-screen";
 import { SessionActions } from "./session-actions";
 export function AccountScreen({ me }: { me: MeResponse }): React.JSX.Element {
-  const { workflow } = useIdentity();
+  const identity = useIdentity();
+  const { workflow } = identity;
   useSyncExternalStore(
     workflow.subscribe,
     workflow.getSnapshot,
@@ -24,6 +27,14 @@ export function AccountScreen({ me }: { me: MeResponse }): React.JSX.Element {
   const [individual, setIndividual] = useState(false);
   if (workflow.securityOpen || workflow.view === "security")
     return <SecurityScreen onBack={() => workflow.showSecurity(false)} />;
+  if (workflow.view === "billing")
+    return (
+      <BillingScreen
+        householdId={me.membership?.household.id ?? me.user.id}
+        billingApi={createBillingApi(identity.finance.transport)}
+        onBack={() => workflow.showView("account")}
+      />
+    );
   if (workflow.view === "privacy")
     return (
       <PrivacyScreen
@@ -85,6 +96,11 @@ export function AccountScreen({ me }: { me: MeResponse }): React.JSX.Element {
         </>
       )}
       <NativeActions>
+        <NativeAction
+          label="Subscription and billing"
+          tone="secondary"
+          onPress={() => workflow.showView("billing")}
+        />
         <NativeAction
           label="Privacy and data"
           tone="secondary"

@@ -87,6 +87,10 @@ function fixture() {
       "./security-screen": { SecurityScreen: "security" },
       "../privacy/archive-screen": { ArchiveScreen: "archive" },
       "../privacy/privacy-screen": { PrivacyScreen: "privacy" },
+      "../billing/billing-screen": { BillingScreen: "billing" },
+      "../../api/billing": {
+        createBillingApi: () => ({ getSubscription: () => Promise.resolve() }),
+      },
       "./household-forms": {
         AcceptInvitation: "accept",
         CreateHousehold: "create",
