@@ -36,15 +36,15 @@ Part of the [canonical feature tree](../../FEATURE_TREE.md). Status describes th
 
 ## BILLING — Web subscriptions and native purchase recovery
 
-- **Status:** `planned`. **Purpose:** Normalize Stripe/RevenueCat billing and native purchase/restore into server entitlements.
-- **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) — `IOS11 — Normalized billing lifecycle and web subscriptions`.
-- **Canonical implementation:** No runtime implementation yet; use the cited plan.
+- **Status:** `partial`. **Purpose:** Normalize Stripe/RevenueCat billing and native purchase/restore into server entitlements.
+- **Entry points:** [apps/api/src/modules/billing/billing.controller.ts](../../apps/api/src/modules/billing/billing.controller.ts) — `createBillingController`, `createBillingWebhooksController`.
+- **Canonical implementation:** [packages/contracts/src/billing.ts](../../packages/contracts/src/billing.ts) — `normalizedSubscriptionEventSchema`; [packages/entitlements/src/billing-reducer.ts](../../packages/entitlements/src/billing-reducer.ts) — `reduceSubscriptionEvent`; [apps/api/src/modules/billing/billing.service.ts](../../apps/api/src/modules/billing/billing.service.ts) — `BillingService`; [packages/database/prisma/migrations/20261109170000_billing_subscriptions/migration.sql](../../packages/database/prisma/migrations/20261109170000_billing_subscriptions/migration.sql) — `Subscription`; [apps/worker/src/billing-maintenance.ts](../../apps/worker/src/billing-maintenance.ts) — `maintainSubscriptions`.
 - **Depends on / reuses:** [AUTH](identity.md#auth), [ENTITLEMENTS](platform.md#entitlements), [HOUSEHOLD](identity.md#household), [JOBS](platform.md#jobs).
 - **Used by:** [MARKETING](planned.md#marketing), [RELEASE](planned.md#release), [STAFF](planned.md#staff).
-- **Permission / data boundary:** No checkout-success fulfillment, double caps or purchaser-household transfer. Actual provider/store test products and signed-device acceptance remain required.
-- **Verification references:** No executable feature acceptance established; the linked plan defines the required evidence.
-- **Graphify navigation:** scopes `features; future runtime nodes are absent`; query `BILLING` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_BILLING`.
-- **Debug / reuse / limits:** IOS11/12 are planned; entitlement calculation foundations are documented separately. No products, secrets or paid service activation is claimed.
+- **Permission / data boundary:** No checkout-success fulfillment, double caps or purchaser-household transfer. Due-time worker reconciliation expires subscriptions. Actual native store test products and signed-device acceptance remain for IOS12.
+- **Verification references:** [tests/billing-lifecycle.test.ts](../../tests/billing-lifecycle.test.ts).
+- **Graphify navigation:** scopes `api, shared, operations`; query `BillingService` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_BILLING`.
+- **Debug / reuse / limits:** IOS11 server billing normalization and web pricing routes are implemented. IOS12 native purchase and restore recovery remain next. Debug reduceSubscriptionEvent, BillingService.processStripeWebhook, and maintainSubscriptions.
 
 <a id="companion"></a>
 

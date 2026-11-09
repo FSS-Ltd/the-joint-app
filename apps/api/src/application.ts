@@ -60,7 +60,8 @@ export async function createApplication(
     limit: "64kb",
     type: (request: IncomingMessage) =>
       request.method === "POST" &&
-      request.url?.split("?")[0] === "/v1/webhooks/clerk" &&
+      (request.url?.split("?")[0] === "/v1/webhooks/clerk" ||
+        request.url?.split("?")[0] === "/v1/webhooks/stripe") &&
       request.headers["content-type"]?.split(";")[0]?.trim() ===
         "application/json",
   });

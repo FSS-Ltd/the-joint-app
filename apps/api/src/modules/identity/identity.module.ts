@@ -75,11 +75,20 @@ import { createProjectionsController } from "../projections/projections.controll
 import { createEventsController } from "../events/events.controller.js";
 import { StatusResources } from "../events/status-resources.js";
 import type { StatusEventHub } from "../events/status-hub.js";
+import {
+  createBillingController,
+  createBillingWebhooksController,
+} from "../billing/billing.controller.js";
+import {
+  BillingService,
+  type BillingServiceOptions,
+} from "../billing/billing.service.js";
 export type AuthOptions = IdentityAdapterOptions & {
   events?: StatusEventHub;
   clerkWebhook?: { signingSecret: string; instanceId: string };
   importKey?: string;
   privacyJournalPath?: string;
+  billing?: Omit<BillingServiceOptions, "database" | "scoped" | "entitlements">;
 };
 export function identityControllers(options?: AuthOptions): Type<unknown>[] {
   if (!options)
@@ -109,6 +118,8 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       createPrivacyController(),
       createLeaveController(),
       createProjectionsController(),
+      createBillingController(),
+      createBillingWebhooksController(),
     ];
   const { database } = options;
   const { identity, vault, legacyLinker, clerkLogout } =
@@ -254,5 +265,22 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
       review: new ImportReview(scoped),
       lifecycle: new ImportLifecycle(scoped, vault),
     }),
+    createBillingController({
+      identity,
+      billing: new BillingService({
+        database,
+        scoped,
+        entitlements,
+        ...options.billing,
+      }),
+    }),
+    createBillingWebhooksController(
+      new BillingService({
+        database,
+        scoped,
+        entitlements,
+        ...options.billing,
+      }),
+    ),
   ];
 }

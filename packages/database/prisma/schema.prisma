@@ -885,6 +885,43 @@ model EntitlementGrantAudit {
   @@schema("app")
 }
 
+model Subscription {
+  id                     String    @id @default(uuid()) @db.Uuid
+  householdId            String    @db.Uuid
+  purchaserUserId        String    @db.Uuid
+  provider               String    @db.VarChar(20)
+  environment            String    @db.VarChar(20)
+  externalCustomerId     String    @db.VarChar(120)
+  externalSubscriptionId String    @db.VarChar(120)
+  status                 String    @db.VarChar(20)
+  interval               String    @db.VarChar(20)
+  effectiveUntil         DateTime  @db.Timestamptz(3)
+  graceUntil             DateTime? @db.Timestamptz(3)
+  cancelAtPeriodEnd      Boolean   @default(false)
+  lastEventId            String?   @db.VarChar(120)
+  lastEventAt            DateTime? @db.Timestamptz(3)
+  createdAt              DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@unique([provider, externalSubscriptionId])
+  @@index([householdId])
+  @@index([purchaserUserId])
+  @@schema("app")
+}
+
+model SubscriptionAudit {
+  id             BigInt   @id @default(autoincrement())
+  subscriptionId String   @db.Uuid
+  householdId    String   @db.Uuid
+  operation      String
+  changedAt      DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(3)
+  databaseActor  String   @default(dbgenerated("SESSION_USER"))
+  snapshot       Json
+
+  @@index([subscriptionId, id])
+  @@schema("app")
+}
+
 // Export references are constrained in SQL; runtime access uses fenced functions.
 model ExportRequest {
   id String @id @default(uuid()) @db.Uuid

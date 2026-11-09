@@ -129,4 +129,5 @@ export { monthEndAtOffset } from "./projection-primitives.js";
 export * from "./funding-evidence.js";
 export * from "./clerk.js";
 
+export * from "./billing.js";
 export * from "./session-activity.js";

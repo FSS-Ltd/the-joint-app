@@ -1968,3 +1968,40 @@ Deliverables implemented and verified:
   - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
   - Formatter: `pnpm format:check` passed clean.
   - Native iOS and Android bundle exports passed (`bundle:ios` and `bundle:android`).
+
+Host merge verified: [PR59](https://github.com/FSS-Ltd/the-joint-app/pull/59) was merged into `main` at commit `140b765`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS10b and closes PR59.
+
+## IOS11 - Normalized billing lifecycle and web subscriptions
+
+Predecessor verified on the host before starting: [PR59](https://github.com/FSS-Ltd/the-joint-app/pull/59) merged at `140b765`. Step IOS11 starts from that merge on branch `feat/ios11-normalized-billing-lifecycle`.
+
+Deliverables implemented and verified:
+
+- Normalized Billing Contracts & Pure Reducer (`@joint/contracts` & `@joint/entitlements`):
+  - Created billing contracts in `packages/contracts/src/billing.ts` (`billingProviderSchema`, `billingEnvironmentSchema`, `billingIntervalSchema`, `subscriptionStatusSchema`, `billingEventTypeSchema`, `normalizedSubscriptionEventSchema`, `subscriptionDtoSchema`, `createCheckoutSessionRequestSchema`, `createCheckoutSessionResponseSchema`, `createPortalSessionRequestSchema`, `createPortalSessionResponseSchema`, `householdSubscriptionResponseSchema`).
+  - Created pure state reducer and signature verifiers in `packages/entitlements/src/billing-reducer.ts`:
+    - `verifyStripeWebhookSignature`: Validates HMAC SHA-256 signatures with 300s replay tolerance and constant-time buffer comparison.
+    - `verifyRevenueCatWebhookAuth`: Validates bearer authorization headers with constant-time equality.
+    - `reduceSubscriptionEvent`: Enforces sandbox/production isolation, idempotent replay/older event handling, immutable purchaser-household binding, and accurate lifecycle state transitions (`ACTIVE`, `GRACE_PERIOD`, `PAST_DUE`, `CANCELED`, `EXPIRED`).
+- Database Schema and Migration:
+  - Added `Subscription` and `SubscriptionAudit` models to `packages/database/prisma/schema.prisma`.
+  - Created migration `packages/database/prisma/migrations/20261109170000_billing_subscriptions/migration.sql` with check constraints, indexes, automated audit triggers, RLS policies, and scoped runtime role permissions.
+- API Billing Module (`apps/api/src/modules/billing/`):
+  - `BillingService`: Ingests and normalizes raw Stripe and RevenueCat webhooks, manages database subscription records, provides server-selected pricing and checkout URLs, and generates customer portal sessions.
+  - `BillingController`: Implements `GET /v1/households/:householdId/billing/subscription`, `POST /v1/households/:householdId/billing/checkout`, and `POST /v1/households/:householdId/billing/portal`.
+  - `BillingWebhooksController`: Implements `POST /v1/webhooks/stripe` and `POST /v1/webhooks/revenuecat`.
+  - Wired into `apps/api/src/modules/identity/identity.module.ts` and `apps/api/src/application.ts` (with raw body parser for `/v1/webhooks/stripe`).
+- Worker Due-Time Reconciliation (`apps/worker/src/billing-maintenance.ts`):
+  - Implemented `maintainSubscriptions` processor to transition past-effective and past-grace subscriptions to `EXPIRED`.
+  - Integrated into scheduler loop in `apps/worker/src/main.ts`.
+- Cap Conservation and Downgrade Safety:
+  - Updated `EntitlementService` in `apps/api/src/modules/entitlements/entitlement.service.ts` to incorporate active subscriptions without stacking resource caps (static caps: 4 bank authorisations, 2 broker connections, 1 companion device).
+  - Downgrading expired subscriptions cleanly reverts the household to Free with `finance.manual` and `projections.basic`, preserving all records, transaction history, categories, and budgets.
+- Comprehensive Test Coverage:
+  - `tests/billing-lifecycle.test.ts`: 20/20 tests passing covering signature verification, replay protection, sandbox rejection in production, immutable household binding, lifecycle transitions, webhook ingestion, server-selected checkout/portal generation, cap conservation, and worker reconciliation.
+- Full Verification:
+  - Full test suite: 1,143/1,143 tests passed across all 145 test files (`pnpm test`).
+  - Typecheck: 19/19 turbo packages and root test tsconfig clean (`pnpm typecheck`).
+  - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
+  - Formatter: `pnpm format:check` passed clean.
+  - Native iOS and Android bundle exports passed (`bundle:ios` and `bundle:android`).

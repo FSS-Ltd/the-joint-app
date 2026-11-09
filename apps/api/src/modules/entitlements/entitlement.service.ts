@@ -61,7 +61,79 @@ export class EntitlementService {
         });
         revisions.push([row.id, row.revision]);
       }
-      const result = resolveEntitlements(grants, now);
+
+      interface SubRow {
+        id: string;
+        status: string;
+        effectiveUntil: Date;
+        graceUntil: Date | null;
+        updatedAt: Date;
+      }
+      const subRows = await tx.$queryRaw<SubRow[]>`
+        SELECT s.id, s.status, s."effectiveUntil", s."graceUntil", s."updatedAt"
+        FROM app."Subscription" s
+        WHERE s."householdId"=${context.householdId}::uuid
+          AND s.status IN ('ACTIVE', 'GRACE_PERIOD', 'CANCELED')
+        ORDER BY s."updatedAt" DESC`;
+
+      const grantResult = resolveEntitlements(grants, now);
+
+      let hasActiveSub = false;
+      let subEffectiveUntil: Date | null = null;
+      for (const sub of subRows) {
+        const until =
+          sub.graceUntil && sub.graceUntil > sub.effectiveUntil
+            ? sub.graceUntil
+            : sub.effectiveUntil;
+        if (until.getTime() > now.getTime()) {
+          hasActiveSub = true;
+          if (
+            subEffectiveUntil === null ||
+            until.getTime() > subEffectiveUntil.getTime()
+          ) {
+            subEffectiveUntil = until;
+          }
+          revisions.push([sub.id, sub.updatedAt.getTime()]);
+        }
+      }
+
+      let result: Omit<EntitlementResponse, "version">;
+      if (hasActiveSub) {
+        const effectiveUntilIso = subEffectiveUntil
+          ? subEffectiveUntil.toISOString()
+          : grantResult.effectiveUntil;
+        const combinedEffectiveUntil =
+          grantResult.effectiveUntil && effectiveUntilIso
+            ? new Date(
+                Math.max(
+                  new Date(grantResult.effectiveUntil).getTime(),
+                  new Date(effectiveUntilIso).getTime(),
+                ),
+              ).toISOString()
+            : (effectiveUntilIso ?? grantResult.effectiveUntil);
+
+        result = {
+          plan: "PLUS",
+          capabilities: [
+            "finance.manual",
+            "projections.basic",
+            "connections.bank",
+            "connections.broker",
+            "projections.advanced",
+            "categorisation.automation",
+            "insights.local",
+          ],
+          caps: {
+            bankAuthorisations: 4,
+            brokerConnections: 2,
+            companionDevices: 1,
+          },
+          effectiveUntil: combinedEffectiveUntil,
+        };
+      } else {
+        result = grantResult;
+      }
+
       const version = createHash("sha256")
         .update(JSON.stringify({ revisions, result }))
         .digest("hex");
