@@ -1,10 +1,11 @@
-import { CutoverNotice } from "../../components/cutover/cutover-notice";
+import { Activity } from "../../components/activity";
+import { CutoverNoticeBanner } from "../../components/cutover/cutover-banner";
 
 export default function ActivityPage() {
   return (
-    <CutoverNotice
-      pageTitle="Household Activity Has Moved to iOS"
-      previousRouteName="Activity"
-    />
+    <>
+      <CutoverNoticeBanner routeName="Activity" />
+      <Activity />
+    </>
   );
 }

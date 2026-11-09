@@ -160,6 +160,7 @@ describe("IOS16 Marketing and Web Household Cutover", () => {
     it("verifies preserved security, recovery, privacy, and staff routes", () => {
       expect(PRESERVED_WEB_ROUTES).toEqual([
         "/",
+        "/cutover",
         "/sign-in",
         "/sign-up",
         "/sign-out",
@@ -174,7 +175,7 @@ describe("IOS16 Marketing and Web Household Cutover", () => {
         "/join",
         "/staff",
       ]);
-      expect(PRESERVED_WEB_ROUTES).toHaveLength(14);
+      expect(PRESERVED_WEB_ROUTES).toHaveLength(15);
     });
   });
 });

@@ -1,10 +1,16 @@
-import { CutoverNotice } from "../../../components/cutover/cutover-notice";
+import { TransactionDetail } from "../../../components/activity/detail";
+import { CutoverNoticeBanner } from "../../../components/cutover/cutover-banner";
 
-export default function TransactionDetailPage() {
+export default async function TransactionDetailPage({
+  params,
+}: {
+  params: Promise<{ transactionId: string }>;
+}) {
+  const { transactionId } = await params;
   return (
-    <CutoverNotice
-      pageTitle="Transaction Details Have Moved to iOS"
-      previousRouteName="Transaction Detail"
-    />
+    <>
+      <CutoverNoticeBanner routeName="Transaction Details" />
+      <TransactionDetail transactionId={transactionId} />
+    </>
   );
 }

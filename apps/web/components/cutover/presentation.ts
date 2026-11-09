@@ -33,6 +33,7 @@ export const RETIRED_HOUSEHOLD_ROUTES = [
 
 export const PRESERVED_WEB_ROUTES = [
   "/",
+  "/cutover",
   "/sign-in",
   "/sign-up",
   "/sign-out",

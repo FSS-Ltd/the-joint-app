@@ -1,10 +1,11 @@
-import { CutoverNotice } from "../../components/cutover/cutover-notice";
+import { SpendingScreen } from "../../components/spending";
+import { CutoverNoticeBanner } from "../../components/cutover/cutover-banner";
 
 export default function BudgetsPage() {
   return (
-    <CutoverNotice
-      pageTitle="Household Budgets Have Moved to iOS"
-      previousRouteName="Budgets"
-    />
+    <>
+      <CutoverNoticeBanner routeName="Budgets" />
+      <SpendingScreen mode="budgets" />
+    </>
   );
 }

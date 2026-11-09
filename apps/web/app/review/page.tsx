@@ -1,10 +1,11 @@
-import { CutoverNotice } from "../../components/cutover/cutover-notice";
+import { SpendingScreen } from "../../components/spending";
+import { CutoverNoticeBanner } from "../../components/cutover/cutover-banner";
 
 export default function ReviewPage() {
   return (
-    <CutoverNotice
-      pageTitle="Spending Review Has Moved to iOS"
-      previousRouteName="Review"
-    />
+    <>
+      <CutoverNoticeBanner routeName="Review" />
+      <SpendingScreen mode="review" />
+    </>
   );
 }

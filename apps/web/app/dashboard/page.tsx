@@ -1,10 +1,11 @@
-import { CutoverNotice } from "../../components/cutover/cutover-notice";
+import { SpendingScreen } from "../../components/spending";
+import { CutoverNoticeBanner } from "../../components/cutover/cutover-banner";
 
 export default function DashboardPage() {
   return (
-    <CutoverNotice
-      pageTitle="Household Dashboard Has Moved to iOS"
-      previousRouteName="Dashboard"
-    />
+    <>
+      <CutoverNoticeBanner routeName="Dashboard" />
+      <SpendingScreen mode="dashboard" />
+    </>
   );
 }

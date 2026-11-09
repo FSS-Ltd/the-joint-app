@@ -1,10 +1,16 @@
-import { CutoverNotice } from "../../../components/cutover/cutover-notice";
+import { AccountDetail } from "../../../components/accounts/detail";
+import { CutoverNoticeBanner } from "../../../components/cutover/cutover-banner";
 
-export default function AccountDetailPage() {
+export default async function AccountDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   return (
-    <CutoverNotice
-      pageTitle="Account Details Have Moved to iOS"
-      previousRouteName="Account Detail"
-    />
+    <>
+      <CutoverNoticeBanner routeName="Account Details" />
+      <AccountDetail accountId={id} />
+    </>
   );
 }
