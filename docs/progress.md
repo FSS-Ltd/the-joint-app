@@ -2109,3 +2109,36 @@ Deliverables implemented and verified:
   - Monorepo build and typecheck: 21/21 turbo tasks clean (`pnpm turbo run build typecheck`).
   - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
   - Formatter: `pnpm format:check` passed clean.
+
+Host merge verified: [PR63](https://github.com/FSS-Ltd/the-joint-app/pull/63) was merged into `main` at commit `028aa56`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS13b and closes PR63.
+
+## IOS13c: Native companion UI, account consent controls, and evaluation harness
+
+Predecessor verified on the host before starting: [PR63](https://github.com/FSS-Ltd/the-joint-app/pull/63) merged at `028aa56`. Step IOS13c starts from that merge on branch `feat/ios13c-native-companion-ui-evaluation`.
+
+Deliverables implemented and verified:
+
+- Device and Consent Contracts (`packages/contracts/src/devices.ts`):
+  - Added and exported list schemas: `deviceListSchema`, `deviceAccountGrantsListSchema`, `insightJobListSchema`, and `emptyResponseSchema`.
+  - Re-exported `z` from `@joint/contracts`.
+- Mobile Devices API Client (`apps/mobile/src/api/devices.ts`):
+  - Implemented `createDevicesApi` covering device listing, pairing initiation, device approval, per-adult account consent grants management, immediate revocation, and background insight job lifecycle.
+- Mobile Companion State & Screen (`apps/mobile/src/features/companion/`):
+  - `useCompanion`: Hook managing device lifecycle, pairing codes, fingerprint verification, account consent toggles, and insight job queuing.
+  - `CompanionScreen`: Native accessible UI with 6-digit numeric pairing code display, 10-minute expiry notice, public key fingerprint attestation, per-adult account consent controls (`NONE`, `TOTALS`, `TRANSACTIONS`), insight job actions (`SPEND_SUMMARY`, `RECURRING_COSTS`, `GOAL_PROJECTION`), and on-device privacy disclosure.
+  - Integrated into mobile workspace navigation routes (`apps/mobile/app/(workspace)/companion.tsx` and `apps/mobile/src/features/identity/account-screen.tsx`).
+- Grounded Model Evaluation Harness (`tests/companion-eval.test.ts`):
+  - 101 tests authored covering:
+    - 25 category and date spending summary scenarios.
+    - 25 recurring cost and cadence audit scenarios.
+    - 25 goal projection and scenario comparison scenarios.
+    - 24 adversarial and boundary tests verifying tool rejection, 4-round exhaustion, zero contributions, achieved targets, unconsented accounts, and loopback protocol checks.
+    - 3-run determinism test verifying exact bit-for-bit repeatability across executions.
+    - Performance benchmark verifying sub-50ms tool execution latencies.
+- Native UI & API Tests (`tests/native-companion-ui.test.ts`):
+  - 6 tests verifying device listing, pairing code generation, fingerprint attestation, account grant updates, revocation, and insight job inspection.
+- Full Verification:
+  - Full test suite: 1,310/1,310 tests passed across all 151 test files (`pnpm test`).
+  - Monorepo build and typecheck: 21/21 turbo tasks clean (`pnpm turbo run build typecheck`).
+  - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
+  - Formatter: `pnpm format:check` passed clean.

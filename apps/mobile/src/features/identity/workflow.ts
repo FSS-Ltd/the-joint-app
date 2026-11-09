@@ -6,7 +6,7 @@ import {
 } from "@joint/identity-runtime";
 export type AuthMode = "sign-in" | "sign-up" | "recovery";
 export type AccountView =
-  "account" | "security" | "privacy" | "archive" | "billing";
+  "account" | "security" | "privacy" | "archive" | "billing" | "companion";
 type EmailKind = "signup" | "device" | "recovery";
 export type NativeAuthStage =
   ClerkStage | { step: "email-request"; kind: EmailKind };
@@ -39,7 +39,8 @@ export class NativeWorkflow {
   private emails = new Map<AuthMode, EmailProgress>();
   private listeners = new Set<() => void>();
   view: AccountView = "account";
-  private returnView: "account" | "privacy" | "archive" | "billing" = "account";
+  private returnView:
+    "account" | "privacy" | "archive" | "billing" | "companion" = "account";
   securityOpen = false;
   enrollmentPending = false;
   deletionReceipt: DeletionReceipt | null = null;

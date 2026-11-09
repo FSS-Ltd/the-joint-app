@@ -204,6 +204,13 @@ export const insightJobDtoSchema = z
   .strict();
 export type InsightJobDto = z.infer<typeof insightJobDtoSchema>;
 
+export const deviceListSchema = z.array(deviceDtoSchema);
+export const deviceAccountGrantsListSchema = z.array(
+  deviceAccountGrantDtoSchema,
+);
+export const insightJobListSchema = z.array(insightJobDtoSchema);
+export const emptyResponseSchema = z.void();
+
 export const companionClaimRequestSchema = z
   .object({
     deviceId: z.string().uuid(),
