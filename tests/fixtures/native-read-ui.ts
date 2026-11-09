@@ -32,6 +32,10 @@ const common = {
   "@/components/screen": { Screen: "screen" },
   "@/components/brand-mark": { BrandMark: "brand" },
   "@/theme/tokens": { colors: {}, corners: {}, spacing: {} },
+  "../billing/billing-screen": { BillingScreen: "billing" },
+  "../../api/billing": {
+    createBillingApi: () => ({ getSubscription: () => Promise.resolve() }),
+  },
 };
 export function load(path: string, deps: Record<string, unknown> = {}) {
   expect(existsSync(base + path), `missing implementation: ${path}`).toBe(true);

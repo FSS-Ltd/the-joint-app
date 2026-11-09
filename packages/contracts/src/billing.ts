@@ -118,3 +118,66 @@ export const householdSubscriptionResponseSchema = z
 export type HouseholdSubscriptionResponse = z.infer<
   typeof householdSubscriptionResponseSchema
 >;
+
+export const nativeProductSchema = z
+  .object({
+    id: z.string().min(1),
+    interval: billingIntervalSchema,
+    title: z.string().min(1),
+    description: z.string().min(1),
+    priceFormatted: z.string().min(1),
+    priceMinor: z.number().int().positive(),
+    currencyCode: z.string().length(3),
+    annualEquivalentMonthlyFormatted: z.string().optional(),
+    savingsPercentage: z.number().int().nonnegative().optional(),
+  })
+  .strict();
+export type NativeProduct = z.infer<typeof nativeProductSchema>;
+
+export const purchaseResultSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      kind: z.literal("success"),
+      transactionId: z.string().min(1),
+      purchaseToken: z.string().optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("pending"),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("canceled"),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("error"),
+      message: z.string().min(1),
+    })
+    .strict(),
+]);
+export type PurchaseResult = z.infer<typeof purchaseResultSchema>;
+
+export const restoreResultSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      kind: z.literal("restored"),
+      transactionIds: z.array(z.string().min(1)),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("none_found"),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("error"),
+      message: z.string().min(1),
+    })
+    .strict(),
+]);
+export type RestoreResult = z.infer<typeof restoreResultSchema>;

@@ -5,7 +5,8 @@ import {
   type ClerkStage,
 } from "@joint/identity-runtime";
 export type AuthMode = "sign-in" | "sign-up" | "recovery";
-export type AccountView = "account" | "security" | "privacy" | "archive";
+export type AccountView =
+  "account" | "security" | "privacy" | "archive" | "billing";
 type EmailKind = "signup" | "device" | "recovery";
 export type NativeAuthStage =
   ClerkStage | { step: "email-request"; kind: EmailKind };
@@ -38,7 +39,7 @@ export class NativeWorkflow {
   private emails = new Map<AuthMode, EmailProgress>();
   private listeners = new Set<() => void>();
   view: AccountView = "account";
-  private returnView: "account" | "privacy" | "archive" = "account";
+  private returnView: "account" | "privacy" | "archive" | "billing" = "account";
   securityOpen = false;
   enrollmentPending = false;
   deletionReceipt: DeletionReceipt | null = null;
@@ -99,7 +100,10 @@ export class NativeWorkflow {
     if (next !== "security") this.returnView = next;
     this.changed();
   }
-  showSecurity(value: boolean, from?: "account" | "privacy" | "archive"): void {
+  showSecurity(
+    value: boolean,
+    from?: "account" | "privacy" | "archive" | "billing",
+  ): void {
     if (value) {
       if (from) this.returnView = from;
       else if (this.view !== "security") this.returnView = this.view;

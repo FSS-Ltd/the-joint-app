@@ -2005,3 +2005,39 @@ Deliverables implemented and verified:
   - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
   - Formatter: `pnpm format:check` passed clean.
   - Native iOS and Android bundle exports passed (`bundle:ios` and `bundle:android`).
+
+Host merge verified: [PR60](https://github.com/FSS-Ltd/the-joint-app/pull/60) was merged into `main` at commit `132fa50`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS11 and closes PR60.
+
+## IOS12 - Native purchase, restore and entitlement recovery
+
+Predecessor verified on the host before starting: [PR60](https://github.com/FSS-Ltd/the-joint-app/pull/60) merged at `132fa50`. Step IOS12 starts from that merge on branch `feat/ios12-native-purchase-restore`.
+
+Deliverables implemented and verified:
+
+- Native Billing Contracts (`packages/contracts/src/billing.ts`):
+  - Added `nativeProductSchema`, `purchaseResultSchema`, `restoreResultSchema`, and their TypeScript types.
+  - Exported schemas and types from `@joint/contracts`.
+- Mobile API Billing Client (`apps/mobile/src/api/billing.ts`):
+  - Created `createBillingApi` with `getSubscription(householdId)` consuming `GET /v1/households/:householdId/billing/subscription`.
+- Platform Purchase Adapters (`apps/mobile/src/features/billing/purchase-adapter.ts`):
+  - `PlatformPurchaseAdapter` contract: defines `getProducts`, `purchaseProduct`, `restorePurchases`, and `getSubscriptionManagementUrl`.
+  - `ApplePurchaseAdapter`: Localized StoreKit products for UK (£4.99/mo, £49.99/yr, annual equivalent £4.17/mo, 16% savings badge). Deep-links directly to `https://apps.apple.com/account/subscriptions`. Handles user cancellation, pending purchase authorizations, and restore transactions.
+  - `GooglePurchaseAdapter`: Localized Google Play Billing products and deep link to `https://play.google.com/store/account/subscriptions`.
+  - `UnsupportedPurchaseAdapter`: Safe fallback for unsupported environments.
+  - `createPlatformPurchaseAdapter`: Factory selecting adapter based on `Platform.OS`.
+- Reactive Billing Workflow & Accessible UI (`apps/mobile/src/features/billing/`):
+  - `useBilling`: Manages products, current plan state, interval toggle, purchasing, restoring, loading state, error notices, and cancellation handling.
+  - `BillingScreen`: Accessible native screen supporting Dynamic Type, 48pt touch targets, WCAG 2.2 contrast, radio cadence toggle (Annual vs Monthly), Save 16% badge, benefits comparison, active Plus card with renewal date and native store deep link, and StoreKit terms disclosure.
+  - Native guard compliance: Wrapped top-bar action in `<NativeActions>` to satisfy `@expo/ui` hosting constraints.
+- Navigation Integration:
+  - Added "Subscription and billing" action in `AccountScreen` (More tab).
+  - Added direct route handler at `apps/mobile/app/(workspace)/billing.tsx`.
+- Comprehensive Test Coverage:
+  - `tests/native-purchase-adapter.test.ts`: 17/17 tests passing covering products, annual savings math, purchase flows, user cancellation, pending verification, and restore recovery.
+  - `tests/native-billing-ui.test.ts`: 11/11 tests passing covering free/plus states, cadence toggle, purchase trigger, restore trigger, deep-link routing, and accessible notice presentation.
+- Full Verification:
+  - Full test suite: 1,171/1,171 tests passed across all 147 test files (`pnpm test`).
+  - Typecheck: 19/19 turbo packages and root test tsconfig clean (`pnpm typecheck`).
+  - Linter: `pnpm lint` passed with 0 errors and 0 warnings.
+  - Formatter: `pnpm format:check` passed clean.
+  - Native iOS and Android bundle exports passed (`bundle:ios` and `bundle:android`).

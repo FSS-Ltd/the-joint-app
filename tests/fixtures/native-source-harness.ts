@@ -59,6 +59,11 @@ export function hookHarness() {
       if (first) slots[slot] = factory();
       return slots[slot] as T;
     },
+    useCallback<T>(callback: T): T {
+      const slot = index++;
+      if (first) slots[slot] = callback;
+      return slots[slot] as T;
+    },
     useLayoutEffect(effect: () => void | (() => void)): void {
       if (first) effects.push(effect);
     },
