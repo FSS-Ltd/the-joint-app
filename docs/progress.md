@@ -1831,3 +1831,36 @@ Deliverables implemented and verified:
   - Prettier clean (`pnpm format:check`).
   - Native iOS and Android bundle exports clean (`pnpm --filter @joint/mobile bundle:ios` and `bundle:android`).
   - Feature tree updated in `FEATURE_TREE.md` and `docs/features/finance.md` (`#recurring`).
+
+Host merge verified: [PR55](https://github.com/FSS-Ltd/the-joint-app/pull/55) was merged into `main` at 2026-11-09T13:21:34Z at commit `369d9524cc9930a73ae4e8272b6c929071485342`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS7b and closes PR55.
+
+## IOS8 - Deterministic projection engine and golden fixtures
+
+Predecessor verified on the host before starting: [PR55](https://github.com/FSS-Ltd/the-joint-app/pull/55) merged at `369d9524cc9930a73ae4e8272b6c929071485342`. Step IOS8 starts from that merge on branch `feat/ios8-deterministic-projection-engine`.
+
+Deliverables implemented and verified:
+
+- Mathematical primitives and rounding (`packages/projections/src/math.ts`):
+  - Pure integer arithmetic with exact `HALF_UP` tie-breaking supporting positive and negative numerators: `roundHalfUp(numerator, denominator)`.
+  - Precise compounding factor `monthlyCompoundingFactor(grossAnnualRateDecimal)` using scale 10^18.
+  - Proportional monthly fee retention factor `monthlyFeeRetentionFactor(proportionalFeeRateDecimal)` with scale 10^18.
+  - Compounded inflation index `inflationFactorAtMonth(annualInflationRateDecimal, monthIndex)` with scale 10^18.
+- Canonical JSON and SHA-256 stable input hashing (`packages/projections/src/hash.ts`):
+  - `canonicalJson(value)` sorts all object keys recursively and preserves number/boolean/null primitives.
+  - `hashProjectionInput(input)` produces a deterministic 64-character hex SHA-256 string for reproducible caching and deduplication.
+- Pure deterministic projection calculator (`packages/projections/src/calculator.ts`):
+  - Pure function `calculateProjection(input, options)` consuming validated `ProjectionInputV1` schemas.
+  - Supports `BASIC` mode (zero nominal growth, zero inflation/fees/tax, fixed target) and `ADVANCED` mode.
+  - Month-by-month compounding using integer minor units without floating-point accumulation.
+  - Supports scheduled cash flows: contributions, withdrawals, fixed fees, and tax drag.
+  - Clamps balances at zero (depletion floor) without generating negative debt loans.
+  - Computes inflation-adjusted targets when requested under `TODAYS_MONEY`.
+  - Determines calculation status across all contract variants: `already_achieved`, `reachable`, `beyond_horizon`, `depleted`, `budget_deficit`, `unreachable_under_assumptions`.
+  - Enforces exact breakdown balance conservation: `opening + contributions - withdrawals + growth - propFees - fixedFees - tax === closing` for every month.
+  - Emits calculation warnings for high fee drag, high depletion risk, and negative real returns.
+  - Validates output against `projectionResultV1Schema`.
+- Export package index (`packages/projections/src/index.ts`):
+  - Re-exports `calculateProjection`, `hashProjectionInput`, `canonicalJson`, `roundHalfUp`, and mathematical factors.
+- Independent test suites (`tests/projection-engine.test.ts`):
+  - 16 comprehensive unit test cases covering rounding boundaries, hashing stability, golden milestones (ADR-007 / ADR-012), leap years, all calculation statuses, cash breakdown conservation, monotonicity, and a 600-month stress test under 10ms.
+- Feature tree updated in `docs/features/finance.md` (`#projections`).
