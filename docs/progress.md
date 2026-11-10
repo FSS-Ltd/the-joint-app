@@ -2331,3 +2331,5 @@ Deliverables implemented and verified:
 - Feature Tree & Verification:
   - Updated `FEATURE_TREE.md` line 34 and `docs/features/planned.md#release` status to `implemented`.
   - Synchronized knowledge graph via `graphify update .`.
+
+Host merge verified: [PR70](https://github.com/FSS-Ltd/the-joint-app/pull/70) was merged into `main` at commit `e0c1e83`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS18 and closes PR70. All delivery units from IOS1 through IOS18 in the ordered plan are implemented, locally checked, independently reviewed, and merged into `main`. The founder retains final store-review submission and deployment approval.
