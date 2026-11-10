@@ -1,3 +1,14 @@
+.brand {
+  display: inline-block;
+  text-decoration: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+.brand:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
 .brand-logo {
   display: block;
   width: clamp(128px, 24vw, 180px);
@@ -8,4 +19,17 @@
   width: 100%;
   margin-top: 16px;
   justify-content: center;
+  transition:
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+.google-button:hover {
+  transform: translateY(-1px);
+  background: #cddccd;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.google-button:active {
+  transform: translateY(0);
 }
