@@ -91,6 +91,17 @@
   font-size: 14px;
   cursor: pointer;
   text-decoration: none;
+  transition:
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+.button:hover {
+  transform: translateY(-1px);
+}
+.button:active {
+  transform: translateY(0);
 }
 .button span {
   margin-left: auto;
@@ -99,13 +110,21 @@
 .primary {
   background: var(--primary);
   color: white;
+  box-shadow: 0 2px 4px rgba(36, 79, 66, 0.15);
 }
 .primary:hover {
   background: #1a3c31;
+  box-shadow: 0 4px 12px rgba(36, 79, 66, 0.25);
 }
 .secondary {
   background: var(--sage);
   color: var(--ink);
+  border: 1px solid #b8cbb8;
+}
+.secondary:hover {
+  background: #cddccd;
+  border-color: #9cb59c;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 .identity-shell button:disabled {
   opacity: 0.65;
@@ -123,6 +142,13 @@
   text-underline-offset: 4px;
   cursor: pointer;
   text-align: left;
+  transition:
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+.text-button:hover {
+  color: var(--primary);
+  opacity: 0.85;
 }
 .form-link {
   display: inline-flex;
@@ -130,6 +156,10 @@
   min-height: 44px;
   font-size: 13px;
   margin-top: 8px;
+  transition: color 0.15s ease;
+}
+.form-link:hover {
+  color: var(--primary);
 }
 .form-divider {
   border-top: 1px solid #e8ece5;
@@ -144,6 +174,10 @@
   align-items: center;
   min-height: 44px;
   font-weight: 600;
+  transition: color 0.15s ease;
+}
+.form-footnote a:hover {
+  color: var(--primary);
 }
 .privacy-note {
   margin: 0;

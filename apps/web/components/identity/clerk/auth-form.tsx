@@ -229,17 +229,21 @@ export function ClerkAuthForm({
           </button>
         )}
         {mode === "sign-in" && (
-          <p>
-            <a href={authContinuation("/recovery", search)}>
+          <p className="form-footnote">
+            <a
+              className="form-link"
+              href={authContinuation("/recovery", search)}
+            >
               Forgot your password?
             </a>
           </p>
         )}
-        <p>
+        <p className="form-footnote">
           {mode === "sign-up"
             ? "Already have an account?"
             : "New to The Family Fund App?"}{" "}
           <a
+            className="form-link"
             href={authContinuation(
               mode === "sign-up" ? "/sign-in" : "/sign-up",
               search,

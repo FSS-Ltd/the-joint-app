@@ -2,6 +2,7 @@ import React from "react";
 import "./marketing.css";
 import { Brand } from "../brand";
 import { MarketingHero } from "./hero";
+import { InteractivePreview } from "./interactive-preview";
 import { MarketingFeatures } from "./features";
 import { MarketingPricing } from "./pricing";
 import { MarketingTrust } from "./trust";
@@ -15,8 +16,12 @@ export function MarketingPage(): React.ReactElement {
       </a>
       <header className="marketing-header">
         <div className="marketing-header-inner">
-          <Brand />
-          <span className="environment-label">In development</span>
+          <div className="marketing-brand-wrapper">
+            <Brand />
+            <span className="environment-label">In development</span>
+          </div>
+
+          {/* Navigation */}
           <nav className="marketing-nav" aria-label="Main Navigation">
             <a
               href="https://github.com/FSS-Ltd/the-joint-app"
@@ -48,6 +53,7 @@ export function MarketingPage(): React.ReactElement {
 
       <main id="main-content">
         <MarketingHero />
+        <InteractivePreview />
         <MarketingFeatures />
         <MarketingPricing />
         <MarketingTrust />

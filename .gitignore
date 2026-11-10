@@ -30,3 +30,6 @@ apps/mobile/android/
 
 # Local Graphify outputs
 graphify-out/
+
+# Local jury audit artifacts
+.jury/
