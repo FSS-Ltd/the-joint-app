@@ -21,11 +21,8 @@ export function MarketingPage(): React.ReactElement {
             <span className="environment-label">In development</span>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav
-            className="marketing-nav marketing-nav--desktop"
-            aria-label="Desktop Navigation"
-          >
+          {/* Navigation */}
+          <nav className="marketing-nav" aria-label="Main Navigation">
             <a
               href="https://github.com/FSS-Ltd/the-joint-app"
               className="marketing-nav-link"
@@ -51,48 +48,6 @@ export function MarketingPage(): React.ReactElement {
               Get App
             </a>
           </nav>
-
-          {/* Mobile Navigation Dropdown */}
-          <details
-            className="marketing-nav-mobile"
-            aria-label="Mobile Navigation"
-          >
-            <summary
-              className="marketing-nav-mobile-toggle"
-              aria-label="Toggle navigation menu"
-            >
-              <span className="marketing-nav-mobile-toggle-text">Menu</span>
-              <span className="marketing-nav-mobile-icon" aria-hidden="true">
-                ▾
-              </span>
-            </summary>
-            <div className="marketing-nav-mobile-drawer">
-              <a
-                href="https://apps.apple.com/app/the-family-fund"
-                className="marketing-mobile-link marketing-mobile-link--highlight"
-              >
-                Download for iOS
-              </a>
-              <a href="/sign-in" className="marketing-mobile-link">
-                Sign in to your household
-              </a>
-              <a href="#features" className="marketing-mobile-link">
-                Capabilities
-              </a>
-              <a href="#pricing" className="marketing-mobile-link">
-                Pricing
-              </a>
-              <a href="#security" className="marketing-mobile-link">
-                Security &amp; Privacy
-              </a>
-              <a
-                href="https://github.com/FSS-Ltd/the-joint-app"
-                className="marketing-mobile-link"
-              >
-                GitHub Roadmap ↗
-              </a>
-            </div>
-          </details>
         </div>
       </header>
 
