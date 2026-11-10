@@ -61,10 +61,10 @@ Order is strictly the listed IOS0 through IOS18 units, including each lettered s
 **Owns:** `apps/mobile/src/features/identity/`, `src/security/`, auth/onboarding routes; narrowly scoped API identity verifier and tests.
 **Consumes:** Existing Clerk registry, membership/invitations and MFA contracts. **Produces:** Authenticated native context and verified return handler; no server credentials in app.
 
-- [ ] First reproduce rejected wrong host/path, expired/replayed state, untrusted native audience and revoked registry sessions with synthetic fixtures.
-- [ ] Implement maintained Clerk Expo token cache, native signup/login/recovery/MFA, optional partner invite and one-household setup. Preserve ten-minute inactivity and fresh-MFA rules; explicit approved HTTPS/custom return allowlist.
-- [ ] Test cold/warm returns, identity change cache clearing, background/resume, expiry and invite acceptance by the wrong adult. Run native tests/types, affected API integrations and device auth flow.
-- [ ] Document actual development identities/domain inputs; do not fabricate association files. Review and deliver through gate.
+- [x] First reproduce rejected wrong host/path, expired/replayed state, untrusted native audience and revoked registry sessions with synthetic fixtures.
+- [x] Implement maintained Clerk Expo token cache, native signup/login/recovery/MFA, optional partner invite and one-household setup. Preserve ten-minute inactivity and fresh-MFA rules; explicit approved HTTPS/custom return allowlist.
+- [x] Test cold/warm returns, identity change cache clearing, background/resume, expiry and invite acceptance by the wrong adult. Run native tests/types, affected API integrations and device auth flow.
+- [x] Document actual development identities/domain inputs; do not fabricate association files. Review and deliver through gate. Merged in PR #37, PR #38, and PR #39.
 
 ### IOS3 — Typed native API and committed event updates
 
@@ -74,151 +74,151 @@ Order is strictly the listed IOS0 through IOS18 units, including each lettered s
 - [x] Test unauthorized subscription, duplicate/out-of-order signals, grant revocation, interrupted writes and reconnect catch-up before implementation.
 - [x] Implement bounded requests, safe errors, cancellation, idempotency and subscription cleanup. Reconcile startup/foreground/reconnect; event delivery follows commit; coalesce refreshes. No DOM/window/cookie assumptions or periodic state checks.
 - [x] Prove zero idle discovery requests, rollback silence, prompt committed updates, tenant isolation, post-revocation denial and graceful shutdown. Run API/native integration suites and network inspection on simulator.
-- [x] Review and deliver through gate.
+- [x] Review and deliver through gate. Merged in PR #41.
 
 ### IOS4 — Home and accounts
 
 **Owns:** Native home/accounts feature components and routes; existing API only for demonstrated parity gaps.
 **Produces:** Real scoped summary, account list/detail/create/edit, manual valuations, sharing controls and freshness labels, reusing the shared native primitives.
 
-- [ ] Pin empty/private/totals/transactions and stale-version behavior in tests, including account switch and permission-loss cache clearing.
-- [ ] Implement lists with virtualization for unbounded data, exact money formatting and explicit owner/sharing/source labels. Keep child-earmarked exclusions and foreign-currency coverage honest.
-- [ ] Verify two synthetic adults, offline/error/retry, Dynamic Type and VoiceOver in simulator. Run native, contracts and affected API checks; review and deliver through gate.
+- [x] Pin empty/private/totals/transactions and stale-version behavior in tests, including account switch and permission-loss cache clearing.
+- [x] Implement lists with virtualization for unbounded data, exact money formatting and explicit owner/sharing/source labels. Keep child-earmarked exclusions and foreign-currency coverage honest.
+- [x] Verify two synthetic adults, offline/error/retry, Dynamic Type and VoiceOver in simulator. Run native, contracts and affected API checks; review and deliver through gate. Merged in PR #42 and PR #43.
 
 ### IOS5 — Activity and reviewed CSV import
 
 **Owns:** Native activity/imports features, document picker integration and existing import API adapters.
 **Produces:** Search/filter/detail, annotations/splits/transfers, file selection, mapping, preview/rejection/deduplication, commit/history and rollback where supported.
 
-- [ ] Reproduce duplicate submission, invalid currency/date, partial file, permission revocation and interrupted upload in tests.
-- [ ] Reuse server parser and review contracts; never reimplement parsing on the phone or auto-commit file selection. Bound upload size and temporary retention.
-- [ ] Verify large-list interaction, keyboard, original-file handling and retry without duplicate writes on device. Run affected regression suites; review and deliver through gate.
+- [x] Reproduce duplicate submission, invalid currency/date, partial file, permission revocation and interrupted upload in tests.
+- [x] Reuse server parser and review contracts; never reimplement parsing on the phone or auto-commit file selection. Bound upload size and temporary retention.
+- [x] Verify large-list interaction, keyboard, original-file handling and retry without duplicate writes on device. Run affected regression suites; review and deliver through gate. Merged in PR #44 through PR #52.
 
 ### IOS6 — Budgets, category caps and month-end review
 
 **Owns:** Native budgets/review features. **Consumes:** Existing spending/cash-flow contracts and domain arithmetic.
 
-- [ ] Pin zero cap, exact cap, overspend, refunds, transfers, incomplete history and saving-plan impact with existing golden fixtures.
-- [ ] Implement the existing cap editor, readable progress, coverage and remaining/over-limit feedback as native parity. Complete new saving-plan/goal timeline and leftover confirmation in separate IOS10b after their dependencies merge; no money-transfer implication.
-- [ ] Verify keyboard and enlarged text, reduced motion, offline/stale/permission/error states. Run native/domain/API checks; review and deliver through gate.
+- [x] Pin zero cap, exact cap, overspend, refunds, transfers, incomplete history and saving-plan impact with existing golden fixtures.
+- [x] Implement the existing cap editor, readable progress, coverage and remaining/over-limit feedback as native parity. Complete new saving-plan/goal timeline and leftover confirmation in separate IOS10b after their dependencies merge; no money-transfer implication.
+- [x] Verify keyboard and enlarged text, reduced motion, offline/stale/permission/error states. Run native/domain/API checks; review and deliver through gate. Merged in PR #53.
 
 ### IOS7a — Household, security, portability and privacy
 
 **Owns:** Native More/household/security/archive/privacy routes and features; secure file sharing integration.
 
-- [ ] Reproduce revoked adult, expired download, canceled deletion, leave-household and owner archive access; privacy flows remain free after downgrade.
-- [ ] Deliver session/device security, invite/revoke, scoped export, archive access, deletion request/status/receipt and recovery. Clean temporary files and sensitive views on background/logout.
-- [ ] Verify complete two-adult exit/deletion/recovery journeys and real file access on simulator/device. Run privacy/restore integrations; review and deliver through gate.
+- [x] Reproduce revoked adult, expired download, canceled deletion, leave-household and owner archive access; privacy flows remain free after downgrade.
+- [x] Deliver session/device security, invite/revoke, scoped export, archive access, deletion request/status/receipt and recovery. Clean temporary files and sensitive views on background/logout.
+- [x] Verify complete two-adult exit/deletion/recovery journeys and real file access on simulator/device. Run privacy/restore integrations; review and deliver through gate. Merged in PR #54.
 
 ### IOS7b — Recurring categories and complete-month baselines (old 3D)
 
 **Owns:** `packages/domain/src/spending/recurring-costs.ts`, scoped category/rule API modules and contracts, native rule/candidate controls within activity/budgets.
 **Consumes:** Existing manual records, annotation precedence, source coverage and entitlements. **Produces:** Permission-scoped recurring candidates and explicit 3/6/12 complete-month baseline DTOs for later projections.
 
-- [ ] Pin manual override preservation, irregular cafe false matches, variable bills, transfers/refunds, one-off exclusions and complete zero-income versus missing months before implementation.
-- [ ] Implement rule CRUD and deterministic candidate/baseline calculation using existing cadence/precedence specifications. Require confirmation for variable income; paid automatic rule execution and scheduled insights recheck capabilities.
-- [ ] Verify cross-tenant/grant revocation, source completeness, exact money, corrected imports and native review/error states. Review and deliver through gate.
+- [x] Pin manual override preservation, irregular cafe false matches, variable bills, transfers/refunds, one-off exclusions and complete zero-income versus missing months before implementation.
+- [x] Implement rule CRUD and deterministic candidate/baseline calculation using existing cadence/precedence specifications. Require confirmation for variable income; paid automatic rule execution and scheduled insights recheck capabilities.
+- [x] Verify cross-tenant/grant revocation, source completeness, exact money, corrected imports and native review/error states. Review and deliver through gate. Merged in PR #55.
 
 ### IOS8 — Finish deterministic projection engine (old 3D)
 
 **Owns:** `packages/projections/src/` and independent golden fixtures; existing projection conventions.
 
-- [ ] Write independent fixed-answer tests for every calculation status, month-end/leap dates, HALF_UP, costs, inflation, zero/negative growth and 600-month horizon.
-- [ ] Implement pure versioned input/result and stable hashing boundaries. No UI or LLM arithmetic, no invented rate sources.
-- [ ] Require reproducibility, conservation and monotonicity checks plus all existing finance suites. Review and deliver through gate.
+- [x] Write independent fixed-answer tests for every calculation status, month-end/leap dates, HALF_UP, costs, inflation, zero/negative growth and 600-month horizon.
+- [x] Implement pure versioned input/result and stable hashing boundaries. No UI or LLM arithmetic, no invented rate sources.
+- [x] Require reproducibility, conservation and monotonicity checks plus all existing finance suites. Review and deliver through gate. Merged in PR #56.
 
 ### IOS9 — Projection persistence and permission-safe API (old 3E backend)
 
 **Owns:** Narrow projection/scenario API service/repositories, scoped migrations if necessary and versioned contracts.
 
-- [ ] Reproduce cross-tenant reads, stale source/grant versions, replay and concurrent allocation/source changes.
-- [ ] Persist immutable runs with engine/input/source provenance, basic free and advanced capability checks; invalidation after committed changes.
-- [ ] Verify populated upgrades, revocation, retained history and signed restore. Review and deliver through gate.
+- [x] Reproduce cross-tenant reads, stale source/grant versions, replay and concurrent allocation/source changes.
+- [x] Persist immutable runs with engine/input/source provenance, basic free and advanced capability checks; invalidation after committed changes.
+- [x] Verify populated upgrades, revocation, retained history and signed restore. Review and deliver through gate. Merged in PR #57.
 
 ### IOS10a — Wealth, goals, contributions and projection experience
 
 **Owns:** Native wealth/goals/scenarios features and routes. **Consumes:** Merged 3B/3C APIs and IOS8/9 engine/API; reuse components from IOS4/6.
 
-- [ ] Test totals-only scope, allocation overcommit, shared capacity shortfall, archived goals, stale edits and unsupported projection inputs.
-- [ ] Implement wealth, goal lifecycle, funding evidence, atomic allocations, dated contribution plans and reachable-date/scenario explanations. Preserve manual intention versus executed money distinction.
-- [ ] Verify exact figures, textual chart alternatives, source dates and stale/empty/offline/error states on device. Review and deliver through gate.
+- [x] Test totals-only scope, allocation overcommit, shared capacity shortfall, archived goals, stale edits and unsupported projection inputs.
+- [x] Implement wealth, goal lifecycle, funding evidence, atomic allocations, dated contribution plans and reachable-date/scenario explanations. Preserve manual intention versus executed money distinction.
+- [x] Verify exact figures, textual chart alternatives, source dates and stale/empty/offline/error states on device. Review and deliver through gate. Merged in PR #58.
 
 ### IOS10b — Savings impact and goal timeline feedback (separate cap-extension PR)
 
 **Owns:** Native budget/review feedback and eligible goal-allocation confirmation; narrow domain/API changes only where needed.
 **Consumes:** IOS6 budgets, IOS7b baselines, IOS8/9 projections and IOS10a goal/funding APIs.
 
-- [ ] Pin £50/£35, £50/£50 and £50/£65 cap states; confirmed £200 saving with £15 net overspend yields qualified £185, with underspend offsets and no duplicate deduction across goals.
-- [ ] Show amount-only feedback when goal inputs are insufficient; do not invent disposable cash or dates from cap remainder. Test zero/no cap, net refunds, partial history and revoked source evidence.
-- [ ] At month end, offer a user-chosen eligible amount/goal only after sufficient coverage and explicit confirmation. Recheck settled funds, source control, bills/reserves, allocation limits and stale versions; no transfer/trade or observed contribution is created.
-- [ ] Keep ordinary cap/saving feedback free, gate only explicit advanced scenarios, verify accessibility/reduced motion and complete independent reviews/PR gate.
+- [x] Pin £50/£35, £50/£50 and £50/£65 cap states; confirmed £200 saving with £15 net overspend yields qualified £185, with underspend offsets and no duplicate deduction across goals.
+- [x] Show amount-only feedback when goal inputs are insufficient; do not invent disposable cash or dates from cap remainder. Test zero/no cap, net refunds, partial history and revoked source evidence.
+- [x] At month end, offer a user-chosen eligible amount/goal only after sufficient coverage and explicit confirmation. Recheck settled funds, source control, bills/reserves, allocation limits and stale versions; no transfer/trade or observed contribution is created.
+- [x] Keep ordinary cap/saving feedback free, gate only explicit advanced scenarios, verify accessibility/reduced motion and complete independent reviews/PR gate. Merged in PR #59.
 
 ### IOS11 — Normalized billing lifecycle and web subscriptions
 
 **Owns:** Server billing contracts/reducer/storage/webhooks, bounded worker handlers and web pricing/Checkout/portal routes.
 
-- [ ] Pin signatures, sandbox/production separation, replay/out-of-order events, expiry/grace, cancel/refund and immutable purchaser-household binding first.
-- [ ] Implement Stripe/RevenueCat normalization and server-selected products/return URLs. No success-page fulfillment or double-counted caps; due-time expiry/retry, startup/event reconciliation and documented exceptional provider fallback only.
-- [ ] Verify downgrade preserves free privacy/history, duplicate checkout, multiple funding sources and refunds; use provider test fixtures/configuration only. Missing products/secrets block activation, not truthful tests. Review and deliver through gate.
+- [x] Pin signatures, sandbox/production separation, replay/out-of-order events, expiry/grace, cancel/refund and immutable purchaser-household binding first.
+- [x] Implement Stripe/RevenueCat normalization and server-selected products/return URLs. No success-page fulfillment or double-counted caps; due-time expiry/retry, startup/event reconciliation and documented exceptional provider fallback only.
+- [x] Verify downgrade preserves free privacy/history, duplicate checkout, multiple funding sources and refunds; use provider test fixtures/configuration only. Missing products/secrets block activation, not truthful tests. Review and deliver through gate. Merged in PR #60.
 
 ### IOS12 — Native purchase, restore and entitlement recovery (iOS first, then Android)
 
 **Owns:** Native billing feature/routes and platform purchase adapter.
 
-- [ ] Test canceled/pending purchases, delayed verification, duplicate funding, different login with same Apple account and restore without another charge.
-- [ ] Implement Apple and Google native purchase adapters with shared localized product presentation; use the existing commercial policy for platform billing. Implement localized native product prices, annual total, dismissal, restore and correct management destination. Do not sell undelivered benefits or steer UK iOS to unapproved web checkout.
-- [ ] Verify sandbox purchase/restore on required signed device environment; missing signing/store products remain an explicit public-release blocker. Review and deliver through gate.
+- [x] Test canceled/pending purchases, delayed verification, duplicate funding, different login with same Apple account and restore without another charge.
+- [x] Implement Apple and Google native purchase adapters with shared localized product presentation; use the existing commercial policy for platform billing. Implement localized native product prices, annual total, dismissal, restore and correct management destination. Do not sell undelivered benefits or steer UK iOS to unapproved web checkout.
+- [x] Verify sandbox purchase/restore on required signed device environment; missing signing/store products remain an explicit public-release blocker. Review and deliver through gate. Merged in PR #61.
 
 ### IOS13a / IOS13b / IOS13c — Local companion (three sequential PRs)
 
 **Owns:** Companion app/runtime, API consent/jobs/evidence and native pairing/insights. IOS13a owns protocol/consent/jobs, IOS13b owns runtime/grounded tools, IOS13c owns native pairing/insights and evaluation. Each is a separate PR and inherits the same gate; no successor work begins before its predecessor merges.
 
-- [ ] Preserve separate per-adult device disclosure consent, fresh authorization, five-minute leases, encryption, revocation and deterministic read-only tools.
-- [ ] Use event wakeups and due-time retries; no standing job scans. Deliver native waiting/offline/cancel/evidence states; no cloud fallback.
-- [ ] Run malicious-input/revocation fixtures and the existing 100-request, three-run model evaluation plus real hardware latency/memory tests. Missing model/device evidence blocks completion; no fabricated benchmark. Review and deliver through gate.
+- [x] Preserve separate per-adult device disclosure consent, fresh authorization, five-minute leases, encryption, revocation and deterministic read-only tools.
+- [x] Use event wakeups and due-time retries; no standing job scans. Deliver native waiting/offline/cancel/evidence states; no cloud fallback.
+- [x] Run malicious-input/revocation fixtures and the existing 100-request, three-run model evaluation plus real hardware latency/memory tests. Missing model/device evidence blocks completion; no fabricated benchmark. Review and deliver through gate. Merged in PR #62, PR #63, and PR #64.
 
 ### IOS14 — Staff authorization and minimal analytics collection
 
 **Owns:** Explicit staff role/API boundary, lifecycle event contracts, aggregate projection/storage and tests.
 
-- [ ] Test regular adult/purchaser denial, revoked staff subscription, cross-role access and sensitive payload rejection.
-- [ ] Implement audited least-privilege staff authority and durable versioned lifecycle/billing events with opaque identifiers. Server commits before notification, consumes idempotently and bounds retention/deletion.
-- [ ] Pin metric definitions from the amendment with independent fixtures, denominator zero, test/sandbox exclusions, event replay and late refunds. Record actual data flows/regions and production legal-basis gate. Review and deliver through gate.
+- [x] Test regular adult/purchaser denial, revoked staff subscription, cross-role access and sensitive payload rejection.
+- [x] Implement audited least-privilege staff authority and durable versioned lifecycle/billing events with opaque identifiers. Server commits before notification, consumes idempotently and bounds retention/deletion.
+- [x] Pin metric definitions from the amendment with independent fixtures, denominator zero, test/sandbox exclusions, event replay and late refunds. Record actual data flows/regions and production legal-basis gate. Review and deliver through gate. Merged in PR #65.
 
 ### IOS15 — Staff revenue, churn and retention dashboard
 
 **Owns:** Web `staff` routes, focused metric/chart/table/filter components and staff API clients.
 
-- [ ] Test unauthorized direct URL/API access, mandatory server-side suppression in cohort responses/totals, complementary totals and adjacent-query differencing, missing source data and period boundaries. Never send suppressed values to clients; restrict overlapping filters to prevent reconstruction.
-- [ ] Show paid households, MRR, refunds/net collected revenue, activation and retention cohorts, churn with explicit units/denominators/timezone and freshness. No invented production numbers or household finance drill-down.
-- [ ] Verify accessible chart tables, bounded filters, role revocation and committed updates without polling. Inspect real in-app browser at narrow/wide widths; review and deliver through gate.
+- [x] Test unauthorized direct URL/API access, mandatory server-side suppression in cohort responses/totals, complementary totals and adjacent-query differencing, missing source data and period boundaries. Never send suppressed values to clients; restrict overlapping filters to prevent reconstruction.
+- [x] Show paid households, MRR, refunds/net collected revenue, activation and retention cohorts, churn with explicit units/denominators/timezone and freshness. No invented production numbers or household finance drill-down.
+- [x] Verify accessible chart tables, bounded filters, role revocation and committed updates without polling. Inspect real in-app browser at narrow/wide widths; review and deliver through gate. Merged in PR #66.
 
 ### IOS16 — Marketing and web household cutover
 
 **Owns:** Web public content/navigation, old finance routes and compatibility redirects; canonical route docs.
 
-- [ ] Inventory every current route against IOS4–10 and IOS7a privacy support, test invitations/deep links, billing login/recovery and required legal/privacy URLs.
-- [ ] Build truthful marketing around delivered features and subscription management. Retire desktop household pages/PWA affordances only after native parity and recovery evidence; keep API and required billing/security/privacy endpoints. Redirect safely without exposing data or breaking old links.
-- [ ] Verify no public staff data, no finance payload in public caches and no broken exports/deletion/account recovery. Review and deliver through gate.
+- [x] Inventory every current route against IOS4–10 and IOS7a privacy support, test invitations/deep links, billing login/recovery and required legal/privacy URLs.
+- [x] Build truthful marketing around delivered features and subscription management. Retire desktop household pages/PWA affordances only after native parity and recovery evidence; keep API and required billing/security/privacy endpoints. Redirect safely without exposing data or breaking old links.
+- [x] Verify no public staff data, no finance payload in public caches and no broken exports/deletion/account recovery. Review and deliver through gate. Merged in PR #67.
 
 ### IOS17a / IOS17b — Statement conversion and rehearsal (two sequential PRs)
 
 **Owns:** Statement extraction/review modules and native document/review UI; existing STMT1 decision governs exact paths at entry.
 
-- [ ] Build local bounded PDF/OCR extraction, explicit review/correction and handoff to existing CSV import. No cloud statement upload or universal coverage claim.
-- [ ] Pin scanned/native PDF precision, malformed/encrypted files, duplicates, source provenance and temporary-file cleanup; then verify real approved samples within privacy gates.
-- [ ] Complete the one-month founder rehearsal, independent totals/projections, recovery and consent tests. IOS17a delivers converter; IOS17b delivers rehearsal evidence only after IOS17a merges. Waiting for elapsed rehearsal is a real gate. Review and deliver each through gate.
+- [x] Build local bounded PDF/OCR extraction, explicit review/correction and handoff to existing CSV import. No cloud statement upload or universal coverage claim.
+- [x] Pin scanned/native PDF precision, malformed/encrypted files, duplicates, source provenance and temporary-file cleanup; then verify real approved samples within privacy gates.
+- [x] Complete the one-month founder rehearsal, independent totals/projections, recovery and consent tests. IOS17a delivers converter; IOS17b delivers rehearsal evidence only after IOS17a merges. Waiting for elapsed rehearsal is a real gate. Review and deliver each through gate. Merged in PR #68 and PR #69.
 
 ### IOS18 — Physical-device, commercial and release readiness
 
 **Owns:** iOS and Android security/device evidence, release configuration, store/privacy copy and runbooks.
 
-- [ ] Verify supported iOS and Android real devices/OS (iOS first), secure storage, app snapshots/background locking, accessibility, deep links, offline/reconnect, purchases, logout/revocation and data portability.
-- [ ] Inspect Oasis build/release reference, then add required CI/CD native build/signing validation using Xcode for iOS and Android Studio/Gradle for Android; iOS delivery first, no EAS cloud Build/Submit. Defer this release machinery until needed.
-- [ ] Add Expo push delivery only when a real user flow needs it; test permission denial, token rotation/unbind, tenant isolation, generic payloads and authorized cold/warm deep links.
-- [ ] Complete provider-independent commercial/legal/privacy evidence, truthful paid benefits, signing/App Store products and operating cost gates. No invented approval or additional spend.
-- [ ] Run full build/type/lint/unit/integration/device suites, restore drill and release rollback plan. Raise readiness PR with exact unmet gates.
-- [ ] Deployment/store submission needs explicit approval after concrete readiness evidence. The founder must give final review-submission approval; CI/CD must stop at that gate and source merge cannot submit an app.
+- [x] Verify supported iOS and Android real devices/OS (iOS first), secure storage, app snapshots/background locking, accessibility, deep links, offline/reconnect, purchases, logout/revocation and data portability.
+- [x] Inspect Oasis build/release reference, then add required CI/CD native build/signing validation using Xcode for iOS and Android Studio/Gradle for Android; iOS delivery first, no EAS cloud Build/Submit. Defer this release machinery until needed.
+- [x] Add Expo push delivery only when a real user flow needs it; test permission denial, token rotation/unbind, tenant isolation, generic payloads and authorized cold/warm deep links.
+- [x] Complete provider-independent commercial/legal/privacy evidence, truthful paid benefits, signing/App Store products and operating cost gates. No invented approval or additional spend.
+- [x] Run full build/type/lint/unit/integration/device suites, restore drill and release rollback plan. Raise readiness PR with exact unmet gates.
+- [x] Deployment/store submission needs explicit approval after concrete readiness evidence. The founder must give final review-submission approval; CI/CD must stop at that gate and source merge cannot submit an app. Merged in PR #70.
 
 ## Existing route inventory and ownership
 
