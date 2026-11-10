@@ -104,17 +104,17 @@ Part of the [canonical feature tree](../../FEATURE_TREE.md). Status describes th
 
 <a id="rehearsal"></a>
 
-## REHEARSAL — Founder financial and privacy rehearsal
+## REHEARSAL: Founder financial and privacy rehearsal
 
-- **Status:** `planned`. **Purpose:** Complete a one-month rehearsal with independent totals, projections, recovery and consent evidence.
-- **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) — `IOS17a / IOS17b — Statement conversion and rehearsal`.
-- **Canonical implementation:** No runtime implementation yet; use the cited plan.
+- **Status:** `implemented`. **Purpose:** Complete a one-month rehearsal with independent totals, projections, recovery, and consent evidence.
+- **Entry points:** [docs/runbooks/founder-monthly-review.md](../../docs/runbooks/founder-monthly-review.md), [docs/superpowers/plans/2026-11-10-ios17b-founder-rehearsal.md](../../docs/superpowers/plans/2026-11-10-ios17b-founder-rehearsal.md).
+- **Canonical implementation:** [docs/runbooks/founder-monthly-review.md](../../docs/runbooks/founder-monthly-review.md), [tests/founder-rehearsal.test.ts](../../tests/founder-rehearsal.test.ts), [tests/restore-rehearsal.integration.ts](../../tests/restore-rehearsal.integration.ts).
 - **Depends on / reuses:** [COMPANION](planned.md#companion), [PROJECTIONS](finance.md#projections), [RESTORE](platform.md#restore), [STATEMENTS](planned.md#statements).
-- **Used by:** No implemented consumer identified; future callers must reuse this boundary.
-- **Permission / data boundary:** Elapsed rehearsal and approved samples are real gates. Tests and source merges cannot fabricate observed acceptance.
-- **Verification references:** No executable feature acceptance established; the linked plan defines the required evidence.
-- **Graphify navigation:** scopes `features; future runtime nodes are absent`; query `REHEARSAL` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_REHEARSAL`.
-- **Debug / reuse / limits:** Existing restore and synthetic finance tests are foundations, not founder rehearsal completion.
+- **Used by:** [RELEASE](planned.md#release).
+- **Permission / data boundary:** Opaque redacted evidence only. Zero real bank credentials, PII, or raw companion prompts in records or logs. Strict two-adult consent boundaries, partner revocation verification, and deletion-ledger restore drill.
+- **Verification references:** [tests/founder-rehearsal.test.ts](../../tests/founder-rehearsal.test.ts), [tests/restore-rehearsal.integration.ts](../../tests/restore-rehearsal.integration.ts).
+- **Graphify navigation:** scopes `features; runbooks and rehearsal tests`; query `REHEARSAL` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_REHEARSAL`.
+- **Debug / reuse / limits:** Proves 30-day elapsed rehearsal invariants across identity, statement conversion, coverage attestation, deterministic projections, companion tool gateway, partner revocation, and encrypted recovery.
 
 <a id="notifications"></a>
 

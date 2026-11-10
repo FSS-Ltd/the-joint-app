@@ -2280,3 +2280,29 @@ Deliverables implemented and verified:
   - Code formatter clean (Prettier).
   - Mobile iOS bundle clean: `pnpm --filter @joint/mobile bundle:ios` generated `dist/ios`.
   - Independent Code Reviewer and Independent AppSec Reviewer both granted formal APPROVE verdicts.
+
+Host merge verified: [PR68](https://github.com/FSS-Ltd/the-joint-app/pull/68) was merged into `main` at commit `c9f6aa6`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS17a and closes PR68.
+
+## IOS17b: Founder financial and privacy rehearsal
+
+Predecessor verified on the host before starting: [PR68](https://github.com/FSS-Ltd/the-joint-app/pull/68) merged at `c9f6aa6`. Step IOS17b starts from that merge on branch `feat/ios17b-founder-rehearsal`.
+
+Deliverables implemented and verified:
+
+- Operational Runbook:
+  - Authored `docs/runbooks/founder-monthly-review.md` specifying step-by-step instructions for the 30-day founder rehearsal: two-adult authentication and account sharing consent, statement ingestion and reconciliation, month-end review attestation, grounded local AI companion checks, partner sharing revocation drills, offline resilience, and encrypted database backup restoration with deletion ledger replay.
+- Delivery Design Plan:
+  - Authored `docs/superpowers/plans/2026-11-10-ios17b-founder-rehearsal.md` detailing problem statement, architectural decisions, redacted rehearsal record schema, failure modes, security boundaries, and success metrics.
+- Comprehensive Rehearsal Verification Suite:
+  - Authored `tests/founder-rehearsal.test.ts` (14 unit/integration tests) verifying:
+    - Two-adult household account-level privacy isolation (withholding private accounts from partner visibility; shared accounts visible to both with accurate ownership badges).
+    - 30-day statement ingestion, balance reconciliation (`opening + credits - debits == closing`), RFC-4180 CSV conversion, and formula injection mitigation (`=`, `+`, `-`, `@`, `\t`, `\r`, and control prefixes).
+    - Month-end coverage attestation rules (only owners can attest; closed period required).
+    - Deterministic wealth and goal projections comparing baseline vs accelerated scenarios using exact minor-unit integer arithmetic.
+    - Grounded local companion gateway enforcing the 4 permitted read-only tools and blocking arbitrary tool invocation.
+    - Immediate exclusion upon partner sharing revocation without stale cached totals.
+    - Redacted rehearsal acceptance record format ensuring zero cleartext credentials, PII, or raw prompts.
+    - Brand & Voice rules compliance (zero em dashes, zero banned words across all documents).
+- Feature Tree & Verification:
+  - Updated `FEATURE_TREE.md` line 34 and `docs/features/planned.md#rehearsal` status to `implemented`.
+  - Synchronized knowledge graph via `graphify update .`.
