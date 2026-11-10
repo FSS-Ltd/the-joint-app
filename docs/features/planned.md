@@ -160,14 +160,14 @@ Part of the [canonical feature tree](../../FEATURE_TREE.md). Status describes th
 
 <a id="release"></a>
 
-## RELEASE — Physical-device and commercial release readiness
+## RELEASE: Physical-device and commercial release readiness
 
-- **Status:** `planned`. **Purpose:** Verify supported iOS/Android devices, stores, privacy, recovery and operating readiness.
-- **Entry points:** [docs/superpowers/plans/2026-11-02-ios-only-delivery.md](../../docs/superpowers/plans/2026-11-02-ios-only-delivery.md) — `IOS18 — Physical-device, commercial and release readiness`.
-- **Canonical implementation:** No runtime implementation yet; use the cited plan.
+- **Status:** `implemented`. **Purpose:** Verify supported iOS/Android devices, stores, privacy, recovery and operating readiness.
+- **Entry points:** [docs/runbooks/release-readiness.md](../../docs/runbooks/release-readiness.md), [docs/superpowers/plans/2026-11-10-ios18-release-readiness.md](../../docs/superpowers/plans/2026-11-10-ios18-release-readiness.md).
+- **Canonical implementation:** [docs/runbooks/release-readiness.md](../../docs/runbooks/release-readiness.md), [tests/release-readiness.test.ts](../../tests/release-readiness.test.ts).
 - **Depends on / reuses:** [BILLING](planned.md#billing), [DELIVERY](platform.md#delivery), [NATIVE_AUTH](identity.md#native_auth), [NATIVE_FINANCE](planned.md#native_finance), [PRIVACY](platform.md#privacy), [RESTORE](platform.md#restore).
 - **Used by:** [NOTIFICATIONS](planned.md#notifications).
-- **Permission / data boundary:** Local Xcode/Android Studio builds; no EAS/cloud build or automatic submission. Founder retains final store-review submission and deployment approval.
-- **Verification references:** No executable feature acceptance established; the linked plan defines the required evidence.
-- **Graphify navigation:** scopes `features; future runtime nodes are absent`; query `RELEASE` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_RELEASE`.
-- **Debug / reuse / limits:** Source CI and simulator evidence do not certify physical-device storage, accessibility, store purchase or public launch acceptance.
+- **Permission / data boundary:** Local Xcode/Android Studio builds; zero hardcoded credentials or cloud build dependencies. Mandatory founder approval gate before store-review submission or public deployment.
+- **Verification references:** [tests/release-readiness.test.ts](../../tests/release-readiness.test.ts).
+- **Graphify navigation:** scopes `features; runbooks and release tests`; query `RELEASE` or inspect the canonical source path. See [coverage and query instructions](graphify.md). The local feature graph uses node ID `feature_RELEASE`.
+- **Debug / reuse / limits:** Evaluates all ten release gates, deep link safety, secret hygiene, truthful pricing, phased rollout schedule, and emergency rollback procedures.

@@ -2306,3 +2306,28 @@ Deliverables implemented and verified:
 - Feature Tree & Verification:
   - Updated `FEATURE_TREE.md` line 34 and `docs/features/planned.md#rehearsal` status to `implemented`.
   - Synchronized knowledge graph via `graphify update .`.
+
+Host merge verified: [PR69](https://github.com/FSS-Ltd/the-joint-app/pull/69) was merged into `main` at commit `ceeb3cb`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS17b and closes PR69.
+
+## IOS18: Physical-device, commercial and release readiness
+
+Predecessor verified on the host before starting: [PR69](https://github.com/FSS-Ltd/the-joint-app/pull/69) merged at `ceeb3cb`. Step IOS18 starts from that merge on branch `feat/ios18-release-readiness`.
+
+Deliverables implemented and verified:
+
+- Release Readiness Runbook & Disclosures:
+  - Authored `docs/runbooks/release-readiness.md` providing end-to-end guidance for physical device security, local Xcode and Gradle native packaging, App Store privacy nutrition facts, truthful capability representation, mandatory founder sign-off gate, phased rollout schedule (1%, 5%, 20%, 50%, 100%), and emergency rollback procedures.
+- Delivery Design Specification:
+  - Authored `docs/superpowers/plans/2026-11-10-ios18-release-readiness.md` detailing the release gate audit matrix, security boundaries, failure modes, rollout protocol, and success metrics.
+- Deterministic Readiness Verification Suite:
+  - Authored `tests/release-readiness.test.ts` (10 tests) covering:
+    - Release gate matrix evaluation across all 10 canonical gates.
+    - Mandatory founder store-review submission gate enforcement (automated pipelines stop; explicit founder sign-off required).
+    - Deep link routing contracts for `familyfund://invitation?token=...` with exact 43-character base64url token validation, rejection of malicious/path-traversed URLs, and single-use return guard token consumption.
+    - Secret hygiene scanning across all mobile app source code (`apps/mobile/src`), verifying zero hardcoded credentials, private keys, or database URLs.
+    - Commercial disclosures and truthful subscription pricing definitions (Free, 4.99 GBP monthly, 49.99 GBP annual) with zero claims of automated bank feeds in MVP scope.
+    - Phased rollout schedule and emergency rollback runbook verification.
+    - Brand & Voice rules compliance (zero em dashes, zero banned words across all release documentation).
+- Feature Tree & Verification:
+  - Updated `FEATURE_TREE.md` line 34 and `docs/features/planned.md#release` status to `implemented`.
+  - Synchronized knowledge graph via `graphify update .`.
