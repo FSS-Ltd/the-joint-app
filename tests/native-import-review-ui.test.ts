@@ -189,18 +189,39 @@ it("review screen merges each choice into the draft and shows loading, empty and
 });
 
 function commit(overrides: Record<string, unknown> = {}, acknowledged = false) {
-  const push = vi.fn();
+  const replace = vi.fn();
   const state = session({ ...batch, ...overrides }, { acknowledged });
   const tree = (
     load(`${feature}import-commit-screen.tsx`, {
       "@expo/ui": { Host: "host", Switch: "switch" },
-      "expo-router": { useRouter: () => ({ push }) },
+      "expo-router": { useRouter: () => ({ replace }) },
       "./import-batch-boundary": { ImportBatchBoundary: "boundary" },
       "./use-import-review": { useImportCommitWrite: () => state },
     }).ImportCommitScreen as (props: { batchId: string }) => unknown
   )({ batchId: batch.id });
-  return { state, tree, push };
+  return { state, tree, replace };
 }
+
+it("displays actual CSV counts and cancels before submission", () => {
+  const view = commit({ validRows: 8, duplicateRows: 3, rejectedRows: 1 });
+  const facts = expand(view.tree)
+    .filter((node) => node.type === "text")
+    .map((node) => node.props.children);
+  expect(facts).toEqual(
+    expect.arrayContaining([
+      "8",
+      "Valid rows",
+      "3",
+      "Duplicates",
+      "1",
+      "Rejected rows",
+      ["12", " rows in this file."],
+    ]),
+  );
+  press(view.tree, "Cancel");
+  expect(view.replace).toHaveBeenCalledWith(`/imports/${batch.id}`);
+  expect(view.state.submit).not.toHaveBeenCalled();
+});
 
 it("commit screen blocks on undecided overlaps and points to the review", () => {
   const blocked = commit({ overlapRows: 2 });

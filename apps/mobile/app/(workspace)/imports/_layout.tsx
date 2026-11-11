@@ -20,10 +20,7 @@ export default function ImportsLayout(): React.JSX.Element {
         name="[batchId]/review"
         options={{ title: "Review rows" }}
       />
-      <Stack.Screen
-        name="[batchId]/commit"
-        options={{ title: "Commit import" }}
-      />
+      <Stack.Screen name="[batchId]/commit" options={{ title: "" }} />
       <Stack.Screen
         name="[batchId]/rollback"
         options={{ title: "Roll back import" }}

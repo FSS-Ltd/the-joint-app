@@ -1,8 +1,10 @@
 import { Host, Switch } from "@expo/ui";
 import { useRouter } from "expo-router";
+import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { AppText } from "@/components/app-text";
 import { NativeAction } from "@/components/native-action";
 import { NativeActions } from "@/components/native-actions";
+import { colors, corners, spacing } from "@/theme/tokens";
 import { ImportBatchBoundary } from "./import-batch-boundary";
 import { useImportCommitWrite } from "./use-import-review";
 
@@ -14,6 +16,8 @@ export function ImportCommitScreen({
   batchId: string;
 }): React.JSX.Element {
   const router = useRouter();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale >= 1.3;
   const session = useImportCommitWrite(batchId);
   const { draft, mutation, editable } = session;
   const batch = draft.base;
@@ -24,17 +28,34 @@ export function ImportCommitScreen({
     <ImportBatchBoundary
       session={session}
       batchId={batchId}
-      title="Commit import"
+      title="Review CSV import"
       saved="Commit requested. Open the import to follow its progress."
       pending="Queueing the import…"
     >
       {batch && (
         <>
-          <AppText>
-            {count(batch.validRows)} valid rows, {count(batch.duplicateRows)}{" "}
-            duplicates and {count(batch.rejectedRows)} rejected rows were found
-            in {count(batch.totalRows)} rows.
-          </AppText>
+          <View style={[styles.metrics, stacked && styles.stacked]}>
+            {[
+              { label: "Valid rows", value: batch.validRows },
+              { label: "Duplicates", value: batch.duplicateRows },
+              { label: "Rejected rows", value: batch.rejectedRows },
+            ].map(({ label, value }) => (
+              <View
+                key={label}
+                style={[styles.metric, stacked && styles.stackedMetric]}
+              >
+                <AppText variant="title">{count(value)}</AppText>
+                <AppText
+                  variant="label"
+                  tone="secondary"
+                  style={styles.metricLabel}
+                >
+                  {label}
+                </AppText>
+              </View>
+            ))}
+          </View>
+          <AppText>{count(batch.totalRows)} rows in this file.</AppText>
           <AppText>
             Only kept, valid rows will enter activity, and none appear there
             until the whole import succeeds.
@@ -82,9 +103,34 @@ export function ImportCommitScreen({
               pending={mutation.kind === "pending"}
               onPress={() => void session.submit()}
             />
+            {mutation.kind === "idle" && (
+              <NativeAction
+                label="Cancel"
+                tone="secondary"
+                onPress={() => router.replace(`/imports/${batchId}`)}
+              />
+            )}
           </NativeActions>
         </>
       )}
     </ImportBatchBoundary>
   );
 }
+
+const styles = StyleSheet.create({
+  metrics: { flexDirection: "row", flexWrap: "wrap", gap: spacing.small },
+  stacked: { flexDirection: "column" },
+  stackedMetric: { flexBasis: "auto" },
+  metric: {
+    flexGrow: 1,
+    flexBasis: 90,
+    alignItems: "center",
+    paddingVertical: spacing.medium,
+    paddingHorizontal: spacing.small,
+    backgroundColor: colors.sage,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: corners.surface,
+  },
+  metricLabel: { textAlign: "center" },
+});

@@ -1,20 +1,13 @@
-import { useState } from "react";
+import { useState, type PropsWithChildren } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
-import {
-  classificationKindSchema,
-  monthSchema,
-  type AccountResponse,
-  type ClassificationKind,
-} from "@joint/contracts";
-import { Host, Switch } from "@expo/ui";
+import type { AccountResponse } from "@joint/contracts";
 import { AppText } from "@/components/app-text";
 import { EmptyState } from "@/components/empty-state";
 import { NativeAction } from "@/components/native-action";
 import { NativeActions } from "@/components/native-actions";
-import { NativeField } from "@/components/native-field";
 import { Panel } from "@/components/panel";
 import { spacing } from "@/theme/tokens";
-import { AccountChoice } from "../accounts/account-choice";
+import { grantLabels, ownerLabel } from "../accounts/account-labels";
 import { useNativeFinance } from "../finance/context";
 import { financeAuthorityKey } from "../finance/scope";
 import { useFinanceResource } from "../finance/use-resource";
@@ -26,37 +19,22 @@ import {
   type ActivityFilterDraft,
 } from "./activity-query";
 import { TransactionRow } from "./transaction-row";
-
-type ClassificationOption = "ALL" | ClassificationKind;
-const classifications = [
-  "ALL",
-  ...classificationKindSchema.options,
-] as readonly ClassificationOption[];
-const classificationLabels: Record<ClassificationOption, string> = {
-  ALL: "All classifications",
-  EXPENSE: "Expense",
-  INCOME: "Income",
-  REFUND: "Refund",
-  TRANSFER: "Transfer",
-  DEBT_PAYMENT: "Debt payment",
-  PRINCIPAL: "Principal",
-  CONTRIBUTION: "Contribution",
-  UNCLASSIFIED: "Unclassified",
-};
+import { ActivityFilterControls } from "./activity-filter-controls";
 
 export function ActivityPage({
   account,
   onOpen,
-}: {
+  onReviewImports,
+  children,
+}: PropsWithChildren<{
   account: AccountResponse;
   onOpen(transactionId: string): void;
-}): React.JSX.Element {
+  onReviewImports?: () => void;
+}>): React.JSX.Element {
   const finance = useNativeFinance();
   const authority = finance.authority;
-  const [draft, setDraft] = useState<ActivityFilterDraft>(emptyActivityFilters);
   const [applied, setApplied] =
     useState<ActivityFilterDraft>(emptyActivityFilters);
-  const [filterError, setFilterError] = useState<string | null>(null);
   const filters = activityFilters(applied);
   const key = `${authority ? financeAuthorityKey(authority) : "unavailable"}:${account.id}:${JSON.stringify(filters)}`;
   const [page, setPage] = useState<{
@@ -82,81 +60,48 @@ export function ActivityPage({
       signal,
     );
   });
-  const apply = () => {
-    if (draft.month && !monthSchema.safeParse(draft.month).success) {
-      setFilterError("Enter a month as YYYY-MM.");
-      return;
-    }
-    setFilterError(null);
-    setApplied({ ...draft, search: draft.search.trim() });
-  };
+  const filterCount =
+    Number(Boolean(applied.month)) +
+    Number(applied.classification !== "ALL") +
+    Number(applied.uncategorizedOnly);
+  const access =
+    account.ownership === "OWNED"
+      ? (account.sharing?.level ?? "NONE")
+      : account.access;
   const header = (
     <View style={styles.sections}>
-      <Panel>
-        <AppText variant="title" accessibilityRole="header">
-          Activity
+      <View>
+        <AppText variant="title" tone="inverse" accessibilityRole="header">
+          {account.label}
         </AppText>
-        <AppText>
-          {account.label} · up to 50 transactions per page. Each page replaces
-          the previous page.
+        <AppText tone="inverse">
+          {ownerLabel(account)} · {grantLabels[access]}
         </AppText>
-        <NativeField
-          label="Search transactions"
-          value={draft.search}
-          onChangeText={(search) => setDraft({ ...draft, search })}
-          returnKeyType="search"
-          onSubmitEditing={apply}
-        />
-        <NativeField
-          label="Month filter"
-          value={draft.month}
-          onChangeText={(month) => setDraft({ ...draft, month })}
-          placeholder="YYYY-MM"
-          returnKeyType="done"
-          onSubmitEditing={apply}
-        />
-        <AccountChoice
-          label="Classification"
-          value={draft.classification}
-          options={classifications}
-          labels={classificationLabels}
-          onChange={(classification) =>
-            setDraft({
-              ...draft,
-              classification: classification as ClassificationOption,
-            })
-          }
-          disabled={false}
-        />
-        <Host matchContents={{ vertical: true }} colorScheme="light">
-          <Switch
-            label="Only uncategorized"
-            value={draft.uncategorizedOnly}
-            onValueChange={(uncategorizedOnly) =>
-              setDraft({ ...draft, uncategorizedOnly })
-            }
-          />
-        </Host>
-        {filterError && (
-          <AppText accessibilityLiveRegion="polite">{filterError}</AppText>
+      </View>
+      {children}
+      <ActivityFilterControls
+        applied={applied}
+        filterCount={filterCount}
+        onChange={setApplied}
+      />
+      <View style={styles.pageLabel}>
+        <AppText variant="label" tone="inverse" accessibilityRole="header">
+          {current.cursor || filterCount || applied.search
+            ? "Transactions"
+            : "Recent transactions"}
+        </AppText>
+        {result.kind === "ready" && (
+          <AppText tone="inverse">
+            {result.value.items.length} on this page
+          </AppText>
         )}
-        <NativeActions>
-          <NativeAction label="Apply activity filters" onPress={apply} />
-          <NativeAction
-            label="Clear activity filters"
-            tone="secondary"
-            onPress={() => {
-              setFilterError(null);
-              setDraft(emptyActivityFilters);
-              setApplied(emptyActivityFilters);
-            }}
-          />
-        </NativeActions>
-      </Panel>
+      </View>
     </View>
   );
   return (
     <FlatList
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
       data={result.kind === "ready" ? result.value.items : []}
       keyExtractor={(transaction) => transaction.id}
       renderItem={({ item }) => (
@@ -211,10 +156,9 @@ export function ActivityPage({
                 tone="secondary"
               />
             )}
-            {result.kind === "ready" && (
+            {result.kind === "ready" && result.value.nextCursor && (
               <NativeAction
                 label="Next activity page"
-                disabled={!result.value.nextCursor}
                 onPress={() => {
                   if (
                     !authority ||
@@ -231,6 +175,20 @@ export function ActivityPage({
               />
             )}
           </NativeActions>
+          {onReviewImports && (
+            <Panel>
+              <AppText variant="title" accessibilityRole="header">
+                CSV imports
+              </AppText>
+              <NativeActions>
+                <NativeAction
+                  label="Review CSV imports"
+                  tone="secondary"
+                  onPress={onReviewImports}
+                />
+              </NativeActions>
+            </Panel>
+          )}
         </View>
       }
       contentContainerStyle={styles.list}
@@ -241,7 +199,13 @@ export function ActivityPage({
 const styles = StyleSheet.create({
   list: { paddingBottom: spacing.large },
   sections: { gap: spacing.medium },
+  pageLabel: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    columnGap: spacing.small,
+  },
   header: { marginBottom: spacing.medium },
   separator: { height: spacing.medium },
-  footer: { paddingTop: spacing.medium },
+  footer: { paddingTop: spacing.medium, gap: spacing.medium },
 });

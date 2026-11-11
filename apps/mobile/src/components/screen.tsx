@@ -13,9 +13,11 @@ export function Screen({
   children,
   compact = false,
   scrollable = true,
+  nativeHeader = false,
 }: PropsWithChildren<{
   compact?: boolean;
   scrollable?: boolean;
+  nativeHeader?: boolean;
 }>): React.JSX.Element {
   const { width } = useWindowDimensions();
   return (
@@ -40,7 +42,10 @@ export function Screen({
           ]}
         />
       </View>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={nativeHeader ? ["left", "right", "bottom"] : undefined}
+      >
         {scrollable ? (
           <ScrollView
             contentContainerStyle={[styles.content, compact && styles.compact]}
