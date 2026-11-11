@@ -4,7 +4,7 @@ import type { AggregateMoney, BudgetResponse } from "@joint/contracts";
 import { formatAggregateMoney } from "@joint/domain/cash-flow";
 import { AppText } from "@/components/app-text";
 import { Panel } from "@/components/panel";
-import { colors, corners } from "@/theme/tokens";
+import { colors, corners, spacing } from "@/theme/tokens";
 import {
   capPosition,
   formatCapBalance,
@@ -127,15 +127,22 @@ export function CapCard({
   actual,
   tint,
   children,
+  partialCoverage = false,
 }: PropsWithChildren<{
   line: BudgetResponse["lines"][number];
   actual: AggregateMoney;
   tint?: "apricot";
+  partialCoverage?: boolean;
 }>): React.JSX.Element {
   const position = capPosition(line.limit.amountMinor, actual.amountMinor);
   const category = line.category ?? "Uncategorized";
   const balance = formatCapBalance(position);
-  const status = formatCapStatus(position);
+  const qualifiedBalance = partialCoverage
+    ? `${balance} based on recorded spending`
+    : balance;
+  const status = partialCoverage
+    ? "Partial coverage"
+    : formatCapStatus(position);
   const savingImpact = formatSavingImpact(category, position);
   const netRefund = hasNetRefund(actual.amountMinor);
   const isOver = position.status === "over";
@@ -143,7 +150,7 @@ export function CapCard({
   const limitLabel = formatAggregateMoney(line.limit);
 
   return (
-    <Panel tint={tint}>
+    <Panel tint={tint} compact={tint === "apricot"}>
       <View style={styles.header}>
         <AppText variant="label">{category}</AppText>
         <AppText
@@ -155,7 +162,7 @@ export function CapCard({
         </AppText>
       </View>
 
-      <AppText variant="title">{balance}</AppText>
+      <AppText variant="title">{qualifiedBalance}</AppText>
 
       <AppText tone="secondary">
         {spentLabel} spent · {limitLabel} cap
@@ -166,7 +173,7 @@ export function CapCard({
         withinPercent={position.withinPercent}
         overPercent={position.overPercent}
         usedPercent={position.usedPercent}
-        balance={balance}
+        balance={qualifiedBalance}
         spentLabel={spentLabel}
         limitLabel={limitLabel}
         isOver={isOver}
@@ -192,6 +199,8 @@ export function CapCard({
 const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.small,
     justifyContent: "space-between",
     alignItems: "center",
   },

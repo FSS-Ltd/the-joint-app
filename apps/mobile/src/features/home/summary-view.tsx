@@ -69,7 +69,6 @@ export function SummaryView({
             <NativeAction
               label="Use all visible accounts"
               tone="secondary"
-              compact
               onPress={onReset}
             />
           </NativeActions>
@@ -105,12 +104,7 @@ export function SummaryView({
 }
 
 const styles = StyleSheet.create({
-  scope: {
-    alignItems: "flex-start",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.small,
-  },
+  scope: { gap: spacing.small },
   chip: {
     backgroundColor: colors.action,
     borderRadius: 22,
@@ -118,7 +112,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: spacing.medium,
     paddingVertical: spacing.small,
-    alignSelf: "center",
+    alignSelf: "flex-start",
     maxWidth: "100%",
   },
   pressed: { backgroundColor: colors.forest },

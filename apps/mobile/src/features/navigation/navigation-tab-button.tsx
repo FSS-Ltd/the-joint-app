@@ -25,6 +25,7 @@ const styles = StyleSheet.create({
   button: {
     minHeight: 44,
     borderRadius: 24,
+    justifyContent: "center",
     overflow: "hidden",
     backgroundColor: "transparent",
   },

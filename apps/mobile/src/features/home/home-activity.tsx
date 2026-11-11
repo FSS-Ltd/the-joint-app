@@ -32,7 +32,7 @@ export function HomeActivity({
   return (
     <View style={styles.section}>
       <AppText variant="title" tone="inverse" accessibilityRole="header">
-        Recent activity
+        {account ? `Recent activity · ${account.label}` : "Recent activity"}
       </AppText>
       <Panel>
         {account ? (
@@ -40,7 +40,6 @@ export function HomeActivity({
             key={account.id}
             accountId={account.id}
             householdId={account.householdId}
-            label={account.label}
           />
         ) : (
           <AppText tone="secondary" accessibilityLiveRegion="polite">
@@ -48,7 +47,7 @@ export function HomeActivity({
               ? "Loading accounts…"
               : resource.kind === "error"
                 ? resource.message
-                : "Open the ledger to choose an account."}
+                : "Open the ledger to choose an account with transaction access."}
           </AppText>
         )}
         <NativeActions>
@@ -66,11 +65,9 @@ export function HomeActivity({
 function RecentTransactions({
   accountId,
   householdId,
-  label,
 }: {
   accountId: string;
   householdId: string;
-  label: string;
 }): React.JSX.Element {
   const router = useRouter();
   const finance = useNativeFinance();
@@ -89,9 +86,6 @@ function RecentTransactions({
 
   return (
     <View>
-      <AppText variant="label" tone="secondary">
-        {label}
-      </AppText>
       {result.kind !== "ready" || result.value.items.length === 0 ? (
         <AppText tone="secondary" accessibilityLiveRegion="polite">
           {result.kind === "loading"

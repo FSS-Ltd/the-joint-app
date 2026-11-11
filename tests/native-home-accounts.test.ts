@@ -312,6 +312,16 @@ it("keeps scope selection available after errors and detaches summary while pick
   tree = h.render(Home);
   expect(elements(tree).some((e) => e.type === "picker")).toBe(true);
   expect(elements(tree).some((e) => e.type === "summary")).toBe(false);
+  const picker = elements(tree).find((e) => e.type === "picker")!;
+  (picker.props.onApply as (ids: string[]) => void)([id]);
+  const selection = elements(h.render(Home)).find((e) => e.type === "summary")!;
+  expect(selection.props.scope).toEqual({ kind: "selected", accountIds: [id] });
+  (selection.props.onReset as () => void)();
+  expect(
+    elements(h.render(Home)).find((e) => e.type === "summary")?.props.scope,
+  ).toEqual({
+    kind: "visible",
+  });
 });
 
 it("previews transactions only for an account with detail access in the summary scope", () => {

@@ -42,7 +42,7 @@ export function HomeInsights({
           {openCaps}
         </Panel>
       )}
-      <Panel tint="sage">
+      <Panel tint="sage" compact>
         <AppText variant="title" accessibilityRole="header">
           Saving plans
         </AppText>
@@ -66,22 +66,22 @@ function HomeCapPreview({ action }: { action: ReactNode }): React.JSX.Element {
   const report = result.kind === "ready" ? result.value : null;
   const firstCap = report?.budget?.lines[0];
   const latestRecord = report?.provenance.latestRecordDate;
-  const freshness = latestRecord && (
+  const freshness = (
     <AppText tone="secondary">
-      Latest recorded transaction: {displayDate(latestRecord)}
+      This month
+      {latestRecord
+        ? ` · Latest transaction: ${displayDate(latestRecord)}`
+        : ""}
     </AppText>
   );
   if (report?.summary && report.scope.length > 0 && firstCap)
     return (
       <CapCard
         tint="apricot"
+        partialCoverage={!report.coverage.complete}
         line={firstCap}
         actual={categoryActual(report, firstCap.category)}
       >
-        <AppText tone="secondary">
-          Current month · {report.coverage.complete ? "Complete" : "Partial"}{" "}
-          transaction coverage
-        </AppText>
         {freshness}
         {action}
       </CapCard>
@@ -117,7 +117,7 @@ function HomeCapPreview({ action }: { action: ReactNode }): React.JSX.Element {
               : "No caps set for this month."}
         </AppText>
       )}
-      {freshness}
+      {report && freshness}
       {action}
     </Panel>
   );

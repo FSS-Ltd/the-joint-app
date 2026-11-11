@@ -432,7 +432,7 @@ describe("GoalsScreen", () => {
     const rendered = h.render(() => GoalsScreen());
     const renderedText = text(rendered);
 
-    expect(renderedText).toContain("Goals & Wealth");
+    expect(renderedText).toContain("Household goals");
     expect(renderedText).toContain("active goal");
     expect(renderedText).toContain("in household");
     expect(renderedText).toContain("£50,000.00");

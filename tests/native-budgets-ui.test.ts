@@ -283,6 +283,7 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
           limit: { amountMinor: string; currency: "GBP" };
         };
         actual: { amountMinor: string; currency: "GBP" };
+        partialCoverage?: boolean;
       }) => unknown;
       CapRuler: (props: Record<string, unknown>) => unknown;
     };
@@ -312,6 +313,17 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
     expect(text(overTree)).toContain(
       "£8.00 less to put toward saving if other spending stays as planned. This comparison does not move money.",
     );
+    const partial = CapCard({
+      line: {
+        category: "Groceries",
+        limit: { amountMinor: "5000", currency: "GBP" },
+      },
+      actual: { amountMinor: "3200", currency: "GBP" },
+      partialCoverage: true,
+    });
+    expect(text(partial)).toContain("£18.00 left based on recorded spending");
+    expect(text(partial)).toContain("Partial coverage");
+    expect(text(partial)).not.toContain("Within cap");
 
     const refundTree = CapCard({
       line: {

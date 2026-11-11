@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useRouter } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Screen } from "@/components/screen";
 import { AppText } from "@/components/app-text";
 import { BrandMark } from "@/components/brand-mark";
 import { NativeActions } from "@/components/native-actions";
 import { NativeAction } from "@/components/native-action";
-import { spacing } from "@/theme/tokens";
+import { colors, corners, spacing } from "@/theme/tokens";
 import { useNativeFinance } from "../finance/context";
 import { financeAuthorityKey } from "../finance/scope";
 import { ScopeSelection } from "../accounts/scope-selection";
@@ -56,14 +56,16 @@ export function HomeContent({
             <View style={styles.headerRow}>
               <BrandMark compact />
               {!wealth && (
-                <NativeActions>
-                  <NativeAction
-                    label="Open accounts"
-                    tone="secondary"
-                    compact
-                    onPress={() => router.push("/home/accounts")}
-                  />
-                </NativeActions>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => router.push("/home/accounts")}
+                  style={({ pressed }) => [
+                    styles.accountLink,
+                    pressed && styles.accountLinkPressed,
+                  ]}
+                >
+                  <AppText variant="label">Accounts</AppText>
+                </Pressable>
               )}
             </View>
             <AppText
@@ -130,6 +132,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: spacing.small,
   },
+  accountLink: {
+    minHeight: 44,
+    justifyContent: "center",
+    paddingHorizontal: spacing.medium,
+    paddingVertical: spacing.small,
+    borderRadius: corners.action,
+    backgroundColor: colors.sage,
+  },
+  accountLinkPressed: { backgroundColor: colors.ivory },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: spacing.small },
   action: { flexBasis: 144, flexGrow: 1 },
 });

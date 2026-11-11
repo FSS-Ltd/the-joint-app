@@ -14,7 +14,7 @@ export function SummaryCard({
 }>): React.JSX.Element {
   if (summary.scope.accountIds.length === 0)
     return (
-      <Panel>
+      <Panel compact>
         <AppText variant="title" accessibilityRole="header">
           No accounts in this scope
         </AppText>
@@ -27,7 +27,7 @@ export function SummaryCard({
     );
   return (
     <>
-      <Panel>
+      <Panel compact>
         <AppText variant="label">Adult net worth · GBP</AppText>
         <AppText variant="amount">
           {summary.adultNetWorth

@@ -30,7 +30,11 @@ const tabIcons = {
   More: "M4 12h.01m7.99 0h.01m7.99 0h.01",
 } as const;
 
-function tabOptions(title: keyof typeof tabIcons) {
+function tabOptions(
+  title: keyof typeof tabIcons,
+  labelSize: number,
+  labelScale: number,
+) {
   return {
     title,
     tabBarAccessibilityLabel: title,
@@ -49,7 +53,12 @@ function tabOptions(title: keyof typeof tabIcons) {
     tabBarLabel: ({ color }: { color: ColorValue | null }) => (
       <AppText
         variant="label"
-        style={[styles.label, { color: color ?? undefined }]}
+        numberOfLines={1}
+        maxFontSizeMultiplier={labelScale}
+        style={[
+          styles.label,
+          { color: color ?? undefined, fontSize: labelSize },
+        ]}
       >
         {title}
       </AppText>
@@ -61,11 +70,15 @@ function ReadyWorkspace({ me }: { me: MeResponse }): React.JSX.Element {
   const { fontScale, width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const tabWidth = (width - spacing.medium * 2) / 5;
-  const labelLines = tabWidth - spacing.small < 44 * fontScale ? 2 : 1;
+  const labelSize = width < 360 ? 11 : 12;
+  // Keep tab labels readable within five targets. Router supplies the iOS Large Content Viewer.
+  const labelScale = Math.max(1, (tabWidth - 18) / (labelSize * 3.9));
   const itemHeight = Math.max(
     44,
-    22 + 16 * fontScale * labelLines + spacing.small,
+    24 + 16 * Math.min(fontScale, labelScale) + spacing.medium,
   );
+  const optionsFor = (title: keyof typeof tabIcons) =>
+    tabOptions(title, labelSize, labelScale);
   return (
     <NativeFinanceProvider me={me}>
       <View style={styles.shell}>
@@ -78,6 +91,7 @@ function ReadyWorkspace({ me }: { me: MeResponse }): React.JSX.Element {
             tabBarAllowFontScaling: true,
             tabBarLabelPosition: "below-icon",
             tabBarHideOnKeyboard: true,
+            tabBarIconStyle: styles.icon,
             tabBarButton: (props) => <NavigationTabButton {...props} />,
             tabBarItemStyle: {
               marginHorizontal: spacing.small / 2,
@@ -93,11 +107,11 @@ function ReadyWorkspace({ me }: { me: MeResponse }): React.JSX.Element {
             },
           }}
         >
-          <Tabs.Screen name="home" options={tabOptions("Home")} />
-          <Tabs.Screen name="activity" options={tabOptions("Activity")} />
-          <Tabs.Screen name="goals" options={tabOptions("Goals")} />
-          <Tabs.Screen name="wealth" options={tabOptions("Wealth")} />
-          <Tabs.Screen name="more" options={tabOptions("More")} />
+          <Tabs.Screen name="home" options={optionsFor("Home")} />
+          <Tabs.Screen name="activity" options={optionsFor("Activity")} />
+          <Tabs.Screen name="goals" options={optionsFor("Goals")} />
+          <Tabs.Screen name="wealth" options={optionsFor("Wealth")} />
+          <Tabs.Screen name="more" options={optionsFor("More")} />
           <Tabs.Screen name="imports" options={hiddenTab} />
           <Tabs.Screen name="budgets" options={hiddenTab} />
           <Tabs.Screen name="review" options={hiddenTab} />
@@ -111,6 +125,7 @@ function ReadyWorkspace({ me }: { me: MeResponse }): React.JSX.Element {
 
 const styles = StyleSheet.create({
   shell: { flex: 1, backgroundColor: colors.forest },
+  icon: { width: 26, height: 24 },
   label: { fontSize: 12, lineHeight: 16, textAlign: "center" },
 });
 export function WorkspaceLayout(): React.JSX.Element {
