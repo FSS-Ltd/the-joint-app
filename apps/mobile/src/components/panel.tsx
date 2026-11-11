@@ -5,10 +5,20 @@ import { colors, corners, spacing } from "@/theme/tokens";
 export function Panel({
   children,
   dark = false,
-}: PropsWithChildren<{ dark?: boolean }>): React.JSX.Element {
-  return <View style={[styles.panel, dark && styles.dark]}>{children}</View>;
+  tint,
+}: PropsWithChildren<{
+  dark?: boolean;
+  tint?: "apricot" | "sage";
+}>): React.JSX.Element {
+  return (
+    <View style={[styles.panel, tint && styles[tint], dark && styles.dark]}>
+      {children}
+    </View>
+  );
 }
 const styles = StyleSheet.create({
+  apricot: { backgroundColor: colors.apricot },
+  sage: { backgroundColor: colors.sage },
   dark: {
     backgroundColor: colors.forest,
     borderColor: colors.border,

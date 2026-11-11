@@ -1,83 +1,118 @@
 import type { MeResponse } from "@joint/contracts";
 import { Tabs } from "expo-router";
-import { useWindowDimensions } from "react-native";
+import {
+  StyleSheet,
+  View,
+  useWindowDimensions,
+  type ColorValue,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Path } from "react-native-svg";
 import { AppText } from "@/components/app-text";
 import { colors, spacing } from "@/theme/tokens";
 import { NavigationTabButton } from "./navigation-tab-button";
 import { ConfiguredEntry } from "../identity/configured-entry";
 import { NativeFinanceProvider } from "../finance/provider";
 
-// Reachable from Home links but absent from the bar. A null href hides a tab in expo-router 58
+// Reachable from feature links but absent from the bar. A null href hides a tab in expo-router 58
 // in a way that router.push cannot reach, so hide the button instead.
 const hiddenTab = {
   tabBarButton: () => null,
   tabBarItemStyle: { display: "none" as const },
 };
 
+const tabIcons = {
+  Home: "M3 11 12 3l9 8M5 10v10h5v-6h4v6h5V10",
+  Activity: "M6 3h12v18l-3-2-3 2-3-2-3 2V3Zm3 5h6m-6 4h6",
+  Goals:
+    "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-4a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0-5h.01",
+  Wealth: "m3 17 6-6 4 4 7-8m-5 0h5v5",
+  More: "M4 12h.01m7.99 0h.01m7.99 0h.01",
+} as const;
+
+function tabOptions(title: keyof typeof tabIcons) {
+  return {
+    title,
+    tabBarAccessibilityLabel: title,
+    tabBarIcon: ({ color }: { color: ColorValue | null }) => (
+      <Svg width={22} height={22} viewBox="0 0 24 24" accessible={false}>
+        <Path
+          d={tabIcons[title]}
+          fill="none"
+          stroke={color ?? colors.sage}
+          strokeWidth={title === "More" ? 3 : 2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
+    ),
+    tabBarLabel: ({ color }: { color: ColorValue | null }) => (
+      <AppText
+        variant="label"
+        style={[styles.label, { color: color ?? undefined }]}
+      >
+        {title}
+      </AppText>
+    ),
+  };
+}
+
 function ReadyWorkspace({ me }: { me: MeResponse }): React.JSX.Element {
-  const { fontScale } = useWindowDimensions();
+  const { fontScale, width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  // Reserve icon, scaled label, button padding and OS inset in normal navigator layout.
-  const itemHeight = Math.max(44, 24 + 20 * fontScale + 12);
+  const tabWidth = (width - spacing.medium * 2) / 5;
+  const labelLines = tabWidth - spacing.small < 44 * fontScale ? 2 : 1;
+  const itemHeight = Math.max(
+    44,
+    22 + 16 * fontScale * labelLines + spacing.small,
+  );
   return (
     <NativeFinanceProvider me={me}>
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: colors.action,
-          tabBarInactiveTintColor: colors.ivory,
-          tabBarAllowFontScaling: true,
-          tabBarButton: (props) => <NavigationTabButton {...props} />,
-          tabBarItemStyle: {
-            marginHorizontal: spacing.small / 2,
-            marginVertical: spacing.small / 2,
-          },
-          tabBarStyle: {
-            backgroundColor: colors.forest,
-            borderWidth: 1,
-            borderColor: colors.border,
-            height: itemHeight + spacing.medium + insets.bottom,
-            borderRadius: 32,
-            marginHorizontal: spacing.medium,
-            marginBottom: spacing.small,
-          },
-          tabBarLabelStyle: { fontSize: 14 },
-        }}
-      >
-        <Tabs.Screen
-          name="home"
-          options={{
-            title: "Home",
-            tabBarAccessibilityLabel: "Home",
-            tabBarIcon: ({ color }) => (
-              <AppText accessible={false} style={{ color }}>
-                ⌂
-              </AppText>
-            ),
+      <View style={styles.shell}>
+        <Tabs
+          safeAreaInsets={{ bottom: 0 }}
+          screenOptions={{
+            headerShown: false,
+            tabBarActiveTintColor: colors.forest,
+            tabBarInactiveTintColor: colors.sage,
+            tabBarAllowFontScaling: true,
+            tabBarLabelPosition: "below-icon",
+            tabBarHideOnKeyboard: true,
+            tabBarButton: (props) => <NavigationTabButton {...props} />,
+            tabBarItemStyle: {
+              marginHorizontal: spacing.small / 2,
+              marginVertical: spacing.small / 2,
+            },
+            tabBarStyle: {
+              backgroundColor: colors.action,
+              borderTopWidth: 0,
+              height: itemHeight + spacing.small,
+              borderRadius: (itemHeight + spacing.small) / 2,
+              marginHorizontal: spacing.medium,
+              marginBottom: spacing.small + insets.bottom,
+            },
           }}
-        />
-        <Tabs.Screen name="activity" options={hiddenTab} />
-        <Tabs.Screen name="imports" options={hiddenTab} />
-        <Tabs.Screen name="budgets" options={hiddenTab} />
-        <Tabs.Screen name="review" options={hiddenTab} />
-        <Tabs.Screen name="goals" options={hiddenTab} />
-        <Tabs.Screen
-          name="more"
-          options={{
-            title: "More",
-            tabBarAccessibilityLabel: "More",
-            tabBarIcon: ({ color }) => (
-              <AppText accessible={false} style={{ color }}>
-                •••
-              </AppText>
-            ),
-          }}
-        />
-      </Tabs>
+        >
+          <Tabs.Screen name="home" options={tabOptions("Home")} />
+          <Tabs.Screen name="activity" options={tabOptions("Activity")} />
+          <Tabs.Screen name="goals" options={tabOptions("Goals")} />
+          <Tabs.Screen name="wealth" options={tabOptions("Wealth")} />
+          <Tabs.Screen name="more" options={tabOptions("More")} />
+          <Tabs.Screen name="imports" options={hiddenTab} />
+          <Tabs.Screen name="budgets" options={hiddenTab} />
+          <Tabs.Screen name="review" options={hiddenTab} />
+          <Tabs.Screen name="billing" options={hiddenTab} />
+          <Tabs.Screen name="companion" options={hiddenTab} />
+        </Tabs>
+      </View>
     </NativeFinanceProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  shell: { flex: 1, backgroundColor: colors.forest },
+  label: { fontSize: 12, lineHeight: 16, textAlign: "center" },
+});
 export function WorkspaceLayout(): React.JSX.Element {
   return <ConfiguredEntry ready={(me) => <ReadyWorkspace me={me} />} />;
 }

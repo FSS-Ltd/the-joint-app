@@ -1,16 +1,26 @@
+import type { PropsWithChildren } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
 import { AppText } from "@/components/app-text";
 import { Panel } from "@/components/panel";
 import { NativeActions } from "@/components/native-actions";
 import { NativeAction } from "@/components/native-action";
+import { colors, spacing } from "@/theme/tokens";
 import { useNativeFinance } from "../finance/context";
 import { useFinanceResource } from "../finance/use-resource";
 import { SummaryCard } from "./summary-card";
 import type { SummaryScope } from "./summary-scope";
 export function SummaryView({
   scope: selection,
-}: {
+  onChoose,
+  onReset,
+  children,
+  showCoverage = false,
+}: PropsWithChildren<{
   scope: SummaryScope;
-}): React.JSX.Element {
+  onChoose(): void;
+  onReset(): void;
+  showCoverage?: boolean;
+}>): React.JSX.Element {
   const finance = useNativeFinance();
   const result = useFinanceResource(
     {
@@ -32,23 +42,43 @@ export function SummaryView({
       );
     },
   );
+  const count =
+    result.kind === "ready" ? result.value.scope.accountIds.length : null;
+  const scopeLabel =
+    (selection.kind === "visible"
+      ? "All visible accounts"
+      : "Selected accounts") +
+    (count === null
+      ? ""
+      : ` · ${count} ${count === 1 ? "account" : "accounts"}`);
   return (
     <>
-      <Panel>
-        <AppText>
-          {selection.kind === "visible"
-            ? "All visible accounts"
-            : `Explicit selection · ${selection.accountIds.length} accounts`}
-        </AppText>
-        <AppText tone="secondary">
-          {result.kind === "ready"
-            ? `${result.value.scope.accountIds.length} accounts included in scope. `
-            : ""}
-          Summary scope is independent of the account list page.
-        </AppText>
-      </Panel>
+      <View style={styles.scope}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Choose summary accounts. ${scopeLabel}`}
+          onPress={onChoose}
+          style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
+        >
+          <AppText variant="label" tone="inverse">
+            {scopeLabel} ⌄
+          </AppText>
+        </Pressable>
+        {selection.kind === "selected" && (
+          <NativeActions>
+            <NativeAction
+              label="Use all visible accounts"
+              tone="secondary"
+              compact
+              onPress={onReset}
+            />
+          </NativeActions>
+        )}
+      </View>
       {result.kind === "ready" ? (
-        <SummaryCard summary={result.value} />
+        <SummaryCard summary={result.value} showCoverage={showCoverage}>
+          {children}
+        </SummaryCard>
       ) : (
         <Panel>
           <AppText accessibilityLiveRegion="polite">
@@ -67,8 +97,29 @@ export function SummaryView({
               </NativeActions>
             </>
           )}
+          {children}
         </Panel>
       )}
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  scope: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.small,
+  },
+  chip: {
+    backgroundColor: colors.action,
+    borderRadius: 22,
+    minHeight: 44,
+    justifyContent: "center",
+    paddingHorizontal: spacing.medium,
+    paddingVertical: spacing.small,
+    alignSelf: "center",
+    maxWidth: "100%",
+  },
+  pressed: { backgroundColor: colors.forest },
+});

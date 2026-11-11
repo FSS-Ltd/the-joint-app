@@ -2342,4 +2342,12 @@ Base verified on GitHub at `d169136`, the merge of [PR73](https://github.com/FSS
 - Return from optional account security after a successful session check. The previous refresh unmounted the screen before it could return, which left the code prompt open despite successful verification.
 - Disposable Clerk development probes confirmed that enrollment leaves the session without a verified second factor. Clerk rejected reuse of the exact TOTP after SDK enrollment and after SDK sign-in. The follow-up needs provider-attested proof tied to the current session to eliminate the extra prompt while preserving the TOTP and backup-code boundaries.
 
-The broader mobile Stitch alignment follows the authenticator work. The approved Stitch setup frame supplies the visual baseline for this step. It contains email verification, with no dedicated MFA screen.
+[PR74](https://github.com/FSS-Ltd/the-joint-app/pull/74) merged into main at `cd194c2a50c19abef52ed6c5073334fe9f8fbb75`. Foundation and Native bundle checks passed on PR head `72dadb5746fa49b8acafc636144ca0978f6e03f1` in [run 43016475290](https://github.com/FSS-Ltd/the-joint-app/actions/runs/43016475290). The approved Stitch setup frame contains email verification, with no dedicated MFA screen.
+
+## STITCH1 — Native Home and workspace navigation
+
+Predecessor merge and both checks were verified on GitHub before starting. STITCH1 is based on main at `cd194c2`.
+
+- Apply the approved [mobile Home composition](design/wireframes/home-mobile.png). Lead with explicit account scope and server-authorized adult net worth, place CSV import and plan review next to the summary, and use the existing cap and goal destinations plus recent activity from one named account. The approved design’s monthly available-cash and aggregate saving-plan figures have no equivalent verified server result in this scope.
+- Expose the Home, Activity, Goals, Wealth and More tabs. Wealth reuses the existing server wealth view with coverage and exclusions. Existing nested or secondary destinations remain available through their links. Panels use the visual contract’s solid fallback.
+- Single-entry TOTP remains open. In the disposable Clerk development instance, the Backend API reverification record returned verified timestamps and session/user identifiers without the verification strategy. A Backend API TOTP-secret update replaced an existing authenticator. Both probes cleaned up their synthetic accounts. The current app retains the TOTP requirement for household access, including after backup-code sign-in. Work on the Stitch composition can proceed independently of provider proof.

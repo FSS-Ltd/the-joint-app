@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, type PropsWithChildren } from "react";
 import { Animated, View, StyleSheet, AccessibilityInfo } from "react-native";
 import type { AggregateMoney, BudgetResponse } from "@joint/contracts";
 import { formatAggregateMoney } from "@joint/domain/cash-flow";
@@ -125,10 +125,13 @@ export function CapRuler({
 export function CapCard({
   line,
   actual,
-}: {
+  tint,
+  children,
+}: PropsWithChildren<{
   line: BudgetResponse["lines"][number];
   actual: AggregateMoney;
-}): React.JSX.Element {
+  tint?: "apricot";
+}>): React.JSX.Element {
   const position = capPosition(line.limit.amountMinor, actual.amountMinor);
   const category = line.category ?? "Uncategorized";
   const balance = formatCapBalance(position);
@@ -140,7 +143,7 @@ export function CapCard({
   const limitLabel = formatAggregateMoney(line.limit);
 
   return (
-    <Panel>
+    <Panel tint={tint}>
       <View style={styles.header}>
         <AppText variant="label">{category}</AppText>
         <AppText
@@ -181,6 +184,7 @@ export function CapCard({
           comparison, not an account balance.
         </AppText>
       )}
+      {children}
     </Panel>
   );
 }

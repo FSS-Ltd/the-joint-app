@@ -139,6 +139,7 @@ it("keeps activity screens free of polling and exposes account, filter and pagin
     "activity/activity-screen.tsx",
     "activity/activity-page.tsx",
     "activity/transaction-detail-screen.tsx",
+    "home/home-activity.tsx",
   ]) {
     const source = readFileSync(`apps/mobile/src/features/${file}`, "utf8");
     expect(source, file).not.toMatch(/setInterval|setTimeout/);
@@ -162,6 +163,6 @@ it("keeps activity screens free of polling and exposes account, filter and pagin
   );
   expect(screen).toContain('label="Account"');
   expect(
-    readFileSync("apps/mobile/src/features/home/home-screen.tsx", "utf8"),
+    readFileSync("apps/mobile/src/features/home/home-activity.tsx", "utf8"),
   ).toContain('router.push("/activity")');
 });
