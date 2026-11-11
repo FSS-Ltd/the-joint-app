@@ -304,7 +304,12 @@ it("keeps recovery notice visible in the actual signed-out authentication screen
     {
       react: h.react,
       "react/jsx-runtime": jsxBoundary,
+      "react-native": {
+        View: "view",
+        StyleSheet: { create: <T>(styles: T) => styles },
+      },
       "@joint/contracts": {},
+      "@/theme/tokens": { colors: {}, corners: {}, spacing: {} },
       "expo-router": { useRouter: () => ({}) },
       "./context": { useIdentity: () => f.screen.render() },
       "./use-auth-flow": {

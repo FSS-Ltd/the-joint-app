@@ -12,6 +12,7 @@ import { AppText } from "@/components/app-text";
 import { colors, spacing } from "@/theme/tokens";
 import { NavigationTabButton } from "./navigation-tab-button";
 import { ConfiguredEntry } from "../identity/configured-entry";
+import { AccountScreen } from "../identity/account-screen";
 import { NativeFinanceProvider } from "../finance/provider";
 
 // Reachable from feature links but absent from the bar. A null href hides a tab in expo-router 58
@@ -129,5 +130,11 @@ const styles = StyleSheet.create({
   label: { fontSize: 12, lineHeight: 16, textAlign: "center" },
 });
 export function WorkspaceLayout(): React.JSX.Element {
-  return <ConfiguredEntry ready={(me) => <ReadyWorkspace me={me} />} />;
+  return (
+    <ConfiguredEntry
+      ready={(me) =>
+        me.membership ? <ReadyWorkspace me={me} /> : <AccountScreen me={me} />
+      }
+    />
+  );
 }

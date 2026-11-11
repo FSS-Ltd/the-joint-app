@@ -11,7 +11,7 @@ function ReadyLanding({ me }: { me: MeResponse }): React.JSX.Element {
     (workflow.view !== undefined && workflow.view !== "account") ? (
     <AccountScreen me={me} />
   ) : (
-    <Redirect href="/home" />
+    <Redirect href={me.membership ? "/home" : "/more"} />
   );
 }
 export function LandingEntry(): React.JSX.Element {

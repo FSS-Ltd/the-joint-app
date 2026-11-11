@@ -4,6 +4,7 @@ import {
   type MeResponse,
 } from "@joint/contracts";
 import { randomUUID } from "expo-crypto";
+import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { Share } from "react-native";
 import { AppText } from "@/components/app-text";
@@ -25,6 +26,7 @@ function useWriteKey() {
 }
 export function CreateHousehold(): React.JSX.Element {
   const [name, setName] = useState("");
+  const router = useRouter();
   const identity = useIdentity(),
     operation = useIdentityOperation(),
     key = useWriteKey();
@@ -40,15 +42,22 @@ export function CreateHousehold(): React.JSX.Element {
         key(parsed.data.name),
         signal,
       );
-      if (lifetime.active()) await identity.refresh();
+      if (lifetime.active()) {
+        try {
+          router.replace("/more?setup=invite");
+        } finally {
+          await identity.refresh();
+        }
+      }
     });
   }
   return (
     <>
-      <AppText variant="title">Make a home for your plans</AppText>
-      <AppText>
-        Your household uses GBP and the Europe/London time zone. Inviting
-        another adult is optional.
+      <AppText variant="title" accessibilityRole="header">
+        Name your household
+      </AppText>
+      <AppText tone="secondary">
+        Your household uses GBP and the Europe/London time zone.
       </AppText>
       <Feedback error={operation.error} />
       <NativeField
@@ -74,12 +83,16 @@ export function CreateHousehold(): React.JSX.Element {
 }
 export function InviteAdult({
   me,
+  onboarding = false,
+  onInviteLater,
 }: {
   me: MeResponse;
+  onboarding?: boolean;
+  onInviteLater?: () => void;
 }): React.JSX.Element | null {
   const [email, setEmail] = useState(""),
     [link, setLink] = useState(""),
-    [expanded, setExpanded] = useState(false);
+    [expanded, setExpanded] = useState(onboarding);
   const identity = useIdentity(),
     operation = useIdentityOperation(),
     key = useWriteKey();
@@ -107,13 +120,20 @@ export function InviteAdult({
       }
     });
   }
-  if (!expanded && membership.household.memberCount < 2) {
+  if (membership.household.memberCount === 2)
+    return (
+      <AppText tone="secondary">
+        Both adults have joined this household.
+      </AppText>
+    );
+  if (!expanded) {
     return (
       <>
-        <AppText variant="title">Your household is ready</AppText>
-        <AppText>
-          Inviting another adult is optional. You can invite them later from
-          your account.
+        <AppText variant="title" accessibilityRole="header">
+          Invite another adult
+        </AppText>
+        <AppText tone="secondary">
+          You can start on your own. Your invitation is optional.
         </AppText>
         <NativeActions>
           <NativeAction
@@ -130,59 +150,67 @@ export function InviteAdult({
   }
   return (
     <>
-      <AppText variant="title">Invite another adult</AppText>
-      <AppText>
-        {membership.household.memberCount === 2
-          ? "Your household already has two adults."
-          : "They use their own sign-in and the email you invite. Sharing never means sharing an account."}
+      <AppText variant="title" accessibilityRole="header">
+        {onboarding ? "Invite your person" : "Invite another adult"}
+      </AppText>
+      <AppText tone="secondary">
+        {onboarding
+          ? "You can start on your own and invite them later."
+          : "They sign in with the email address you invite."}
       </AppText>
       <Feedback error={operation.error} notice={operation.notice} />
-      {membership.household.memberCount < 2 && (
-        <>
-          <NativeField
-            label="Other adult’s email"
-            value={email}
-            onChangeText={(value) => {
-              identity.interact();
-              setEmail(value);
-              setLink("");
+      <NativeField
+        label="Other adult’s email"
+        value={email}
+        onChangeText={(value) => {
+          identity.interact();
+          setEmail(value);
+          setLink("");
+        }}
+        keyboardType="email-address"
+        autoComplete="email"
+        editable={!operation.pending}
+      />
+      <NativeActions>
+        <NativeAction
+          label="Create invitation link"
+          pending={operation.pending}
+          onPress={() => void invite()}
+        />
+        {link && (
+          <NativeAction
+            label="Share invitation"
+            onPress={() => {
+              void Share.share({ message: link }).catch(() =>
+                operation.setError(
+                  "Sharing is unavailable. Copy the invitation link instead.",
+                ),
+              );
             }}
-            keyboardType="email-address"
-            autoComplete="email"
-            editable={!operation.pending}
           />
-          <NativeActions>
-            <NativeAction
-              label="Create invitation"
-              pending={operation.pending}
-              onPress={() => void invite()}
-            />
-            {link && (
-              <NativeAction
-                label="Share invitation"
-                onPress={() => {
-                  void Share.share({ message: link }).catch(() =>
-                    operation.setError(
-                      "Sharing is unavailable. Copy the invitation link instead.",
-                    ),
-                  );
-                }}
-              />
-            )}
-            <NativeAction
-              label="Invite later"
-              tone="text"
-              disabled={operation.pending}
-              onPress={() => {
-                if (operation.pending) return;
-                identity.interact();
-                setExpanded(false);
-              }}
-            />
-          </NativeActions>
-          {link && <AppText selectable>{link}</AppText>}
-        </>
+        )}
+        <NativeAction
+          label="Invite later"
+          tone={onboarding ? "secondary" : "text"}
+          disabled={operation.pending}
+          onPress={() => {
+            if (operation.pending) return;
+            identity.interact();
+            if (onboarding && onInviteLater) onInviteLater();
+            else setExpanded(false);
+          }}
+        />
+      </NativeActions>
+      {onboarding && (
+        <AppText tone="secondary">
+          Continue to Accounts without a partner. Share invitation links
+          privately.
+        </AppText>
       )}
+      {link && <AppText selectable>{link}</AppText>}
+      <AppText tone="secondary">
+        You choose which accounts to share. Unshared accounts stay private.
+      </AppText>
     </>
   );
 }

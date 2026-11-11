@@ -1,5 +1,6 @@
 import type { MeResponse } from "@joint/contracts";
 import { useState, useSyncExternalStore } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { AppText } from "@/components/app-text";
 import { IdentityFrame } from "@/components/identity-frame";
 import { NativeAction } from "@/components/native-action";
@@ -20,6 +21,8 @@ import { SecurityScreen } from "./security-screen";
 import { SessionActions } from "./session-actions";
 export function AccountScreen({ me }: { me: MeResponse }): React.JSX.Element {
   const identity = useIdentity();
+  const router = useRouter();
+  const { setup } = useLocalSearchParams<{ setup?: string }>();
   const { workflow } = identity;
   useSyncExternalStore(
     workflow.subscribe,
@@ -63,10 +66,35 @@ export function AccountScreen({ me }: { me: MeResponse }): React.JSX.Element {
         onOpenSecurity={() => workflow.showSecurity(true, "archive")}
       />
     );
+  if (
+    setup === "invite" &&
+    !identity.invitation &&
+    me.membership?.role === "ADMIN" &&
+    me.membership.household.memberCount < 2
+  )
+    return (
+      <IdentityFrame
+        title="A shared view, at your pace"
+        description="Set up transparent domestic accounts together or begin privately."
+      >
+        <InviteAdult
+          me={me}
+          onboarding
+          onInviteLater={() => {
+            router.setParams({ setup: undefined });
+            router.replace("/home/accounts");
+          }}
+        />
+      </IdentityFrame>
+    );
   return (
     <IdentityFrame
-      title={me.membership?.household.name ?? "Your account, your choice."}
-      description="Keep your own identity. Choose what you share."
+      title={me.membership?.household.name ?? "A shared view, at your pace"}
+      description={
+        me.membership
+          ? "Keep your own sign-in and choose which accounts to share."
+          : "Start on your own and invite another adult when you’re ready."
+      }
     >
       <AppText>{me.user.email}</AppText>
       <AcceptInvitation />

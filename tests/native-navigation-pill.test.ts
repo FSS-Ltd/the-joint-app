@@ -66,6 +66,7 @@ it("uses the native selected button and reserves safe navigation space as labels
     },
     "@/theme/tokens": { colors, spacing },
     "../identity/configured-entry": { ConfiguredEntry: "gate" },
+    "../identity/account-screen": { AccountScreen: "account" },
     "../finance/provider": { NativeFinanceProvider: "finance" },
     "./navigation-tab-button": { NavigationTabButton: "native-tab-button" },
   }).WorkspaceLayout as () => unknown;
@@ -76,7 +77,7 @@ it("uses the native selected button and reserves safe navigation space as labels
         type: (props: unknown) => unknown;
         props: unknown;
       }
-    )({});
+    )({ membership: {} });
     const tree = ready.type(ready.props);
     return elements(tree).find((e) => e.type === tabs)!.props.screenOptions as {
       tabBarButton: (props: unknown) => unknown;

@@ -60,6 +60,10 @@ function fixture() {
       react: h.react,
       "react/jsx-runtime": jsxBoundary,
       "expo-linking": { openURL },
+      "expo-router": {
+        useRouter: () => ({ replace: vi.fn() }),
+        useLocalSearchParams: () => ({}),
+      },
       "@joint/identity-runtime": { ...shared, getTotpSetupUri },
       "@joint/contracts": { passwordResetSchema },
       "@clerk/expo": {
