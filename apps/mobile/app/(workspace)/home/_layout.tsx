@@ -13,7 +13,10 @@ export default function HomeLayout(): React.JSX.Element {
         name="index"
         options={{ headerShown: false, title: "Home" }}
       />
-      <Stack.Screen name="accounts/index" options={{ title: "Accounts" }} />
+      <Stack.Screen
+        name="accounts/index"
+        options={{ title: "Your accounts" }}
+      />
       <Stack.Screen
         name="accounts/[accountId]/index"
         options={{ title: "Account" }}

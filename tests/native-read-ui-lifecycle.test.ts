@@ -98,8 +98,16 @@ it("uses the captured summary selection and preserves explicit scope recovery af
       }),
     },
     "./summary-card": { SummaryCard: "summary" },
-  }).SummaryView as (props: { scope: { kind: "visible" } }) => unknown;
-  const tree = Failed({ scope: { kind: "visible" } });
+  }).SummaryView as (props: {
+    scope: { kind: "visible" };
+    onChoose(): void;
+    onReset(): void;
+  }) => unknown;
+  const tree = Failed({
+    scope: { kind: "visible" },
+    onChoose: vi.fn(),
+    onReset: vi.fn(),
+  });
   expect(text(tree)).toContain("Choose 1–50 accounts");
   expect(elements(tree).some((e) => e.type === "summary")).toBe(false);
   press(tree, "Retry summary");

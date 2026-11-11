@@ -2,14 +2,16 @@ import { useRouter } from "expo-router";
 import { Screen } from "@/components/screen";
 import { NativeAction } from "@/components/native-action";
 import { NativeActions } from "@/components/native-actions";
-import { AppText } from "@/components/app-text";
+import { SummaryView } from "../home/summary-view";
 import { AccountPage } from "./account-page";
 import { AccountRow } from "./account-row";
 export function AccountListScreen(): React.JSX.Element {
   const router = useRouter();
+  const addAccount = () => router.push("/home/accounts/new");
   return (
     <Screen scrollable={false}>
       <AccountPage
+        onAddAccount={addAccount}
         renderAccount={(account) => (
           <AccountRow
             account={account}
@@ -17,15 +19,17 @@ export function AccountListScreen(): React.JSX.Element {
           />
         )}
       >
-        <AppText variant="heading" tone="inverse" accessibilityRole="header">
-          Accounts
-        </AppText>
         <NativeActions>
-          <NativeAction
-            label="Create an account"
-            onPress={() => router.push("/home/accounts/new")}
-          />
+          <NativeAction label="Add account" onPress={addAccount} />
         </NativeActions>
+        <SummaryView scope={{ kind: "visible" }}>
+          <NativeActions>
+            <NativeAction
+              label="Import CSV"
+              onPress={() => router.push("/imports")}
+            />
+          </NativeActions>
+        </SummaryView>
       </AccountPage>
     </Screen>
   );

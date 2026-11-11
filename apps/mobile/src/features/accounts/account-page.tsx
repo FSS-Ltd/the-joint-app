@@ -13,25 +13,27 @@ export function AccountPage({
   children,
   renderAccount,
   extraData,
+  onAddAccount,
 }: PropsWithChildren<{
   renderAccount(account: AccountResponse): ReactElement;
   extraData?: unknown;
+  onAddAccount?: () => void;
 }>): React.JSX.Element {
   const page = useAccountPage();
   const result = page.resource;
   const header = (
     <View style={styles.sections}>
       {children}
-      <Panel>
-        <AppText>
-          {page.firstPage ? "First account page" : "Next account page"} · up to
-          50 accounts
-        </AppText>
-        <AppText tone="secondary">
-          Each page replaces the previous page. Account values are not summary
-          totals.
-        </AppText>
-      </Panel>
+      {result.kind === "ready" && result.value.items.length > 0 && (
+        <View style={styles.pageLabel}>
+          <AppText variant="label" tone="inverse" accessibilityRole="header">
+            Visible accounts
+          </AppText>
+          <AppText tone="inverse">
+            {result.value.items.length} on this page
+          </AppText>
+        </View>
+      )}
     </View>
   );
   return (
@@ -62,6 +64,18 @@ export function AccountPage({
               />
             </NativeActions>
           </Panel>
+        ) : page.firstPage && onAddAccount ? (
+          <EmptyState
+            title="No accounts yet"
+            description="Add an account to record a value or import a statement."
+          >
+            <NativeActions>
+              <NativeAction
+                label="Add your first account"
+                onPress={onAddAccount}
+              />
+            </NativeActions>
+          </EmptyState>
         ) : (
           <EmptyState
             title="No accounts on this page"
@@ -84,12 +98,8 @@ export function AccountPage({
                 tone="secondary"
               />
             )}
-            {result.kind === "ready" && (
-              <NativeAction
-                label="Next account page"
-                disabled={!result.value.nextCursor}
-                onPress={page.next}
-              />
+            {result.kind === "ready" && result.value.nextCursor && (
+              <NativeAction label="Next account page" onPress={page.next} />
             )}
             {!page.firstPage && result.kind !== "error" && (
               <NativeAction
@@ -108,6 +118,13 @@ export function AccountPage({
 const styles = StyleSheet.create({
   list: { paddingBottom: spacing.large },
   sections: { gap: spacing.medium },
+  pageLabel: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    columnGap: spacing.small,
+  },
   header: { marginBottom: spacing.medium },
   separator: { height: spacing.medium },
   footer: { paddingTop: spacing.medium },

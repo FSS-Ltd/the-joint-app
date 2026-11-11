@@ -1,9 +1,9 @@
 import type { AccountResponse } from "@joint/contracts";
-import { Panel } from "@/components/panel";
+import { formatMoney, isLiabilityKind } from "@joint/domain";
+import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import { AppText } from "@/components/app-text";
-import { NativeActions } from "@/components/native-actions";
-import { NativeAction } from "@/components/native-action";
-import { AccountFacts } from "./account-facts";
+import { colors, corners, spacing } from "@/theme/tokens";
+import { displayDate, grantLabels, ownerLabel } from "./account-labels";
 
 export function AccountRow({
   account,
@@ -12,19 +12,61 @@ export function AccountRow({
   account: AccountResponse;
   onOpen(): void;
 }): React.JSX.Element {
+  const { fontScale } = useWindowDimensions();
+  const valuation = account.latestValuation;
+  const sharing =
+    account.ownership === "OWNED" && account.sharing
+      ? grantLabels[account.sharing.level]
+      : grantLabels[account.access];
+
   return (
-    <Panel>
-      <AppText variant="title" accessibilityRole="header">
-        {account.label}
-      </AppText>
-      <AccountFacts account={account} />
-      <NativeActions>
-        <NativeAction
-          label={`Open ${account.label}`}
-          tone="secondary"
-          onPress={onOpen}
-        />
-      </NativeActions>
-    </Panel>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityHint="Opens account details"
+      onPress={onOpen}
+      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+    >
+      <View style={[styles.content, fontScale > 1.3 && styles.stacked]}>
+        <View style={[styles.identity, fontScale > 1.3 && styles.stackedItem]}>
+          <AppText variant="title">{account.label}</AppText>
+          <AppText tone="secondary">
+            {ownerLabel(account)} · {sharing}
+          </AppText>
+        </View>
+        <View style={[styles.value, fontScale > 1.3 && styles.stackedItem]}>
+          {valuation ? (
+            <>
+              <AppText variant="title">{formatMoney(valuation.money)}</AppText>
+              <AppText tone="secondary">
+                {isLiabilityKind(account.kind)
+                  ? "Total outstanding debt"
+                  : "Total account value"}
+              </AppText>
+              <AppText tone="secondary">
+                Manual valuation · {displayDate(valuation.asOfDate)}
+              </AppText>
+              {!valuation.complete && <AppText>Incomplete valuation</AppText>}
+            </>
+          ) : (
+            <AppText tone="secondary">No valuation recorded</AppText>
+          )}
+        </View>
+      </View>
+    </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  row: {
+    minHeight: 44,
+    backgroundColor: colors.ivory,
+    borderRadius: corners.surface,
+    padding: spacing.medium,
+  },
+  pressed: { opacity: 0.75 },
+  content: { flexDirection: "row", flexWrap: "wrap", gap: spacing.medium },
+  stacked: { flexDirection: "column" },
+  identity: { flexGrow: 1, flexBasis: 140 },
+  value: { flexGrow: 1, flexBasis: 140, alignItems: "flex-end" },
+  stackedItem: { flexBasis: "auto", alignItems: "flex-start" },
+});

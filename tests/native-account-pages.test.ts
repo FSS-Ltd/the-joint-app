@@ -5,6 +5,7 @@ import type { NativeFinanceAuthority } from "../apps/mobile/src/features/finance
 import { financeAuthorityKey } from "../apps/mobile/src/features/finance/scope.js";
 import { scope } from "./fixtures/native-stream.js";
 import { account, id, load } from "./fixtures/native-read-ui.js";
+import * as accountLabels from "../apps/mobile/src/features/accounts/account-labels.js";
 import {
   elements,
   hookHarness,
@@ -179,12 +180,73 @@ it("keeps Screen scrolling by default and puts virtualized pages in its non-scro
   expect(regular.some((e) => e.type === "scroll")).toBe(true);
   const fixed = elements(Screen({ scrollable: false, children: "content" }));
   expect(fixed.some((e) => e.type === "scroll")).toBe(false);
+  const push = vi.fn();
   const List = load("accounts/list-screen.tsx", {
-    "expo-router": { useRouter: () => ({ push: vi.fn() }) },
+    "expo-router": { useRouter: () => ({ push }) },
     "./account-page": { AccountPage: "page" },
     "./account-row": { AccountRow: "row" },
+    "../home/summary-view": { SummaryView: "summary" },
   }).AccountListScreen as () => unknown;
-  expect(elements(List())[0]?.props.scrollable).toBe(false);
+  const tree = List();
+  expect(elements(tree)[0]?.props.scrollable).toBe(false);
+  expect(elements(tree).find((e) => e.type === "summary")?.props.scope).toEqual(
+    { kind: "visible" },
+  );
+  press(tree, "Add account");
+  press(tree, "Import CSV");
+  expect(push.mock.calls).toEqual([["/home/accounts/new"], ["/imports"]]);
+});
+
+it("opens the first account form from the empty first page", () => {
+  const onAddAccount = vi.fn();
+  const Page = load("accounts/account-page.tsx", {
+    "./use-account-page": {
+      useAccountPage: () => ({
+        resource: { kind: "ready", value: { items: [], nextCursor: null } },
+        firstPage: true,
+      }),
+    },
+  }).AccountPage as (props: {
+    renderAccount(a: AccountResponse): never;
+    onAddAccount(): void;
+  }) => unknown;
+  const [list] = elements(
+    Page({
+      renderAccount: () => {
+        throw Error("No accounts expected");
+      },
+      onAddAccount,
+    }),
+  );
+  expect(elements(list?.props.ListEmptyComponent)[0]?.props.title).toBe(
+    "No accounts yet",
+  );
+  press(list?.props.ListEmptyComponent, "Add your first account");
+  expect(onAddAccount).toHaveBeenCalledOnce();
+});
+
+it("keeps an account row actionable with its real ownership and valuation labels", () => {
+  const onOpen = vi.fn();
+  const Row = load("accounts/account-row.tsx", {
+    "./account-labels": accountLabels,
+    "react-native": {
+      Pressable: "pressable",
+      View: "view",
+      StyleSheet: { create: <T>(styles: T) => styles },
+      useWindowDimensions: () => ({ width: 320, fontScale: 1.6 }),
+    },
+  }).AccountRow as (props: {
+    account: AccountResponse;
+    onOpen(): void;
+  }) => unknown;
+  const row = Row({ account: account(), onOpen });
+  const [action] = elements(row);
+  expect(action?.props.accessibilityRole).toBe("button");
+  expect(action?.props.onPress).toBe(onOpen);
+  expect(JSON.stringify(row)).toContain("Sole owner: you");
+  expect(JSON.stringify(row)).toContain("Private");
+  expect(JSON.stringify(row)).toContain("No valuation recorded");
+  expect(JSON.stringify(row)).toContain('"flexDirection":"column"');
 });
 
 function loadScreen() {

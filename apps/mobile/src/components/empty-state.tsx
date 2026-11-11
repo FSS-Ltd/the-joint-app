@@ -1,13 +1,18 @@
 import { StyleSheet, View } from "react-native";
+import type { PropsWithChildren } from "react";
 
 import { AppText } from "@/components/app-text";
 import { colors, corners, spacing } from "@/theme/tokens";
 
-type EmptyStateProps = { title: string; description: string };
+type EmptyStateProps = PropsWithChildren<{
+  title: string;
+  description: string;
+}>;
 
 export function EmptyState({
   title,
   description,
+  children,
 }: EmptyStateProps): React.JSX.Element {
   return (
     <View style={styles.container}>
@@ -15,6 +20,7 @@ export function EmptyState({
         {title}
       </AppText>
       <AppText tone="secondary">{description}</AppText>
+      {children}
     </View>
   );
 }
