@@ -34,11 +34,18 @@ founder's two requested options, not a new platform or branding decision.
   authenticator handler gives fixed helpful feedback; never display raw errors.
 - Open only on an explicit press using existing expo-linking.openURL. Do not
   assume every authenticator handles otpauth, and do not mark setup verified.
+- Keep the QR and code field on separate steps. Scanning from another device
+  cannot notify Family Fund, so **Enter authenticator code** advances to the
+  verification form. A successful same-device handoff advances the form, and
+  a return from the background resumes the pending form.
 - Keep secret and URI together in ephemeral screen state. Background/actor change
   conceals and clears both; retain only existing pending-enrollment metadata.
   Returning never generates another seed automatically. Explicit restart remains
   available if setup material was cleared before the user added the account.
-- Enrollment confirmation and a separate fresh server TOTP check remain unchanged.
+- Enrollment confirmation and server TOTP verification use separate provider
+  operations. After a successful server verification from account security,
+  exit the optional security view before refreshing identity. Refresh can
+  unmount that view while the server rechecks the session.
 - Screen readers receive a static QR description, never its URI/secret. Manual
   key reading stays behind the existing explicit reveal action.
 

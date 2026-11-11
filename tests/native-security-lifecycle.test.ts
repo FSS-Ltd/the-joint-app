@@ -53,6 +53,7 @@ function fixture() {
   const openURL = vi.fn<(uri: string) => Promise<boolean>>(async () => true);
   function mount(
     name: "SecurityScreen" | "PasswordTaskScreen" | "AccountScreen",
+    onBack?: () => void,
   ) {
     const h = hookHarness();
     const deps = {
@@ -79,10 +80,12 @@ function fixture() {
         AuthenticatorEnrollment: ({
           setup,
           onOpen,
+          onContinue,
         }: {
           setup: { secret: string; uri: string | null };
           onOpen(uri: string): void;
-        }) => jsxBoundary.jsx("enrollment", { setup, onOpen }),
+          onContinue(): void;
+        }) => jsxBoundary.jsx("enrollment", { setup, onOpen, onContinue }),
       },
       "./security-screen": { SecurityScreen: "security" },
       "../privacy/archive-screen": { ArchiveScreen: "archive" },
@@ -142,6 +145,7 @@ function fixture() {
         h.render(() =>
           screen({
             me: { user: { email: "synthetic@example.test" }, membership: null },
+            onBack,
           }),
         ),
       unmount: h.unmount,
@@ -157,13 +161,32 @@ function fixture() {
     done: () => pending,
   };
 }
+it("leaves optional security after a verified code before refresh remounts the screen", async () => {
+  const f = fixture();
+  f.user.totpEnabled = true;
+  const back = vi.fn();
+  const screen = f.mount("SecurityScreen", back);
+  f.identity.refresh.mockImplementationOnce(async () => screen.unmount());
+  field(screen.render(), "Authenticator code").onChangeText("123456");
+  press(screen.render(), "Verify this session");
+  await f.done();
+  expect(f.identity.api.verifyTotp).toHaveBeenCalledExactlyOnceWith(
+    "123456",
+    expect.any(AbortSignal),
+  );
+  expect(back).toHaveBeenCalledOnce();
+  expect(back).toHaveBeenCalledBefore(f.identity.refresh);
+});
+
 it("resumes pending authenticator verification after concealment without retaining the secret or code", async () => {
   const f = fixture(),
     first = f.mount("SecurityScreen");
   press(first.render(), "Set up authenticator");
   await f.done();
-  field(first.render(), "Authenticator code").onChangeText("111111");
   expect(JSON.stringify(first.render())).toContain("synthetic-private-key");
+  enterAuthenticatorCode(first.render());
+  field(first.render(), "Authenticator code").onChangeText("111111");
+  expect(JSON.stringify(first.render())).not.toContain("synthetic-private-key");
   first.unmount();
   f.workflow.conceal();
   const resumed = f.mount("SecurityScreen");
@@ -186,8 +209,42 @@ it("resumes pending authenticator verification after concealment without retaini
     "654321",
     expect.any(AbortSignal),
   );
+  expect(f.identity.refresh).toHaveBeenCalled();
   resumed.unmount();
 });
+
+it("shows setup first and advances to the code field on request", async () => {
+  const f = fixture(),
+    screen = f.mount("SecurityScreen");
+  press(screen.render(), "Set up authenticator");
+  await f.done();
+  expect(
+    elements(screen.render()).some(
+      (item) => item.props.label === "Authenticator code",
+    ),
+  ).toBe(false);
+  enterAuthenticatorCode(screen.render());
+  expect(field(screen.render(), "Authenticator code").value).toBe("");
+  expect(
+    elements(screen.render()).find(
+      (item) => item.props.label === "Authenticator code",
+    )?.props.autoFocus,
+  ).toBe(true);
+  expect(elements(screen.render()).some((item) => item.props.setup)).toBe(
+    false,
+  );
+  press(screen.render(), "Back to setup");
+  expect(elements(screen.render()).some((item) => item.props.setup)).toBe(true);
+  screen.unmount();
+});
+
+function enterAuthenticatorCode(tree: unknown): void {
+  const advance = elements(tree).find((item) => item.props.setup)?.props
+    .onContinue;
+  if (typeof advance !== "function")
+    throw new Error("Missing code entry action");
+  advance();
+}
 
 function openAuthenticator(tree: unknown): void {
   const enrollment = elements(tree).find((item) => item.props.setup);
@@ -212,6 +269,7 @@ it("hands off the matching creation URI only on press, without verifying enrollm
   );
   expect(f.user.verifyTOTP).not.toHaveBeenCalled();
   expect(f.identity.api.verifyTotp).not.toHaveBeenCalled();
+  expect(field(screen.render(), "Authenticator code").value).toBe("");
   expect(f.workflow.enrollmentPending).toBe(true);
   screen.unmount();
 });
@@ -226,6 +284,12 @@ it("gives fixed QR/manual fallback feedback when an authenticator cannot open", 
   await f.done();
   const result = JSON.stringify(screen.render());
   expect(result).toContain("manual setup key");
+  expect(result).toContain("synthetic-private-key");
+  expect(
+    elements(screen.render()).some(
+      (item) => item.props.label === "Authenticator code",
+    ),
+  ).toBe(false);
   expect(result).not.toContain("synthetic provider detail");
   expect(f.workflow.enrollmentPending).toBe(true);
   screen.unmount();
@@ -262,7 +326,6 @@ it.each(["conceal", "actor"])(
     );
     press(screen.render(), "Set up authenticator");
     await f.done();
-    field(screen.render(), "Authenticator code").onChangeText("111111");
     openAuthenticator(screen.render());
     screen.unmount();
     if (transition === "conceal") f.workflow.conceal();
@@ -289,6 +352,7 @@ it("clears creation material and entered code if the actor changes while mounted
     screen = f.mount("SecurityScreen");
   press(screen.render(), "Set up authenticator");
   await f.done();
+  enterAuthenticatorCode(screen.render());
   field(screen.render(), "Authenticator code").onChangeText("111111");
   f.workflow.identify("other:b");
   f.workflow.setEnrollmentPending(true);

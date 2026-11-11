@@ -13,6 +13,7 @@ const uri = `otpauth://totp/sample?secret=${secret}`;
 function mount(setupUri: string | null = uri, pending = false) {
   const hooks = hookHarness();
   const onOpen = vi.fn();
+  const onContinue = vi.fn();
   const Enrollment = sourceExports(
     "apps/mobile/src/features/identity/authenticator-enrollment.tsx",
     {
@@ -27,12 +28,25 @@ function mount(setupUri: string | null = uri, pending = false) {
   ).AuthenticatorEnrollment as (props: unknown) => unknown;
   return {
     onOpen,
+    onContinue,
     render: () =>
       hooks.render(() =>
-        Enrollment({ setup: { secret, uri: setupUri }, pending, onOpen }),
+        Enrollment({
+          setup: { secret, uri: setupUri },
+          pending,
+          onOpen,
+          onContinue,
+        }),
       ),
   };
 }
+
+it("makes advancing to verification an explicit action", () => {
+  const screen = mount();
+  expect(screen.onContinue).not.toHaveBeenCalled();
+  press(screen.render(), "Enter authenticator code");
+  expect(screen.onContinue).toHaveBeenCalledOnce();
+});
 
 it("hides the manual key until requested and opens only after an explicit press", () => {
   const screen = mount();
