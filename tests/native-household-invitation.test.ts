@@ -66,7 +66,9 @@ function fixture(role: "ADMIN" | "MEMBER" = "ADMIN", memberCount = 1) {
     interact: vi.fn(),
     refresh: vi.fn(async () => {}),
     api: {
-      createHousehold: vi.fn(async () => {}),
+      createHousehold: vi.fn<
+        (name: string, key: string, signal: AbortSignal) => Promise<void>
+      >(async () => {}),
       invite: vi.fn<
         (
           id: string,
@@ -129,7 +131,9 @@ function fixture(role: "ADMIN" | "MEMBER" = "ADMIN", memberCount = 1) {
     onboarding?: boolean;
     onInviteLater?: () => void;
   }) => unknown;
-  const CreateHousehold = forms.CreateHousehold as () => unknown;
+  const CreateHousehold = forms.CreateHousehold as (props: {
+    onPendingChange: (pending: boolean) => void;
+  }) => unknown;
   return {
     me,
     identity,
@@ -137,7 +141,8 @@ function fixture(role: "ADMIN" | "MEMBER" = "ADMIN", memberCount = 1) {
     render: (
       props: { onboarding?: boolean; onInviteLater?: () => void } = {},
     ) => h.render(() => InviteAdult({ me, ...props })),
-    renderCreate: () => h.render(CreateHousehold),
+    renderCreate: (onPendingChange: (pending: boolean) => void = () => {}) =>
+      h.render(() => CreateHousehold({ onPendingChange })),
     done: () => pending,
   };
 }
@@ -318,4 +323,105 @@ it("shows onboarding on More only for an eligible admin and routes deferral to A
   expect(
     elements(render()).find((item) => item.type === "invite")?.props.onboarding,
   ).toBeUndefined();
+});
+
+it("keeps setup mounted while a household creation is pending", async () => {
+  const f = fixture();
+  f.me.membership = null;
+  const h = hookHarness();
+  let complete: (() => void) | undefined;
+  f.identity.api.createHousehold.mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        complete = resolve;
+      }),
+  );
+  const Account = sourceExports(
+    "apps/mobile/src/features/identity/account-screen.tsx",
+    {
+      react: h.react,
+      "react/jsx-runtime": jsxBoundary,
+      "expo-router": {
+        useRouter: () => ({ replace: f.replace }),
+        useLocalSearchParams: () => ({}),
+      },
+      "@/components/app-text": { AppText: "text" },
+      "@/components/identity-frame": { IdentityFrame: "frame" },
+      "@/components/native-action": { NativeAction: "action" },
+      "@/components/native-actions": { NativeActions: "actions" },
+      "./household-forms": {
+        AcceptInvitation: "accept",
+        CreateHousehold: "create",
+        InviteAdult: "invite",
+      },
+      "../privacy/archive-screen": { ArchiveScreen: "archive" },
+      "../privacy/privacy-screen": { PrivacyScreen: "privacy" },
+      "../billing/billing-screen": { BillingScreen: "billing" },
+      "../../api/billing": { createBillingApi: vi.fn() },
+      "../companion/companion-screen": { CompanionScreen: "companion" },
+      "../../api/devices": { createDevicesApi: vi.fn() },
+      "./context": { useIdentity: () => f.identity },
+      "./security-screen": { SecurityScreen: "security" },
+      "./session-actions": { SessionActions: "session" },
+    },
+  ).AccountScreen as (props: { me: MeResponse }) => unknown;
+  const render = () => h.render(() => Account({ me: f.me }));
+  const before = render();
+  const create = elements(before).find((item) => item.type === "create")!;
+  const onPendingChange = create.props.onPendingChange as (
+    value: boolean,
+  ) => void;
+  const form = () => f.renderCreate(onPendingChange);
+  field(form(), "Household name").onChangeText("Our home");
+  press(form(), "Create household");
+  press(form(), "Create household");
+  for (const label of [
+    "Continue on my own",
+    "Local companion (Mac)",
+    "Subscription and billing",
+    "Privacy and data",
+    "Owner archive",
+    "Account security",
+  ]) {
+    press(before, label);
+    expect(
+      elements(render()).find((item) => item.props.label === label)?.props
+        .disabled,
+    ).toBe(true);
+  }
+  expect(f.identity.workflow.view).toBe("account");
+  expect(elements(render()).some((item) => item.type === "create")).toBe(true);
+  const accept = elements(render()).find((item) => item.type === "accept")!;
+  expect(accept.props.disabled).toBe(true);
+  expect((accept.props.isDisabled as () => boolean)()).toBe(true);
+  expect(f.identity.api.createHousehold).toHaveBeenCalledOnce();
+  complete?.();
+  await f.done();
+  await Promise.resolve();
+  expect(f.replace).toHaveBeenCalledWith("/more?setup=invite");
+  expect(f.identity.refresh).toHaveBeenCalledOnce();
+  expect(
+    elements(render()).find((item) => item.props.label === "Continue on my own")
+      ?.props.disabled,
+  ).toBe(false);
+});
+
+it("releases the navigation guard after a failed write and reuses the unchanged key", async () => {
+  const f = fixture();
+  const pending = vi.fn();
+  f.identity.api.createHousehold.mockRejectedValueOnce(
+    new Error("Unavailable"),
+  );
+  const form = () => f.renderCreate(pending);
+  field(form(), "Household name").onChangeText("Our home");
+  press(form(), "Create household");
+  await f.done();
+  await Promise.resolve();
+  expect(pending.mock.calls).toEqual([[true], [false]]);
+  press(form(), "Create household");
+  await f.done();
+  expect(f.identity.api.createHousehold).toHaveBeenCalledTimes(2);
+  expect(f.identity.api.createHousehold.mock.calls[0]?.[1]).toBe(
+    f.identity.api.createHousehold.mock.calls[1]?.[1],
+  );
 });

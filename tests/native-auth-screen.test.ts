@@ -40,7 +40,9 @@ it("groups signup verification actions with the accessible code field and retain
   const { flow, render } = screen({ step: "email", kind: "signup" });
   let tree = render();
   const panel = elements(tree).find((element) => element.type === "view");
-  expect(text(panel)).toContain("Authenticator setup is a separate step");
+  expect(text(panel)).toContain(
+    "Set up an authenticator in Account security before adding or sharing accounts.",
+  );
   expect(
     elements(panel).some((element) => element.props.label === "Verify email"),
   ).toBe(true);
@@ -66,7 +68,7 @@ it("keeps device email and authenticator verification distinct", () => {
   press(deviceTree, "Send a new code");
   expect(device.flow.resend).toHaveBeenCalledOnce();
   expect(text(deviceTree)).not.toContain(
-    "Authenticator setup is a separate step",
+    "Set up an authenticator in Account security before adding or sharing accounts.",
   );
 
   const mfa = screen({ step: "mfa" });

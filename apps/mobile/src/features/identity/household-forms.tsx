@@ -24,7 +24,11 @@ function useWriteKey() {
     return attempt.current.key;
   };
 }
-export function CreateHousehold(): React.JSX.Element {
+export function CreateHousehold({
+  onPendingChange,
+}: {
+  onPendingChange: (pending: boolean) => void;
+}): React.JSX.Element {
   const [name, setName] = useState("");
   const router = useRouter();
   const identity = useIdentity(),
@@ -37,17 +41,22 @@ export function CreateHousehold(): React.JSX.Element {
       return;
     }
     await operation.run(async (signal, lifetime) => {
-      await identity.api.createHousehold(
-        parsed.data.name,
-        key(parsed.data.name),
-        signal,
-      );
-      if (lifetime.active()) {
-        try {
-          router.replace("/more?setup=invite");
-        } finally {
-          await identity.refresh();
+      onPendingChange(true);
+      try {
+        await identity.api.createHousehold(
+          parsed.data.name,
+          key(parsed.data.name),
+          signal,
+        );
+        if (lifetime.active()) {
+          try {
+            router.replace("/more?setup=invite");
+          } finally {
+            await identity.refresh();
+          }
         }
+      } finally {
+        onPendingChange(false);
       }
     });
   }
@@ -214,13 +223,19 @@ export function InviteAdult({
     </>
   );
 }
-export function AcceptInvitation(): React.JSX.Element | null {
+export function AcceptInvitation({
+  disabled = false,
+  isDisabled = () => false,
+}: {
+  disabled?: boolean;
+  isDisabled?: () => boolean;
+}): React.JSX.Element | null {
   const identity = useIdentity(),
     operation = useIdentityOperation();
   const token = identity.invitation;
   if (!token) return null;
   async function accept() {
-    if (!token) return;
+    if (!token || isDisabled()) return;
     await operation.run(async (signal, lifetime) => {
       await identity.api.acceptInvitation(token, signal);
       if (lifetime.active()) {
@@ -240,14 +255,17 @@ export function AcceptInvitation(): React.JSX.Element | null {
       <NativeActions>
         <NativeAction
           label="Accept invitation"
+          disabled={disabled}
           pending={operation.pending}
           onPress={() => void accept()}
         />
         <NativeAction
           label="Dismiss invitation"
           tone="text"
-          disabled={operation.pending}
-          onPress={identity.clearInvitation}
+          disabled={disabled || operation.pending}
+          onPress={() => {
+            if (!isDisabled()) identity.clearInvitation();
+          }}
         />
       </NativeActions>
     </>

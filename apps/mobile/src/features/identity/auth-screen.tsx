@@ -214,7 +214,8 @@ export function AuthScreen({ mode }: { mode: AuthMode }): React.JSX.Element {
                 />
               </NativeActions>
               <AppText tone="secondary">
-                Authenticator setup is a separate step before financial access.
+                Set up an authenticator in Account security before adding or
+                sharing accounts.
               </AppText>
             </>
           )}
