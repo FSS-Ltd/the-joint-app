@@ -253,6 +253,44 @@ describe("month-helpers", () => {
   });
 });
 
+it("uses the shared stacked month actions at large text sizes", () => {
+  let fontScale = 1;
+  const { MonthSelector } = load("budgets/month-selector.tsx", {
+    "@expo/ui": { Host: "host" },
+    "react-native": {
+      View: "view",
+      StyleSheet: { create: <T>(styles: T) => styles },
+      useWindowDimensions: () => ({ width: 390, fontScale }),
+    },
+    "./month-helpers": {
+      currentMobileMonth: () => "2026-11",
+      formatMonthLabel,
+    },
+  }) as {
+    MonthSelector: (props: {
+      month: string;
+      onPrevious: () => void;
+      onNext: () => void;
+    }) => unknown;
+  };
+  const render = () =>
+    elements(
+      MonthSelector({
+        month: "2026-11",
+        onPrevious: vi.fn(),
+        onNext: vi.fn(),
+      }),
+    );
+  expect(render().filter((node) => node.type === "host")).toHaveLength(2);
+  fontScale = 1.6;
+  const stacked = render();
+  expect(stacked.some((node) => node.type === "actions")).toBe(true);
+  expect(stacked.some((node) => node.type === "host")).toBe(false);
+  expect(
+    stacked.find((node) => node.props.label === "Next month")?.props.disabled,
+  ).toBe(true);
+});
+
 describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests", () => {
   it("renders CapCard with progressbar role, spent/cap value text, overspend copy, and net refund notice", () => {
     const h = hookHarness();
