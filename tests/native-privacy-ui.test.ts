@@ -618,6 +618,10 @@ describe("AccountScreen & PrivacyScreen navigation and post-leave access", () =>
 
     const workflow = new NativeWorkflow(() => true);
     const { AccountScreen } = load("identity/account-screen.tsx", {
+      "expo-router": {
+        useRouter: () => ({ replace: vi.fn() }),
+        useLocalSearchParams: () => ({}),
+      },
       react: {
         ...h.react,
         useSyncExternalStore: (_sub: unknown, get: () => unknown) => get(),

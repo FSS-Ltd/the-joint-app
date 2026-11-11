@@ -1,11 +1,13 @@
 import { emailSchema, passwordResetSchema } from "@joint/contracts";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 import { AppText } from "@/components/app-text";
 import { Feedback, IdentityFrame } from "@/components/identity-frame";
 import { NativeAction } from "@/components/native-action";
 import { NativeActions } from "@/components/native-actions";
 import { NativeField } from "@/components/native-field";
+import { colors, corners, spacing } from "@/theme/tokens";
 import { useIdentity } from "./context";
 import { useNativeAuthFlow, type AuthMode } from "./use-auth-flow";
 
@@ -25,6 +27,9 @@ export function AuthScreen({ mode }: { mode: AuthMode }): React.JSX.Element {
     (credentials && mode !== "recovery") || flow.stage.step === "password";
   const newPassword = mode === "sign-up" || flow.stage.step === "password";
   const codeVisible = flow.stage.step === "email" || flow.stage.step === "mfa";
+  const emailVerification = flow.stage.step === "email";
+  const emailKind = flow.stage.step === "email" ? flow.stage.kind : undefined;
+  const signupEmail = emailKind === "signup";
   function change(update: (value: string) => void) {
     return (value: string) => {
       identity.interact();
@@ -87,18 +92,26 @@ export function AuthScreen({ mode }: { mode: AuthMode }): React.JSX.Element {
       : mode === "recovery"
         ? "Find your way back."
         : "Welcome home."
-    : flow.stage.step === "username"
-      ? "Choose your username."
-      : flow.stage.step === "password"
-        ? "A fresh password."
-        : "One more check.";
+    : emailVerification
+      ? emailKind === "recovery"
+        ? "Verify your recovery code."
+        : emailKind === "device"
+          ? "Verify this sign-in."
+          : "Verify your email."
+      : flow.stage.step === "username"
+        ? "Choose your username."
+        : flow.stage.step === "password"
+          ? "A fresh password."
+          : "One more check.";
   return (
     <IdentityFrame
       title={title}
       description={
         credentials
           ? "Your own sign-in. A shared home, when you choose."
-          : "Keep your account private and protected."
+          : emailVerification
+            ? "Enter the six-digit code sent to your email."
+            : "Keep your account private and protected."
       }
     >
       <Feedback error={identity.sessionError} notice={identity.sessionNotice} />
@@ -157,16 +170,22 @@ export function AuthScreen({ mode }: { mode: AuthMode }): React.JSX.Element {
         />
       )}
       {codeVisible && (
-        <>
-          <AppText>
-            {flow.stage.step === "email"
-              ? "Enter the six-digit code from your email."
-              : backup
+        <View style={signupEmail ? styles.emailVerification : undefined}>
+          {!emailVerification && (
+            <AppText>
+              {backup
                 ? "Use one of your private, single-use backup codes. Household access still requires an authenticator."
                 : "Enter the current code from your authenticator app."}
-          </AppText>
+            </AppText>
+          )}
           <NativeField
-            label={backup ? "Backup code" : "Verification code"}
+            label={
+              emailVerification
+                ? "Email verification code"
+                : backup
+                  ? "Backup code"
+                  : "Verification code"
+            }
             value={code}
             onChangeText={change(setCode)}
             keyboardType={backup ? "default" : "number-pad"}
@@ -174,26 +193,57 @@ export function AuthScreen({ mode }: { mode: AuthMode }): React.JSX.Element {
             maxLength={backup ? 64 : 6}
             editable={!flow.pending && !identity.googlePending}
           />
-        </>
+          {signupEmail && (
+            <>
+              <NativeActions>
+                <NativeAction
+                  label="Verify email"
+                  pending={flow.pending}
+                  disabled={identity.googlePending}
+                  onPress={() => void submit()}
+                />
+                <NativeAction
+                  label={
+                    flow.resendReady
+                      ? "Send a new code"
+                      : "New code available shortly"
+                  }
+                  tone="secondary"
+                  disabled={flow.pending || !flow.resendReady}
+                  onPress={() => void flow.resend()}
+                />
+              </NativeActions>
+              <AppText tone="secondary">
+                Set up an authenticator in Account security before adding or
+                sharing accounts.
+              </AppText>
+            </>
+          )}
+        </View>
       )}
       <NativeActions>
-        <NativeAction
-          label={
-            credentials && mode === "recovery"
-              ? "Send recovery code"
-              : "Continue"
-          }
-          pending={flow.pending}
-          disabled={identity.googlePending}
-          onPress={() => void submit()}
-        />
-        {flow.stage.step === "email" && (
+        {!signupEmail && (
+          <NativeAction
+            label={
+              credentials && mode === "recovery"
+                ? "Send recovery code"
+                : emailVerification
+                  ? "Verify code"
+                  : "Continue"
+            }
+            pending={flow.pending}
+            disabled={identity.googlePending}
+            onPress={() => void submit()}
+          />
+        )}
+        {emailVerification && !signupEmail && (
           <NativeAction
             label={
               flow.resendReady
                 ? "Send a new code"
                 : "New code available shortly"
             }
+            tone="secondary"
             disabled={flow.pending || !flow.resendReady}
             onPress={() => void flow.resend()}
           />
@@ -260,3 +310,12 @@ export function AuthScreen({ mode }: { mode: AuthMode }): React.JSX.Element {
     </IdentityFrame>
   );
 }
+
+const styles = StyleSheet.create({
+  emailVerification: {
+    backgroundColor: colors.sage,
+    borderRadius: corners.surface,
+    padding: spacing.medium,
+    gap: spacing.medium,
+  },
+});

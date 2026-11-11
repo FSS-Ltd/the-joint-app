@@ -43,6 +43,7 @@ it("mounts actual Tabs only through the configured financial ready gate", () => 
     },
     "./navigation-tab-button": { NavigationTabButton: "tab-button" },
     "../identity/configured-entry": { ConfiguredEntry: "gate" },
+    "../identity/account-screen": { AccountScreen: "account" },
     "../finance/provider": { NativeFinanceProvider: "finance" },
   }).WorkspaceLayout as () => unknown;
   const gate = elements(Workspace())[0]!;
@@ -53,9 +54,14 @@ it("mounts actual Tabs only through the configured financial ready gate", () => 
       type: (props: unknown) => unknown;
       props: unknown;
     }
-  )({});
+  )({ membership: {} });
   const tree = Ready.type(Ready.props);
   expect(elements(tree)[0]?.type).toBe("finance");
+  const noMembership = (gate.props.ready as (me: unknown) => unknown)({
+    membership: null,
+  });
+  expect(elements(noMembership)[0]?.type).toBe("account");
+  expect(elements(noMembership).some((e) => e.type === "finance")).toBe(false);
   const tabsByName = elements(tree).filter((e) => e.type === "tab");
   expect(tabsByName.map((e) => e.props.name)).toEqual([
     "home",
@@ -375,19 +381,25 @@ it("preserves invitation and security destinations after verified sign-in", () =
     type: (props: unknown) => unknown;
     props: unknown;
   };
-  const render = () => {
-    const element = ready({});
+  const render = (membership: unknown = {}) => {
+    const element = ready({ membership });
     return elements(element.type(element.props))[0]!;
   };
   expect(render()).toMatchObject({
     type: "redirect",
     props: { href: "/home" },
   });
+  expect(render(null)).toMatchObject({
+    type: "redirect",
+    props: { href: "/more" },
+  });
   identity.invitation = "synthetic-pending-invitation";
   expect(render().type).toBe("account");
+  expect(render(null).type).toBe("account");
   identity.invitation = null;
   identity.workflow.securityOpen = true;
   expect(render().type).toBe("account");
+  expect(render(null).type).toBe("account");
 });
 
 it("selects across >50 visible accounts without treating an empty selection as all-visible", () => {

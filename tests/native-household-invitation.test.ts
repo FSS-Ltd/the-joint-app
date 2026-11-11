@@ -66,6 +66,9 @@ function fixture(role: "ADMIN" | "MEMBER" = "ADMIN", memberCount = 1) {
     interact: vi.fn(),
     refresh: vi.fn(async () => {}),
     api: {
+      createHousehold: vi.fn<
+        (name: string, key: string, signal: AbortSignal) => Promise<void>
+      >(async () => {}),
       invite: vi.fn<
         (
           id: string,
@@ -92,12 +95,14 @@ function fixture(role: "ADMIN" | "MEMBER" = "ADMIN", memberCount = 1) {
     },
   ).useIdentityOperation as () => Operation;
   let pending: Promise<boolean> | undefined;
-  const InviteAdult = sourceExports(
+  const replace = vi.fn();
+  const forms = sourceExports(
     "apps/mobile/src/features/identity/household-forms.tsx",
     {
       ...deps,
       "react/jsx-runtime": jsxBoundary,
       "@joint/contracts": { householdCreateSchema, inviteSchema },
+      "expo-router": { useRouter: () => ({ replace }) },
       "expo-crypto": {
         randomUUID: () => "44444444-4444-4444-8444-444444444444",
       },
@@ -120,11 +125,24 @@ function fixture(role: "ADMIN" | "MEMBER" = "ADMIN", memberCount = 1) {
         },
       },
     },
-  ).InviteAdult as (props: { me: MeResponse }) => unknown;
+  );
+  const InviteAdult = forms.InviteAdult as (props: {
+    me: MeResponse;
+    onboarding?: boolean;
+    onInviteLater?: () => void;
+  }) => unknown;
+  const CreateHousehold = forms.CreateHousehold as (props: {
+    onPendingChange: (pending: boolean) => void;
+  }) => unknown;
   return {
     me,
     identity,
-    render: () => h.render(() => InviteAdult({ me })),
+    replace,
+    render: (
+      props: { onboarding?: boolean; onInviteLater?: () => void } = {},
+    ) => h.render(() => InviteAdult({ me, ...props })),
+    renderCreate: (onPendingChange: (pending: boolean) => void = () => {}) =>
+      h.render(() => CreateHousehold({ onPendingChange })),
     done: () => pending,
   };
 }
@@ -170,7 +188,7 @@ it("blocks deferral during a write and never cancels an invitation already creat
   );
   press(f.render(), "Invite another adult");
   field(f.render(), "Other adult’s email").onChangeText("partner@example.test");
-  press(f.render(), "Create invitation");
+  press(f.render(), "Create invitation link");
   const later = elements(f.render()).find(
     (item) => item.props.label === "Invite later",
   );
@@ -205,5 +223,205 @@ it("does not offer invitations to a non-admin or a full household", () => {
   expect(actionLabels(full.render())).not.toContain("Invite another adult");
   expect(elements(full.render()).some((item) => item.type === "field")).toBe(
     false,
+  );
+});
+
+it("continues onboarding to Accounts without writing an invitation", () => {
+  const f = fixture();
+  const onInviteLater = vi.fn();
+  const render = () => f.render({ onboarding: true, onInviteLater });
+  expect(field(render(), "Other adult’s email")).toBeDefined();
+  press(render(), "Invite later");
+  expect(onInviteLater).toHaveBeenCalledOnce();
+  expect(f.identity.api.invite).not.toHaveBeenCalled();
+});
+
+it("routes household creation to the invitation before refreshing identity", async () => {
+  const f = fixture();
+  field(f.renderCreate(), "Household name").onChangeText("Our home");
+  press(f.renderCreate(), "Create household");
+  await f.done();
+  expect(f.identity.api.createHousehold).toHaveBeenCalledExactlyOnceWith(
+    "Our home",
+    "44444444-4444-4444-8444-444444444444",
+    expect.any(AbortSignal),
+  );
+  expect(f.replace).toHaveBeenCalledExactlyOnceWith("/more?setup=invite");
+  expect(f.replace.mock.invocationCallOrder[0]).toBeLessThan(
+    f.identity.refresh.mock.invocationCallOrder[0]!,
+  );
+});
+
+it("refreshes membership if navigation fails after household creation", async () => {
+  const f = fixture();
+  f.replace.mockImplementationOnce(() => {
+    throw new Error("Navigation failed");
+  });
+  field(f.renderCreate(), "Household name").onChangeText("Our home");
+  press(f.renderCreate(), "Create household");
+  await f.done();
+  expect(f.identity.refresh).toHaveBeenCalledOnce();
+});
+
+it("shows onboarding on More only for an eligible admin and routes deferral to Accounts", () => {
+  const f = fixture();
+  const h = hookHarness();
+  const identity = { ...f.identity, invitation: null as string | null };
+  let setup: string | undefined = "invite";
+  const setParams = vi.fn((params: { setup?: string }) => {
+    setup = params.setup;
+  });
+  const Account = sourceExports(
+    "apps/mobile/src/features/identity/account-screen.tsx",
+    {
+      react: h.react,
+      "react/jsx-runtime": jsxBoundary,
+      "expo-router": {
+        useRouter: () => ({ replace: f.replace, setParams }),
+        useLocalSearchParams: () => ({ setup }),
+      },
+      "@/components/app-text": { AppText: "text" },
+      "@/components/identity-frame": { IdentityFrame: "frame" },
+      "@/components/native-action": { NativeAction: "action" },
+      "@/components/native-actions": { NativeActions: "actions" },
+      "./household-forms": {
+        AcceptInvitation: "accept",
+        CreateHousehold: "create",
+        InviteAdult: "invite",
+      },
+      "../privacy/archive-screen": { ArchiveScreen: "archive" },
+      "../privacy/privacy-screen": { PrivacyScreen: "privacy" },
+      "../billing/billing-screen": { BillingScreen: "billing" },
+      "../../api/billing": { createBillingApi: vi.fn() },
+      "../companion/companion-screen": { CompanionScreen: "companion" },
+      "../../api/devices": { createDevicesApi: vi.fn() },
+      "./context": { useIdentity: () => identity },
+      "./security-screen": { SecurityScreen: "security" },
+      "./session-actions": { SessionActions: "session" },
+    },
+  ).AccountScreen as (props: { me: MeResponse }) => unknown;
+  const render = () => h.render(() => Account({ me: f.me }));
+  const invite = elements(render()).find((item) => item.type === "invite")!;
+  expect(invite.props.onboarding).toBe(true);
+  (invite.props.onInviteLater as () => void)();
+  expect(setParams).toHaveBeenCalledExactlyOnceWith({ setup: undefined });
+  expect(f.replace).toHaveBeenCalledWith("/home/accounts");
+  expect(setParams.mock.invocationCallOrder[0]).toBeLessThan(
+    f.replace.mock.invocationCallOrder[0]!,
+  );
+  expect(
+    elements(render()).find((item) => item.type === "invite")?.props.onboarding,
+  ).toBeUndefined();
+  setup = "invite";
+  identity.invitation = "pending";
+  expect(elements(render()).some((item) => item.type === "accept")).toBe(true);
+  expect(
+    elements(render()).find((item) => item.type === "invite")?.props.onboarding,
+  ).toBeUndefined();
+  identity.invitation = null;
+  f.me.membership!.role = "MEMBER";
+  expect(
+    elements(render()).find((item) => item.type === "invite")?.props.onboarding,
+  ).toBeUndefined();
+});
+
+it("keeps setup mounted while a household creation is pending", async () => {
+  const f = fixture();
+  f.me.membership = null;
+  const h = hookHarness();
+  let complete: (() => void) | undefined;
+  f.identity.api.createHousehold.mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        complete = resolve;
+      }),
+  );
+  const Account = sourceExports(
+    "apps/mobile/src/features/identity/account-screen.tsx",
+    {
+      react: h.react,
+      "react/jsx-runtime": jsxBoundary,
+      "expo-router": {
+        useRouter: () => ({ replace: f.replace }),
+        useLocalSearchParams: () => ({}),
+      },
+      "@/components/app-text": { AppText: "text" },
+      "@/components/identity-frame": { IdentityFrame: "frame" },
+      "@/components/native-action": { NativeAction: "action" },
+      "@/components/native-actions": { NativeActions: "actions" },
+      "./household-forms": {
+        AcceptInvitation: "accept",
+        CreateHousehold: "create",
+        InviteAdult: "invite",
+      },
+      "../privacy/archive-screen": { ArchiveScreen: "archive" },
+      "../privacy/privacy-screen": { PrivacyScreen: "privacy" },
+      "../billing/billing-screen": { BillingScreen: "billing" },
+      "../../api/billing": { createBillingApi: vi.fn() },
+      "../companion/companion-screen": { CompanionScreen: "companion" },
+      "../../api/devices": { createDevicesApi: vi.fn() },
+      "./context": { useIdentity: () => f.identity },
+      "./security-screen": { SecurityScreen: "security" },
+      "./session-actions": { SessionActions: "session" },
+    },
+  ).AccountScreen as (props: { me: MeResponse }) => unknown;
+  const render = () => h.render(() => Account({ me: f.me }));
+  const before = render();
+  const create = elements(before).find((item) => item.type === "create")!;
+  const onPendingChange = create.props.onPendingChange as (
+    value: boolean,
+  ) => void;
+  const form = () => f.renderCreate(onPendingChange);
+  field(form(), "Household name").onChangeText("Our home");
+  press(form(), "Create household");
+  press(form(), "Create household");
+  for (const label of [
+    "Continue on my own",
+    "Local companion (Mac)",
+    "Subscription and billing",
+    "Privacy and data",
+    "Owner archive",
+    "Account security",
+  ]) {
+    press(before, label);
+    expect(
+      elements(render()).find((item) => item.props.label === label)?.props
+        .disabled,
+    ).toBe(true);
+  }
+  expect(f.identity.workflow.view).toBe("account");
+  expect(elements(render()).some((item) => item.type === "create")).toBe(true);
+  const accept = elements(render()).find((item) => item.type === "accept")!;
+  expect(accept.props.disabled).toBe(true);
+  expect((accept.props.isDisabled as () => boolean)()).toBe(true);
+  expect(f.identity.api.createHousehold).toHaveBeenCalledOnce();
+  complete?.();
+  await f.done();
+  await Promise.resolve();
+  expect(f.replace).toHaveBeenCalledWith("/more?setup=invite");
+  expect(f.identity.refresh).toHaveBeenCalledOnce();
+  expect(
+    elements(render()).find((item) => item.props.label === "Continue on my own")
+      ?.props.disabled,
+  ).toBe(false);
+});
+
+it("releases the navigation guard after a failed write and reuses the unchanged key", async () => {
+  const f = fixture();
+  const pending = vi.fn();
+  f.identity.api.createHousehold.mockRejectedValueOnce(
+    new Error("Unavailable"),
+  );
+  const form = () => f.renderCreate(pending);
+  field(form(), "Household name").onChangeText("Our home");
+  press(form(), "Create household");
+  await f.done();
+  await Promise.resolve();
+  expect(pending.mock.calls).toEqual([[true], [false]]);
+  press(form(), "Create household");
+  await f.done();
+  expect(f.identity.api.createHousehold).toHaveBeenCalledTimes(2);
+  expect(f.identity.api.createHousehold.mock.calls[0]?.[1]).toBe(
+    f.identity.api.createHousehold.mock.calls[1]?.[1],
   );
 });
