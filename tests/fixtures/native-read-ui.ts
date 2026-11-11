@@ -17,6 +17,7 @@ const native = {
   Pressable: "pressable",
   ScrollView: "scrollview",
   StyleSheet: { create: <T>(styles: T) => styles },
+  useWindowDimensions: () => ({ width: 390, fontScale: 1 }),
 };
 const common = {
   "react/jsx-runtime": jsxBoundary,

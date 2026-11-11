@@ -2377,3 +2377,7 @@ Single-code investigation used disposable Clerk test identities, which were dele
 ## STITCH3 — Native Activity and CSV confirmation
 
 Based on the verified PR77 merge. Follow the approved [Activity and CSV frame](design/wireframes/activity-mobile.png) on the existing Activity and import routes. Activity keeps one named account and displays only transaction-visible choices. Search and advanced filters preserve the authorized stream, explicit submission and cursor reset. Rows use exact amounts and booked dates. Account owners can reach CSV review through import history. The confirmation presents the real valid, duplicate and rejected counts and keeps the existing manual review and commit gates.
+
+The iOS 26.5 simulator verified a populated account, filter disclosure, CSV import history, the worker-generated 2 valid / 0 duplicate / 1 rejected counts and Cancel returning to the existing review. The search and filter action share a row at standard text size, and the confirmation count cards stack on smaller widths or with large text. Physical-device and assistive-technology testing remain open.
+
+The local preview sign-in resumed after restoring the documented native Clerk audience setting in the ignored API preview environment. In the disposable account, Clerk accepted authenticator sign-in and the app still required a second code. The live provider reported backup codes enabled, so the signed second-factor age alone could not establish that TOTP was used.

@@ -6,11 +6,13 @@ import {
   type ClassificationKind,
 } from "@joint/contracts";
 import { Host, Switch } from "@expo/ui";
+import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { AppText } from "@/components/app-text";
 import { NativeAction } from "@/components/native-action";
 import { NativeActions } from "@/components/native-actions";
 import { NativeField } from "@/components/native-field";
 import { Panel } from "@/components/panel";
+import { colors, spacing } from "@/theme/tokens";
 import { AccountChoice } from "../accounts/account-choice";
 import {
   emptyActivityFilters,
@@ -47,6 +49,8 @@ export function ActivityFilterControls({
   const [filterError, setFilterError] = useState<string | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 380 || fontScale >= 1.3;
   const search = () => {
     const value = draft.search.trim();
     if (
@@ -71,29 +75,40 @@ export function ActivityFilterControls({
   return (
     <>
       <Panel>
-        <NativeField
-          label="Search transactions"
-          value={draft.search}
-          onChangeText={(search) => setDraft({ ...draft, search })}
-          returnKeyType="search"
-          onSubmitEditing={search}
-        />
+        <View style={[styles.searchBar, stacked && styles.stacked]}>
+          <View style={stacked ? undefined : styles.searchInput}>
+            <NativeField
+              label="Search transactions"
+              value={draft.search}
+              onChangeText={(search) => setDraft({ ...draft, search })}
+              returnKeyType="search"
+              onSubmitEditing={search}
+            />
+          </View>
+          <Host
+            colorScheme="light"
+            seedColor={colors.action}
+            matchContents={{ horizontal: !stacked, vertical: true }}
+          >
+            <NativeAction
+              label={
+                filtersOpen
+                  ? "Hide filters"
+                  : filterCount
+                    ? `Filters (${filterCount})`
+                    : "Filters"
+              }
+              compact={!stacked}
+              tone="secondary"
+              onPress={() => setFiltersOpen(!filtersOpen)}
+            />
+          </Host>
+        </View>
         {searchError && (
           <AppText accessibilityLiveRegion="polite">{searchError}</AppText>
         )}
-        <NativeActions>
-          <NativeAction
-            label={
-              filtersOpen
-                ? "Hide filters"
-                : filterCount
-                  ? `Filters (${filterCount})`
-                  : "Filters"
-            }
-            tone="secondary"
-            onPress={() => setFiltersOpen(!filtersOpen)}
-          />
-          {applied.search && (
+        {applied.search && (
+          <NativeActions>
             <NativeAction
               label="Clear search"
               tone="text"
@@ -103,8 +118,8 @@ export function ActivityFilterControls({
                 onChange({ ...applied, search: "" });
               }}
             />
-          )}
-        </NativeActions>
+          </NativeActions>
+        )}
       </Panel>
       {filtersOpen && (
         <Panel>
@@ -162,3 +177,13 @@ export function ActivityFilterControls({
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: spacing.small,
+  },
+  searchInput: { flex: 1, minWidth: 0 },
+  stacked: { flexDirection: "column", alignItems: "stretch" },
+});

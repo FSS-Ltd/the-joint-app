@@ -100,6 +100,8 @@ export function ActivityPage({
   );
   return (
     <FlatList
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
       data={result.kind === "ready" ? result.value.items : []}
       keyExtractor={(transaction) => transaction.id}
       renderItem={({ item }) => (

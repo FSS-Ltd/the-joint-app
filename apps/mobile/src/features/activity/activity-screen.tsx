@@ -37,7 +37,7 @@ export function ActivityScreen(): React.JSX.Element {
   const [chosen, setChosen] = useState<string | null>(null);
   if (accounts.kind === "loading")
     return (
-      <Screen>
+      <Screen nativeHeader>
         <Panel>
           <AppText accessibilityLiveRegion="polite">Loading accounts…</AppText>
         </Panel>
@@ -45,7 +45,7 @@ export function ActivityScreen(): React.JSX.Element {
     );
   if (accounts.kind === "error")
     return (
-      <Screen>
+      <Screen nativeHeader>
         <Panel>
           <AppText accessibilityLiveRegion="polite">{accounts.message}</AppText>
           <NativeActions>
@@ -66,7 +66,7 @@ export function ActivityScreen(): React.JSX.Element {
     items.find((item) => item.id === chosen) ?? items[0];
   if (!account)
     return (
-      <Screen>
+      <Screen nativeHeader>
         <EmptyState
           title={
             accounts.value.nextCursor
@@ -85,7 +85,7 @@ export function ActivityScreen(): React.JSX.Element {
     );
   const labels = Object.fromEntries(items.map((item) => [item.id, item.label]));
   return (
-    <Screen scrollable={false}>
+    <Screen nativeHeader scrollable={false}>
       <ActivityPage
         key={account.id}
         account={account}
