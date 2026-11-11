@@ -15,12 +15,14 @@ export function SummaryView({
   onReset,
   children,
   showCoverage = false,
-}: PropsWithChildren<{
-  scope: SummaryScope;
-  onChoose(): void;
-  onReset(): void;
-  showCoverage?: boolean;
-}>): React.JSX.Element {
+}: PropsWithChildren<
+  {
+    showCoverage?: boolean;
+  } & (
+    | { scope: SummaryScope; onChoose(): void; onReset(): void }
+    | { scope: { kind: "visible" }; onChoose?: never; onReset?: never }
+  )
+>): React.JSX.Element | null {
   const finance = useNativeFinance();
   const result = useFinanceResource(
     {
@@ -44,6 +46,7 @@ export function SummaryView({
   );
   const count =
     result.kind === "ready" ? result.value.scope.accountIds.length : null;
+  if (!onChoose && count === 0) return null;
   const scopeLabel =
     (selection.kind === "visible"
       ? "All visible accounts"
@@ -54,17 +57,23 @@ export function SummaryView({
   return (
     <>
       <View style={styles.scope}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Choose summary accounts. ${scopeLabel}`}
-          onPress={onChoose}
-          style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
-        >
+        {onChoose ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Choose summary accounts. ${scopeLabel}`}
+            onPress={onChoose}
+            style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
+          >
+            <AppText variant="label" tone="inverse">
+              {scopeLabel} ⌄
+            </AppText>
+          </Pressable>
+        ) : (
           <AppText variant="label" tone="inverse">
-            {scopeLabel} ⌄
+            {scopeLabel}
           </AppText>
-        </Pressable>
-        {selection.kind === "selected" && (
+        )}
+        {onReset && selection.kind === "selected" && (
           <NativeActions>
             <NativeAction
               label="Use all visible accounts"
@@ -87,10 +96,12 @@ export function SummaryView({
           </AppText>
           {result.kind === "error" && (
             <>
-              <AppText>
-                Choose 1–50 accounts for an explicit summary scope. Households
-                with more than 50 visible accounts require a selection.
-              </AppText>
+              {onChoose && (
+                <AppText>
+                  Choose 1–50 accounts for an explicit summary scope. Households
+                  with more than 50 visible accounts require a selection.
+                </AppText>
+              )}
               <NativeActions>
                 <NativeAction label="Retry summary" onPress={result.retry} />
               </NativeActions>
