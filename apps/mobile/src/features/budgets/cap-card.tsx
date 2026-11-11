@@ -150,9 +150,11 @@ export function CapCard({
   const limitLabel = formatAggregateMoney(line.limit);
 
   return (
-    <Panel tint={tint} compact={tint === "apricot"}>
+    <Panel tint={tint} compact>
       <View style={styles.header}>
-        <AppText variant="label">{category}</AppText>
+        <AppText variant="title" style={styles.category}>
+          {category}
+        </AppText>
         <AppText
           variant="label"
           tone="secondary"
@@ -197,6 +199,9 @@ export function CapCard({
 }
 
 const styles = StyleSheet.create({
+  category: {
+    flexShrink: 1,
+  },
   header: {
     flexDirection: "row",
     flexWrap: "wrap",

@@ -1,7 +1,7 @@
-import { View, StyleSheet } from "react-native";
+import { Host } from "@expo/ui";
+import { View, StyleSheet, useWindowDimensions } from "react-native";
 import { AppText } from "@/components/app-text";
 import { NativeAction } from "@/components/native-action";
-import { NativeActions } from "@/components/native-actions";
 import { colors, spacing } from "@/theme/tokens";
 import { currentMobileMonth, formatMonthLabel } from "./month-helpers";
 
@@ -15,28 +15,41 @@ export function MonthSelector({
   onNext: () => void;
 }): React.JSX.Element {
   const current = currentMobileMonth();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 380 || fontScale >= 1.3;
   return (
-    <View style={styles.monthRow}>
-      <NativeActions>
+    <View style={[styles.monthRow, stacked && styles.stacked]}>
+      <Host
+        colorScheme="light"
+        seedColor={colors.action}
+        matchContents={{ horizontal: !stacked, vertical: true }}
+      >
         <NativeAction
           label="< Previous"
           tone="text"
-          compact
+          compact={!stacked}
           onPress={onPrevious}
         />
-      </NativeActions>
-      <AppText variant="label" style={styles.monthLabel}>
+      </Host>
+      <AppText
+        variant="label"
+        style={[styles.monthLabel, stacked && styles.stackedLabel]}
+      >
         {formatMonthLabel(month)}
       </AppText>
-      <NativeActions>
+      <Host
+        colorScheme="light"
+        seedColor={colors.action}
+        matchContents={{ horizontal: !stacked, vertical: true }}
+      >
         <NativeAction
           label="Next >"
           tone="text"
-          compact
+          compact={!stacked}
           onPress={onNext}
           disabled={month >= current}
         />
-      </NativeActions>
+      </Host>
     </View>
   );
 }
@@ -52,5 +65,12 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
     color: colors.ivory,
+  },
+  stacked: {
+    flexDirection: "column",
+    alignItems: "stretch",
+  },
+  stackedLabel: {
+    flex: 0,
   },
 });

@@ -272,7 +272,7 @@ describe("IOS10b: Component Rendering", () => {
       "./savings-impact": savingsImpact,
     }) as {
       SavingsImpactCard: (props: {
-        scheduledSavingsMinor: string;
+        scheduledSavingsMinor?: string;
         capLines: readonly { limitMinor: string; actualMinor: string }[];
       }) => unknown;
     };
@@ -296,6 +296,15 @@ describe("IOS10b: Component Rendering", () => {
     const underspendText = text(underspendUi);
     expect(underspendText).toContain("+£20.00");
     expect(underspendText).toContain("£200.00");
+
+    const recorded = text(
+      SavingsImpactCard({
+        capLines: [{ limitMinor: "5000", actualMinor: "6500" }],
+      }),
+    );
+    expect(recorded).toContain("Recorded cap variance");
+    expect(recorded).toContain("-£15.00");
+    expect(recorded).not.toContain("Qualified savings");
   });
 
   it("renders GoalTimelineFeedbackCard in amount-only mode when insufficient", () => {

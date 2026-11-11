@@ -12,11 +12,11 @@ export function SavingsImpactCard({
   scheduledSavingsMinor,
   capLines,
 }: {
-  scheduledSavingsMinor: string;
+  scheduledSavingsMinor?: string;
   capLines: readonly { limitMinor: string; actualMinor: string }[];
 }): React.JSX.Element {
   const impact: HouseholdSavingsImpact = calculateHouseholdSavingsImpact(
-    scheduledSavingsMinor,
+    scheduledSavingsMinor ?? "0",
     capLines,
   );
 
@@ -26,6 +26,37 @@ export function SavingsImpactCard({
   );
   const netOverspend = BigInt(impact.netOverspendMinor);
   const netUnderspend = BigInt(impact.netUnderspendMinor);
+  const varianceLabel =
+    netOverspend > 0n
+      ? `-${formatGbpMinor(netOverspend)}`
+      : netUnderspend > 0n
+        ? `+${formatGbpMinor(netUnderspend)}`
+        : "£0.00";
+
+  if (scheduledSavingsMinor === undefined)
+    return (
+      <Panel tint="sage" compact>
+        <AppText variant="title" accessibilityRole="header">
+          Saving plan impact
+        </AppText>
+        <View style={styles.statBox}>
+          <AppText tone="secondary">Recorded cap variance</AppText>
+          <AppText
+            variant="label"
+            style={[
+              styles.statValue,
+              netOverspend > 0n && styles.overspendText,
+            ]}
+          >
+            {varianceLabel}
+          </AppText>
+        </View>
+        <AppText tone="secondary">
+          Caps compare recorded spending with your limits. Review the month to
+          see what cash may be available to save.
+        </AppText>
+      </Panel>
+    );
 
   return (
     <Panel>
@@ -63,11 +94,7 @@ export function SavingsImpactCard({
                   : undefined,
             ]}
           >
-            {netOverspend > 0n
-              ? `-${formatGbpMinor(netOverspend)}`
-              : netUnderspend > 0n
-                ? `+${formatGbpMinor(netUnderspend)}`
-                : "£0.00"}
+            {varianceLabel}
           </AppText>
         </View>
 

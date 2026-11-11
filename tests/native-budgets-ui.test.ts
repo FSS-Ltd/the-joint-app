@@ -458,6 +458,7 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
       visible: true,
       reload: vi.fn(),
     };
+    const readReport = vi.fn(() => reportState);
 
     const { BudgetScreen, CapList } = load("budgets/budget-screen.tsx", {
       react: h.react,
@@ -490,7 +491,7 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
       "./cap-math": load("budgets/cap-math.ts"),
       "./month-helpers": load("budgets/month-helpers.ts"),
       "./month-selector": { MonthSelector: "month-selector" },
-      "./use-spending-report": { useSpendingReport: () => reportState },
+      "./use-spending-report": { useSpendingReport: readReport },
     }) as {
       BudgetScreen: () => { type: () => unknown };
       CapList: (props: Record<string, unknown>) => unknown;
@@ -514,15 +515,40 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
       reload: vi.fn(),
     };
     const readyScreenTree = h.render(root.type);
+    expect(readReport).toHaveBeenLastCalledWith("current");
+    const selector = elements(readyScreenTree).find(
+      (e) => e.type === "month-selector",
+    );
+    expect(selector?.props.month).toBe(baseReport.month);
     const readyCapListNode = elements(readyScreenTree).find(
       (e) => e.type === CapList,
     );
     const readyTree = CapList(
       readyCapListNode!.props as Record<string, unknown>,
     );
-    expect(text(readyTree)).toContain("Review the month before reallocating");
+    expect(text(readyTree)).toContain("Review the month");
+    const cap = elements(readyTree).find((e) => e.type === "cap-card");
+    expect(cap?.props).toMatchObject({
+      actual: { amountMinor: "3200", currency: "GBP" },
+      partialCoverage: true,
+    });
+    expect(text(cap?.props.children)).toContain("recorded");
+    expect(
+      elements(readyTree).find((e) => e.type === "savings-impact-card")?.props,
+    ).toMatchObject({
+      capLines: [{ actualMinor: "3200", limitMinor: "5000" }],
+    });
     press(readyTree, "Review this month");
-    expect(push).toHaveBeenLastCalledWith("/review");
+    expect(push).toHaveBeenLastCalledWith({
+      pathname: "/review",
+      params: { month: baseReport.month },
+    });
+    const previous = selector?.props.onPrevious;
+    if (typeof previous !== "function")
+      throw new Error("Missing previous action");
+    previous();
+    h.render(root.type);
+    expect(readReport).toHaveBeenLastCalledWith("2026-09");
   });
 
   it("fences useSpendingReport with useFinanceLifetime, conceals when hidden, revokes on 401, and reconciles on 404", async () => {

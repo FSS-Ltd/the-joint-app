@@ -15,7 +15,7 @@ import { SavingsImpactCard } from "./savings-impact-card";
 import { RecurringCard } from "./recurring-card";
 import { BaselinesCard } from "./baselines-card";
 import { BudgetEditor } from "./budget-editor";
-import { categoryActual } from "./cap-math";
+import { categorySpending } from "./cap-math";
 import { currentMobileMonth, previousMonth, nextMonth } from "./month-helpers";
 import { MonthSelector } from "./month-selector";
 import { useSpendingReport } from "./use-spending-report";
@@ -35,10 +35,9 @@ export function CapList({
   const router = useRouter();
   const { spending } = useNativeFinance();
   const recurringData = useRecurringData();
-  const lines = report.budget?.lines ?? [];
-  const capLines = lines.map((line) => ({
-    limitMinor: line.limit.amountMinor,
-    actualMinor: categoryActual(report, line.category).amountMinor,
+  const caps = (report.budget?.lines ?? []).map((line) => ({
+    line,
+    ...categorySpending(report, line.category),
   }));
 
   if (report.scope.length === 0) {
@@ -60,41 +59,56 @@ export function CapList({
 
   return (
     <>
-      {lines.length > 0 ? (
-        lines.map((line) => (
+      {caps.length > 0 ? (
+        caps.map(({ line, spending: actual, count }) => (
           <CapCard
             key={line.category ?? "uncategorized"}
             line={line}
-            actual={categoryActual(report, line.category)}
-          />
+            actual={actual}
+            partialCoverage={!report.coverage.complete}
+          >
+            <AppText variant="label" tone="secondary">
+              {count.toLocaleString("en-GB")} recorded{" "}
+              {count === 1 ? "transaction" : "transactions"}
+            </AppText>
+          </CapCard>
         ))
       ) : (
         <Panel>
           <AppText tone="secondary">
-            No budget caps set for this month. Add limits below to track your
-            spending against targets.
+            Add a category cap below to track this month’s spending.
           </AppText>
         </Panel>
       )}
 
-      <SavingsImpactCard scheduledSavingsMinor="0" capLines={capLines} />
+      {caps.length > 0 && (
+        <SavingsImpactCard
+          capLines={caps.map(({ line, spending }) => ({
+            limitMinor: line.limit.amountMinor,
+            actualMinor: spending.amountMinor,
+          }))}
+        />
+      )}
 
-      <Panel>
-        <AppText variant="label" tone="secondary">
+      <Panel tint="apricot" compact>
+        <AppText variant="title" accessibilityRole="header">
           {report.coverage.closedPeriod
-            ? "Anything left this month?"
-            : "A thought for month end"}
+            ? "Review the month"
+            : "Month-end review"}
         </AppText>
-        <AppText variant="title">Review the month before reallocating</AppText>
         <AppText tone="secondary">
-          An unused cap shows you stayed beneath that limit. It is not proof of
-          available cash until month-end coverage and transfers are reviewed.
+          Check coverage and transfers before allocating any remaining cash.
         </AppText>
         <NativeActions>
           <NativeAction
             label="Review this month"
             tone="secondary"
-            onPress={() => router.push("/review")}
+            onPress={() =>
+              router.push({
+                pathname: "/review",
+                params: { month: report.month },
+              })
+            }
           />
         </NativeActions>
       </Panel>
@@ -128,27 +142,37 @@ export function BudgetScreen(): React.JSX.Element | null {
 
 export function BudgetContent(): React.JSX.Element | null {
   const { authority } = useNativeFinance();
-  const [month, setMonth] = useState(currentMobileMonth);
-  const result = useSpendingReport(month);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const result = useSpendingReport(selectedMonth ?? "current");
+  const month =
+    result.kind === "ready"
+      ? result.value.month
+      : (selectedMonth ?? currentMobileMonth());
 
   if (!authority) return null;
 
   return (
     <Screen>
       <AppText variant="heading" tone="inverse" accessibilityRole="header">
-        Budget caps
+        Your spending plan
       </AppText>
 
       <MonthSelector
         month={month}
-        onPrevious={() => setMonth((m) => previousMonth(m))}
-        onNext={() => setMonth((m) => nextMonth(m))}
+        onPrevious={() => setSelectedMonth(previousMonth(month))}
+        onNext={() => {
+          const next = nextMonth(month);
+          setSelectedMonth(next < currentMobileMonth() ? next : null);
+        }}
       />
+      <AppText tone="inverse">
+        Spending from accounts you can view in detail.
+      </AppText>
 
       {result.kind === "loading" && (
         <Panel>
           <AppText accessibilityLiveRegion="polite" tone="secondary">
-            Loading…
+            Loading category caps…
           </AppText>
         </Panel>
       )}
