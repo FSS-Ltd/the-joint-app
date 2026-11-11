@@ -2390,4 +2390,6 @@ With disposable Clerk test identities, the documented audit lookup exposed exact
 
 ## STITCH4 — Native Caps
 
-Based on the verified PR78 merge. Follow the approved [Caps frame](design/wireframes/caps-mobile.png) with compact cap comparisons, recorded transaction counts, a qualified saving-plan variance and an explicit month-end review action. Keep incomplete coverage visible. The report has no planned saving amount, so the Caps screen presents recorded cap variance and opens the review for the selected report month. Reuse the existing scoped read and versioned cap editor.
+Based on the verified PR78 merge. Follow the approved [Caps frame](design/wireframes/caps-mobile.png) with compact cap comparisons, recorded spending-entry counts, a qualified saving-plan variance and an explicit month-end review action. Split transactions can contribute multiple spending entries. Keep incomplete coverage visible and avoid a saving amount estimate from partial spending. The Caps screen opens Monthly Review for the selected report month.
+
+The independent reviews identified one-shot current-month loading and ambiguous entry counts. The current view now shares Home's scoped spending subscription and server-controlled London rollover. The editor opens an explicitly selected month using the existing versioned write and readback, so a live refresh cannot overwrite an in-progress draft.

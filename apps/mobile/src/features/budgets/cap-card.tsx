@@ -143,7 +143,9 @@ export function CapCard({
   const status = partialCoverage
     ? "Partial coverage"
     : formatCapStatus(position);
-  const savingImpact = formatSavingImpact(category, position);
+  const savingImpact = partialCoverage
+    ? null
+    : formatSavingImpact(category, position);
   const netRefund = hasNetRefund(actual.amountMinor);
   const isOver = position.status === "over";
   const spentLabel = formatAggregateMoney(actual);
