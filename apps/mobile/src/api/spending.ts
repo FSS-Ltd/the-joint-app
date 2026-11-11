@@ -14,6 +14,7 @@ import {
   recurringCostsResponseSchema,
   scopeAccountIdsSchema,
   spendingReportSchema,
+  spendingReportMonthSchema,
   type BaselinesReport,
   type BudgetResponse,
   type CategorisationRule,
@@ -44,7 +45,7 @@ export function createSpendingApi(transport: NativeTransport) {
       accountIds?: readonly string[],
       signal?: AbortSignal,
     ): Promise<SpendingReport> {
-      const validMonth = monthSchema.parse(month);
+      const validMonth = spendingReportMonthSchema.parse(month);
       const path = `${household(householdId)}/reports/spending`;
       const query = new URLSearchParams({ month: validMonth });
       if (accountIds !== undefined) {

@@ -180,6 +180,7 @@ export function identityControllers(options?: AuthOptions): Type<unknown>[] {
               imports,
               accounts,
               wealth,
+              reports,
               transactions,
               exports,
               deletions,

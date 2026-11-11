@@ -7,7 +7,7 @@ import type { AuthContext, WealthSummaryDto } from "@joint/contracts";
 import type { ScopedDatabase } from "@joint/database/scoped";
 import { valueAccounts } from "@joint/domain/wealth";
 import { readWealthScope } from "./wealth.repository.js";
-import { readWealthClock } from "./wealth-clock.js";
+import { readLondonClock } from "../../london-clock.js";
 
 export class WealthService {
   constructor(private readonly database: ScopedDatabase) {}
@@ -31,7 +31,7 @@ export class WealthService {
   ): Promise<{ summary: WealthSummaryDto; nextChangeAt: number }> {
     return this.database.withScope(context, async (tx) => {
       const accounts = await readWealthScope(tx, context, accountIds);
-      const clock = await readWealthClock(tx);
+      const clock = await readLondonClock(tx);
       const result = valueAccounts({
         householdId: context.householdId,
         grantVersion: context.grantVersion,
@@ -63,7 +63,7 @@ export class WealthService {
         JSON.stringify(sources) !== JSON.stringify(result.scope.sources)
       )
         throw new ConflictException({ error: { code: "SCOPE_CHANGED" } });
-      return { summary: result, nextChangeAt: clock.nextChangeAt.getTime() };
+      return { summary: result, nextChangeAt: clock.nextMidnightAt.getTime() };
     });
   }
 }

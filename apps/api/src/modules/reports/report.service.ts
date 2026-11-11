@@ -13,6 +13,7 @@ import {
   summariseSpending,
 } from "@joint/domain/cash-flow";
 import { londonToday } from "@joint/domain/transactions";
+import { readLondonClock } from "../../london-clock.js";
 import { findScopedBudget } from "../budgets/budget-projection.js";
 import { resolveReportScope } from "./report-scope.js";
 import { reportComponents, reportProvenance } from "./report-components.js";
@@ -25,11 +26,33 @@ export class ReportService {
     month: string,
     accountIds?: readonly string[],
   ): Promise<SpendingReport> {
+    return (await this.evaluate(context, month, accountIds)).report;
+  }
+
+  observeCurrent(context: AuthContext): Promise<{
+    report: SpendingReport;
+    nextChangeAt: number | null;
+  }> {
+    return this.evaluate(context, "current");
+  }
+
+  private evaluate(
+    context: AuthContext,
+    requestedMonth: string,
+    accountIds?: readonly string[],
+  ): Promise<{ report: SpendingReport; nextChangeAt: number | null }> {
     return this.database.withScope(context, async (tx) => {
+      const clock =
+        requestedMonth === "current" ? await readLondonClock(tx) : null;
+      // The observer uses the API clock. Preserve the database's remaining time.
+      const nextChangeAt = clock
+        ? Date.now() + (clock.nextMonthAt.getTime() - clock.now.getTime())
+        : null;
+      const today = clock?.today ?? londonToday();
+      const month = clock ? today.slice(0, 7) : requestedMonth;
       const scope = await resolveReportScope(tx, context, accountIds),
         ids = scope.map((a) => a.id),
-        bounds = monthBounds(month),
-        today = londonToday();
+        bounds = monthBounds(month);
       const permissionKey = digest([
         context.userId,
         context.membershipId,
@@ -135,7 +158,7 @@ export class ReportService {
               },
             }
           : null;
-      return spendingReportSchema.parse({
+      const report = spendingReportSchema.parse({
         month,
         startDate: bounds.start,
         endDateExclusive: bounds.endExclusive,
@@ -148,7 +171,7 @@ export class ReportService {
           budget?.id ?? null,
           budget?.version ?? 0,
         ]),
-        calculatedAt: new Date().toISOString(),
+        calculatedAt: (clock?.now ?? new Date()).toISOString(),
         scope: scope.map((a) => {
           const c = coverage.find(
             (c) =>
@@ -204,6 +227,7 @@ export class ReportService {
           sourceRowCount: Number(provenance.sourceRowCount),
         },
       });
+      return { report, nextChangeAt };
     });
   }
 }

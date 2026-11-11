@@ -7,8 +7,9 @@ import { Panel } from "@/components/panel";
 import { displayDate } from "../accounts/account-labels";
 import { CapCard } from "../budgets/cap-card";
 import { categoryActual } from "../budgets/cap-math";
-import { currentMobileMonth } from "../budgets/month-helpers";
-import { useSpendingReport } from "../budgets/use-spending-report";
+import { formatMonthLabel } from "../budgets/month-helpers";
+import { useNativeFinance } from "../finance/context";
+import { useFinanceResource } from "../finance/use-resource";
 import type { SummaryScope } from "./summary-scope";
 
 export function HomeInsights({
@@ -62,13 +63,28 @@ export function HomeInsights({
 }
 
 function HomeCapPreview({ action }: { action: ReactNode }): React.JSX.Element {
-  const result = useSpendingReport(currentMobileMonth());
+  const finance = useNativeFinance();
+  const result = useFinanceResource(
+    {
+      kind: "spending",
+      householdId:
+        finance.authority?.householdId ??
+        "00000000-0000-4000-8000-000000000000",
+    },
+    (scope, signal) =>
+      finance.spending.readReport(
+        scope.householdId,
+        "current",
+        undefined,
+        signal,
+      ),
+  );
   const report = result.kind === "ready" ? result.value : null;
   const firstCap = report?.budget?.lines[0];
   const latestRecord = report?.provenance.latestRecordDate;
   const freshness = (
     <AppText tone="secondary">
-      This month
+      {report ? formatMonthLabel(report.month) : ""}
       {latestRecord
         ? ` · Latest transaction: ${displayDate(latestRecord)}`
         : ""}
@@ -103,7 +119,7 @@ function HomeCapPreview({ action }: { action: ReactNode }): React.JSX.Element {
             <NativeAction
               label="Retry caps"
               tone="secondary"
-              onPress={result.reload}
+              onPress={result.retry}
             />
           </NativeActions>
         </>
@@ -114,7 +130,7 @@ function HomeCapPreview({ action }: { action: ReactNode }): React.JSX.Element {
             ? "No accounts with transaction access."
             : firstCap
               ? "Spending data is unavailable."
-              : "No caps set for this month."}
+              : `No caps set for ${formatMonthLabel(report.month)}.`}
         </AppText>
       )}
       {report && freshness}
