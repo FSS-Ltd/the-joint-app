@@ -2,7 +2,6 @@ import { useClerk, useUser } from "@clerk/expo";
 import { useLayoutEffect, useState, useSyncExternalStore } from "react";
 import * as Linking from "expo-linking";
 import { getTotpSetupUri } from "@joint/identity-runtime";
-import { AppText } from "@/components/app-text";
 import { Feedback, IdentityFrame } from "@/components/identity-frame";
 import { NativeField } from "@/components/native-field";
 import { NativeAction } from "@/components/native-action";
@@ -34,13 +33,18 @@ export function SecurityScreen({
       material: AuthenticatorSetup;
       active(): boolean;
     } | null>(null),
+    [codeStep, setCodeStep] = useState(false),
     [code, setCode] = useState("");
+  const currentSetup = enrollmentPending && setup?.active() ? setup : null;
+  const showSetup = currentSetup !== null && !codeStep;
+  const showCode = !showSetup && (enrollmentPending || user?.totpEnabled);
   useLayoutEffect(() => {
     let actor = identity.workflow.capture();
     return identity.workflow.subscribe(() => {
       if (actor.current()) return;
       actor = identity.workflow.capture();
       setSetup(null);
+      setCodeStep(false);
       setCode("");
     });
   }, [identity.workflow]);
@@ -51,6 +55,7 @@ export function SecurityScreen({
       if (!enrollment.secret) throw new Error();
       if (lifetime.current()) identity.workflow.setEnrollmentPending(true);
       if (lifetime.active()) {
+        setCodeStep(false);
         setSetup({
           material: {
             secret: enrollment.secret,
@@ -67,6 +72,7 @@ export function SecurityScreen({
     await operation.run(async (_signal, lifetime) => {
       try {
         await Linking.openURL(uri);
+        if (lifetime.active()) setCodeStep(true);
       } catch {
         if (lifetime.active())
           operation.setNotice(
@@ -101,31 +107,40 @@ export function SecurityScreen({
         await identity.api.verifyTotp(code, signal);
         if (!lifetime.active()) return;
         setCode("");
+        onBack?.();
         await identity.refresh();
-        if (lifetime.active()) onBack?.();
       }
     });
   }
   return (
     <IdentityFrame
-      title="A little extra peace of mind."
-      description="Use your own authenticator to protect your household."
+      key={showCode ? "code" : "setup"}
+      title={
+        showCode ? "Enter your authenticator code" : "Set up an authenticator"
+      }
+      description={
+        showCode
+          ? "Enter the six-digit code shown in your authenticator app."
+          : "Add The Family Fund App to your authenticator to protect your household."
+      }
     >
       <Feedback error={operation.error} notice={operation.notice} />
-      <AppText>
-        Email verification and backup codes do not replace a fresh authenticator
-        check for household access.
-      </AppText>
-      {setup?.active() && (
+      {showSetup && (
         <AuthenticatorEnrollment
-          setup={setup.material}
+          setup={currentSetup.material}
           pending={operation.pending}
           onOpen={(uri) => void openAuthenticator(uri)}
+          onContinue={() => {
+            if (!currentSetup.active()) return;
+            operation.setNotice("");
+            setCodeStep(true);
+          }}
         />
       )}
-      {(user?.totpEnabled || enrollmentPending) && (
+      {showCode && (
         <NativeField
           label="Authenticator code"
+          autoFocus={enrollmentPending}
           value={code}
           onChangeText={(value) => {
             identity.interact();
@@ -144,7 +159,7 @@ export function SecurityScreen({
             pending={operation.pending}
             onPress={() => void enroll()}
           />
-        ) : (
+        ) : showCode ? (
           <NativeAction
             label={
               enrollmentPending ? "Enable authenticator" : "Verify this session"
@@ -152,8 +167,20 @@ export function SecurityScreen({
             pending={operation.pending}
             onPress={() => void verify()}
           />
+        ) : null}
+        {showCode && currentSetup && (
+          <NativeAction
+            label="Back to setup"
+            tone="text"
+            disabled={operation.pending}
+            onPress={() => {
+              setCode("");
+              operation.setError("");
+              setCodeStep(false);
+            }}
+          />
         )}
-        {enrollmentPending && !setup?.active() && (
+        {enrollmentPending && !currentSetup && (
           <NativeAction
             label="Restart authenticator setup"
             tone="text"

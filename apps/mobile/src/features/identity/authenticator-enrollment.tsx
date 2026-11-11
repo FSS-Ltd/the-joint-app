@@ -11,10 +11,12 @@ export function AuthenticatorEnrollment({
   setup,
   pending,
   onOpen,
+  onContinue,
 }: {
   setup: AuthenticatorSetup;
   pending: boolean;
   onOpen(uri: string): void;
+  onContinue(): void;
 }): React.JSX.Element {
   const [showKey, setShowKey] = useState(false);
   const uri = getTotpSetupUri(setup.uri, setup.secret);
@@ -35,9 +37,15 @@ export function AuthenticatorEnrollment({
         </AppText>
       )}
       <NativeActions>
+        <NativeAction
+          label="Enter authenticator code"
+          disabled={pending}
+          onPress={onContinue}
+        />
         {uri && (
           <NativeAction
             label="Open authenticator"
+            tone="secondary"
             pending={pending}
             onPress={() => onOpen(uri)}
           />

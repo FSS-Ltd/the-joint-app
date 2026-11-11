@@ -2333,3 +2333,13 @@ Deliverables implemented and verified:
   - Synchronized knowledge graph via `graphify update .`.
 
 Host merge verified: [PR70](https://github.com/FSS-Ltd/the-joint-app/pull/70) was merged into `main` at commit `e0c1e83`. Required CI checks (`CI/Foundation checks` and `CI/Native bundle checks`) both succeeded. This completes IOS18 and closes PR70. All delivery units from IOS1 through IOS18 in the ordered plan are implemented, locally checked, independently reviewed, and merged into `main`. The founder retains final store-review submission and deployment approval.
+
+## MFA1 — Native authenticator setup and return
+
+Base verified on GitHub at `d169136`, the merge of [PR73](https://github.com/FSS-Ltd/the-joint-app/pull/73). Foundation checks and Native bundle checks passed on the predecessor.
+
+- Separate QR setup and code entry using the existing native identity frame and actions. Provide an explicit advance after scanning externally, resume code entry after an authenticator handoff, and preserve concealment and actor boundaries.
+- Return from optional account security after a successful session check. The previous refresh unmounted the screen before it could return, which left the code prompt open despite successful verification.
+- Disposable Clerk development probes confirmed that enrollment leaves the session without a verified second factor. Clerk rejected reuse of the exact TOTP after SDK enrollment and after SDK sign-in. The follow-up needs provider-attested proof tied to the current session to eliminate the extra prompt while preserving the TOTP and backup-code boundaries.
+
+The broader mobile Stitch alignment follows the authenticator work. The approved Stitch setup frame supplies the visual baseline for this step. It contains email verification, with no dedicated MFA screen.
