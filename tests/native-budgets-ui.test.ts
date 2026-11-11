@@ -31,6 +31,7 @@ import {
   press,
 } from "./fixtures/native-source-harness.js";
 import { householdId, id, load, text } from "./fixtures/native-read-ui.js";
+import { deferred } from "./fixtures/native-stream.js";
 
 const baseReport: SpendingReport = {
   month: "2026-10",
@@ -354,6 +355,7 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
     const putBudget = vi.fn();
     const onSaved = vi.fn();
     const onReload = vi.fn();
+    const onBack = vi.fn();
     const revoke = vi.fn();
     const reconcile = vi.fn();
     const authority = {
@@ -384,6 +386,7 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
         spending: { putBudget: typeof putBudget };
         onSaved: () => void;
         onReload?: () => void;
+        onBack: () => void;
       }) => unknown;
     };
 
@@ -395,12 +398,25 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
           spending: { putBudget },
           onSaved,
           onReload,
+          onBack,
         }),
       );
 
-    // 1. Successful save
-    putBudget.mockResolvedValueOnce(baseReport.budget);
-    press(render(), "Save budget caps");
+    // Leave is fenced even when a tap races the pending render.
+    const write = deferred<SpendingReport["budget"]>();
+    putBudget.mockReturnValueOnce(write.promise);
+    const idle = render();
+    press(idle, "Save budget caps");
+    press(idle, "Back to spending plan");
+    press(idle, "Save budget caps");
+    expect(onBack).not.toHaveBeenCalled();
+    expect(putBudget).toHaveBeenCalledTimes(1);
+    expect(
+      elements(render()).find(
+        (node) => node.props.label === "Back to spending plan",
+      )?.props.disabled,
+    ).toBe(true);
+    write.resolve(baseReport.budget);
     await Promise.resolve();
     expect(putBudget).toHaveBeenCalledWith(
       householdId,
@@ -418,6 +434,8 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
       expect.any(AbortSignal),
     );
     expect(onSaved).toHaveBeenCalledTimes(1);
+    press(render(), "Back to spending plan");
+    expect(onBack).toHaveBeenCalledTimes(1);
 
     // 2. 412 conflict shows Reload budget action
     putBudget.mockRejectedValueOnce(
@@ -471,9 +489,16 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
       reload,
     }));
 
+    const capsModule = load("budgets/cap-list.tsx", {
+      "expo-router": { useRouter: () => ({ push }) },
+      "./cap-card": { CapCard: "cap-card" },
+      "./savings-impact-card": { SavingsImpactCard: "savings-impact-card" },
+      "./recurring-card": { RecurringCard: "recurring-card" },
+      "./baselines-card": { BaselinesCard: "baselines-card" },
+      "./cap-math": load("budgets/cap-math.ts"),
+    });
     const { BudgetScreen } = load("budgets/budget-screen.tsx", {
       react: h.react,
-      "expo-router": { useRouter: () => ({ push }) },
       "../finance/context": {
         useNativeFinance: () => ({
           authority: {
@@ -487,10 +512,6 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
         }),
       },
       "../finance/scope": { financeAuthorityKey: () => "auth-1" },
-      "./cap-card": { CapCard: "cap-card" },
-      "./savings-impact-card": { SavingsImpactCard: "savings-impact-card" },
-      "./recurring-card": { RecurringCard: "recurring-card" },
-      "./baselines-card": { BaselinesCard: "baselines-card" },
       "./use-recurring-data": {
         useRecurringData: () => ({
           recurring: null,
@@ -499,7 +520,7 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
         }),
       },
       "./budget-editor": { BudgetEditor: "budget-editor" },
-      "./cap-math": load("budgets/cap-math.ts"),
+      "./cap-list": capsModule,
       "./month-helpers": load("budgets/month-helpers.ts"),
       "./month-selector": { MonthSelector: "month-selector" },
       "./use-current-spending-report": {
@@ -561,12 +582,13 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
     const editing = renderChild(render(), "EditBudget");
     expect(readHistory).toHaveBeenLastCalledWith("2026-11");
     expect(readCurrent).not.toHaveBeenCalled();
-    expect(
-      elements(renderChild(editing, "BudgetReportState")).some(
-        (node) => node.type === "budget-editor",
-      ),
-    ).toBe(true);
-    press(editing, "Back to spending plan");
+    const editor = elements(renderChild(editing, "BudgetReportState")).find(
+      (node) => node.type === "budget-editor",
+    );
+    const back = editor?.props.onBack;
+    if (typeof back !== "function")
+      throw new Error("Missing editor back action");
+    back();
     expect(findMonth(renderCurrentMonth())?.props.month).toBe("2026-11");
 
     const previous = selector?.props.onPrevious;
