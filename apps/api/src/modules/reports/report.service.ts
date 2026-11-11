@@ -13,23 +13,34 @@ import {
   summariseSpending,
 } from "@joint/domain/cash-flow";
 import { londonToday } from "@joint/domain/transactions";
+import { readLondonClock } from "../../london-clock.js";
 import { findScopedBudget } from "../budgets/budget-projection.js";
 import { resolveReportScope } from "./report-scope.js";
 import { reportComponents, reportProvenance } from "./report-components.js";
+import { observeSpending } from "./spending-observation.js";
 const digest = (input: unknown) =>
   createHash("sha256").update(JSON.stringify(input)).digest("hex");
 export class ReportService {
   constructor(private readonly database: ScopedDatabase) {}
-  async read(
+  observeCurrent(context: AuthContext): ReturnType<typeof observeSpending> {
+    return this.database.withScope(context, (tx) =>
+      observeSpending(tx, context),
+    );
+  }
+
+  read(
     context: AuthContext,
-    month: string,
+    requestedMonth: string,
     accountIds?: readonly string[],
   ): Promise<SpendingReport> {
     return this.database.withScope(context, async (tx) => {
+      const clock =
+        requestedMonth === "current" ? await readLondonClock(tx) : null;
+      const today = clock?.today ?? londonToday();
+      const month = clock ? today.slice(0, 7) : requestedMonth;
       const scope = await resolveReportScope(tx, context, accountIds),
         ids = scope.map((a) => a.id),
-        bounds = monthBounds(month),
-        today = londonToday();
+        bounds = monthBounds(month);
       const permissionKey = digest([
         context.userId,
         context.membershipId,
@@ -148,7 +159,7 @@ export class ReportService {
           budget?.id ?? null,
           budget?.version ?? 0,
         ]),
-        calculatedAt: new Date().toISOString(),
+        calculatedAt: (clock?.now ?? new Date()).toISOString(),
         scope: scope.map((a) => {
           const c = coverage.find(
             (c) =>

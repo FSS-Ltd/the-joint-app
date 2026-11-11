@@ -31,6 +31,7 @@ export const statusSubscriptionSchema = z
         uncategorized: z.enum(["true", "false"]).optional(),
       })
       .strict(),
+    z.object({ kind: z.literal("spending"), householdId: id }).strict(),
     z.object({ kind: z.literal("import"), householdId: id, id }).strict(),
     z.object({ kind: z.literal("export"), householdId: id, id }).strict(),
     z.object({ kind: z.literal("archive-export"), id }).strict(),

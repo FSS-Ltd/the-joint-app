@@ -12,6 +12,7 @@ export function createDatabaseNotifications(options: {
   retryMaxMs: number;
   onReady: () => void;
   onWake: () => void;
+  onSpendingWake?: (scope: string) => void;
   onUnavailable?: () => void;
 }): DatabaseNotifications {
   const topic = {
@@ -53,13 +54,17 @@ export function createDatabaseNotifications(options: {
       connection.on("error", lost);
       connection.on("end", lost);
       connection.on("notification", (message) => {
-        if (
-          !stopped &&
-          !disconnected &&
-          message.channel === topic.channel &&
-          message.payload === ""
-        )
+        if (stopped || disconnected) return;
+        if (message.channel === topic.channel && message.payload === "") {
           options.onWake();
+        } else if (
+          options.topic === "status" &&
+          message.channel === "joint_spending_wakeup" &&
+          typeof message.payload === "string" &&
+          /^(?:[0-9a-f]{64})?$/.test(message.payload)
+        ) {
+          options.onSpendingWake?.(message.payload);
+        }
       });
       try {
         // pg can leave connect() pending when end() interrupts authentication.
@@ -73,7 +78,13 @@ export function createDatabaseNotifications(options: {
           !stopped &&
           !disconnected &&
           (await Promise.race([
-            connection.query(topic.statement).then(() => true),
+            connection
+              .query(
+                options.topic === "status" && options.onSpendingWake
+                  ? `${topic.statement}; LISTEN joint_spending_wakeup`
+                  : topic.statement,
+              )
+              .then(() => true),
             ended.then(() => false),
           ]));
         if (subscribed && !stopped && !disconnected) {

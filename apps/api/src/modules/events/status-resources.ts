@@ -11,6 +11,7 @@ import type { ImportQueries } from "../imports/import-queries.js";
 import type { AccountQueries } from "../accounts/account-queries.js";
 import type { ExportService } from "../exports/export.service.js";
 import type { WealthService } from "../wealth/wealth.service.js";
+import type { ReportService } from "../reports/report.service.js";
 import type { TransactionQueries } from "../transactions/transaction-queries.js";
 import type { IdentityAccess } from "../identity/identity.service.js";
 import { hashToken } from "../identity/identity-vault.js";
@@ -26,6 +27,7 @@ interface Services {
   imports?: Pick<ImportQueries, "observe">;
   accounts?: Pick<AccountQueries, "read" | "observePage">;
   wealth?: Pick<WealthService, "observe">;
+  reports?: Pick<ReportService, "observeCurrent">;
   transactions?: Pick<TransactionQueries, "observePage">;
   exports?: Pick<ExportService, "status" | "archiveStatus">;
   deletions?: Pick<DeletionRepository, "status" | "statusDeadline">;
@@ -87,6 +89,12 @@ export class StatusResources {
       );
     }
     const context = await financeContext(identity, auth, selector.householdId);
+    if (selector.kind === "spending") {
+      if (!this.services.reports) throw new ServiceUnavailableException();
+      const { status, nextChangeAt } =
+        await this.services.reports.observeCurrent(context);
+      return this.snapshot(token, context, status, nextChangeAt);
+    }
     if (selector.kind === "wealth") {
       if (!this.services.wealth) throw new ServiceUnavailableException();
       const { summary, nextChangeAt } = await this.services.wealth.observe(

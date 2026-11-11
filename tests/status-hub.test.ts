@@ -1,4 +1,5 @@
 import { expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
 import {
   StatusEventHub,
   type StatusHubCallbacks,
@@ -54,5 +55,40 @@ it("bounds active stream memory and restores capacity after unsubscribe", async 
   expect(() => hub.subscribe(vi.fn(), vi.fn())).toThrow();
   stops[0]?.();
   expect(() => hub.subscribe(vi.fn(), vi.fn())).not.toThrow();
+  await hub.close();
+});
+
+it("routes only matching spending hints at full observer capacity", async () => {
+  let callbacks: StatusHubCallbacks | undefined;
+  const hub = new StatusEventHub((value) => {
+    callbacks = value;
+    return { close: async () => {} };
+  });
+  callbacks?.onReady();
+  const householdId = "e237d3d7-236f-4ec3-8454-c4e5504d397f";
+  const matching = vi.fn(),
+    unrelated = vi.fn(),
+    legacy = vi.fn();
+  hub.forSpending(householdId).subscribe(matching, vi.fn());
+  for (let i = 0; i < 254; i++)
+    hub
+      .forSpending(`00000000-0000-4000-8000-${String(i).padStart(12, "0")}`)
+      .subscribe(unrelated, vi.fn());
+  hub.subscribe(legacy, vi.fn());
+  const scope = createHash("sha256")
+    .update(`joint.spending:${householdId}`)
+    .digest("hex");
+  callbacks?.onSpendingWake(scope);
+  expect(matching).toHaveBeenCalledOnce();
+  expect(unrelated).not.toHaveBeenCalled();
+  expect(legacy).not.toHaveBeenCalled();
+  callbacks?.onWake();
+  expect(legacy).toHaveBeenCalledOnce();
+  expect(matching).toHaveBeenCalledOnce();
+  expect(unrelated).not.toHaveBeenCalled();
+  callbacks?.onSpendingWake("");
+  expect(matching).toHaveBeenCalledTimes(2);
+  expect(unrelated).toHaveBeenCalledTimes(254);
+  expect(legacy).toHaveBeenCalledOnce();
   await hub.close();
 });

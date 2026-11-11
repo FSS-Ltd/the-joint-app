@@ -28,6 +28,7 @@ export async function readNativeStatusStream(
     selector.kind !== "accounts" &&
     selector.kind !== "wealth" &&
     selector.kind !== "transactions" &&
+    selector.kind !== "spending" &&
     selector.kind !== "import" &&
     selector.kind !== "export" &&
     selector.kind !== "archive-export" &&

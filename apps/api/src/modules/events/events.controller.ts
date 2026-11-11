@@ -10,12 +10,12 @@ import {
 } from "@nestjs/common";
 import { statusSubscriptionSchema } from "@joint/contracts";
 import { validateInput } from "../../http-input.js";
-import type { StatusEventSource } from "./status-observer.js";
+import type { StatusEventHub } from "./status-hub.js";
 import type { StatusResources } from "./status-resources.js";
 import { openStatusStream } from "./status-stream.js";
 
 export function createEventsController(services?: {
-  source: StatusEventSource;
+  source: Pick<StatusEventHub, "subscribe" | "forSpending">;
   resources: Pick<StatusResources, "read">;
 }): Type<unknown> {
   @Controller("v1/events")
@@ -29,7 +29,10 @@ export function createEventsController(services?: {
       if (!services) throw new ServiceUnavailableException();
       const selector = validateInput(statusSubscriptionSchema, query);
       await openStatusStream(response, {
-        source: services.source,
+        source:
+          selector.kind === "spending"
+            ? services.source.forSpending(selector.householdId)
+            : services.source,
         read: () => services.resources.read(selector, auth),
       });
     }

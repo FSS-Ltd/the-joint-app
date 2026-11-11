@@ -52,8 +52,15 @@ export const reportAccountSchema = z
     coverage: accountCoverageSchema,
   })
   .strict();
+export const spendingReportMonthSchema = z.union([
+  monthSchema,
+  z.literal("current"),
+]);
 export const spendingQuerySchema = z
-  .object({ month: monthSchema, accountIds: scopeQuerySchema.optional() })
+  .object({
+    month: spendingReportMonthSchema,
+    accountIds: scopeQuerySchema.optional(),
+  })
   .strict();
 export const categoryQuerySchema = z
   .object({ accountIds: scopeQuerySchema.optional() })

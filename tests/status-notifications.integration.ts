@@ -135,10 +135,9 @@ it("returns a receipt deadline only for the matching unexpired opaque receipt ha
   expect(await deadline(receiptId, "c".repeat(64))).toBeInstanceOf(Date);
   expect(await deadline(randomUUID(), "c".repeat(64))).toBeNull();
   expect(await deadline(receiptId, "d".repeat(64))).toBeNull();
-  await owner.deletionRequest.update({
-    where: { id: receiptId },
-    data: { statusExpiresAt: new Date(Date.now() - 1) },
-  });
+  await owner.$executeRaw`UPDATE app."DeletionRequest"
+    SET "statusExpiresAt"=clock_timestamp() - interval '1 second'
+    WHERE id=${receiptId}::uuid`;
   expect(await deadline(receiptId, "c".repeat(64))).toBeNull();
   await expect(
     runtime.$queryRaw`SELECT "statusExpiresAt" FROM app."DeletionRequest" WHERE id=${receiptId}::uuid`,

@@ -9,7 +9,7 @@ import {
 } from "../packages/contracts/src/index.js";
 import * as repository from "../apps/api/src/modules/wealth/wealth.repository.js";
 import { WealthService } from "../apps/api/src/modules/wealth/wealth.service.js";
-import { readWealthClock } from "../apps/api/src/modules/wealth/wealth-clock.js";
+import { readLondonClock } from "../apps/api/src/london-clock.js";
 import { StatusResources } from "../apps/api/src/modules/events/status-resources.js";
 import {
   createStatusFixture,
@@ -346,23 +346,35 @@ it("returns the database London date and next midnight from the same evaluation 
     stream = await open();
   try {
     const observation = await observed.mock.results[0]?.value;
-    const clock = await readWealthClock(fixture.owner);
+    const clock = await readLondonClock(fixture.owner);
     expect(observation.summary.asOfDate).toBe(clock.today);
-    expect(observation.nextChangeAt).toBe(clock.nextChangeAt.getTime());
+    expect(observation.nextChangeAt).toBe(clock.nextMidnightAt.getTime());
   } finally {
     await stream.close();
     observed.mockRestore();
   }
 });
 it.each([
-  ["2026-03-29T00:30:00.000Z", "2026-03-29", "2026-03-29T23:00:00.000Z", 22.5],
-  ["2026-10-25T00:30:00.000Z", "2026-10-25", "2026-10-26T00:00:00.000Z", 23.5],
+  [
+    "2026-03-29T00:30:00.000Z",
+    "2026-03-29",
+    "2026-03-29T23:00:00.000Z",
+    "2026-03-31T23:00:00.000Z",
+    22.5,
+  ],
+  [
+    "2026-10-25T00:30:00.000Z",
+    "2026-10-25",
+    "2026-10-26T00:00:00.000Z",
+    "2026-11-01T00:00:00.000Z",
+    23.5,
+  ],
 ] as const)(
   "pins independent London DST answers at %s",
-  async (instant, today, deadline, remainingHours) => {
+  async (instant, today, deadline, nextMonth, remainingHours) => {
     // Execute production SQL, binding only its database clock calls to a fixed instant.
     // No date/deadline expression or expected answer comes from a test SQL copy.
-    const clock = await readWealthClock({
+    const clock = await readLondonClock({
       $queryRaw<T>(query: TemplateStringsArray): Promise<T> {
         expect(query).toHaveLength(1);
         const fragments = query
@@ -381,7 +393,8 @@ it.each([
     });
     expect(clock.today).toBe(today);
     expect(clock.now.toISOString()).toBe(instant);
-    expect(clock.nextChangeAt.toISOString()).toBe(deadline);
+    expect(clock.nextMidnightAt.toISOString()).toBe(deadline);
+    expect(clock.nextMonthAt.toISOString()).toBe(nextMonth);
     expect((Date.parse(deadline) - Date.parse(instant)) / 3600000).toBe(
       remainingHours,
     );
