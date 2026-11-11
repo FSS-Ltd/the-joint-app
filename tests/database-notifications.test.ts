@@ -23,7 +23,8 @@ vi.mock("../packages/database/node_modules/pg/esm/index.mjs", () => ({
 
 it("uses a fixed status topic, accepts only empty matching hints and ignores delivery after close", async () => {
   const ready = vi.fn(),
-    wake = vi.fn();
+    wake = vi.fn(),
+    spending = vi.fn();
   const subscription = createDatabaseNotifications({
     topic: "status",
     connectionString: "postgresql://synthetic.invalid/test",
@@ -31,9 +32,12 @@ it("uses a fixed status topic, accepts only empty matching hints and ignores del
     retryMaxMs: 1000,
     onReady: ready,
     onWake: wake,
+    onSpendingWake: spending,
   });
   await vi.waitFor(() => expect(ready).toHaveBeenCalledTimes(1));
-  expect(fixture.query).toHaveBeenCalledWith("LISTEN joint_status_wakeup");
+  expect(fixture.query).toHaveBeenCalledWith(
+    "LISTEN joint_status_wakeup; LISTEN joint_spending_wakeup",
+  );
   const notification = fixture.callbacks.get("notification");
   notification?.({ channel: "joint_worker_wakeup", payload: "" });
   notification?.({
@@ -43,7 +47,18 @@ it("uses a fixed status topic, accepts only empty matching hints and ignores del
   expect(wake).not.toHaveBeenCalled();
   notification?.({ channel: "joint_status_wakeup", payload: "" });
   expect(wake.mock.calls).toEqual([[]]);
+  notification?.({
+    channel: "joint_spending_wakeup",
+    payload: "private-untrusted",
+  });
+  expect(spending).not.toHaveBeenCalled();
+  notification?.({ channel: "joint_spending_wakeup", payload: "a".repeat(64) });
+  notification?.({ channel: "joint_spending_wakeup", payload: "" });
+  expect(spending.mock.calls).toEqual([["a".repeat(64)], [""]]);
+  expect(wake).toHaveBeenCalledTimes(1);
   await subscription.close();
   notification?.({ channel: "joint_status_wakeup", payload: "" });
+  notification?.({ channel: "joint_spending_wakeup", payload: "" });
   expect(wake).toHaveBeenCalledTimes(1);
+  expect(spending).toHaveBeenCalledTimes(2);
 });

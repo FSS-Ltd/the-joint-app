@@ -120,7 +120,9 @@ it("refreshes after committed spending and cap edits and keeps totals-only views
       .catch(() => {});
     const source = expense(today, -1250n);
     const wake = vi.fn();
-    const unsubscribe = fixture.hub.subscribe(wake, () => {});
+    const unsubscribe = fixture.hub
+      .forSpending(householdId)
+      .subscribe(wake, () => {});
     try {
       await expect(
         owner.$transaction(async (tx) => {
@@ -163,7 +165,9 @@ it("refreshes after committed spending and cap edits and keeps totals-only views
     if (!budget) throw new Error("Fixture cap unavailable");
     expect(budget?.lines[0]?.limit.amountMinor).toBe("3000");
     const wakeOnNoop = vi.fn();
-    const stop = fixture.hub.subscribe(wakeOnNoop, () => {});
+    const stop = fixture.hub
+      .forSpending(householdId)
+      .subscribe(wakeOnNoop, () => {});
     try {
       await owner.$executeRaw`UPDATE app."BudgetLine" SET "amountMinor"="amountMinor" WHERE "budgetId"=${budget.id}::uuid`;
       await delay(150);
@@ -185,7 +189,7 @@ it("refreshes after committed spending and cap edits and keeps totals-only views
   }
 });
 
-it("keeps wakeups bounded across households without running spending aggregates", async () => {
+it("wakes only the matching household without running spending aggregates", async () => {
   const { owner, otherHouseholdId, outsider } = fixture;
   const { today } = await readLondonClock(owner);
   await owner.account.create({
@@ -229,13 +233,11 @@ it("keeps wakeups bounded across households without running spending aggregates"
     observations.mockClear();
     await owner.transaction.create({ data: expense(today, -1320n) });
     expect(await first.next()).toBe(changed);
-    await vi.waitFor(() => expect(observations).toHaveBeenCalledTimes(2));
-    const otherIndex = observations.mock.calls.findIndex(
-      ([context]) => context.householdId === otherHouseholdId,
+    await delay(150);
+    expect(observations).toHaveBeenCalledTimes(1);
+    expect(observations.mock.calls[0]?.[0].householdId).toBe(
+      fixture.householdId,
     );
-    expect(
-      (await observations.mock.results[otherIndex]?.value)?.status,
-    ).toEqual(previous);
     expect(aggregate).not.toHaveBeenCalled();
     expect(provenance).not.toHaveBeenCalled();
   } finally {
@@ -244,5 +246,30 @@ it("keeps wakeups bounded across households without running spending aggregates"
     observations.mockRestore();
     aggregate.mockRestore();
     provenance.mockRestore();
+  }
+});
+
+it("invalidates a spending stream after its registry session is revoked", async () => {
+  const mapping = await fixture.owner.clerkSession.findUniqueOrThrow({
+    where: {
+      issuer_externalSessionId: {
+        issuer: fixture.provider.environment.CLERK_ISSUER,
+        externalSessionId: fixture.actor.external.sessionId,
+      },
+    },
+  });
+  const frames = statusSignals(
+    await fixture.request(query(), undefined, AbortSignal.timeout(5000)),
+  );
+  try {
+    expect(await frames.next()).toBe("event: change\ndata: {}");
+    await fixture.owner.sessionRegistry.update({
+      where: { id: mapping.internalSessionId },
+      data: { revokedAt: new Date() },
+    });
+    expect(await frames.next()).toBe("event: invalidate\ndata: {}");
+    expect(await frames.next()).toBeNull();
+  } finally {
+    await frames.close();
   }
 });

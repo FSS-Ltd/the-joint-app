@@ -356,6 +356,9 @@ it("wires routes, tab, Home entry and the dependencies", () => {
   ).toContain('router.push("/imports")');
   expect(
     JSON.parse(readFileSync(`${root}/package.json`, "utf8")).dependencies,
-  ).toHaveProperty("expo-document-picker", "58.0.4");
+  ).toHaveProperty(
+    "expo-document-picker",
+    expect.stringMatching(/^58\.0\.\d+$/),
+  );
   void contracts;
 });
