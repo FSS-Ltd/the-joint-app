@@ -28,7 +28,7 @@ export function GoalsScreen(): React.JSX.Element {
     <Screen scrollable>
       <BrandMark compact />
       <AppText variant="heading" tone="inverse" accessibilityRole="header">
-        Goals & Wealth
+        Household goals
       </AppText>
 
       <NativeActions>

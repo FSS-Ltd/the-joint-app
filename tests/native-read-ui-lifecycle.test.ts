@@ -83,7 +83,7 @@ it("uses the captured summary selection and preserves explicit scope recovery af
     [id],
     expect.any(AbortSignal),
   );
-  expect(text(render())).toContain("Explicit selection");
+  expect(text(render())).toContain("Selected accounts");
   f.h.focus(false);
   expect(elements(render()).some((e) => e.type === "summary")).toBe(false);
   f.close();

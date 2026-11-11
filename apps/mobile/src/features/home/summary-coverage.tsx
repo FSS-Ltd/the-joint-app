@@ -13,9 +13,26 @@ const exclusions = {
 } satisfies Record<WealthSummaryDto["excludedReasons"][number], string>;
 export function SummaryCoverage({
   summary,
+  concise = false,
 }: {
   summary: WealthSummaryDto;
+  concise?: boolean;
 }): React.JSX.Element {
+  if (concise) {
+    const dates = summary.valuations.map(({ asOfDate }) => asOfDate).sort();
+    const earliest = dates[0];
+    const latest = dates.at(-1);
+    return (
+      <AppText tone="secondary">
+        Summary date: {displayDate(summary.asOfDate)}
+        {earliest &&
+          latest &&
+          ` · Manual valuations: ${displayDate(earliest)}${earliest === latest ? "" : ` to ${displayDate(latest)}`}`}
+        {summary.excludedReasons.length > 0 &&
+          ` · Excluded: ${summary.excludedReasons.map((reason) => exclusions[reason]).join(", ")}`}
+      </AppText>
+    );
+  }
   return (
     <>
       <AppText>

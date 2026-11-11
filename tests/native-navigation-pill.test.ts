@@ -55,7 +55,12 @@ it("uses the native selected button and reserves safe navigation space as labels
   const tabs = Object.assign("tabs", { Screen: "tab" });
   const Workspace = load("navigation/workspace-layout.tsx", {
     "expo-router": { Tabs: tabs },
-    "react-native": { useWindowDimensions: () => ({ fontScale }) },
+    "react-native": {
+      useWindowDimensions: () => ({ fontScale, width: 390 }),
+      StyleSheet: { create: <T>(styles: T) => styles },
+      View: "view",
+    },
+    "react-native-svg": { default: "svg", Path: "path" },
     "react-native-safe-area-context": {
       useSafeAreaInsets: () => ({ top: 0, bottom: 34, left: 0, right: 0 }),
     },
@@ -76,13 +81,18 @@ it("uses the native selected button and reserves safe navigation space as labels
     return elements(tree).find((e) => e.type === tabs)!.props.screenOptions as {
       tabBarButton: (props: unknown) => unknown;
       tabBarAllowFontScaling: boolean;
-      tabBarStyle: { height: number; backgroundColor: string };
+      tabBarStyle: {
+        height: number;
+        backgroundColor: string;
+        marginBottom: number;
+      };
     };
   };
   const normal = options();
   expect(normal.tabBarAllowFontScaling).toBe(true);
-  expect(normal.tabBarStyle.height).toBeGreaterThanOrEqual(44 + 34);
-  expect(normal.tabBarStyle.backgroundColor).toBe(colors.forest);
+  expect(normal.tabBarStyle.height).toBeGreaterThanOrEqual(44);
+  expect(normal.tabBarStyle.marginBottom).toBeGreaterThanOrEqual(34);
+  expect(normal.tabBarStyle.backgroundColor).toBe(colors.action);
   expect(
     elements(normal.tabBarButton({ "aria-selected": true }))[0],
   ).toMatchObject({
