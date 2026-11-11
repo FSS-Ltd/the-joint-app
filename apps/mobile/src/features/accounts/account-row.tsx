@@ -3,7 +3,13 @@ import { formatMoney, isLiabilityKind } from "@joint/domain";
 import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import { AppText } from "@/components/app-text";
 import { colors, corners, spacing } from "@/theme/tokens";
-import { displayDate, grantLabels, ownerLabel } from "./account-labels";
+import {
+  displayDate,
+  grantLabels,
+  kinds,
+  liquidityLabels,
+  ownerLabel,
+} from "./account-labels";
 
 export function AccountRow({
   account,
@@ -12,7 +18,8 @@ export function AccountRow({
   account: AccountResponse;
   onOpen(): void;
 }): React.JSX.Element {
-  const { fontScale } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.3;
   const valuation = account.latestValuation;
   const sharing =
     account.ownership === "OWNED" && account.sharing
@@ -26,14 +33,17 @@ export function AccountRow({
       onPress={onOpen}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
-      <View style={[styles.content, fontScale > 1.3 && styles.stacked]}>
-        <View style={[styles.identity, fontScale > 1.3 && styles.stackedItem]}>
+      <View style={[styles.content, stacked && styles.stacked]}>
+        <View style={[styles.identity, stacked && styles.stackedItem]}>
           <AppText variant="title">{account.label}</AppText>
           <AppText tone="secondary">
             {ownerLabel(account)} · {sharing}
           </AppText>
+          <AppText tone="secondary">
+            {kinds[account.kind]} · {liquidityLabels[account.liquidity]}
+          </AppText>
         </View>
-        <View style={[styles.value, fontScale > 1.3 && styles.stackedItem]}>
+        <View style={[styles.value, stacked && styles.stackedItem]}>
           {valuation ? (
             <>
               <AppText variant="title">{formatMoney(valuation.money)}</AppText>
@@ -41,6 +51,11 @@ export function AccountRow({
                 {isLiabilityKind(account.kind)
                   ? "Total outstanding debt"
                   : "Total account value"}
+              </AppText>
+              <AppText tone="secondary">
+                {valuation.adultMoney
+                  ? `Adult portion: ${formatMoney(valuation.adultMoney)}`
+                  : "Adult portion unknown"}
               </AppText>
               <AppText tone="secondary">
                 Manual valuation · {displayDate(valuation.asOfDate)}

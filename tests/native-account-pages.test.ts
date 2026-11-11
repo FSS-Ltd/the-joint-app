@@ -247,6 +247,30 @@ it("keeps an account row actionable with its real ownership and valuation labels
   expect(JSON.stringify(row)).toContain("Private");
   expect(JSON.stringify(row)).toContain("No valuation recorded");
   expect(JSON.stringify(row)).toContain('"flexDirection":"column"');
+  expect(JSON.stringify(row)).toContain("Available");
+  const valuation = {
+    id,
+    money: { amountMinor: "82000", currency: "GBP" as const },
+    adultMoney: { amountMinor: "40000", currency: "GBP" as const },
+    asOfDate: "2026-11-10",
+    recordedAt: "2026-11-10T12:00:00.000Z",
+    complete: false,
+    source: "MANUAL" as const,
+  };
+  const owned = account({
+    legalOwnerKind: "JOINT_ADULT",
+    latestValuation: valuation,
+  });
+  expect(JSON.stringify(Row({ account: owned, onOpen }))).toContain(
+    "Adult portion: £400.00",
+  );
+  expect(JSON.stringify(Row({ account: owned, onOpen }))).toContain("£820.00");
+  const unknown = account({
+    latestValuation: { ...valuation, adultMoney: null },
+  });
+  expect(JSON.stringify(Row({ account: unknown, onOpen }))).toContain(
+    "Adult portion unknown",
+  );
 });
 
 function loadScreen() {
