@@ -5,10 +5,17 @@ export function categoryActual(
   report: SpendingReport,
   category: string | null,
 ): AggregateMoney {
+  return categorySpending(report, category).spending;
+}
+
+export function categorySpending(
+  report: SpendingReport,
+  category: string | null,
+): { spending: AggregateMoney; count: number } {
   return (
     report.summary?.categories.find(
       (line) => !line.grouped && line.category === category,
-    )?.spending ?? { amountMinor: "0", currency: "GBP" }
+    ) ?? { spending: { amountMinor: "0", currency: "GBP" }, count: 0 }
   );
 }
 

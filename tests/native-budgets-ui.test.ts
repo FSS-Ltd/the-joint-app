@@ -31,6 +31,7 @@ import {
   press,
 } from "./fixtures/native-source-harness.js";
 import { householdId, id, load, text } from "./fixtures/native-read-ui.js";
+import { deferred } from "./fixtures/native-stream.js";
 
 const baseReport: SpendingReport = {
   month: "2026-10",
@@ -252,6 +253,44 @@ describe("month-helpers", () => {
   });
 });
 
+it("uses the shared stacked month actions at large text sizes", () => {
+  let fontScale = 1;
+  const { MonthSelector } = load("budgets/month-selector.tsx", {
+    "@expo/ui": { Host: "host" },
+    "react-native": {
+      View: "view",
+      StyleSheet: { create: <T>(styles: T) => styles },
+      useWindowDimensions: () => ({ width: 390, fontScale }),
+    },
+    "./month-helpers": {
+      currentMobileMonth: () => "2026-11",
+      formatMonthLabel,
+    },
+  }) as {
+    MonthSelector: (props: {
+      month: string;
+      onPrevious: () => void;
+      onNext: () => void;
+    }) => unknown;
+  };
+  const render = () =>
+    elements(
+      MonthSelector({
+        month: "2026-11",
+        onPrevious: vi.fn(),
+        onNext: vi.fn(),
+      }),
+    );
+  expect(render().filter((node) => node.type === "host")).toHaveLength(2);
+  fontScale = 1.6;
+  const stacked = render();
+  expect(stacked.some((node) => node.type === "actions")).toBe(true);
+  expect(stacked.some((node) => node.type === "host")).toBe(false);
+  expect(
+    stacked.find((node) => node.props.label === "Next month")?.props.disabled,
+  ).toBe(true);
+});
+
 describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests", () => {
   it("renders CapCard with progressbar role, spent/cap value text, overspend copy, and net refund notice", () => {
     const h = hookHarness();
@@ -324,6 +363,18 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
     expect(text(partial)).toContain("£18.00 left based on recorded spending");
     expect(text(partial)).toContain("Partial coverage");
     expect(text(partial)).not.toContain("Within cap");
+    const partialOver = CapCard({
+      line: {
+        category: "Groceries",
+        limit: { amountMinor: "5000", currency: "GBP" },
+      },
+      actual: { amountMinor: "5800", currency: "GBP" },
+      partialCoverage: true,
+    });
+    expect(text(partialOver)).toContain(
+      "£8.00 over limit based on recorded spending",
+    );
+    expect(text(partialOver)).not.toContain("less to put toward saving");
 
     const refundTree = CapCard({
       line: {
@@ -342,6 +393,7 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
     const putBudget = vi.fn();
     const onSaved = vi.fn();
     const onReload = vi.fn();
+    const onBack = vi.fn();
     const revoke = vi.fn();
     const reconcile = vi.fn();
     const authority = {
@@ -372,6 +424,7 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
         spending: { putBudget: typeof putBudget };
         onSaved: () => void;
         onReload?: () => void;
+        onBack: () => void;
       }) => unknown;
     };
 
@@ -383,12 +436,25 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
           spending: { putBudget },
           onSaved,
           onReload,
+          onBack,
         }),
       );
 
-    // 1. Successful save
-    putBudget.mockResolvedValueOnce(baseReport.budget);
-    press(render(), "Save budget caps");
+    // Leave is fenced even when a tap races the pending render.
+    const write = deferred<SpendingReport["budget"]>();
+    putBudget.mockReturnValueOnce(write.promise);
+    const idle = render();
+    press(idle, "Save budget caps");
+    press(idle, "Back to spending plan");
+    press(idle, "Save budget caps");
+    expect(onBack).not.toHaveBeenCalled();
+    expect(putBudget).toHaveBeenCalledTimes(1);
+    expect(
+      elements(render()).find(
+        (node) => node.props.label === "Back to spending plan",
+      )?.props.disabled,
+    ).toBe(true);
+    write.resolve(baseReport.budget);
     await Promise.resolve();
     expect(putBudget).toHaveBeenCalledWith(
       householdId,
@@ -406,6 +472,8 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
       expect.any(AbortSignal),
     );
     expect(onSaved).toHaveBeenCalledTimes(1);
+    press(render(), "Back to spending plan");
+    expect(onBack).toHaveBeenCalledTimes(1);
 
     // 2. 412 conflict shows Reload budget action
     putBudget.mockRejectedValueOnce(
@@ -443,25 +511,32 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
     expect(revoke).toHaveBeenCalledWith("actor-1");
   });
 
-  it("renders BudgetScreen empty-scope guidance and month-end callout", () => {
+  it("updates the current month from the live report and pins the editor to the displayed month", () => {
     const h = hookHarness();
     const push = vi.fn();
-    let reportState: {
-      kind: "loading" | "ready" | "error";
-      value?: SpendingReport;
-      message?: string;
-      visible: boolean;
-      reload: () => void;
-    } = {
+    let live: SpendingReport = { ...baseReport, scope: [] };
+    const reload = vi.fn();
+    const readCurrent = vi.fn(() => ({
       kind: "ready",
-      value: { ...baseReport, scope: [] },
-      visible: true,
-      reload: vi.fn(),
-    };
+      value: live,
+      retry: reload,
+    }));
+    const readHistory = vi.fn((month: string) => ({
+      kind: "ready",
+      value: { ...baseReport, month },
+      reload,
+    }));
 
-    const { BudgetScreen, CapList } = load("budgets/budget-screen.tsx", {
-      react: h.react,
+    const capsModule = load("budgets/cap-list.tsx", {
       "expo-router": { useRouter: () => ({ push }) },
+      "./cap-card": { CapCard: "cap-card" },
+      "./savings-impact-card": { SavingsImpactCard: "savings-impact-card" },
+      "./recurring-card": { RecurringCard: "recurring-card" },
+      "./baselines-card": { BaselinesCard: "baselines-card" },
+      "./cap-math": load("budgets/cap-math.ts"),
+    });
+    const { BudgetScreen } = load("budgets/budget-screen.tsx", {
+      react: h.react,
       "../finance/context": {
         useNativeFinance: () => ({
           authority: {
@@ -475,10 +550,6 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
         }),
       },
       "../finance/scope": { financeAuthorityKey: () => "auth-1" },
-      "./cap-card": { CapCard: "cap-card" },
-      "./savings-impact-card": { SavingsImpactCard: "savings-impact-card" },
-      "./recurring-card": { RecurringCard: "recurring-card" },
-      "./baselines-card": { BaselinesCard: "baselines-card" },
       "./use-recurring-data": {
         useRecurringData: () => ({
           recurring: null,
@@ -487,42 +558,83 @@ describe("CapCard & BudgetEditor & BudgetScreen source-harness component tests",
         }),
       },
       "./budget-editor": { BudgetEditor: "budget-editor" },
-      "./cap-math": load("budgets/cap-math.ts"),
+      "./cap-list": capsModule,
       "./month-helpers": load("budgets/month-helpers.ts"),
       "./month-selector": { MonthSelector: "month-selector" },
-      "./use-spending-report": { useSpendingReport: () => reportState },
+      "./use-current-spending-report": {
+        useCurrentSpendingReport: readCurrent,
+      },
+      "./use-spending-report": { useSpendingReport: readHistory },
     }) as {
       BudgetScreen: () => { type: () => unknown };
-      CapList: (props: Record<string, unknown>) => unknown;
     };
 
-    // Empty scope renders "Your picture starts with an account" and navigates to /home/accounts
+    const renderChild = (tree: unknown, name: string): unknown => {
+      const child = elements(tree).find(
+        (node) => typeof node.type === "function" && node.type.name === name,
+      );
+      if (!child || typeof child.type !== "function")
+        throw new Error(`Missing ${name}`);
+      return child.type(child.props);
+    };
     const root = BudgetScreen();
-    const screenTree = h.render(root.type);
-    const capListNode = elements(screenTree).find((e) => e.type === CapList);
-    expect(capListNode).toBeDefined();
-    const emptyTree = CapList(capListNode!.props as Record<string, unknown>);
+    const render = () => h.render(root.type);
+    const renderCurrentMonth = () =>
+      renderChild(renderChild(render(), "CurrentBudget"), "BudgetMonth");
+    const caps = (view: unknown) =>
+      renderChild(renderChild(view, "BudgetReportState"), "CapList");
+    const emptyTree = caps(renderCurrentMonth());
     expect(text(emptyTree)).toContain("Your picture starts with an account");
     press(emptyTree, "Open accounts");
     expect(push).toHaveBeenLastCalledWith("/home/accounts");
 
-    // Non-empty scope renders CapCard, month-end callout, and BudgetEditor
-    reportState = {
-      kind: "ready",
-      value: baseReport,
-      visible: true,
-      reload: vi.fn(),
-    };
-    const readyScreenTree = h.render(root.type);
-    const readyCapListNode = elements(readyScreenTree).find(
-      (e) => e.type === CapList,
-    );
-    const readyTree = CapList(
-      readyCapListNode!.props as Record<string, unknown>,
-    );
-    expect(text(readyTree)).toContain("Review the month before reallocating");
+    const findMonth = (tree: unknown) =>
+      elements(tree).find((node) => node.type === "month-selector");
+    expect(findMonth(renderCurrentMonth())?.props.month).toBe("2026-10");
+    live = { ...baseReport, month: "2026-11" };
+    const readyScreenTree = renderCurrentMonth();
+    const selector = findMonth(readyScreenTree);
+    expect(selector?.props.month).toBe("2026-11");
+    const readyTree = caps(readyScreenTree);
+    expect(text(readyTree)).toContain("Review the month");
+    const cap = elements(readyTree).find((e) => e.type === "cap-card");
+    expect(cap?.props).toMatchObject({
+      actual: { amountMinor: "3200", currency: "GBP" },
+      partialCoverage: true,
+    });
+    expect(text(cap?.props.children)).toContain("recorded spending");
+    expect(text(cap?.props.children)).not.toContain("transactions");
+    expect(
+      elements(readyTree).find((e) => e.type === "savings-impact-card")?.props,
+    ).toMatchObject({
+      capLines: [{ actualMinor: "3200", limitMinor: "5000" }],
+    });
     press(readyTree, "Review this month");
-    expect(push).toHaveBeenLastCalledWith("/review");
+    expect(push).toHaveBeenLastCalledWith({
+      pathname: "/review",
+      params: { month: "2026-11" },
+    });
+
+    press(readyTree, "Edit category caps");
+    readCurrent.mockClear();
+    const editing = renderChild(render(), "EditBudget");
+    expect(readHistory).toHaveBeenLastCalledWith("2026-11");
+    expect(readCurrent).not.toHaveBeenCalled();
+    const editor = elements(renderChild(editing, "BudgetReportState")).find(
+      (node) => node.type === "budget-editor",
+    );
+    const back = editor?.props.onBack;
+    if (typeof back !== "function")
+      throw new Error("Missing editor back action");
+    back();
+    expect(findMonth(renderCurrentMonth())?.props.month).toBe("2026-11");
+
+    const previous = selector?.props.onPrevious;
+    if (typeof previous !== "function")
+      throw new Error("Missing previous action");
+    previous();
+    renderChild(render(), "HistoricalBudget");
+    expect(readHistory).toHaveBeenLastCalledWith("2026-10");
   });
 
   it("fences useSpendingReport with useFinanceLifetime, conceals when hidden, revokes on 401, and reconciles on 404", async () => {

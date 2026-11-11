@@ -143,16 +143,20 @@ export function CapCard({
   const status = partialCoverage
     ? "Partial coverage"
     : formatCapStatus(position);
-  const savingImpact = formatSavingImpact(category, position);
+  const savingImpact = partialCoverage
+    ? null
+    : formatSavingImpact(category, position);
   const netRefund = hasNetRefund(actual.amountMinor);
   const isOver = position.status === "over";
   const spentLabel = formatAggregateMoney(actual);
   const limitLabel = formatAggregateMoney(line.limit);
 
   return (
-    <Panel tint={tint} compact={tint === "apricot"}>
+    <Panel tint={tint} compact>
       <View style={styles.header}>
-        <AppText variant="label">{category}</AppText>
+        <AppText variant="title" style={styles.category}>
+          {category}
+        </AppText>
         <AppText
           variant="label"
           tone="secondary"
@@ -197,6 +201,9 @@ export function CapCard({
 }
 
 const styles = StyleSheet.create({
+  category: {
+    flexShrink: 1,
+  },
   header: {
     flexDirection: "row",
     flexWrap: "wrap",

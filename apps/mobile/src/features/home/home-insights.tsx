@@ -8,8 +8,7 @@ import { displayDate } from "../accounts/account-labels";
 import { CapCard } from "../budgets/cap-card";
 import { categoryActual } from "../budgets/cap-math";
 import { formatMonthLabel } from "../budgets/month-helpers";
-import { useNativeFinance } from "../finance/context";
-import { useFinanceResource } from "../finance/use-resource";
+import { useCurrentSpendingReport } from "../budgets/use-current-spending-report";
 import type { SummaryScope } from "./summary-scope";
 
 export function HomeInsights({
@@ -63,22 +62,7 @@ export function HomeInsights({
 }
 
 function HomeCapPreview({ action }: { action: ReactNode }): React.JSX.Element {
-  const finance = useNativeFinance();
-  const result = useFinanceResource(
-    {
-      kind: "spending",
-      householdId:
-        finance.authority?.householdId ??
-        "00000000-0000-4000-8000-000000000000",
-    },
-    (scope, signal) =>
-      finance.spending.readReport(
-        scope.householdId,
-        "current",
-        undefined,
-        signal,
-      ),
-  );
+  const result = useCurrentSpendingReport();
   const report = result.kind === "ready" ? result.value : null;
   const firstCap = report?.budget?.lines[0];
   const latestRecord = report?.provenance.latestRecordDate;

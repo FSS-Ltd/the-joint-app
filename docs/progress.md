@@ -2381,3 +2381,15 @@ Based on the verified PR77 merge. Follow the approved [Activity and CSV frame](d
 The iOS 26.5 simulator verified a populated account, filter disclosure, CSV import history, the worker-generated 2 valid / 0 duplicate / 1 rejected counts and Cancel returning to the existing review. The search and filter action share a row at standard text size, and the confirmation count cards stack on smaller widths or with large text. Physical-device and assistive-technology testing remain open.
 
 The local preview sign-in resumed after restoring the documented native Clerk audience setting in the ignored API preview environment. In the disposable account, Clerk accepted authenticator sign-in and the app still required a second code. The live provider reported backup codes enabled, so the signed second-factor age alone could not establish that TOTP was used.
+
+[PR78](https://github.com/FSS-Ltd/the-joint-app/pull/78) merged at `0b1bb46293cc1b4c3ee56adcfd36a0a4af7bf8be`. Both independent reviews passed on `120679ad7f75e4bdb679741f2b1438c469f63c8b`. Foundation and Native bundle checks passed in [run 43110363889](https://github.com/FSS-Ltd/the-joint-app/actions/runs/43110363889) on test merge `d45dd210dadd29bf6c793decc3ab3dbe8ecefd25`. The simulator also passed the Activity-to-CSV flow at Accessibility Medium with scrolling.
+
+## Single-code provider investigation
+
+With disposable Clerk test identities, the documented audit lookup exposed exact sign-in TOTP strategy, actor and resulting session after about 28 seconds in a fresh test. Enrollment evidence included the acting session and enrolled factor after about 11 seconds. The provider's user update timestamp advanced on enrollment and deletion, but a Backend API secret replacement left it unchanged while TOTP stayed enabled. The Backend API also refused to verify a code against an unfinished enrollment. Historical evidence by itself cannot establish that it represents the current factor. The independent design review requires a trustworthy factor generation or reset watermark before accepting historical proof. The live access checks are unchanged.
+
+## STITCH4 — Native Caps
+
+Based on the verified PR78 merge. Follow the approved [Caps frame](design/wireframes/caps-mobile.png) with compact cap comparisons, recorded spending-entry counts, a qualified saving-plan variance and an explicit month-end review action. Split transactions can contribute multiple spending entries. Keep incomplete coverage visible and avoid a saving amount estimate from partial spending. The Caps screen opens Monthly Review for the selected report month.
+
+The independent reviews identified one-shot current-month loading and ambiguous entry counts. The current view now shares Home's scoped spending subscription and server-controlled London rollover. The editor opens an explicitly selected month using the existing versioned write and readback, so a live refresh cannot overwrite an in-progress draft. Its back action and duplicate submissions are blocked while a save is awaiting its outcome.

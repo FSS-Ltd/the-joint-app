@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
-import type { SpendingReport } from "@joint/contracts";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { monthSchema, type SpendingReport } from "@joint/contracts";
 import { chartRatio, formatAggregateMoney } from "@joint/domain/cash-flow";
 import { Screen } from "@/components/screen";
 import { AppText } from "@/components/app-text";
@@ -243,15 +243,26 @@ export function CashBridgeSection({
 
 export function MonthlyReviewScreen(): React.JSX.Element | null {
   const { authority } = useNativeFinance();
+  const requested = monthSchema.safeParse(useLocalSearchParams().month);
+  const current = currentMobileMonth();
+  const initialMonth =
+    requested.success && requested.data <= current ? requested.data : current;
   return authority ? (
-    <MonthlyReviewContent key={financeAuthorityKey(authority)} />
+    <MonthlyReviewContent
+      key={`${financeAuthorityKey(authority)}:${requested.success ? requested.data : ""}`}
+      initialMonth={initialMonth}
+    />
   ) : null;
 }
 
-export function MonthlyReviewContent(): React.JSX.Element | null {
+export function MonthlyReviewContent({
+  initialMonth,
+}: {
+  initialMonth: string;
+}): React.JSX.Element | null {
   const router = useRouter();
   const { authority, spending } = useNativeFinance();
-  const [month, setMonth] = useState(currentMobileMonth);
+  const [month, setMonth] = useState(initialMonth);
   const result = useSpendingReport(month);
   const goalsResult = useGoalsData();
 

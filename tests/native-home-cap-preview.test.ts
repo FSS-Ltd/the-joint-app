@@ -23,12 +23,7 @@ it("reads the current report through the spending subscription and labels its re
     },
     retry,
   }));
-  const { HomeInsights: loadedHomeInsights } = load("home/home-insights.tsx", {
-    "expo-router": { useRouter: () => ({ push: vi.fn() }) },
-    "../accounts/account-labels": { displayDate: vi.fn() },
-    "../budgets/cap-card": { CapCard: "cap" },
-    "../budgets/cap-math": { categoryActual: vi.fn() },
-    "../budgets/month-helpers": load("budgets/month-helpers.ts"),
+  const currentSpending = load("budgets/use-current-spending-report.ts", {
     "../finance/context": {
       useNativeFinance: () => ({
         authority: { householdId },
@@ -36,6 +31,14 @@ it("reads the current report through the spending subscription and labels its re
       }),
     },
     "../finance/use-resource": { useFinanceResource: resource },
+  });
+  const { HomeInsights: loadedHomeInsights } = load("home/home-insights.tsx", {
+    "expo-router": { useRouter: () => ({ push: vi.fn() }) },
+    "../accounts/account-labels": { displayDate: vi.fn() },
+    "../budgets/cap-card": { CapCard: "cap" },
+    "../budgets/cap-math": { categoryActual: vi.fn() },
+    "../budgets/month-helpers": load("budgets/month-helpers.ts"),
+    "../budgets/use-current-spending-report": currentSpending,
   });
   const HomeInsights = loadedHomeInsights as (props: {
     scope: unknown;

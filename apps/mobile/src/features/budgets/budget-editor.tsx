@@ -38,12 +38,14 @@ export function BudgetEditor({
   spending,
   onSaved,
   onReload,
+  onBack,
 }: {
   report: SpendingReport;
   householdId: string;
   spending: SpendingApi;
   onSaved: () => void;
   onReload?: () => void;
+  onBack: () => void;
 }): React.JSX.Element | null {
   const finance = useNativeFinance();
   const authority = finance.authority;
@@ -98,7 +100,7 @@ export function BudgetEditor({
   }
 
   async function submit(): Promise<void> {
-    if (!authority || !finance.isCurrent(authority) || pending) return;
+    if (!authority || !finance.isCurrent(authority) || abortRef.current) return;
     setError("");
     const validationError = validateBudgetLines(lines);
     if (validationError) {
@@ -110,7 +112,6 @@ export function BudgetEditor({
       report.scope.map((a) => a.id),
     );
     const version = report.budget?.version ?? 0;
-    abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
     setPending(true);
@@ -228,6 +229,14 @@ export function BudgetEditor({
           onPress={() => void submit()}
           pending={pending}
           disabled={pending}
+        />
+        <NativeAction
+          label="Back to spending plan"
+          tone="secondary"
+          disabled={pending}
+          onPress={() => {
+            if (!abortRef.current) onBack();
+          }}
         />
       </NativeActions>
     </Panel>

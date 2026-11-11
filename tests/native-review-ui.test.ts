@@ -338,6 +338,7 @@ describe("CoverageCard & MonthlyReviewScreen source-harness component tests", ()
     const h = hookHarness();
     const push = vi.fn();
     const reload = vi.fn();
+    let month: string | string[] = "2026-10";
 
     const {
       MonthlyReviewScreen,
@@ -347,7 +348,10 @@ describe("CoverageCard & MonthlyReviewScreen source-harness component tests", ()
       CashBridgeSection,
     } = load("review/monthly-review-screen.tsx", {
       react: h.react,
-      "expo-router": { useRouter: () => ({ push }) },
+      "expo-router": {
+        useRouter: () => ({ push }),
+        useLocalSearchParams: () => ({ month }),
+      },
       "../finance/context": {
         useNativeFinance: () => ({
           authority: {
@@ -380,7 +384,10 @@ describe("CoverageCard & MonthlyReviewScreen source-harness component tests", ()
           reload: vi.fn(),
         }),
       },
-      "../budgets/month-helpers": load("budgets/month-helpers.ts"),
+      "../budgets/month-helpers": {
+        ...load("budgets/month-helpers.ts"),
+        currentMobileMonth: () => "2026-11",
+      },
       "../budgets/month-selector": { MonthSelector: "month-selector" },
       "../budgets/use-spending-report": {
         useSpendingReport: () => ({
@@ -391,7 +398,10 @@ describe("CoverageCard & MonthlyReviewScreen source-harness component tests", ()
         }),
       },
     }) as {
-      MonthlyReviewScreen: () => { type: () => unknown };
+      MonthlyReviewScreen: () => {
+        type: (props: { initialMonth: string }) => unknown;
+        props: { initialMonth: string };
+      };
       CashFlowSummary: (props: { report: SpendingReport }) => unknown;
       CategoryBreakdownSection: (props: { report: SpendingReport }) => unknown;
       TrendSection: (props: { report: SpendingReport }) => unknown;
@@ -399,7 +409,12 @@ describe("CoverageCard & MonthlyReviewScreen source-harness component tests", ()
     };
 
     const root = MonthlyReviewScreen();
-    const tree = h.render(root.type);
+    expect(root.props.initialMonth).toBe("2026-10");
+    month = ["2026-09", "2026-10"];
+    expect(MonthlyReviewScreen().props.initialMonth).toBe("2026-11");
+    month = "2026-12";
+    expect(MonthlyReviewScreen().props.initialMonth).toBe("2026-11");
+    const tree = h.render(() => root.type(root.props));
     const rendered = text(tree);
     const summaryText = text(CashFlowSummary({ report: reviewReport }));
     const categoryText = text(
