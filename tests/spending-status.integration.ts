@@ -6,6 +6,8 @@ import {
   statusSubscriptionQuery,
 } from "../packages/contracts/src/index.js";
 import { readLondonClock } from "../apps/api/src/london-clock.js";
+import * as reportComponents from "../apps/api/src/modules/reports/report-components.js";
+import { ReportService } from "../apps/api/src/modules/reports/report.service.js";
 import {
   createStatusFixture,
   statusSignals,
@@ -27,6 +29,9 @@ afterAll(async () => {
   await fixture.owner.budgetScope.deleteMany({
     where: { householdId: fixture.householdId },
   });
+  await fixture.owner.account.deleteMany({
+    where: { householdId: fixture.otherHouseholdId },
+  });
   await fixture.close();
 });
 
@@ -45,6 +50,27 @@ async function report(token = fixture.actor.token) {
   return spendingReportSchema.parse(await response.json());
 }
 
+function expense(today: string, amountMinor: bigint) {
+  return {
+    householdId: fixture.householdId,
+    accountId: fixture.accountId,
+    sourceNamespace: "MANUAL" as const,
+    sourceId: randomUUID(),
+    sourceHash: "a".repeat(64),
+    fingerprint: "b".repeat(64),
+    amountMinor,
+    bookedDate: new Date(today),
+    description: "Synthetic spending status row",
+    override: {
+      create: {
+        authorMembershipId: fixture.actor.membershipId,
+        classificationKind: "EXPENSE" as const,
+        category: "Food",
+      },
+    },
+  };
+}
+
 it("enforces authorization and strict scope before sending spending status frames", async () => {
   for (const [auth, status, suffix] of [
     ["", 401, ""],
@@ -57,6 +83,10 @@ it("enforces authorization and strict scope before sending spending status frame
       "text/event-stream",
     );
   }
+  expect(
+    await fixture.database
+      .$queryRaw`SELECT * FROM app.spending_ledger_revisions(ARRAY[${fixture.accountId}::uuid])`,
+  ).toEqual([]);
 });
 
 it("refreshes after committed spending and cap edits and keeps totals-only views private", async () => {
@@ -88,24 +118,7 @@ it("refreshes after committed spending and cap edits and keeps totals-only views
         partnerReceived = frame !== null;
       })
       .catch(() => {});
-    const source = {
-      householdId,
-      accountId,
-      sourceNamespace: "MANUAL" as const,
-      sourceId: randomUUID(),
-      sourceHash: "a".repeat(64),
-      fingerprint: "b".repeat(64),
-      amountMinor: -1250n,
-      bookedDate: new Date(today),
-      description: "Synthetic spending status row",
-      override: {
-        create: {
-          authorMembershipId: actor.membershipId,
-          classificationKind: "EXPENSE" as const,
-          category: "Food",
-        },
-      },
-    };
+    const source = expense(today, -1250n);
     const wake = vi.fn();
     const unsubscribe = fixture.hub.subscribe(wake, () => {});
     try {
@@ -147,11 +160,12 @@ it("refreshes after committed spending and cap edits and keeps totals-only views
     expect(response.status).toBe(200);
     expect(await ownerFrames.next()).toBe(changed);
     const { budget } = await report();
+    if (!budget) throw new Error("Fixture cap unavailable");
     expect(budget?.lines[0]?.limit.amountMinor).toBe("3000");
     const wakeOnNoop = vi.fn();
     const stop = fixture.hub.subscribe(wakeOnNoop, () => {});
     try {
-      await owner.$executeRaw`UPDATE app."BudgetLine" SET "amountMinor"="amountMinor" WHERE "budgetId"=${budget?.id}::uuid`;
+      await owner.$executeRaw`UPDATE app."BudgetLine" SET "amountMinor"="amountMinor" WHERE "budgetId"=${budget.id}::uuid`;
       await delay(150);
       expect(wakeOnNoop).not.toHaveBeenCalled();
     } finally {
@@ -168,5 +182,67 @@ it("refreshes after committed spending and cap edits and keeps totals-only views
   } finally {
     await ownerFrames.close();
     await partnerFrames.close();
+  }
+});
+
+it("keeps wakeups bounded across households without running spending aggregates", async () => {
+  const { owner, otherHouseholdId, outsider } = fixture;
+  const { today } = await readLondonClock(owner);
+  await owner.account.create({
+    data: {
+      householdId: otherHouseholdId,
+      creatorUserId: outsider.userId,
+      creatorMembershipId: outsider.membershipId,
+      label: "Other synthetic household",
+      kind: "CURRENT",
+      owners: {
+        create: {
+          userId: outsider.userId,
+          membershipId: outsider.membershipId,
+        },
+      },
+    },
+  });
+  const observations = vi.spyOn(ReportService.prototype, "observeCurrent");
+  const aggregate = vi.spyOn(reportComponents, "reportComponents");
+  const provenance = vi.spyOn(reportComponents, "reportProvenance");
+  const signal = AbortSignal.timeout(5000);
+  const first = statusSignals(
+    await fixture.request(query(), undefined, signal),
+  );
+  const second = statusSignals(
+    await fixture.request(
+      statusSubscriptionQuery({
+        kind: "spending",
+        householdId: otherHouseholdId,
+      }),
+      `Bearer ${outsider.token}`,
+      signal,
+    ),
+  );
+  const changed = "event: change\ndata: {}";
+  try {
+    expect(await first.next()).toBe(changed);
+    expect(await second.next()).toBe(changed);
+    const previous = (await observations.mock.results[1]?.value)?.status;
+    expect(previous?.scope).toHaveLength(1);
+    observations.mockClear();
+    await owner.transaction.create({ data: expense(today, -1320n) });
+    expect(await first.next()).toBe(changed);
+    await vi.waitFor(() => expect(observations).toHaveBeenCalledTimes(2));
+    const otherIndex = observations.mock.calls.findIndex(
+      ([context]) => context.householdId === otherHouseholdId,
+    );
+    expect(
+      (await observations.mock.results[otherIndex]?.value)?.status,
+    ).toEqual(previous);
+    expect(aggregate).not.toHaveBeenCalled();
+    expect(provenance).not.toHaveBeenCalled();
+  } finally {
+    await first.close();
+    await second.close();
+    observations.mockRestore();
+    aggregate.mockRestore();
+    provenance.mockRestore();
   }
 });

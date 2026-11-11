@@ -91,10 +91,8 @@ export class StatusResources {
     const context = await financeContext(identity, auth, selector.householdId);
     if (selector.kind === "spending") {
       if (!this.services.reports) throw new ServiceUnavailableException();
-      const { report, nextChangeAt } =
+      const { status, nextChangeAt } =
         await this.services.reports.observeCurrent(context);
-      const { calculatedAt, ...status } = report;
-      void calculatedAt;
       return this.snapshot(token, context, status, nextChangeAt);
     }
     if (selector.kind === "wealth") {

@@ -17,37 +17,25 @@ import { readLondonClock } from "../../london-clock.js";
 import { findScopedBudget } from "../budgets/budget-projection.js";
 import { resolveReportScope } from "./report-scope.js";
 import { reportComponents, reportProvenance } from "./report-components.js";
+import { observeSpending } from "./spending-observation.js";
 const digest = (input: unknown) =>
   createHash("sha256").update(JSON.stringify(input)).digest("hex");
 export class ReportService {
   constructor(private readonly database: ScopedDatabase) {}
-  async read(
-    context: AuthContext,
-    month: string,
-    accountIds?: readonly string[],
-  ): Promise<SpendingReport> {
-    return (await this.evaluate(context, month, accountIds)).report;
+  observeCurrent(context: AuthContext): ReturnType<typeof observeSpending> {
+    return this.database.withScope(context, (tx) =>
+      observeSpending(tx, context),
+    );
   }
 
-  observeCurrent(context: AuthContext): Promise<{
-    report: SpendingReport;
-    nextChangeAt: number | null;
-  }> {
-    return this.evaluate(context, "current");
-  }
-
-  private evaluate(
+  read(
     context: AuthContext,
     requestedMonth: string,
     accountIds?: readonly string[],
-  ): Promise<{ report: SpendingReport; nextChangeAt: number | null }> {
+  ): Promise<SpendingReport> {
     return this.database.withScope(context, async (tx) => {
       const clock =
         requestedMonth === "current" ? await readLondonClock(tx) : null;
-      // The observer uses the API clock. Preserve the database's remaining time.
-      const nextChangeAt = clock
-        ? Date.now() + (clock.nextMonthAt.getTime() - clock.now.getTime())
-        : null;
       const today = clock?.today ?? londonToday();
       const month = clock ? today.slice(0, 7) : requestedMonth;
       const scope = await resolveReportScope(tx, context, accountIds),
@@ -158,7 +146,7 @@ export class ReportService {
               },
             }
           : null;
-      const report = spendingReportSchema.parse({
+      return spendingReportSchema.parse({
         month,
         startDate: bounds.start,
         endDateExclusive: bounds.endExclusive,
@@ -227,7 +215,6 @@ export class ReportService {
           sourceRowCount: Number(provenance.sourceRowCount),
         },
       });
-      return { report, nextChangeAt };
     });
   }
 }

@@ -3,7 +3,6 @@ import { StatusResources } from "../apps/api/src/modules/events/status-resources
 import { authorizeStatusObserver } from "../apps/api/src/modules/events/status-observer.js";
 import {
   spendingQuerySchema,
-  spendingReportSchema,
   statusSubscriptionSchema,
 } from "../packages/contracts/src/index.js";
 
@@ -51,37 +50,20 @@ it("publishes committed changes and the next London month with no idle reads", a
     actor: vi.fn(async () => ({ ...context, emailHash: "opaque" })),
     subscriptionExpiry: vi.fn(async () => boundary + 5000),
   };
-  let rows = 0;
+  let revision = 0;
   const reports = {
     observeCurrent: vi.fn(async () => {
       const before = Date.now() < boundary;
       const month = before ? "2026-08" : "2026-09";
       return {
         nextChangeAt: before ? boundary : Date.parse("2026-09-30T23:00:00Z"),
-        report: spendingReportSchema.parse({
+        status: {
           month,
-          startDate: `${month}-01`,
-          endDateExclusive: before ? "2026-09-01" : "2026-10-01",
-          scopeKey: "a".repeat(64),
-          permissionKey: "b".repeat(64),
-          calculatedAt: new Date().toISOString(),
           scope: [],
-          coverage: {
-            complete: false,
-            closedPeriod: false,
-            reasons: [],
-            missingAccountIds: [],
-          },
-          summary: null,
-          trend: [],
-          comparison: null,
+          revisions: [{ accountId: householdId, revision: String(revision) }],
           budget: null,
-          provenance: {
-            source: "CSV_MANUAL",
-            latestRecordDate: null,
-            sourceRowCount: before ? rows : 0,
-          },
-        }),
+          coverage: [],
+        },
       };
     }),
   };
@@ -110,7 +92,7 @@ it("publishes committed changes and the next London month with no idle reads", a
     wake();
     await vi.advanceTimersByTimeAsync(0);
     expect(send).toHaveBeenCalledTimes(1);
-    rows++;
+    revision++;
     wake();
     await vi.advanceTimersByTimeAsync(0);
     expect(send).toHaveBeenCalledTimes(2);
