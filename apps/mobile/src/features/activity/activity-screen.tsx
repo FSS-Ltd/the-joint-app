@@ -59,15 +59,21 @@ export function ActivityScreen(): React.JSX.Element {
         </Panel>
       </Screen>
     );
-  const items = accounts.value.items;
+  const items = accounts.value.items.filter(
+    (item) => item.access === "TRANSACTIONS",
+  );
   const account: AccountResponse | undefined =
     items.find((item) => item.id === chosen) ?? items[0];
   if (!account)
     return (
       <Screen>
         <EmptyState
-          title="No accounts to show"
-          description="Activity needs a visible account. Create or join an account from Home first."
+          title={
+            accounts.value.nextCursor
+              ? "No transaction access on this account page"
+              : "No transaction access"
+          }
+          description="Activity shows transactions from accounts you can view in detail."
         />
         <NativeActions>
           <NativeAction
@@ -80,23 +86,29 @@ export function ActivityScreen(): React.JSX.Element {
   const labels = Object.fromEntries(items.map((item) => [item.id, item.label]));
   return (
     <Screen scrollable={false}>
-      {items.length > 1 && (
-        <Panel>
-          <AccountChoice
-            label="Account"
-            value={account.id}
-            options={items.map((item) => item.id)}
-            labels={labels}
-            onChange={setChosen}
-            disabled={false}
-          />
-        </Panel>
-      )}
       <ActivityPage
         key={account.id}
         account={account}
         onOpen={(transactionId) => router.push(`/activity/${transactionId}`)}
-      />
+        onReviewImports={
+          account.ownership === "OWNED"
+            ? () => router.push(`/imports/history/${account.id}`)
+            : undefined
+        }
+      >
+        {items.length > 1 && (
+          <Panel>
+            <AccountChoice
+              label="Account"
+              value={account.id}
+              options={items.map((item) => item.id)}
+              labels={labels}
+              onChange={setChosen}
+              disabled={false}
+            />
+          </Panel>
+        )}
+      </ActivityPage>
     </Screen>
   );
 }
