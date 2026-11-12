@@ -60,6 +60,7 @@ export function TransactionDetail({
   }
   return (
     <AccountsFrame
+      cutoverNotice="Transaction Details"
       active="activity"
       title="Transaction details"
       description="The source record, your classification and a space only you can see."

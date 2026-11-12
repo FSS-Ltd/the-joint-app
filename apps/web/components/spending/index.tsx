@@ -22,6 +22,13 @@ export function SpendingScreen({
     r = state.report;
   return (
     <AccountsFrame
+      cutoverNotice={
+        mode === "dashboard"
+          ? "Dashboard"
+          : mode === "budgets"
+            ? "Budgets"
+            : "Review"
+      }
       active={mode}
       reportQuery={new URLSearchParams({
         month: state.month,

@@ -12,6 +12,7 @@ export function Activity(): ReactNode {
   const [revision, setRevision] = useState(0);
   return (
     <AccountsFrame
+      cutoverNotice="Activity"
       active="activity"
       title="Everyday activity"
       description="Your booked transactions, with the source and the choices kept clear."

@@ -11,6 +11,7 @@ export function Imports(): ReactNode {
   const scope = useFinanceScope(true);
   return (
     <AccountsFrame
+      cutoverNotice="Imports"
       active="imports"
       title="Bring your activity together."
       description="Inspect, map and review your CSV before any booked rows are published."

@@ -47,6 +47,7 @@ export function AccountDetail({ accountId }: { accountId: string }): ReactNode {
   }, [householdId, accountId, revision]);
   return (
     <AccountsFrame
+      cutoverNotice="Account Details"
       title={account?.label ?? "Your account"}
       description="A manual record, with a clear date and your own sharing choices."
       household={identity?.membership?.household.name}
