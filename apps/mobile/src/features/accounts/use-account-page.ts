@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { CsvBalance } from "@joint/contracts";
 import type { AccountsApi } from "../../api/accounts";
 import type { FinanceResourceResult } from "../finance/state";
 import {
@@ -9,7 +10,9 @@ import { financeAuthorityKey } from "../finance/scope";
 import { useFinanceResource } from "../finance/use-resource";
 
 type AccountPageResult = {
-  resource: FinanceResourceResult<Awaited<ReturnType<AccountsApi["list"]>>>;
+  resource: FinanceResourceResult<
+    Awaited<ReturnType<AccountsApi["list"]>> & { balances?: CsvBalance[] }
+  >;
   firstPage: boolean;
   canGoBack: boolean;
   reset(): void;
@@ -25,7 +28,7 @@ type PageState = {
 };
 
 /** Keep cursor metadata only; moving pages replaces the sole live page resource. */
-export function useAccountPage(): AccountPageResult {
+export function useAccountPage(includeBalances = false): AccountPageResult {
   const finance = useNativeFinance();
   const authority = finance.authority;
   const key = authority ? financeAuthorityKey(authority) : "unavailable";
@@ -42,10 +45,10 @@ export function useAccountPage(): AccountPageResult {
       limit: 50,
       ...(cursor ? { cursor } : {}),
     },
-    (scope, signal) => {
+    async (scope, signal) => {
       if (scope.selector.kind !== "accounts")
         throw new Error("Expected account page scope.");
-      return finance.accounts.list(
+      const page = await finance.accounts.list(
         scope.householdId,
         {
           limit: scope.selector.limit,
@@ -53,6 +56,13 @@ export function useAccountPage(): AccountPageResult {
         },
         signal,
       );
+      if (!includeBalances || page.items.length === 0) return page;
+      const balances = await finance.accounts.currentBalances(
+        scope.householdId,
+        page.items.map((account) => account.id),
+        signal,
+      );
+      return { ...page, balances: balances.items };
     },
   );
   return {

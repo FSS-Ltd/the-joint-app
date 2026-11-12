@@ -14,7 +14,13 @@ interface Flow {
   chooseFile(): Promise<void>;
   reload(): void;
 }
-const item = account({ householdId: "00000000-0000-4000-8000-000000000001" });
+const itemAccount = account({
+  householdId: "00000000-0000-4000-8000-000000000001",
+});
+const item = {
+  ...itemAccount,
+  csvBalance: { accountId: itemAccount.id, status: "MISSING_ANCHOR" as const },
+};
 const picked = {
   name: "statement.csv",
   uri: "file:///cache/statement.csv",
@@ -44,6 +50,14 @@ function setup() {
         }),
       },
       "../finance/errors": errors,
+      "./use-opening-balance": {
+        statementIsEligible: () => false,
+        useOpeningBalance: () => ({
+          mutation: { kind: "idle" },
+          issued: { current: false },
+          reset: vi.fn(),
+        }),
+      },
       "../finance/use-mutation": {
         useFinanceMutation: () => ({
           kind: "idle",

@@ -12,9 +12,11 @@ export function AccountListScreen(): React.JSX.Element {
     <Screen scrollable={false}>
       <AccountPage
         onAddAccount={addAccount}
-        renderAccount={(account) => (
+        includeBalances
+        renderAccount={(account, balance) => (
           <AccountRow
             account={account}
+            balance={balance}
             onOpen={() => router.push(`/home/accounts/${account.id}`)}
           />
         )}

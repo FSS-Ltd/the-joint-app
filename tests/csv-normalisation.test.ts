@@ -314,3 +314,118 @@ it("requires a currency choice for competing or unknown currency-indicating head
     expect(result.requiresCurrencyColumn, header).toBeUndefined();
   }
 });
+
+it("suggests a statement balance only when dated GBP rows reconcile", async () => {
+  const csv = (rows: string) =>
+    new TextEncoder().encode(
+      `Date,Description,Debit,Credit,Currency,Running balance\n${rows}`,
+    );
+  const ascending = await inspectCsv(
+    csv("2026-01-01,A,0,10,GBP,110.00\n2026-01-02,B,5,0,GBP,105.00"),
+    true,
+  );
+  expect(ascending.statementBalance).toEqual({
+    money: { amountMinor: "10500", currency: "GBP" },
+    asOfDate: "2026-01-02",
+  });
+  const descending = await inspectCsv(
+    csv("2026-01-02,B,5,0,GBP,105.00\n2026-01-01,A,0,10,GBP,110.00"),
+    true,
+  );
+  expect(descending.statementBalance).toEqual(ascending.statementBalance);
+  expect(
+    (
+      await inspectCsv(
+        csv("2026-01-01,A,0,10,GBP,110.00\n2026-01-02,B,5,0,GBP,106.00"),
+        true,
+      )
+    ).statementBalance,
+  ).toBeUndefined();
+  expect(
+    (
+      await inspectCsv(
+        csv("2026-01-01,A,0,10,USD,110.00\n2026-01-02,B,5,0,GBP,105.00"),
+        true,
+      )
+    ).statementBalance,
+  ).toBeUndefined();
+});
+
+it("suppresses ambiguous balances, malformed rows and missing GBP evidence", async () => {
+  const check = async (text: string) =>
+    (await inspectCsv(new TextEncoder().encode(text), true)).statementBalance;
+  const header = "Date,Description,Debit,Credit,Currency,Running balance\n";
+  expect(
+    await check(
+      header +
+        "2026-01-01,A,0,10,GBP,110.00\n2026-01-02,B,5,0,GBP,105.00,extra",
+    ),
+  ).toBeUndefined();
+  expect(
+    await check(
+      header +
+        "2026-01-01,A,0,10,GBP,110.00\n2026-01-02,B,5,0,GBP,105.00\n2026-01-03,C,0,1,GBP,",
+    ),
+  ).toBeUndefined();
+  expect(
+    await check(
+      "Date,Description,Debit,Credit,Running balance\n2026-01-01,A,0,10,110.00\n2026-01-02,B,5,0,105.00",
+    ),
+  ).toBeUndefined();
+  expect(
+    await check(
+      "Date,Description,Debit,Credit,Currency,Running balance,Closing balance\n2026-01-01,A,0,10,GBP,110.00,110.00",
+    ),
+  ).toBeUndefined();
+  expect(
+    await check(
+      "Date,Description,Debit,Credit,Currency,Closing balance\n2026-01-01,A,0,10,GBP,110.00",
+    ),
+  ).toEqual({
+    money: { amountMinor: "11000", currency: "GBP" },
+    asOfDate: "2026-01-01",
+  });
+  expect(await check(header + "2026-01-01,A,0,10,GBP,110.00")).toBeUndefined();
+});
+
+it("resolves same-day order and signed direction only from a consistent balance chain", async () => {
+  const inspect = (rows: string) =>
+    inspectCsv(
+      new TextEncoder().encode(
+        `Date,Description,Amount,Currency,Running balance\n${rows}`,
+      ),
+      true,
+    );
+  const result = await inspect(
+    "2026-01-01,A,10.00,GBP,110.00\n2026-01-01,B,-5.00,GBP,105.00",
+  );
+  expect(result.statementBalance).toEqual({
+    money: { amountMinor: "10500", currency: "GBP" },
+    asOfDate: "2026-01-01",
+  });
+  expect(csvInspectionSchema.safeParse(result).success).toBe(true);
+  expect(
+    (
+      await inspect(
+        "2026-01-01,A,0.00,GBP,110.00\n2026-01-02,B,0.00,GBP,110.00",
+      )
+    ).statementBalance,
+  ).toBeUndefined();
+  expect(
+    (
+      await inspect(
+        "2026-01-01,A,10.00,GBP,110.00\n2026-01-02,B,-5.00,GBP,105.00\n2026-01-03,C,-2.00,GBP,107.00",
+      )
+    ).statementBalance,
+  ).toBeUndefined();
+});
+
+it("accepts integer amounts when both decimal conventions are equivalent", async () => {
+  const csv = new TextEncoder().encode(
+    "Date,Description,Debit,Credit,Currency,Running balance\n2026-01-01,A,0,10,GBP,110\n2026-01-02,B,5,0,GBP,105",
+  );
+  expect((await inspectCsv(csv, true)).statementBalance).toEqual({
+    money: { amountMinor: "10500", currency: "GBP" },
+    asOfDate: "2026-01-02",
+  });
+});

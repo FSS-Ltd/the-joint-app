@@ -55,6 +55,10 @@ export const csvInspectionSchema = z
     rowCount: z.number().int().min(1).max(MAX_CSV_ROWS),
     suggestedMapping: csvMappingSuggestionSchema.optional(),
     requiresCurrencyColumn: z.literal(true).optional(),
+    statementBalance: z
+      .object({ money: moneySchema, asOfDate: bookedDateSchema })
+      .strict()
+      .optional(),
   })
   .strict();
 export const csvRejectCodeSchema = z.enum([

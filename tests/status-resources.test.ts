@@ -94,6 +94,10 @@ it("observes account projections with live authority and stable request-independ
   const accounts = {
     read: vi.fn(async () => account),
     observePage: vi.fn(async () => ({ items: [account], hasMore: true })),
+    observeBalanceCalendar: vi.fn(async () => ({
+      anchors: [{ accountId, anchorId: null as string | null }],
+      nextChangeAt: null as number | null,
+    })),
   };
   const resources = new StatusResources({ identity, accounts });
   const auth = `Session ${"a".repeat(43)}`;
@@ -109,6 +113,9 @@ it("observes account projections with live authority and stable request-independ
     cursor: "opaque",
   };
   const first = await resources.read(detail, auth);
+  expect(accounts.observeBalanceCalendar).toHaveBeenCalledWith(context, [
+    accountId,
+  ]);
   expect(first).toMatchObject({
     resourceExpiresAt: null,
     credentialExpiresAt: 1900000000000,
@@ -126,6 +133,15 @@ it("observes account projections with live authority and stable request-independ
     first.fingerprint,
   );
   const originalPage = await resources.read(page, auth);
+  accounts.observeBalanceCalendar.mockResolvedValueOnce({
+    anchors: [{ accountId, anchorId: "future-effective-anchor" }],
+    nextChangeAt: Date.parse("2026-11-05T00:00:00.000Z"),
+  });
+  const changedAnchor = await resources.read(page, auth);
+  expect(changedAnchor.fingerprint).not.toBe(originalPage.fingerprint);
+  expect(changedAnchor.resourceExpiresAt).toBe(
+    Date.parse("2026-11-05T00:00:00.000Z"),
+  );
   identity.financeContext.mockResolvedValueOnce({
     ...context,
     requestId: "request-c",
@@ -598,3 +614,79 @@ it("observes one bounded transaction page and stays silent for request-only diff
     new StatusResources({ identity }).read(selector, auth),
   ).rejects.toThrow("Service Unavailable");
 });
+
+it.each(["account", "accounts"] as const)(
+  "wakes %s at a future effective balance anchor",
+  async (kind) => {
+    vi.useFakeTimers();
+    const deadline = Date.parse("2026-11-05T00:00:00.000Z");
+    vi.setSystemTime(deadline - 1000);
+    const context = {
+      userId: "user",
+      sessionId: "session",
+      householdId: accountId,
+      membershipId: "member",
+      grantVersion: 0,
+      requestId: "request",
+      aal: "aal2" as const,
+      mfaAuthenticatedAt: Date.now(),
+      authenticatedAt: Date.now(),
+    };
+    const identity = {
+      financeContext: vi.fn(async () => context),
+      actor: vi.fn(async () => ({ ...context, emailHash: "opaque" })),
+      subscriptionExpiry: vi.fn(async () => deadline + 86400000),
+    };
+    const account = accountSchema.parse({
+      id: accountId,
+      householdId: accountId,
+      label: "Synthetic",
+      kind: "CURRENT",
+      currency: "GBP",
+      legalOwnerKind: "ADULT",
+      liquidity: "AVAILABLE",
+      version: 1,
+      source: "MANUAL",
+      ownership: "OWNED",
+      access: "TRANSACTIONS",
+      latestValuation: null,
+      sharing: null,
+      permissions: { canEdit: true, canValue: true, canShare: false },
+    });
+    const accounts = {
+      read: vi.fn(async () => account),
+      observePage: vi.fn(async () => ({ items: [account], hasMore: false })),
+      observeBalanceCalendar: vi.fn(async () => ({
+        anchors: [
+          { accountId, anchorId: Date.now() < deadline ? null : accountId },
+        ],
+        nextChangeAt: Date.now() < deadline ? deadline : null,
+      })),
+    };
+    const resources = new StatusResources({ identity, accounts });
+    const selector =
+      kind === "account"
+        ? { kind, householdId: accountId, id: accountId }
+        : { kind, householdId: accountId, limit: 50 };
+    const send = vi.fn(() => true),
+      unsubscribe = vi.fn(),
+      close = vi.fn();
+    const observer = await authorizeStatusObserver({
+      source: { subscribe: () => unsubscribe },
+      read: () => resources.read(selector, `Session ${"a".repeat(43)}`),
+      send,
+      close,
+    });
+    observer.start();
+    await vi.advanceTimersByTimeAsync(999);
+    expect(accounts.observeBalanceCalendar).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(send.mock.calls).toEqual([["change"], ["change"]]);
+    expect(accounts.observeBalanceCalendar).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(60000);
+    expect(accounts.observeBalanceCalendar).toHaveBeenCalledTimes(2);
+    observer.close();
+    expect(unsubscribe).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+  },
+);

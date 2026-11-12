@@ -9,6 +9,8 @@ import {
   parseCsvAmount,
 } from "./transaction-normalisation.js";
 
+import { CsvStatementBalance } from "./csv-statement-balance.js";
+
 const aliases = {
   date: ["date", "transaction date", "booking date", "booked date"],
   description: ["description", "transaction description", "details"],
@@ -55,6 +57,7 @@ export class CsvSuggestion {
   private sourceIdsValid = true;
   private readonly amountIndexes: number[];
   private readonly width: number;
+  private readonly balance: CsvStatementBalance;
   readonly requiresCurrencyColumn: boolean;
 
   constructor(columns: CsvColumn[]) {
@@ -101,9 +104,11 @@ export class CsvSuggestion {
       this.mapping.amountMode = "DEBIT_CREDIT";
       this.amountIndexes.push(debit[0]!, credit[0]!);
     }
+    this.balance = new CsvStatementBalance(columns, this.mapping);
   }
 
   observe(cells: string[]): void {
+    this.balance.observe(cells);
     if (cells.length !== this.width) return;
     if (this.mapping.date !== undefined) {
       const value = cells[this.mapping.date]?.trim() ?? "";
@@ -140,6 +145,10 @@ export class CsvSuggestion {
         this.sourceIdsValid = false;
       else this.sourceIds.add(value);
     }
+  }
+
+  statementBalance(): ReturnType<CsvStatementBalance["result"]> {
+    return this.balance.result(this.sourceIdsValid);
   }
 
   result(): CsvMappingSuggestion {

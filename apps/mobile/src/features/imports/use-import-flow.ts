@@ -5,6 +5,7 @@ import type {
   CsvColumn,
   CsvMappingSuggestion,
   ImportBatchResponse,
+  ValuationInput,
 } from "@joint/contracts";
 import { useNativeFinance } from "../finance/context";
 import { financeErrorMessage } from "../finance/errors";
@@ -12,6 +13,11 @@ import type { FinanceMutationResult } from "../finance/state";
 import { useFinanceMutation } from "../finance/use-mutation";
 import { useFinanceResource } from "../finance/use-resource";
 import { useWriteDraft } from "../accounts/use-write-draft";
+import {
+  statementIsEligible,
+  useOpeningBalance,
+  type ImportAccount,
+} from "./use-opening-balance";
 import type { WriteDraft } from "../accounts/write-state";
 import { readCsvBytes } from "./import-file";
 import { previewIntent } from "./import-intent";
@@ -31,6 +37,7 @@ export interface ImportDraft {
     rowCount: number;
     suggestedMapping?: CsvMappingSuggestion;
     requiresCurrencyColumn?: boolean;
+    statementBalance?: { money: ValuationInput["money"]; asOfDate: string };
   } | null;
   mapping: MappingDraft;
 }
@@ -41,9 +48,15 @@ export const emptyImportDraft = (): ImportDraft => ({
 });
 export interface ImportFlow {
   account: AccountResponse | null;
-  draft: WriteDraft<ImportDraft, AccountResponse>;
+  draft: WriteDraft<ImportDraft, ImportAccount>;
   mutation: FinanceMutationResult<ImportBatchResponse>;
-  resource: ReturnType<typeof useFinanceResource<AccountResponse>>;
+  openingMutation: FinanceMutationResult<AccountResponse>;
+  needsOpening: boolean;
+  statementAvailable: boolean;
+  saveOpening(amount: string, date: string): Promise<void>;
+  correctOpening(): void;
+  saveStatementBalance(input: ValuationInput): Promise<void>;
+  resource: ReturnType<typeof useFinanceResource<ImportAccount>>;
   allowed: boolean;
   editable: boolean;
   localMappingEditable: boolean;
@@ -74,21 +87,47 @@ export function useImportFlow(accountId: string): ImportFlow {
         "00000000-0000-4000-8000-000000000000",
       id: accountId,
     },
-    (scope, signal) =>
-      finance.accounts.read(scope.householdId, accountId, signal),
+    async (scope, signal) => {
+      const account = await finance.accounts.read(
+        scope.householdId,
+        accountId,
+        signal,
+      );
+      const result = await finance.accounts.currentBalances(
+        scope.householdId,
+        [accountId],
+        signal,
+      );
+      const balance = result.items[0];
+      if (!balance) throw new Error("Missing requested balance");
+      return { ...account, csvBalance: balance };
+    },
     { preserveRefreshHint: true },
   );
-  const draft = useWriteDraft<ImportDraft, AccountResponse>(
+  const draft = useWriteDraft<ImportDraft, ImportAccount>(
     `import:${accountId}`,
     emptyImportDraft,
   );
   const mutation = useFinanceMutation<ImportBatchResponse>(
     `import:${accountId}`,
   );
+  const previewIssued = useRef(false);
   const [busy, setBusy] = useState<ImportFlow["busy"]>(null);
   const work = useRef<AbortController | null>(null);
   const latest = useRef(draft.value);
   latest.current = draft.value;
+  const opening = useOpeningBalance({
+    accountId,
+    resource,
+    active: draft.visible && !draft.invalidated && draft.base !== null,
+    canStart: () =>
+      mutation.kind === "idle" &&
+      !previewIssued.current &&
+      !work.current &&
+      latest.current.inspection !== null,
+    statement: () => latest.current.inspection?.statementBalance,
+    error: draft.error,
+  });
   const revoked = useRef(false);
   revoked.current = draft.invalidated;
   const live = useRef(false);
@@ -100,8 +139,20 @@ export function useImportFlow(accountId: string): ImportFlow {
     if (!owner(account)) {
       draft.invalidate();
       mutation.reset();
+      opening.reset();
     } else draft.initialize(account, emptyImportDraft());
-  }, [account, draft.initialize, draft.invalidate, mutation.reset]);
+  }, [
+    account,
+    draft.initialize,
+    draft.invalidate,
+    mutation.reset,
+    opening.reset,
+  ]);
+  useLayoutEffect(() => {
+    if (!draft.visible || draft.invalidated) {
+      previewIssued.current = false;
+    }
+  }, [draft.visible, draft.invalidated]);
   // The upload is accepted: release the file bytes immediately.
   useLayoutEffect(() => {
     if (mutation.kind === "success") draft.change(emptyImportDraft());
@@ -145,12 +196,24 @@ export function useImportFlow(accountId: string): ImportFlow {
     busy === null;
   const localEdit = useRef(false);
   localEdit.current = localMappingEditable;
+  const openingAccount = account ?? (preservingDraft ? draft.base : null);
+  const needsOpening =
+    !!openingAccount &&
+    (openingAccount.kind === "CURRENT" || openingAccount.kind === "SAVINGS") &&
+    openingAccount.csvBalance.status === "MISSING_ANCHOR";
+  const hint = draft.value.inspection?.statementBalance;
+  const statementAvailable =
+    !!openingAccount &&
+    !!hint &&
+    (openingAccount.kind === "CURRENT" || openingAccount.kind === "SAVINGS") &&
+    statementIsEligible(openingAccount.csvBalance, hint.asOfDate);
   const editable =
     draft.visible &&
     !draft.invalidated &&
     allowed &&
     draft.base !== null &&
     mutation.kind === "idle" &&
+    opening.mutation.kind === "idle" &&
     busy === null;
 
   function begin(kind: NonNullable<ImportFlow["busy"]>): AbortController {
@@ -168,7 +231,13 @@ export function useImportFlow(accountId: string): ImportFlow {
   }
   async function chooseFile(): Promise<void> {
     // A second tap before the next render must not open a second picker.
-    if (!editable || work.current) return;
+    if (
+      !editable ||
+      opening.issued.current ||
+      previewIssued.current ||
+      work.current
+    )
+      return;
     const controller = begin("reading");
     let picked: Awaited<ReturnType<typeof pickCsvFile>> = null;
     try {
@@ -197,7 +266,7 @@ export function useImportFlow(accountId: string): ImportFlow {
     name: string;
     bytes: Uint8Array<ArrayBuffer>;
   }): void {
-    if (!editable) return;
+    if (!editable || opening.issued.current || previewIssued.current) return;
     if (live.current) {
       draft.change({ file, inspection: null, mapping: emptyMapping });
     } else if (!revoked.current) {
@@ -210,6 +279,8 @@ export function useImportFlow(accountId: string): ImportFlow {
     const current = resource.current();
     if (
       !editable ||
+      opening.issued.current ||
+      previewIssued.current ||
       !file ||
       !authority ||
       !current ||
@@ -257,7 +328,22 @@ export function useImportFlow(accountId: string): ImportFlow {
   async function submit(): Promise<void> {
     const current = resource.kind === "ready" ? resource.current() : null;
     const { file, inspection, mapping } = latest.current;
-    if (!editable || !draft.base || !current || !owner(current)) return;
+    if (
+      !editable ||
+      opening.issued.current ||
+      previewIssued.current ||
+      !draft.base ||
+      !current ||
+      !owner(current)
+    )
+      return;
+    if (
+      (current.kind === "CURRENT" || current.kind === "SAVINGS") &&
+      current.csvBalance.status === "MISSING_ANCHOR"
+    ) {
+      draft.error("Record an opening or statement balance before preview.");
+      return;
+    }
     if (!file || !inspection) {
       draft.error("Choose a file and check it first.");
       return;
@@ -272,9 +358,15 @@ export function useImportFlow(accountId: string): ImportFlow {
       return;
     }
     try {
-      await mutation.submit(
-        previewIntent(finance, current, file.bytes, parsed.value, randomUUID()),
+      const intent = previewIntent(
+        finance,
+        current,
+        file.bytes,
+        parsed.value,
+        randomUUID(),
       );
+      previewIssued.current = true;
+      await mutation.submit(intent);
     } catch (error) {
       draft.error(financeErrorMessage(error));
     }
@@ -293,7 +385,10 @@ export function useImportFlow(accountId: string): ImportFlow {
   }
   function editAgain() {
     // Only a rejected upload may be edited; an uncertain one must replay unchanged.
-    if (mutation.kind === "error") mutation.reset();
+    if (mutation.kind === "error") {
+      previewIssued.current = false;
+      mutation.reset();
+    }
   }
   function reload() {
     work.current?.abort();
@@ -302,6 +397,8 @@ export function useImportFlow(accountId: string): ImportFlow {
     setBusy(null);
     pending.current = null;
     mutation.reset();
+    opening.reset();
+    previewIssued.current = false;
     draft.clear();
     resource.retry();
   }
@@ -309,6 +406,12 @@ export function useImportFlow(accountId: string): ImportFlow {
     account,
     draft,
     mutation: { ...mutation, retry },
+    openingMutation: opening.mutation,
+    needsOpening,
+    statementAvailable,
+    saveOpening: opening.saveOpening,
+    correctOpening: opening.correct,
+    saveStatementBalance: opening.saveStatementBalance,
     resource,
     allowed,
     editable,

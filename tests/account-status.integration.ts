@@ -292,6 +292,37 @@ it("invalidates active account streams when the internal session is revoked", as
   }
 });
 
+it("schedules account and page status at a future London valuation date", async () => {
+  await fixture.owner.balanceSnapshot.create({
+    data: {
+      householdId: fixture.householdId,
+      accountId: fixture.accountId,
+      authorMembershipId: fixture.actor.membershipId,
+      amountMinor: 100n,
+      asOfDate: new Date("2099-01-01T00:00:00.000Z"),
+    },
+  });
+  const observed = vi.spyOn(StatusResources.prototype, "read");
+  const streams = [];
+  try {
+    for (const selector of [detail(), page()])
+      streams.push(await open(selector));
+    const snapshots = await Promise.all(
+      observed.mock.results.map((result) => result.value),
+    );
+    expect(snapshots).toHaveLength(2);
+    expect(
+      snapshots.every(
+        (snapshot) =>
+          snapshot.resourceExpiresAt === Date.parse("2099-01-01T00:00:00.000Z"),
+      ),
+    ).toBe(true);
+  } finally {
+    for (const stream of streams) await stream.close();
+    observed.mockRestore();
+  }
+});
+
 it("disconnects account page streams and removes the event subscription at API shutdown", async () => {
   const stream = await open(page());
   try {

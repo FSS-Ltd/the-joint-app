@@ -19,6 +19,7 @@ import {
   accountCreateSchema,
   accountListQuerySchema,
   accountPatchSchema,
+  csvBalanceQuerySchema,
   grantInputSchema,
   idempotencyKeySchema,
   quotedVersionSchema,
@@ -76,6 +77,19 @@ export function createAccountsController(
         await context(auth, householdId),
         value.limit,
         value.cursor,
+      );
+    }
+    @Get("current-balances")
+    @Header("Cache-Control", "no-store")
+    async csvBalances(
+      @Headers("authorization") auth: string | undefined,
+      @Param("householdId") householdId: string,
+      @Query() query: unknown,
+    ) {
+      const input = validate(csvBalanceQuerySchema, query);
+      return useServices().queries.csvBalances(
+        await context(auth, householdId),
+        input.accountIds,
       );
     }
     @Get(":accountId")

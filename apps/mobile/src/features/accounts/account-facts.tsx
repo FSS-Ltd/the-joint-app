@@ -1,6 +1,7 @@
-import type { AccountResponse } from "@joint/contracts";
+import type { AccountResponse, CsvBalance } from "@joint/contracts";
 import { formatMoney, isLiabilityKind } from "@joint/domain";
 import { AppText } from "@/components/app-text";
+import { ImportedBalance } from "./imported-balance";
 import {
   displayDate,
   grantLabels,
@@ -11,8 +12,10 @@ import {
 
 export function AccountFacts({
   account,
+  balance,
 }: {
   account: AccountResponse;
+  balance?: CsvBalance;
 }): React.JSX.Element {
   const valuation = account.latestValuation;
   return (
@@ -26,9 +29,12 @@ export function AccountFacts({
           ? grantLabels[account.sharing.level]
           : grantLabels[account.access]}
       </AppText>
+      <ImportedBalance balance={balance} />
       {valuation ? (
         <>
-          <AppText variant="title">{formatMoney(valuation.money)}</AppText>
+          <AppText variant={balance?.status === "AVAILABLE" ? "body" : "title"}>
+            {formatMoney(valuation.money)}
+          </AppText>
           <AppText>
             {isLiabilityKind(account.kind)
               ? "Total outstanding debt"
@@ -37,8 +43,10 @@ export function AccountFacts({
           </AppText>
           <AppText>
             {valuation.adultMoney
-              ? `Adult portion: ${formatMoney(valuation.adultMoney)}`
-              : "Adult portion unknown"}
+              ? `${balance?.status === "AVAILABLE" ? "Adult portion of manual valuation ·" : "Adult portion:"} ${formatMoney(valuation.adultMoney)}`
+              : balance?.status === "AVAILABLE"
+                ? "Adult portion of manual valuation unknown"
+                : "Adult portion unknown"}
           </AppText>
           <AppText tone="secondary">
             Manual valuation · {displayDate(valuation.asOfDate)}

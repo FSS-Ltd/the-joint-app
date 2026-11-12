@@ -261,3 +261,32 @@ it("preserves valuation retry identity and never replays an uncertain or conflic
     });
   }
 });
+
+it("requests one scoped balance batch and rejects mismatched results", async () => {
+  const { api, send, signal } = fixture();
+  const second = "00000000-0000-4000-8000-000000000005";
+  send.mockResolvedValueOnce(
+    Response.json({
+      items: [
+        { accountId, status: "NO_ACTIVITY" },
+        { accountId: second, status: "MISSING_ANCHOR" },
+      ],
+    }),
+  );
+  const result = await api.currentBalances(
+    householdId,
+    [second, accountId],
+    signal,
+  );
+  expect(result.items).toHaveLength(2);
+  expect(String(send.mock.calls[0]?.[0])).toContain(
+    `current-balances?accountIds=${accountId}%2C${second}`,
+  );
+  send.mockResolvedValueOnce(
+    Response.json({ items: [{ accountId: second, status: "NO_ACTIVITY" }] }),
+  );
+  await expect(
+    api.currentBalances(householdId, [accountId], signal),
+  ).rejects.toMatchObject({ code: "RESOURCE_MISMATCH" });
+  await expect(api.currentBalances(householdId, [], signal)).rejects.toThrow();
+});
