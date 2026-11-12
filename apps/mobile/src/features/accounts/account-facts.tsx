@@ -36,9 +36,11 @@ export function AccountFacts({
             {formatMoney(valuation.money)}
           </AppText>
           <AppText>
-            {isLiabilityKind(account.kind)
-              ? "Total outstanding debt"
-              : "Total account value"}{" "}
+            {balance?.status === "AVAILABLE"
+              ? "Recorded manual balance"
+              : isLiabilityKind(account.kind)
+                ? "Total outstanding debt"
+                : "Total account value"}{" "}
             · GBP
           </AppText>
           <AppText>

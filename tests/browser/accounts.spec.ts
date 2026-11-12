@@ -333,6 +333,15 @@ test("real private accounts, dated values, owner grants, fresh MFA and immediate
       }
     }
     await page.reload();
+    await expect(
+      page.getByRole("link", { name: "My synthetic savings", exact: true }),
+    ).toBeVisible();
+    await page.evaluate(() => {
+      document.body.tabIndex = -1;
+      document.body.focus();
+      document.body.removeAttribute("tabindex");
+    });
+    await expect(page.locator("body")).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(
       page.getByRole("link", { name: "Skip to content" }),

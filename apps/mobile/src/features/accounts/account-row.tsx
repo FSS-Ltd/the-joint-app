@@ -56,9 +56,11 @@ export function AccountRow({
                 {formatMoney(valuation.money)}
               </AppText>
               <AppText tone="secondary">
-                {isLiabilityKind(account.kind)
-                  ? "Total outstanding debt"
-                  : "Total account value"}
+                {balance?.status === "AVAILABLE"
+                  ? "Recorded manual balance"
+                  : isLiabilityKind(account.kind)
+                    ? "Total outstanding debt"
+                    : "Total account value"}
               </AppText>
               <AppText tone="secondary">
                 {valuation.adultMoney

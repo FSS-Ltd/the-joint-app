@@ -351,7 +351,7 @@ it("shows an estimated recorded balance without attributing a different manual v
     accountId: id,
     status: "AVAILABLE" as const,
     basis: "MANUAL_PLUS_LEDGER" as const,
-    money: { amountMinor: "25000", currency: "GBP" as const },
+    money: { amountMinor: "8500", currency: "GBP" as const },
     anchorId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     anchorDate: "2026-01-01",
     throughDate: "2026-01-10",
@@ -360,7 +360,7 @@ it("shows an estimated recorded balance without attributing a different manual v
     "./account-labels": accountLabels,
   }).ImportedBalance as (props: { balance: typeof balance }) => unknown;
   const text = JSON.stringify(imported({ balance }));
-  expect(text).toContain("£250.00");
+  expect(text).toContain("£85.00");
   expect(text).toContain("Balance from recorded activity");
   expect(text).toContain("estimate");
   const Facts = load("accounts/account-facts.tsx", {
@@ -369,7 +369,7 @@ it("shows an estimated recorded balance without attributing a different manual v
   }).AccountFacts as (props: unknown) => unknown;
   const valuation: NonNullable<AccountResponse["latestValuation"]> = {
     id,
-    money: { amountMinor: "20000", currency: "GBP" },
+    money: { amountMinor: "10000", currency: "GBP" },
     adultMoney: { amountMinor: "10000", currency: "GBP" },
     asOfDate: "2026-01-05",
     recordedAt: "2026-01-05T00:00:00.000Z",
@@ -379,7 +379,32 @@ it("shows an estimated recorded balance without attributing a different manual v
   const rendered = JSON.stringify(
     Facts({ account: account({ latestValuation: valuation }), balance }),
   );
+  expect(rendered).toContain("£100.00");
+  expect(rendered).toContain("Recorded manual balance");
+  expect(rendered).toContain("5 Jan 2026");
+  expect(rendered).not.toContain("Total account value");
   expect(rendered).toContain("Manual valuation");
   expect(rendered).toContain("Adult portion of manual valuation");
   expect(rendered).not.toContain("Source valuation");
+  const Row = load("accounts/account-row.tsx", {
+    "./account-labels": accountLabels,
+    "./imported-balance": { ImportedBalance: "balance" },
+    "react-native": {
+      Pressable: "pressable",
+      View: "view",
+      StyleSheet: { create: <T>(styles: T) => styles },
+      useWindowDimensions: () => ({ width: 390, fontScale: 1 }),
+    },
+  }).AccountRow as (props: unknown) => unknown;
+  const row = JSON.stringify(
+    Row({
+      account: account({ latestValuation: valuation }),
+      balance,
+      onOpen: vi.fn(),
+    }),
+  );
+  expect(row).toContain("£100.00");
+  expect(row).toContain("Recorded manual balance");
+  expect(row).toContain("5 Jan 2026");
+  expect(row).not.toContain("Total account value");
 });
