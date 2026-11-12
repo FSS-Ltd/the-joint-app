@@ -140,6 +140,7 @@ export async function financeFixture(getToken?: () => Promise<string>) {
     ).useFinanceResource as <T>(
       selector: NativeResourceScope["selector"],
       read: (scope: NativeResourceScope, signal: AbortSignal) => Promise<T>,
+      options?: { preserveRefreshHint?: boolean },
     ) => FinanceResourceResult<T>;
     const mutation = sourceExports(
       "apps/mobile/src/features/finance/use-mutation.ts",

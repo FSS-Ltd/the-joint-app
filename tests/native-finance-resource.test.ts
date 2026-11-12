@@ -28,6 +28,94 @@ it("subscribes before reading, coalesces hints and makes zero idle calls", async
   expect(f.h.listeners()).toBe(0);
   expect(vi.getTimerCount()).toBe(0);
 });
+it("hints only an in-place refresh while keeping current values concealed", async () => {
+  const f = await financeFixture();
+  const pending = deferred<string>();
+  const read = vi
+    .fn()
+    .mockResolvedValueOnce("first")
+    .mockReturnValueOnce(pending.promise);
+  const render = () =>
+    f.h.render(() =>
+      f.resource(scope.selector, read, { preserveRefreshHint: true }),
+    );
+  expect(render()).toMatchObject({ kind: "loading" });
+  await flush();
+  f.emit("event: change\ndata: {}\n\n");
+  await flush();
+  expect(render()).toMatchObject({ kind: "ready", value: "first" });
+  f.emit("event: change\ndata: {}\n\n");
+  await flush();
+  const refreshing = render();
+  expect(refreshing).toMatchObject({ kind: "loading", refreshing: true });
+  expect(refreshing.current()).toBeNull();
+  pending.resolve("second");
+  await flush();
+  expect(render()).toMatchObject({ kind: "ready", value: "second" });
+  f.connections[0]?.wire.close();
+  await flush();
+  expect(render()).toMatchObject({ kind: "loading" });
+  expect(render()).not.toHaveProperty("refreshing");
+  expect(render().current()).toBeNull();
+  f.close();
+});
+it("preserves only the refresh hint across an explicit renewal and replacement read", async () => {
+  const f = await financeFixture();
+  const pending = deferred<string>();
+  const read = vi
+    .fn()
+    .mockResolvedValueOnce("first")
+    .mockReturnValueOnce(pending.promise);
+  const render = () =>
+    f.h.render(() =>
+      f.resource(scope.selector, read, { preserveRefreshHint: true }),
+    );
+  render();
+  await flush();
+  f.emit("event: change\ndata: {}\n\n");
+  await flush();
+  expect(render()).toMatchObject({ kind: "ready", value: "first" });
+  f.emit("event: renew\ndata: {}\n\n");
+  await flush();
+  expect(render()).toMatchObject({ kind: "loading", refreshing: true });
+  expect(render().current()).toBeNull();
+  await vi.advanceTimersByTimeAsync(1000);
+  expect(f.send).toHaveBeenCalledTimes(2);
+  f.emit("event: change\ndata: {}\n\n");
+  await flush();
+  expect(render()).toMatchObject({ kind: "loading", refreshing: true });
+  expect(render().current()).toBeNull();
+  pending.resolve("second");
+  await flush();
+  expect(render()).toMatchObject({ kind: "ready", value: "second" });
+  f.emit("event: reconnect\ndata: {}\n\n");
+  await flush();
+  expect(render()).toMatchObject({ kind: "loading" });
+  expect(render()).not.toHaveProperty("refreshing");
+  f.close();
+});
+it("clears a renewal hint if the replacement stream fails", async () => {
+  const f = await financeFixture();
+  const read = vi.fn(async () => "first");
+  const render = () =>
+    f.h.render(() =>
+      f.resource(scope.selector, read, { preserveRefreshHint: true }),
+    );
+  render();
+  await flush();
+  f.emit("event: change\ndata: {}\n\n");
+  await flush();
+  f.emit("event: renew\ndata: {}\n\n");
+  await flush();
+  expect(render()).toMatchObject({ kind: "loading", refreshing: true });
+  await vi.advanceTimersByTimeAsync(1000);
+  f.connections[1]?.wire.close();
+  await flush();
+  expect(render()).toMatchObject({ kind: "loading" });
+  expect(render()).not.toHaveProperty("refreshing");
+  expect(render().current()).toBeNull();
+  f.close();
+});
 it.each(["identity", "blur", "background"])(
   "aborts immediately on %s loss and fences late reads",
   async (loss) => {

@@ -1,5 +1,8 @@
 import { expect, it } from "vitest";
-import type { CsvMapping } from "../packages/contracts/dist/index.js";
+import {
+  csvInspectionSchema,
+  type CsvMapping,
+} from "../packages/contracts/dist/index.js";
 import { inspectCsv, normalizeCsv } from "../packages/domain/src/csv.js";
 
 const encode = (value: string) => new TextEncoder().encode(value);
@@ -140,4 +143,174 @@ it("rejects database-unsupported text and year zero as durable row errors", asyn
     { rowNumber: 2, status: "REJECTED", reason: "INVALID_DESCRIPTION" },
     { rowNumber: 3, status: "REJECTED", reason: "INVALID_SOURCE_ID" },
   ]);
+});
+
+it("suggests only uniquely identified columns and evidence-backed formats when requested", async () => {
+  const data = encode(
+    "Date,Description,Paid out,Paid in,Currency,Transaction ID,Balance\n13/04/2026,Shop,12.30,,GBP,tx1,100\n14/04/2026,Pay,,50.00,GBP,tx2,150",
+  );
+  expect(await inspectCsv(data)).not.toHaveProperty("suggestedMapping");
+  expect((await inspectCsv(data, true)).suggestedMapping).toEqual({
+    date: 0,
+    description: 1,
+    debit: 2,
+    credit: 3,
+    currency: 4,
+    sourceId: 5,
+    amountMode: "DEBIT_CREDIT",
+    dateFormat: "DMY",
+    decimalSeparator: "DOT",
+  });
+});
+
+it("leaves conflicting headers and ambiguous or malformed evidence unset", async () => {
+  const result = await inspectCsv(
+    encode(
+      "Date,Date,Description,Amount,Debit,Credit,Reference\n03/04/2026,03/04/2026,Shop,12.30,12.30,,a",
+    ),
+    true,
+  );
+  expect(result.suggestedMapping).toEqual({ description: 2 });
+  const partial = await inspectCsv(
+    encode(
+      "Date,Description,Amount,Transaction ID\n03/04/2026,A,12,duplicate\n04/05/2026,B,13,duplicate",
+    ),
+    true,
+  );
+  expect(partial.suggestedMapping).toEqual({
+    date: 0,
+    description: 1,
+    amount: 2,
+    amountMode: "SIGNED",
+    decimalSeparator: "DOT",
+  });
+  const invalid = await inspectCsv(
+    encode('Date,Description,Amount\n13/04/2026,A,1.20\n04/13/2026,B,"1,20"'),
+    true,
+  );
+  expect(invalid.suggestedMapping).toEqual({
+    date: 0,
+    description: 1,
+    amount: 2,
+    amountMode: "SIGNED",
+  });
+});
+
+it("recognizes money in/out and ignores balance and malformed rows", async () => {
+  const result = await inspectCsv(
+    encode(
+      "Booking Date,Details,Money Out,Money In,Balance,ID\n2026-04-13,Shop,10,,90,1\nbroken,row\n2026-04-14,Pay,,20,110,2",
+    ),
+    true,
+  );
+  expect(result.suggestedMapping).toEqual({
+    date: 0,
+    description: 1,
+    debit: 2,
+    credit: 3,
+    amountMode: "DEBIT_CREDIT",
+    dateFormat: "ISO",
+    decimalSeparator: "DOT",
+  });
+});
+
+it("ignores values no parser accepts but preserves conflicting usable evidence", async () => {
+  const invalid = await inspectCsv(
+    encode(
+      "Date,Description,Amount\n2026-04-13,Shop,12.30\ninvalid,Reject,broken",
+    ),
+    true,
+  );
+  expect(invalid.suggestedMapping).toMatchObject({
+    dateFormat: "ISO",
+    decimalSeparator: "DOT",
+  });
+  const conflict = await inspectCsv(
+    encode(
+      'Date,Description,Amount\n13/04/2026,Shop,12.30\n04/13/2026,Other,"12,30"\ninvalid,Reject,broken',
+    ),
+    true,
+  );
+  expect(conflict.suggestedMapping).not.toHaveProperty("dateFormat");
+  expect(conflict.suggestedMapping).not.toHaveProperty("decimalSeparator");
+});
+
+it("flags competing currency columns only when suggestions are requested", async () => {
+  const csv = encode(
+    "Date,Description,Amount,Currency,Currency Code\n2026-04-13,Shop,12.30,GBP,USD",
+  );
+  expect(await inspectCsv(csv)).not.toHaveProperty("requiresCurrencyColumn");
+  const result = await inspectCsv(csv, true);
+  expect(result.requiresCurrencyColumn).toBe(true);
+  expect(csvInspectionSchema.safeParse(result).success).toBe(true);
+  expect(
+    csvInspectionSchema.safeParse({ ...result, requiresCurrencyColumn: false })
+      .success,
+  ).toBe(false);
+  expect(result.suggestedMapping).not.toHaveProperty("currency");
+  expect(
+    await inspectCsv(
+      encode("Date,Description,Amount,Currency\n2026-04-13,Shop,12.30,GBP"),
+      true,
+    ),
+  ).not.toHaveProperty("requiresCurrencyColumn");
+});
+
+it("detects transaction currency and rejects a foreign currency during normalization", async () => {
+  const bytes = encode(
+    "Date,Description,Debit,Credit,Transaction Currency\n2026-04-13,Shop,10.00,,USD",
+  );
+  const result = await inspectCsv(bytes, true);
+  expect(result.suggestedMapping).toMatchObject({ currency: 4 });
+  expect(result).not.toHaveProperty("requiresCurrencyColumn");
+  const normalized = await normalizeCsv(
+    bytes,
+    {
+      ...mapping,
+      dateFormat: "ISO",
+      amount: null,
+      debit: 2,
+      credit: 3,
+      currency: result.suggestedMapping?.currency ?? null,
+      amountMode: "DEBIT_CREDIT",
+    },
+    "2026-10-23",
+  );
+  expect(normalized.rows[0]).toEqual({
+    rowNumber: 1,
+    status: "REJECTED",
+    reason: "UNSUPPORTED_CURRENCY",
+  });
+});
+
+it("requires a currency choice for competing or unknown currency-indicating headers", async () => {
+  for (const headers of [
+    "Currency,Transaction Currency",
+    "Currency,Account Currency Name",
+    "Settlement CCY Name",
+    "CCY,CCY Code",
+  ]) {
+    const columns = headers.split(",");
+    const result = await inspectCsv(
+      encode(
+        `Date,Description,Amount,${headers}\n2026-04-13,Shop,10.00,${columns.map(() => "USD").join(",")}`,
+      ),
+      true,
+    );
+    expect(result.requiresCurrencyColumn, headers).toBe(true);
+    expect(result.suggestedMapping, headers).not.toHaveProperty("currency");
+  }
+  for (const header of [
+    "CCY",
+    "CCY Code",
+    "Transaction CCY",
+    "Transaction Currency Code",
+  ]) {
+    const result = await inspectCsv(
+      encode(`Date,Description,Amount,${header}\n2026-04-13,Shop,10.00,USD`),
+      true,
+    );
+    expect(result.suggestedMapping, header).toMatchObject({ currency: 3 });
+    expect(result.requiresCurrencyColumn, header).toBeUndefined();
+  }
 });

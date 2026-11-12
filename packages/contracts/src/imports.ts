@@ -5,7 +5,7 @@ import { moneySchema } from "./accounts.js";
 export const MAX_CSV_BYTES = 10 * 1024 * 1024;
 export const MAX_CSV_ROWS = 50_000;
 const columnIndex = z.number().int().min(0).max(99);
-export const csvMappingSchema = z
+const csvMappingFieldsSchema = z
   .object({
     date: columnIndex,
     description: columnIndex,
@@ -19,7 +19,10 @@ export const csvMappingSchema = z
     amountMode: z.enum(["SIGNED", "DEBIT_CREDIT"]),
     positiveIs: z.enum(["INFLOW", "OUTFLOW"]),
   })
-  .strict()
+  .strict();
+export const csvMappingSuggestionSchema = csvMappingFieldsSchema.partial();
+export type CsvMappingSuggestion = z.infer<typeof csvMappingSuggestionSchema>;
+export const csvMappingSchema = csvMappingFieldsSchema
   .refine(
     (value) =>
       value.amountMode === "SIGNED"
@@ -50,6 +53,8 @@ export const csvInspectionSchema = z
   .object({
     columns: z.array(csvColumnSchema).min(1).max(100),
     rowCount: z.number().int().min(1).max(MAX_CSV_ROWS),
+    suggestedMapping: csvMappingSuggestionSchema.optional(),
+    requiresCurrencyColumn: z.literal(true).optional(),
   })
   .strict();
 export const csvRejectCodeSchema = z.enum([

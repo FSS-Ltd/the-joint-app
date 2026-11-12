@@ -1,5 +1,5 @@
 export type FinanceResourceSnapshot<T> =
-  | { kind: "loading" }
+  | { kind: "loading"; refreshing?: true }
   | { kind: "ready"; value: T }
   | { kind: "error"; message: string };
 export type FinanceResourceResult<T> = FinanceResourceSnapshot<T> & {

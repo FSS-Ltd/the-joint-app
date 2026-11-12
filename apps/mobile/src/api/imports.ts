@@ -44,7 +44,7 @@ export function createImportsApi(transport: NativeTransport) {
       signal: AbortSignal,
     ) {
       return transport.request(
-        `${collection(householdId)}/inspect`,
+        `${collection(householdId)}/inspect?suggestMapping=1`,
         csvInspectionSchema,
         { method: "POST", csv: { bytes, accountId }, signal },
       );

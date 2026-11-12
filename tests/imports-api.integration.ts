@@ -37,13 +37,46 @@ it("imports equal purchases, requires reject/overlap decisions, preserves lineag
       { "X-Account-Id": accountId },
     );
     expect(inspection.status).toBe(200);
-    expect(csvInspectionSchema.parse(await inspection.json())).toMatchObject({
+    const inspected = csvInspectionSchema.parse(await inspection.json());
+    expect(inspected).not.toHaveProperty("suggestedMapping");
+    expect(inspected).toMatchObject({
       rowCount: 3,
       columns: [
         { index: 0, label: "date" },
         { index: 1, label: "description" },
         { index: 2, label: "amount" },
       ],
+    });
+    const suggested = await request(
+      `${root}/imports/inspect?suggestMapping=1`,
+      "POST",
+      "date,description,amount\n2026-01-01,Shop,-12.34\n",
+      actorToken,
+      { "X-Account-Id": accountId },
+    );
+    expect(suggested.status).toBe(200);
+    expect(
+      csvInspectionSchema.parse(await suggested.json()).suggestedMapping,
+    ).toEqual({
+      date: 0,
+      description: 1,
+      amount: 2,
+      amountMode: "SIGNED",
+      dateFormat: "ISO",
+      decimalSeparator: "DOT",
+    });
+    const ambiguousCurrency = await request(
+      `${root}/imports/inspect?suggestMapping=1`,
+      "POST",
+      "date,description,amount,currency,currency code\n2026-01-01,Shop,-12.34,GBP,USD\n",
+      actorToken,
+      { "X-Account-Id": accountId },
+    );
+    expect(ambiguousCurrency.status).toBe(200);
+    expect(
+      csvInspectionSchema.parse(await ambiguousCurrency.json()),
+    ).toMatchObject({
+      requiresCurrencyColumn: true,
     });
     let current = await preview(csv);
     expect(current).toMatchObject({

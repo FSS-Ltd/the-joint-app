@@ -2404,4 +2404,10 @@ Signup email verification uses one labelled native OTP field and the existing re
 
 The affected Graphify mobile-features scope was refreshed: 185 files detected, one sensitive exclusion, 522 nodes and 572 edges. The directed feature graph has 446 nodes and 703 edges; selected paths and hashes were verified. Existing inventory coverage gaps remain.
 
-[PR80](https://github.com/FSS-Ltd/the-joint-app/pull/80) is open. Focused tests passed (37 combined), covering delayed POST, stale actions, duplicate submission, refresh and navigation, and failed retry idempotency. Independent reviews and CI will be rerun on the final candidate.
+[PR80](https://github.com/FSS-Ltd/the-joint-app/pull/80) merged at `895f0cd6161612d7fbe48b9408fea24b8a310c76`. Foundation and Native bundle checks passed on head `7dbc4d5e56873ecdc5727029f5121c3da0718683` in [run 43121145910](https://github.com/FSS-Ltd/the-joint-app/actions/runs/43121145910). Focused tests passed (37 combined), covering delayed POST, stale actions, duplicate submission, refresh and navigation, and failed retry idempotency.
+
+## CSV1 — Native CSV column detection
+
+CSV1 is in progress on `fix/native-csv-column-detection`. Native inspection opts into bounded mapping suggestions, with editing and manual fallback. The import draft survives a same-authority in-place account refresh or typed credential renewal while `current()` and writes remain gated pending a fresh authorized read; review and commit remain explicit. Local HTTP integration passed three tests against an isolated loopback database and local Auth; its final rerun, independent reviews and CI remain pending.
+
+The requested balance update is the next gated build step, after CSV1 passes its delivery gate. Current balances use dated `BalanceSnapshot` records; CSV commit publishes ledger transactions. A future balance change must prevent overlapping transactions or double counting and cover rollback and restore. No balance update is implemented in CSV1.
