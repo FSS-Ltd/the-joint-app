@@ -1,0 +1,261 @@
+{
+  "project": "projects/10205021540383864256",
+  "screens": [
+    {
+      "title": "01 Home Dashboard",
+      "screen": "projects/10205021540383864256/screens/ae35a3d2ae61437d90a9794161794438",
+      "screenshot": "projects/10205021540383864256/files/a300e79291704f4bb1a279989d04144b",
+      "path": "screens/01-home-dashboard.png",
+      "mimeType": "png",
+      "sha256": "c7d31f0654e4efee5b5b54f27f142245616632b209fffc26a0408400afc9c4e7"
+    },
+    {
+      "title": "02 Accounts List",
+      "screen": "projects/10205021540383864256/screens/f27e4b71badb4cd8817c007782653024",
+      "screenshot": "projects/10205021540383864256/files/ce3cb5570ec74ff88a75f3b570cb0566",
+      "path": "screens/02-accounts-list.png",
+      "mimeType": "png",
+      "sha256": "2f3e1403f378fcabab5c09941af241597e87445207c01b99357838ebf05381ca"
+    },
+    {
+      "title": "03 Account Detail",
+      "screen": "projects/10205021540383864256/screens/7c78d2fbbef8429aa417578b2b40cdd5",
+      "screenshot": "projects/10205021540383864256/files/a5c1ceadf03f468a8ada05afd4e65306",
+      "path": "screens/03-account-detail.png",
+      "mimeType": "png",
+      "sha256": "40eb49172fc52f557447a809165e088ff2a5b0159cf84066fbfba88315821f78"
+    },
+    {
+      "title": "04 Activity Ledger",
+      "screen": "projects/10205021540383864256/screens/b96452c5bceb4abf9a8d735bbd5ea5b5",
+      "screenshot": "projects/10205021540383864256/files/e4fa3f93199049bd98ec7488100f2396",
+      "path": "screens/04-activity-ledger.png",
+      "mimeType": "png",
+      "sha256": "fc9d46e6c34b0eb5d1771e159b7ebf3ce684d478fb351c93810448cdee655e11"
+    },
+    {
+      "title": "05 Transaction Detail",
+      "screen": "projects/10205021540383864256/screens/2dfa928eda0045fda4c4f152d16de59b",
+      "screenshot": "projects/10205021540383864256/files/6bdc4386b32f4c8e84810a73eb5d6143",
+      "path": "screens/05-transaction-detail.png",
+      "mimeType": "png",
+      "sha256": "040c80714dd5366a173b0fba42f979e8a8541f00b410d1e5ae7d74f94ea9c5b8"
+    },
+    {
+      "title": "06 CSV Import Review",
+      "screen": "projects/10205021540383864256/screens/528e812e50e5423f947a77e47a60e320",
+      "screenshot": "projects/10205021540383864256/files/e6bd4b5360ef4f4f8f05709eb460c56b",
+      "path": "screens/06-csv-import-review.png",
+      "mimeType": "png",
+      "sha256": "3627be922f9233cbf1bff2ed082a5b089c243e3b44ae025835b84b8a853d9f6c"
+    },
+    {
+      "title": "07 Spending Plan",
+      "screen": "projects/10205021540383864256/screens/b319d97f74e34ee8bd4f7b31816fc743",
+      "screenshot": "projects/10205021540383864256/files/e7be46666d7c4725b1bf2b3c3f4a1213",
+      "path": "screens/07-spending-plan.png",
+      "mimeType": "png",
+      "sha256": "e41280315cfb4ab72f559ebe9e915a28dcf70ad0991dfdd4da95dc4711aa2d62"
+    },
+    {
+      "title": "08 Monthly Review",
+      "screen": "projects/10205021540383864256/screens/ab593dfe38cb43d7a28801a5f4d5fab2",
+      "screenshot": "projects/10205021540383864256/files/7f1885764c984c0eb540e661b667346f",
+      "path": "screens/08-monthly-review.png",
+      "mimeType": "png",
+      "sha256": "9e1de8de1e217612e0c0c3013175f5b97504ef3598ee5028f58a574cb42c8f23"
+    },
+    {
+      "title": "09 Recurring Commitments",
+      "screen": "projects/10205021540383864256/screens/f3c7af368d404aab8629b046db536499",
+      "screenshot": "projects/10205021540383864256/files/0dbd4cdbe2e94a05b93819421f46a704",
+      "path": "screens/09-recurring-commitments.png",
+      "mimeType": "png",
+      "sha256": "b9c5e86aa4dbd7481b1a09e5df461c500e64eef498764715bcf46e53c3eadb2b"
+    },
+    {
+      "title": "10 Goals Overview",
+      "screen": "projects/10205021540383864256/screens/f43fe2068ccc4466b1987762b78aba9c",
+      "screenshot": "projects/10205021540383864256/files/02bc1a3008ba45639beece88fd3ffc9c",
+      "path": "screens/10-goals-overview.png",
+      "mimeType": "png",
+      "sha256": "d3f0d996c7b59bd19cfee20db96354934cadb4512730f2085148948b6a5ccedd"
+    },
+    {
+      "title": "11 Goal Detail",
+      "screen": "projects/10205021540383864256/screens/eb0d36b904a4435084198f316dbf36b6",
+      "screenshot": "projects/10205021540383864256/files/f699d7c24fa74bc59ca61de05d77d068",
+      "path": "screens/11-goal-detail.png",
+      "mimeType": "png",
+      "sha256": "90da8e3eecbc601f33ba60e74310204f0d7e74f8b758af692842d532a8b31f1f"
+    },
+    {
+      "title": "12 Record Contribution Form",
+      "screen": "projects/10205021540383864256/screens/fb4724cee7cf4846a10b0aa97cefdb27",
+      "screenshot": "projects/10205021540383864256/files/4494e1bcc597477fad11a24b4386792a",
+      "path": "screens/12-record-contribution-form.png",
+      "mimeType": "png",
+      "sha256": "7afdff88ac5877965695d290250bad6b0a2c26051f973a6ed4628c2c34bd1548"
+    },
+    {
+      "title": "13 Wealth Overview",
+      "screen": "projects/10205021540383864256/screens/15bfaa741fbf497abb20dc3a58854c6f",
+      "screenshot": "projects/10205021540383864256/files/9f1387f8d3d6447097c47309e82402b8",
+      "path": "screens/13-wealth-overview.png",
+      "mimeType": "png",
+      "sha256": "f9bc3f092e73062943cc09a816542ccc7d4c1c8dfb62f40814358eb3a76453d0"
+    },
+    {
+      "title": "14 Projection Scenario",
+      "screen": "projects/10205021540383864256/screens/722bd0a1b41f4f5aab79ed3176784e8a",
+      "screenshot": "projects/10205021540383864256/files/615713b709c24012a11e3ca1fc658c9d",
+      "path": "screens/14-projection-scenario.png",
+      "mimeType": "png",
+      "sha256": "abb644520c873d6507f97954d3f845896a4d3f5100a705fff0a4335c8650fbb2"
+    },
+    {
+      "title": "15 More / Profile",
+      "screen": "projects/10205021540383864256/screens/842bbbad944f4da9a79c5b0728d04351",
+      "screenshot": "projects/10205021540383864256/files/3f3e3062e8f04e8f88ac7f80b51b1710",
+      "path": "screens/15-more-profile.png",
+      "mimeType": "png",
+      "sha256": "18539d5c330b5fa1bed46642a098a37e57fe9d4f127e3cc00898ead6692e6ab6"
+    },
+    {
+      "title": "16 Household Members",
+      "screen": "projects/10205021540383864256/screens/73e645b9abfc4896b0a9bec221de8138",
+      "screenshot": "projects/10205021540383864256/files/95e95bd4c0e843e383de48a6bdeafa09",
+      "path": "screens/16-household-members.png",
+      "mimeType": "png",
+      "sha256": "86eb636bca945f033b21f5479031602034833cea21f4bc81394f3b038dc4e012"
+    },
+    {
+      "title": "17 Privacy and Exports",
+      "screen": "projects/10205021540383864256/screens/b1b6892469604cc0887546d80f1a6c01",
+      "screenshot": "projects/10205021540383864256/files/6119029938321538799",
+      "path": "screens/17-privacy-and-exports.jpg",
+      "mimeType": "image/jpeg",
+      "sha256": "7bdfa19d7526ea2b2c2667b575901e698fe8587b498839be6ec197caa9a4cff9"
+    },
+    {
+      "title": "18 Local Companion",
+      "screen": "projects/10205021540383864256/screens/51c172641d9048db9c2b7c559f6c1beb",
+      "screenshot": "projects/10205021540383864256/files/83c308b0d223453cb97f2a3334f0ce87",
+      "path": "screens/18-local-companion.png",
+      "mimeType": "png",
+      "sha256": "ea8bf57a5cd4d44af716d2ee053adcfcee4c3b6d5742c5ee4b2b836f20aaac48"
+    },
+    {
+      "title": "19 Subscription Management",
+      "screen": "projects/10205021540383864256/screens/cda2c9f218564c65b58af73a349e34ac",
+      "screenshot": "projects/10205021540383864256/files/bb6284668b734b81a3a3fc6c71d852f2",
+      "path": "screens/19-subscription-management.png",
+      "mimeType": "png",
+      "sha256": "a4cc25489445335b686f5fb61248680c452a84f837a3b6ba0a525cfd9c041cab"
+    },
+    {
+      "title": "20 Welcome / Sign-in",
+      "screen": "projects/10205021540383864256/screens/8b81f1326ef64a12ab8cf324e3319783",
+      "screenshot": "projects/10205021540383864256/files/683cfd960c1e419f9980060ddc6223b5",
+      "path": "screens/20-welcome-sign-in.png",
+      "mimeType": "png",
+      "sha256": "0b889e5e636d63c72f2a5b6812d8b87a33abfd928e39cd4996d97f9a8dd3ae1d"
+    },
+    {
+      "title": "21 Verify Identity",
+      "screen": "projects/10205021540383864256/screens/67b9d687570f400ab2763eb31ba6297e",
+      "screenshot": "projects/10205021540383864256/files/3c31babc377f4e4d9838d07d23de1550",
+      "path": "screens/21-verify-identity.png",
+      "mimeType": "png",
+      "sha256": "8a94112e061177f929c9e77c5c2b9ce8f0f973d370503f10944c2ded1c3aff3f"
+    },
+    {
+      "title": "22 First Account Setup",
+      "screen": "projects/10205021540383864256/screens/9e35ed586ea44c98b83ede8a856f0de2",
+      "screenshot": "projects/10205021540383864256/files/bbf2f7d88d774aa1bc153f18729d85fb",
+      "path": "screens/22-first-account-setup.png",
+      "mimeType": "png",
+      "sha256": "2cba31fbaa08a0ea0a17b6282f79a0f6c8201520cd0b30b878f53b9475cc10dd"
+    },
+    {
+      "title": "23 Account Sharing",
+      "screen": "projects/10205021540383864256/screens/dc8c27656e4949838bd220ce2f8a9931",
+      "screenshot": "projects/10205021540383864256/files/b42290e113b4424fb3b1f6e590ef8f36",
+      "path": "screens/23-account-sharing.png",
+      "mimeType": "png",
+      "sha256": "d67d752faa6a7d33877c530aac269cb59281df435a3249cfc65b6cd6cc2f319c"
+    },
+    {
+      "title": "24 State Gallery",
+      "screen": "projects/10205021540383864256/screens/ddcd3f01230344e28bbb034b3c6134e2",
+      "screenshot": "projects/10205021540383864256/files/5927badf07cf49e986f52e285dc846c2",
+      "path": "screens/24-state-gallery.png",
+      "mimeType": "png",
+      "sha256": "f8a660a2736e465720b89f18d6d79aed69a08f7d56784235970d74e5899d9025"
+    },
+    {
+      "title": "25 Security Settings",
+      "screen": "projects/10205021540383864256/screens/d813a68f3fa44db1882495e379ef9a3c",
+      "screenshot": "projects/10205021540383864256/files/26ee5d1dd0be4a879becc4bbc09c7e17",
+      "path": "screens/25-security-settings.png",
+      "mimeType": "png",
+      "sha256": "b8ceb2ab81639549be0f72f1a35809b75ba279092eefa09232382165a87db951"
+    },
+    {
+      "title": "26 Account Recovery",
+      "screen": "projects/10205021540383864256/screens/e1288b74d3ed412e86fb1097515fa709",
+      "screenshot": "projects/10205021540383864256/files/b265ba411a0048dc8d9203dece7e319f",
+      "path": "screens/26-account-recovery.png",
+      "mimeType": "png",
+      "sha256": "8df7844cd95a5ab7fe9df72000366a893e00562c0d11fa5ea30bfc073a78ea64"
+    },
+    {
+      "title": "27 Archive",
+      "screen": "projects/10205021540383864256/screens/5c09c931e6c848a08c6208130d756012",
+      "screenshot": "projects/10205021540383864256/files/7cd662a52c2e448799e2a2efed12d5a0",
+      "path": "screens/27-archive.png",
+      "mimeType": "png",
+      "sha256": "3d3ebe873f46a2fed555963ab4f01dc14c302e37e28dcbb97c12cf7f73e28145"
+    },
+    {
+      "title": "28 Import History & Detail",
+      "screen": "projects/10205021540383864256/screens/189961e7588b4ed0b4c60bd5355f8b87",
+      "screenshot": "projects/10205021540383864256/files/e8a0e5a4017049eb898cbff3329fbcf2",
+      "path": "screens/28-import-history-detail.png",
+      "mimeType": "png",
+      "sha256": "86403ba24509be88656e5e957aec923f85eb9cdb83c6e5121222b2c935bf73d8"
+    },
+    {
+      "title": "29 Split Transaction Editor",
+      "screen": "projects/10205021540383864256/screens/939dc587858e4a42a257e55cea0bbc1e",
+      "screenshot": "projects/10205021540383864256/files/281263a0ad9d452b8a50a2db05d6d8da",
+      "path": "screens/29-split-transaction-editor.png",
+      "mimeType": "png",
+      "sha256": "4d35f89c2b45742c5a3df41a3aab5f0acd6f7536526ed9f83e936c53ac8c8b7d"
+    },
+    {
+      "title": "30 Goal Funding Review",
+      "screen": "projects/10205021540383864256/screens/3b5df2287adc4d5993031431f1032fb6",
+      "screenshot": "projects/10205021540383864256/files/eacf9d18907b4ec08a1a25c244ba7984",
+      "path": "screens/30-goal-funding-review.png",
+      "mimeType": "png",
+      "sha256": "b6bf09befca6f1dc1fe43e9fb406c5ec18843bff5e7961342627eb414aebdfe1"
+    },
+    {
+      "title": "31 Update Manual Valuation",
+      "screen": "projects/10205021540383864256/screens/fb971342500740dfb8cf81896a6474f0",
+      "screenshot": "projects/10205021540383864256/files/8149b4721d654e66aa3ed7da11d055c0",
+      "path": "screens/31-update-manual-valuation.png",
+      "mimeType": "png",
+      "sha256": "65f92bccc1761e71072d8cfe3eadf099f6947e0b345ec4d5b6c7d507555c260b"
+    },
+    {
+      "title": "32 Create Account / Sign Up",
+      "screen": "projects/10205021540383864256/screens/ad888a035c0148c390b125a39f573ad2",
+      "screenshot": "projects/10205021540383864256/files/4f95bbe70f6e4780b21c849f27e350ef",
+      "path": "screens/32-create-account-sign-up.png",
+      "mimeType": "png",
+      "sha256": "a11f35152e3d34b19ed6626141e4db0af36b6b36106bb21ed8492b0782a5fe8c"
+    }
+  ]
+}
