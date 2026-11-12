@@ -307,16 +307,47 @@ it("schedules account and page status at a future London valuation date", async 
   try {
     for (const selector of [detail(), page()])
       streams.push(await open(selector));
-    const snapshots = await Promise.all(
-      observed.mock.results.map((result) => result.value),
-    );
-    expect(snapshots).toHaveLength(2);
-    expect(
-      snapshots.every(
-        (snapshot) =>
-          snapshot.resourceExpiresAt === Date.parse("2099-01-01T00:00:00.000Z"),
-      ),
-    ).toBe(true);
+    const snapshotsFor = async (kind: "account" | "accounts") =>
+      Promise.all(
+        observed.mock.calls.flatMap(([selector], index) =>
+          selector.kind === kind ? [observed.mock.results[index]!.value] : [],
+        ),
+      );
+    const expectedDeadline = Date.parse("2099-01-01T00:00:00.000Z");
+    const initial = await Promise.all([
+      snapshotsFor("account"),
+      snapshotsFor("accounts"),
+    ]);
+    for (const snapshots of initial) {
+      expect(snapshots.length).toBeGreaterThan(0);
+      expect(
+        snapshots.every(
+          (snapshot) => snapshot.resourceExpiresAt === expectedDeadline,
+        ),
+      ).toBe(true);
+    }
+    observed.mockClear();
+    await fixture.owner
+      .$executeRaw`SELECT pg_notify('joint_status_wakeup', '')`;
+    await vi.waitFor(() => {
+      for (const kind of ["account", "accounts"])
+        expect(
+          observed.mock.calls.some(([selector]) => selector.kind === kind),
+        ).toBe(true);
+    });
+    const rereads = await Promise.all([
+      snapshotsFor("account"),
+      snapshotsFor("accounts"),
+    ]);
+    for (const [index, snapshots] of rereads.entries()) {
+      expect(
+        snapshots.every(
+          (snapshot) =>
+            snapshot.resourceExpiresAt === expectedDeadline &&
+            snapshot.fingerprint === initial[index]?.[0]?.fingerprint,
+        ),
+      ).toBe(true);
+    }
   } finally {
     for (const stream of streams) await stream.close();
     observed.mockRestore();
