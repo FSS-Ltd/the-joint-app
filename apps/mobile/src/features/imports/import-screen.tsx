@@ -5,6 +5,7 @@ import { NativeAction } from "@/components/native-action";
 import { NativeActions } from "@/components/native-actions";
 import { ImportBoundary } from "./import-boundary";
 import { MappingFields } from "./mapping-fields";
+import { OpeningBalance } from "./opening-balance";
 import { mappingInput, missingRequired } from "./import-mapping";
 import { useImportFlow } from "./use-import-flow";
 import { useStatementConverter } from "../statements/use-statement-converter";
@@ -144,10 +145,22 @@ export function ImportScreen({
               requiresCurrencyColumn={inspection.requiresCurrencyColumn}
             />
           )}
+          {(flow.needsOpening ||
+            flow.statementAvailable ||
+            flow.openingMutation.kind !== "idle") && (
+            <OpeningBalance
+              flow={flow}
+              statement={
+                flow.statementAvailable
+                  ? inspection.statementBalance
+                  : undefined
+              }
+            />
+          )}
           <NativeActions>
             <NativeAction
               label="Start preview"
-              disabled={!editable || (suggested && !valid)}
+              disabled={!editable || flow.needsOpening || (suggested && !valid)}
               pending={mutation.kind === "pending"}
               onPress={() => void flow.submit()}
             />

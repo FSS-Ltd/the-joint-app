@@ -103,6 +103,7 @@ function ScopedImportDetail({
   }, [householdId, batchId, revision]);
   return (
     <AccountsFrame
+      cutoverNotice="Import Batch"
       active="imports"
       title="Your import"
       description="Review the source. Keep what belongs. Every change stays traceable."

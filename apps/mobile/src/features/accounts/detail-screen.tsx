@@ -22,14 +22,20 @@ export function AccountDetailScreen({
         "00000000-0000-4000-8000-000000000000",
       id: accountId,
     },
-    (scope, signal) => {
+    async (scope, signal) => {
       if (scope.selector.kind !== "account")
         throw new Error("Expected account scope.");
-      return finance.accounts.read(
+      const account = await finance.accounts.read(
         scope.householdId,
         scope.selector.id,
         signal,
       );
+      const balance = await finance.accounts.currentBalances(
+        scope.householdId,
+        [scope.selector.id],
+        signal,
+      );
+      return { ...account, csvBalance: balance.items[0] };
     },
   );
   return (
@@ -40,7 +46,10 @@ export function AccountDetailScreen({
             <AppText variant="heading" accessibilityRole="header">
               {result.value.label}
             </AppText>
-            <AccountFacts account={result.value} />
+            <AccountFacts
+              account={result.value}
+              balance={result.value.csvBalance}
+            />
             <OwnerActions account={result.value} />
             {result.value.access === "TOTALS" && (
               <AppText>

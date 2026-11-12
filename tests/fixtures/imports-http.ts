@@ -43,6 +43,7 @@ export interface ImportsHttpFixture {
   batch(id: string): Promise<ImportBatchResponse>;
   preview(csv: string): Promise<ImportBatchResponse>;
   progress(batchId: string): Promise<void>;
+  progressStep(batchId: string): Promise<boolean>;
   ledger(id?: string, token?: string): Promise<TransactionResponse[]>;
   close(): Promise<void>;
 }
@@ -116,26 +117,29 @@ export async function createImportsHttpFixture(): Promise<ImportsHttpFixture> {
     expect(response.ok).toBe(true);
     return importBatchSchema.parse(await response.json());
   }
+  async function progressStep(batchId: string): Promise<boolean> {
+    const job = await runtime.job.findFirst({
+      where: { householdId, resourceId: batchId, state: "QUEUED" },
+      orderBy: { createdAt: "asc" },
+    });
+    if (!job) return false;
+    const lease = await jobs.claim(
+      `http-import-test-${householdId}`,
+      Object.keys(handlers),
+      5000,
+      job.id,
+    );
+    if (!lease) throw new Error("Expected the fixture's queued import lease");
+    const handler = handlers[lease.type];
+    if (!handler) throw new Error("Unexpected import job type");
+    expect(await jobs.complete(lease, (tx) => handler(lease, tx), 5000)).toBe(
+      true,
+    );
+    return true;
+  }
   async function progress(batchId: string): Promise<void> {
-    for (let attempt = 0; attempt < 10; attempt++) {
-      const job = await runtime.job.findFirst({
-        where: { householdId, resourceId: batchId, state: "QUEUED" },
-        orderBy: { createdAt: "asc" },
-      });
-      if (!job) return;
-      const lease = await jobs.claim(
-        `http-import-test-${householdId}`,
-        Object.keys(handlers),
-        5000,
-        job.id,
-      );
-      if (!lease) throw new Error("Expected the fixture's queued import lease");
-      const handler = handlers[lease.type];
-      if (!handler) throw new Error("Unexpected import job type");
-      expect(await jobs.complete(lease, (tx) => handler(lease, tx), 5000)).toBe(
-        true,
-      );
-    }
+    for (let attempt = 0; attempt < 10; attempt++)
+      if (!(await progressStep(batchId))) return;
     throw new Error("Import did not finish its bounded fixture jobs");
   }
   async function preview(csv: string): Promise<ImportBatchResponse> {
@@ -321,6 +325,7 @@ export async function createImportsHttpFixture(): Promise<ImportsHttpFixture> {
       batch,
       preview,
       progress,
+      progressStep,
       ledger,
       close,
     };

@@ -5,11 +5,14 @@ import { useLogout } from "./use-logout";
 
 export function LogoutCompletion({
   signout,
+  cutoverNotice,
 }: {
   signout: ReturnType<typeof useLogout>;
+  cutoverNotice?: string;
 }): ReactNode {
   return (
     <IdentityFrame
+      cutoverNotice={cutoverNotice}
       eyebrow="Your account"
       title="App access has ended."
       description="Finishing sign-out safely."

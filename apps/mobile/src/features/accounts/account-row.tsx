@@ -1,7 +1,8 @@
-import type { AccountResponse } from "@joint/contracts";
+import type { AccountResponse, CsvBalance } from "@joint/contracts";
 import { formatMoney, isLiabilityKind } from "@joint/domain";
 import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import { AppText } from "@/components/app-text";
+import { ImportedBalance } from "./imported-balance";
 import { colors, corners, spacing } from "@/theme/tokens";
 import {
   displayDate,
@@ -14,8 +15,10 @@ import {
 export function AccountRow({
   account,
   onOpen,
+  balance,
 }: {
   account: AccountResponse;
+  balance?: CsvBalance;
   onOpen(): void;
 }): React.JSX.Element {
   const { width, fontScale } = useWindowDimensions();
@@ -44,18 +47,27 @@ export function AccountRow({
           </AppText>
         </View>
         <View style={[styles.value, stacked && styles.stackedItem]}>
+          <ImportedBalance balance={balance} />
           {valuation ? (
             <>
-              <AppText variant="title">{formatMoney(valuation.money)}</AppText>
+              <AppText
+                variant={balance?.status === "AVAILABLE" ? "body" : "title"}
+              >
+                {formatMoney(valuation.money)}
+              </AppText>
               <AppText tone="secondary">
-                {isLiabilityKind(account.kind)
-                  ? "Total outstanding debt"
-                  : "Total account value"}
+                {balance?.status === "AVAILABLE"
+                  ? "Recorded manual balance"
+                  : isLiabilityKind(account.kind)
+                    ? "Total outstanding debt"
+                    : "Total account value"}
               </AppText>
               <AppText tone="secondary">
                 {valuation.adultMoney
-                  ? `Adult portion: ${formatMoney(valuation.adultMoney)}`
-                  : "Adult portion unknown"}
+                  ? `${balance?.status === "AVAILABLE" ? "Adult portion of manual valuation ·" : "Adult portion:"} ${formatMoney(valuation.adultMoney)}`
+                  : balance?.status === "AVAILABLE"
+                    ? "Adult portion of manual valuation unknown"
+                    : "Adult portion unknown"}
               </AppText>
               <AppText tone="secondary">
                 Manual valuation · {displayDate(valuation.asOfDate)}

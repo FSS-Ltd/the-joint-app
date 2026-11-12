@@ -22,6 +22,12 @@ interface ImportFlow {
     change(value: unknown): void;
   };
   mutation: { kind: string; retry(): Promise<void> };
+  openingMutation: { kind: string; retry(): Promise<void> };
+  needsOpening: boolean;
+  statementAvailable: boolean;
+  saveOpening(amount: string, date: string): Promise<void>;
+  saveStatementBalance(input: contracts.ValuationInput): Promise<void>;
+  correctOpening(): void;
   chooseFile(): Promise<void>;
   editAgain(): void;
   inspect(): Promise<void>;
@@ -89,17 +95,42 @@ const inspection = {
   rowCount: 2,
 };
 
-async function setup(owned = true) {
+async function setup(owned = true, hasAnchor = true) {
   const f = await financeFixture();
-  const item = account({
+  const baseAccount = account({
+    latestValuation: {
+      id: key,
+      money: { amountMinor: "0", currency: "GBP" },
+      adultMoney: null,
+      asOfDate: "2026-01-01",
+      recordedAt: "2026-01-01T00:00:00.000Z",
+      complete: false,
+      source: "MANUAL",
+    },
     householdId: f.finance.authority.householdId,
     ownership: owned ? "OWNED" : "SHARED",
   });
+  const item: contracts.AccountResponse & { csvBalance: contracts.CsvBalance } =
+    {
+      ...baseAccount,
+      latestValuation: hasAnchor ? baseAccount.latestValuation : null,
+      csvBalance: {
+        accountId: baseAccount.id,
+        status: hasAnchor ? "NO_ACTIVITY" : "MISSING_ANCHOR",
+      },
+    };
+  const value = vi.fn<
+    (...args: unknown[]) => Promise<contracts.AccountResponse>
+  >(async () => ({ ...item, version: item.version + 1 }));
   const inspect = vi.fn<
     (...args: unknown[]) => Promise<
       typeof inspection & {
         suggestedMapping?: contracts.CsvMappingSuggestion;
         requiresCurrencyColumn?: true;
+        statementBalance?: {
+          money: contracts.ValuationInput["money"];
+          asOfDate: string;
+        };
       }
     >
   >(async () => inspection);
@@ -109,6 +140,7 @@ async function setup(owned = true) {
   }));
   f.replaceFinance({
     ...f.finance,
+    accounts: { ...f.finance.accounts, value },
     imports: { ...f.finance.imports, inspect, preview } as never,
   });
   const resource = {
@@ -172,6 +204,58 @@ async function setup(owned = true) {
         }),
       },
       "../accounts/use-write-draft": draft,
+      "./use-opening-balance": sourceExports(
+        "apps/mobile/src/features/imports/use-opening-balance.ts",
+        {
+          ...deps,
+          "expo-crypto": { randomUUID: () => key },
+          "../finance/errors": errors,
+          "../finance/use-mutation": { useFinanceMutation: f.mutation },
+          "../accounts/write-intent": sourceExports(
+            "apps/mobile/src/features/accounts/write-intent.ts",
+            {
+              "@joint/contracts": contracts,
+              "../finance/result": result,
+              "../finance/errors": errors,
+            },
+          ),
+          "./opening-input": sourceExports(
+            "apps/mobile/src/features/imports/opening-input.ts",
+            {
+              "@joint/contracts": contracts,
+              "../accounts/write-input": sourceExports(
+                "apps/mobile/src/features/accounts/write-input.ts",
+                {
+                  "@joint/contracts": contracts,
+                  "@joint/domain":
+                    await import("../packages/domain/src/index.js"),
+                },
+              ),
+            },
+          ),
+        },
+      ),
+      "../accounts/write-intent": sourceExports(
+        "apps/mobile/src/features/accounts/write-intent.ts",
+        {
+          "@joint/contracts": contracts,
+          "../finance/result": result,
+          "../finance/errors": errors,
+        },
+      ),
+      "./opening-input": sourceExports(
+        "apps/mobile/src/features/imports/opening-input.ts",
+        {
+          "@joint/contracts": contracts,
+          "../accounts/write-input": sourceExports(
+            "apps/mobile/src/features/accounts/write-input.ts",
+            {
+              "@joint/contracts": contracts,
+              "@joint/domain": await import("../packages/domain/src/index.js"),
+            },
+          ),
+        },
+      ),
       "./import-file": fileModule,
       "./import-intent": intent,
       "./import-mapping": mappingModule,
@@ -189,6 +273,7 @@ async function setup(owned = true) {
     item,
     inspect,
     preview,
+    value,
     picked,
     content,
     discarded,
@@ -504,5 +589,254 @@ it("waits for renewed account ownership before retrying an uncertain preview", a
   expect(second?.[2]).toEqual(first?.[2]);
   expect(second?.[3]).toEqual(first?.[3]);
   expect(second?.[4]).toBe(first?.[4]);
+  s.f.close();
+});
+
+it("records a dated opening before preview and waits for a fresh usable anchor", async () => {
+  const s = await setup(true, false);
+  await s.render().chooseFile();
+  await s.render().inspect();
+  s.render().changeMapping({ ...mapped });
+  expect(s.render().needsOpening).toBe(true);
+  await s.render().submit();
+  expect(s.preview).not.toHaveBeenCalled();
+  await s.render().saveOpening("123.45", "2024-03-01");
+  expect(s.value).toHaveBeenCalledOnce();
+  expect(s.value.mock.calls[0]?.[2]).toEqual({
+    money: { amountMinor: "12345", currency: "GBP" },
+    asOfDate: "2024-02-29",
+  });
+  expect(s.render().draft.value.file?.name).toBe("statement.csv");
+  expect(s.render().draft.value.mapping).toMatchObject(mapped);
+  await s.render().submit();
+  expect(s.preview).not.toHaveBeenCalled();
+  s.resource.current = {
+    kind: "ready",
+    value: {
+      ...s.item,
+      version: s.item.version + 1,
+      csvBalance: { accountId: s.item.id, status: "NO_ACTIVITY" },
+    },
+  };
+  s.render();
+  await s.render().submit();
+  expect(s.preview).toHaveBeenCalledOnce();
+  s.f.close();
+});
+
+it("corrects a rejected opening without dropping the inspected file or mapping", async () => {
+  const s = await setup(true, false);
+  s.value.mockRejectedValueOnce(
+    new errors.NativeApiError(400, "INVALID_INPUT"),
+  );
+  await s.render().chooseFile();
+  await s.render().inspect();
+  s.render().changeMapping({ ...mapped });
+  await s.render().saveOpening("1.00", "2024-03-01");
+  expect(s.render().openingMutation.kind).toBe("error");
+  s.render().correctOpening();
+  expect(s.render().draft.value.file?.name).toBe("statement.csv");
+  expect(s.render().draft.value.mapping).toMatchObject(mapped);
+  await s.render().saveOpening("2.00", "2024-03-01");
+  expect(s.value).toHaveBeenCalledTimes(2);
+  s.resource.current = {
+    kind: "ready",
+    value: {
+      ...s.item,
+      version: s.item.version + 1,
+      csvBalance: { accountId: s.item.id, status: "NO_ACTIVITY" },
+    },
+  };
+  s.render();
+  await s.render().submit();
+  expect(s.preview).toHaveBeenCalledOnce();
+  s.f.close();
+});
+
+it("requires confirmation and preserves the statement closing date when recording a reliable hint", async () => {
+  const s = await setup(true, false);
+  const statementBalance = {
+    money: { amountMinor: "17500", currency: "GBP" as const },
+    asOfDate: "2024-04-30",
+  };
+  s.inspect.mockResolvedValueOnce({ ...inspection, statementBalance });
+  await s.render().chooseFile();
+  await s.render().inspect();
+  expect(s.value).not.toHaveBeenCalled();
+  await s
+    .render()
+    .saveStatementBalance({ ...statementBalance, asOfDate: "2024-04-29" });
+  expect(s.value).not.toHaveBeenCalled();
+  await s.render().saveStatementBalance(statementBalance);
+  expect(s.value.mock.calls[0]?.[2]).toEqual(statementBalance);
+  expect(s.render().draft.value.file?.name).toBe("statement.csv");
+  s.f.close();
+});
+
+it("requires a replacement when the authoritative balance reports an unusable anchor", async () => {
+  const s = await setup();
+  s.resource.current = {
+    kind: "ready",
+    value: {
+      ...s.item,
+      csvBalance: { accountId: s.item.id, status: "MISSING_ANCHOR" },
+    },
+  };
+  await s.render().chooseFile();
+  await s.render().inspect();
+  s.render().changeMapping({ ...mapped });
+  expect(s.render().needsOpening).toBe(true);
+  await s.render().submit();
+  expect(s.preview).not.toHaveBeenCalled();
+  s.f.close();
+});
+
+it("retries an uncertain opening only after ownership is rechecked with the identical request", async () => {
+  const s = await setup(true, false);
+  s.value.mockRejectedValueOnce(
+    new errors.NativeApiError(0, undefined, "uncertain"),
+  );
+  await s.render().chooseFile();
+  await s.render().inspect();
+  await s.render().saveOpening("12.34", "2024-03-01");
+  const stale = s.render();
+  expect(stale.openingMutation.kind).toBe("uncertain");
+  s.resource.current = { kind: "loading", refreshing: true };
+  s.render();
+  await stale.openingMutation.retry();
+  expect(s.value).toHaveBeenCalledOnce();
+  s.resource.current = { kind: "ready", value: s.item };
+  await s.render().openingMutation.retry();
+  expect(s.value).toHaveBeenCalledTimes(2);
+  expect(s.value.mock.calls[1]?.slice(0, 5)).toEqual(
+    s.value.mock.calls[0]?.slice(0, 5),
+  );
+  s.f.close();
+});
+
+it("does not admit preview or another opening while a valuation is pending", async () => {
+  const s = await setup(true, false);
+  let finish: (value: contracts.AccountResponse) => void = () => {};
+  s.value.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  await s.render().chooseFile();
+  await s.render().inspect();
+  s.render().changeMapping({ ...mapped });
+  const stale = s.render();
+  const pending = stale.saveOpening("1.00", "2024-03-01");
+  await stale.saveOpening("2.00", "2024-03-01");
+  await stale.submit();
+  await stale.chooseFile();
+  await stale.inspect();
+  expect(s.inspect).toHaveBeenCalledOnce();
+  expect(s.render().draft.value.file?.name).toBe("statement.csv");
+  expect(s.value).toHaveBeenCalledOnce();
+  expect(s.preview).not.toHaveBeenCalled();
+  finish({ ...s.item, version: s.item.version + 1 });
+  await pending;
+  s.f.close();
+});
+
+it("offers a newer statement balance without replacing an anchor automatically", async () => {
+  const s = await setup();
+  const existing = {
+    ...s.item,
+    csvBalance: {
+      accountId: s.item.id,
+      status: "AVAILABLE" as const,
+      basis: "MANUAL_PLUS_LEDGER" as const,
+      money: { amountMinor: "10000", currency: "GBP" as const },
+      anchorId: key,
+      anchorDate: "2024-01-01",
+      throughDate: "2024-03-01",
+    },
+  };
+  s.resource.current = { kind: "ready", value: existing };
+  const statementBalance = {
+    money: { amountMinor: "17500", currency: "GBP" as const },
+    asOfDate: "2024-04-30",
+  };
+  s.inspect.mockResolvedValueOnce({ ...inspection, statementBalance });
+  await s.render().chooseFile();
+  await s.render().inspect();
+  expect(s.render().needsOpening).toBe(false);
+  expect(s.render().statementAvailable).toBe(true);
+  expect(s.value).not.toHaveBeenCalled();
+  await s.render().saveStatementBalance(statementBalance);
+  expect(s.value.mock.calls[0]?.[2]).toEqual(statementBalance);
+  expect(s.render().draft.value.file?.name).toBe("statement.csv");
+  s.f.close();
+});
+
+it("does not offer or save an older statement balance over an existing anchor", async () => {
+  const s = await setup();
+  const existing = {
+    ...s.item,
+    csvBalance: {
+      accountId: s.item.id,
+      status: "AVAILABLE" as const,
+      basis: "MANUAL_PLUS_LEDGER" as const,
+      money: { amountMinor: "10000", currency: "GBP" as const },
+      anchorId: key,
+      anchorDate: "2024-05-01",
+      throughDate: "2024-05-01",
+    },
+  };
+  s.resource.current = { kind: "ready", value: existing };
+  const statementBalance = {
+    money: { amountMinor: "17500", currency: "GBP" as const },
+    asOfDate: "2024-04-30",
+  };
+  s.inspect.mockResolvedValueOnce({ ...inspection, statementBalance });
+  await s.render().chooseFile();
+  await s.render().inspect();
+  expect(s.render().statementAvailable).toBe(false);
+  await s.render().saveStatementBalance(statementBalance);
+  expect(s.value).not.toHaveBeenCalled();
+  s.f.close();
+});
+
+it("never records an optional statement balance after a preview was dispatched", async () => {
+  const s = await setup();
+  s.resource.current = {
+    kind: "ready",
+    value: {
+      ...s.item,
+      csvBalance: {
+        accountId: s.item.id,
+        status: "AVAILABLE",
+        basis: "MANUAL_PLUS_LEDGER",
+        money: { amountMinor: "10000", currency: "GBP" },
+        anchorId: key,
+        anchorDate: "2024-01-01",
+        throughDate: "2024-01-01",
+      },
+    },
+  };
+  const statementBalance = {
+    money: { amountMinor: "17500", currency: "GBP" as const },
+    asOfDate: "2024-04-30",
+  };
+  s.inspect.mockResolvedValueOnce({ ...inspection, statementBalance });
+  let finish: (value: unknown) => void = () => {};
+  s.preview.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  await s.render().chooseFile();
+  await s.render().inspect();
+  s.render().changeMapping({ ...mapped });
+  const stale = s.render();
+  const pending = stale.submit();
+  await stale.saveStatementBalance(statementBalance);
+  expect(s.value).not.toHaveBeenCalled();
+  finish({ batch: batch(s.item.id), jobId: key });
+  await pending;
   s.f.close();
 });

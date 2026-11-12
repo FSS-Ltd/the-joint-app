@@ -41,6 +41,9 @@ function flow(
   return {
     ...session({ id: "a" }, draftValue),
     busy: null as string | null,
+    openingMutation: { kind: "idle" },
+    needsOpening: false,
+    statementAvailable: false,
     localMappingEditable: true,
     preservingDraft: false,
     resource: { kind: "ready", value: { id: "a" }, retry: vi.fn() },
@@ -59,6 +62,7 @@ function importScreen(
       react,
       "./import-boundary": { ImportBoundary: "boundary" },
       "./mapping-fields": { MappingFields: "mapping" },
+      "./opening-balance": { OpeningBalance: "opening" },
       "./import-mapping": mapping,
       "./use-import-flow": { useImportFlow: () => state },
       "../statements/use-statement-converter": {
@@ -512,4 +516,45 @@ it("requests an explicit currency column for an ambiguous detected file", () => 
     requiresCurrencyColumn: true,
   });
   expect(byLabel(choices, "Currency column")).toBeDefined();
+});
+
+it("offers a user-confirmed statement balance and separately dated opening entry", () => {
+  const h = hookHarness();
+  const saveStatementBalance = vi.fn();
+  const state = flow(
+    { file, inspection },
+    {
+      account: { permissions: { canValue: true } },
+      needsOpening: true,
+      openingMutation: { kind: "idle" },
+      saveStatementBalance,
+      saveOpening: vi.fn(),
+    },
+  );
+  const Opening = load(`${feature}opening-balance.tsx`, {
+    react: h.react,
+    "@/components/native-field": { NativeField: "field" },
+    "../accounts/write-feedback": { WriteFeedback: "feedback" },
+  }).OpeningBalance as (props: unknown) => unknown;
+  const statement = {
+    money: { amountMinor: "17500", currency: "GBP" },
+    asOfDate: "2024-04-30",
+  };
+  const render = () => h.render(() => Opening({ flow: state, statement }));
+  expect(JSON.stringify(expand(render()))).toContain("£175.00");
+  expect(byLabel(render(), "Opening date (YYYY-MM-DD)")).toBeDefined();
+  expect(saveStatementBalance).not.toHaveBeenCalled();
+  press(render(), "Use statement balance");
+  expect(saveStatementBalance).toHaveBeenCalledWith(statement);
+  expect(
+    expand(importScreen(state)).some((item) => item.type === "opening"),
+  ).toBe(true);
+  expect(byLabel(importScreen(state), "Start preview")?.disabled).toBe(true);
+  state.needsOpening = false;
+  state.statementAvailable = true;
+  expect(byLabel(render(), "Opening balance in GBP")).toBeUndefined();
+  expect(byLabel(render(), "Use statement balance")).toBeDefined();
+  expect(
+    expand(importScreen(state)).some((item) => item.type === "opening"),
+  ).toBe(true);
 });

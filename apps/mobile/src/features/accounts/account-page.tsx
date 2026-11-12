@@ -1,5 +1,5 @@
 import type { PropsWithChildren, ReactElement } from "react";
-import type { AccountResponse } from "@joint/contracts";
+import type { AccountResponse, CsvBalance } from "@joint/contracts";
 import { FlatList, StyleSheet, View } from "react-native";
 import { AppText } from "@/components/app-text";
 import { EmptyState } from "@/components/empty-state";
@@ -14,12 +14,14 @@ export function AccountPage({
   renderAccount,
   extraData,
   onAddAccount,
+  includeBalances = false,
 }: PropsWithChildren<{
-  renderAccount(account: AccountResponse): ReactElement;
+  renderAccount(account: AccountResponse, balance?: CsvBalance): ReactElement;
+  includeBalances?: boolean;
   extraData?: unknown;
   onAddAccount?: () => void;
 }>): React.JSX.Element {
-  const page = useAccountPage();
+  const page = useAccountPage(includeBalances);
   const result = page.resource;
   const header = (
     <View style={styles.sections}>
@@ -41,7 +43,16 @@ export function AccountPage({
       data={result.kind === "ready" ? result.value.items : []}
       extraData={extraData}
       keyExtractor={(account) => account.id}
-      renderItem={({ item }) => renderAccount(item)}
+      renderItem={({ item }) =>
+        renderAccount(
+          item,
+          result.kind === "ready"
+            ? result.value.balances?.find(
+                (balance) => balance.accountId === item.id,
+              )
+            : undefined,
+        )
+      }
       ItemSeparatorComponent={() => <View style={styles.separator} />}
       ListHeaderComponent={header}
       ListHeaderComponentStyle={styles.header}

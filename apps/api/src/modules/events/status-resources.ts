@@ -25,7 +25,10 @@ interface Services {
     "financeContext" | "actor" | "subscriptionExpiry"
   >;
   imports?: Pick<ImportQueries, "observe">;
-  accounts?: Pick<AccountQueries, "read" | "observePage">;
+  accounts?: Pick<
+    AccountQueries,
+    "read" | "observePage" | "observeBalanceCalendar"
+  >;
   wealth?: Pick<WealthService, "observe">;
   reports?: Pick<ReportService, "observeCurrent">;
   transactions?: Pick<TransactionQueries, "observePage">;
@@ -108,15 +111,37 @@ export class StatusResources {
     }
     if (selector.kind === "account" || selector.kind === "accounts") {
       if (!this.services.accounts) throw new ServiceUnavailableException();
-      const status =
-        selector.kind === "account"
-          ? await this.services.accounts.read(context, selector.id)
-          : await this.services.accounts.observePage(
-              context,
-              selector.limit,
-              selector.cursor,
-            );
-      return this.snapshot(token, context, status, null);
+      if (selector.kind === "account") {
+        const status = await this.services.accounts.read(context, selector.id);
+        const calendar = await this.services.accounts.observeBalanceCalendar(
+          context,
+          ["CURRENT", "SAVINGS"].includes(status.kind) ? [status.id] : [],
+        );
+        return this.snapshot(
+          token,
+          context,
+          { status, anchors: calendar.anchors },
+          calendar.nextChangeAt,
+        );
+      }
+      const status = await this.services.accounts.observePage(
+        context,
+        selector.limit,
+        selector.cursor,
+      );
+      const ids = status.items
+        .filter((item) => ["CURRENT", "SAVINGS"].includes(item.kind))
+        .map((item) => item.id);
+      const calendar = await this.services.accounts.observeBalanceCalendar(
+        context,
+        ids,
+      );
+      return this.snapshot(
+        token,
+        context,
+        { status, anchors: calendar.anchors },
+        calendar.nextChangeAt,
+      );
     }
     if (selector.kind === "transactions") {
       if (!this.services.transactions) throw new ServiceUnavailableException();

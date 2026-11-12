@@ -32,9 +32,13 @@ export function Household(): ReactNode {
     }
   }
   const membership = identity?.membership;
-  if (signout.started) return <LogoutCompletion signout={signout} />;
+  if (signout.started)
+    return (
+      <LogoutCompletion signout={signout} cutoverNotice="Household Settings" />
+    );
   return (
     <IdentityFrame
+      cutoverNotice="Household Settings"
       eyebrow="Your household"
       title={membership ? membership.household.name : "A home for your plans."}
       description="Start with the people. The rest can grow from here."

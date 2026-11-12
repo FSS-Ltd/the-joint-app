@@ -126,6 +126,32 @@ html:has(.app-navigation) {
   }
 }
 @media (min-width: 1100px) {
+  :is(.accounts-shell, .identity-screen.has-app-navigation).has-cutover-notice {
+    grid-template-rows: auto auto 1fr auto;
+  }
+  :is(.accounts-shell, .identity-screen.has-app-navigation).has-cutover-notice
+    > .cutover-banner {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100%;
+  }
+  :is(.accounts-shell, .identity-screen.has-app-navigation).has-cutover-notice
+    > .identity-header {
+    grid-row: 2;
+  }
+  :is(.accounts-shell, .identity-screen.has-app-navigation).has-cutover-notice
+    > .app-navigation,
+  :is(.accounts-shell, .identity-screen.has-app-navigation).has-cutover-notice
+    > .accounts-main,
+  :is(.accounts-shell, .identity-screen.has-app-navigation).has-cutover-notice
+    > .identity-main {
+    grid-row: 3;
+  }
+  :is(.accounts-shell, .identity-screen.has-app-navigation).has-cutover-notice
+    > .identity-footer {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
   html:has(.app-navigation) {
     scroll-padding-bottom: 24px;
   }

@@ -229,6 +229,7 @@ it("keeps an account row actionable with its real ownership and valuation labels
   const onOpen = vi.fn();
   const Row = load("accounts/account-row.tsx", {
     "./account-labels": accountLabels,
+    "./imported-balance": { ImportedBalance: "imported-balance" },
     "react-native": {
       Pressable: "pressable",
       View: "view",
@@ -290,3 +291,120 @@ import {
   jsxBoundary,
   sourceExports,
 } from "./fixtures/native-source-harness.js";
+
+it("reads one balance batch for the visible account page and never batches the summary picker", async () => {
+  const h = hookHarness();
+  const rows = [
+    account(),
+    account({ id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" }),
+  ];
+  const list = vi.fn(async () => ({ items: rows, nextCursor: null }));
+  const currentBalances = vi.fn(async () => ({
+    items: rows.map((row) => ({ accountId: row.id, status: "NO_ACTIVITY" })),
+  }));
+  let read:
+    | ((scope: NativeResourceScope, signal: AbortSignal) => Promise<unknown>)
+    | undefined;
+  const usePage = load("accounts/use-account-page.ts", {
+    react: h.react,
+    "../finance/context": {
+      useNativeFinance: () => ({
+        authority: scope,
+        accounts: { list, currentBalances },
+        isCurrent: () => true,
+      }),
+    },
+    "../finance/scope": { financeAuthorityKey },
+    "../finance/use-resource": {
+      useFinanceResource: (_selector: unknown, reader: typeof read) => {
+        read = reader;
+        return { kind: "loading" };
+      },
+    },
+  }).useAccountPage as (include: boolean) => unknown;
+  const captured = {
+    ...scope,
+    selector: {
+      kind: "accounts" as const,
+      householdId: scope.householdId,
+      limit: 50,
+    },
+  };
+  h.render(() => usePage(true));
+  const signal = new AbortController().signal;
+  const page = await read!(captured, signal);
+  expect(currentBalances).toHaveBeenCalledExactlyOnceWith(
+    scope.householdId,
+    rows.map((row) => row.id),
+    signal,
+  );
+  expect(page).toMatchObject({
+    balances: [{ accountId: rows[0]!.id }, { accountId: rows[1]!.id }],
+  });
+  h.render(() => usePage(false));
+  await read!(captured, signal);
+  expect(currentBalances).toHaveBeenCalledOnce();
+});
+
+it("shows an estimated recorded balance without attributing a different manual valuation as its anchor", () => {
+  const balance = {
+    accountId: id,
+    status: "AVAILABLE" as const,
+    basis: "MANUAL_PLUS_LEDGER" as const,
+    money: { amountMinor: "8500", currency: "GBP" as const },
+    anchorId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    anchorDate: "2026-01-01",
+    throughDate: "2026-01-10",
+  };
+  const imported = load("accounts/imported-balance.tsx", {
+    "./account-labels": accountLabels,
+  }).ImportedBalance as (props: { balance: typeof balance }) => unknown;
+  const text = JSON.stringify(imported({ balance }));
+  expect(text).toContain("£85.00");
+  expect(text).toContain("Balance from recorded activity");
+  expect(text).toContain("estimate");
+  const Facts = load("accounts/account-facts.tsx", {
+    "./account-labels": accountLabels,
+    "./imported-balance": { ImportedBalance: "balance" },
+  }).AccountFacts as (props: unknown) => unknown;
+  const valuation: NonNullable<AccountResponse["latestValuation"]> = {
+    id,
+    money: { amountMinor: "10000", currency: "GBP" },
+    adultMoney: { amountMinor: "10000", currency: "GBP" },
+    asOfDate: "2026-01-05",
+    recordedAt: "2026-01-05T00:00:00.000Z",
+    complete: true,
+    source: "MANUAL",
+  };
+  const rendered = JSON.stringify(
+    Facts({ account: account({ latestValuation: valuation }), balance }),
+  );
+  expect(rendered).toContain("£100.00");
+  expect(rendered).toContain("Recorded manual balance");
+  expect(rendered).toContain("5 Jan 2026");
+  expect(rendered).not.toContain("Total account value");
+  expect(rendered).toContain("Manual valuation");
+  expect(rendered).toContain("Adult portion of manual valuation");
+  expect(rendered).not.toContain("Source valuation");
+  const Row = load("accounts/account-row.tsx", {
+    "./account-labels": accountLabels,
+    "./imported-balance": { ImportedBalance: "balance" },
+    "react-native": {
+      Pressable: "pressable",
+      View: "view",
+      StyleSheet: { create: <T>(styles: T) => styles },
+      useWindowDimensions: () => ({ width: 390, fontScale: 1 }),
+    },
+  }).AccountRow as (props: unknown) => unknown;
+  const row = JSON.stringify(
+    Row({
+      account: account({ latestValuation: valuation }),
+      balance,
+      onOpen: vi.fn(),
+    }),
+  );
+  expect(row).toContain("£100.00");
+  expect(row).toContain("Recorded manual balance");
+  expect(row).toContain("5 Jan 2026");
+  expect(row).not.toContain("Total account value");
+});

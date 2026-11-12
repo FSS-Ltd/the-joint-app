@@ -161,6 +161,7 @@ it("preserves exact owner, NONE/TOTALS/TRANSACTIONS and unknown-adult labels", (
   });
   const facts = load("accounts/account-facts.tsx", {
     "./account-labels": labels,
+    "./imported-balance": { ImportedBalance: "imported-balance" },
   }).AccountFacts as (props: { account: AccountResponse }) => unknown;
   expect(text(facts({ account: account() }))).toContain(
     "No valuation recorded",

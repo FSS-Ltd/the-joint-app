@@ -7,6 +7,8 @@ import {
 import type { Prisma } from "@joint/database/client";
 import type { ScopedDatabase } from "@joint/database/scoped";
 import type { IdentityVault } from "../identity/identity-vault.js";
+import { readCsvBalances } from "./csv-balance.js";
+import { observeBalanceCalendar } from "./balance-calendar.js";
 import {
   accountInclude,
   partnerMembership,
@@ -23,6 +25,12 @@ export class AccountQueries {
     return this.database.withScope(context, (tx) =>
       readAccount(tx, context, accountId),
     );
+  }
+  csvBalances(context: AuthContext, accountIds: string[]) {
+    return readCsvBalances(this.database, context, accountIds);
+  }
+  observeBalanceCalendar(context: AuthContext, accountIds: string[]) {
+    return observeBalanceCalendar(this.database, context, accountIds);
   }
   async list(context: AuthContext, limit: number, cursor?: string) {
     const page = await this.page(context, limit, cursor);

@@ -4,12 +4,15 @@ import {
   accountListSchema,
   accountPatchSchema,
   accountSchema,
+  csvBalanceListSchema,
+  scopeAccountIdsSchema,
   grantInputSchema,
   idempotencyKeySchema,
   quotedVersionSchema,
   valuationInputSchema,
 } from "@joint/contracts";
 import type { NativeTransport } from "./types";
+import { NativeApiError } from "./errors";
 
 type AccountInput = ReturnType<typeof accountCreateSchema.parse>;
 type AccountPatch = ReturnType<typeof accountPatchSchema.parse>;
@@ -39,6 +42,28 @@ export function createAccountsApi(transport: NativeTransport) {
         accountListSchema,
         { method: "GET", signal },
       );
+    },
+    async currentBalances(
+      householdId: string,
+      accountIds: readonly string[],
+      signal: AbortSignal,
+    ) {
+      const ids = scopeAccountIdsSchema.parse(accountIds);
+      const query = new URLSearchParams({ accountIds: ids.join(",") });
+      const result = await transport.request(
+        `${collection(householdId)}/current-balances?${query.toString()}`,
+        csvBalanceListSchema,
+        { method: "GET", signal },
+      );
+      const received = result.items
+        .map((item) => item.accountId.toLowerCase())
+        .sort();
+      if (
+        received.length !== ids.length ||
+        received.some((id, index) => id !== ids[index])
+      )
+        throw new NativeApiError(409, "RESOURCE_MISMATCH");
+      return result;
     },
     read(householdId: string, accountId: string, signal: AbortSignal) {
       return transport.request(

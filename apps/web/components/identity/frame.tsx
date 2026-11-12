@@ -1,4 +1,5 @@
 import { Brand } from "../brand";
+import { CutoverNoticeBanner } from "../cutover/cutover-banner";
 import type { ReactNode } from "react";
 import {
   AppNavigation,
@@ -16,6 +17,7 @@ export function IdentityFrame({
   children,
   navigation,
   idPrefix = "",
+  cutoverNotice,
 }: {
   eyebrow: string;
   title: string;
@@ -23,16 +25,18 @@ export function IdentityFrame({
   children: ReactNode;
   navigation?: AppDestination;
   idPrefix?: string;
+  cutoverNotice?: string;
 }): ReactNode {
   const mainId = idPrefix ? `${idPrefix}-main` : "main";
   const titleId = idPrefix ? `${idPrefix}-page-title` : "page-title";
   return (
     <div
-      className={`identity-shell identity-screen${navigation ? " has-app-navigation" : ""}`}
+      className={`identity-shell identity-screen${navigation ? " has-app-navigation" : ""}${cutoverNotice ? " has-cutover-notice" : ""}`}
     >
       <a className="skip-link" href={`#${mainId}`}>
         Skip to content
       </a>
+      {cutoverNotice && <CutoverNoticeBanner routeName={cutoverNotice} />}
       <header className="identity-header">
         <Brand />
         <span className="environment-label">Local development</span>

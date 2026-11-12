@@ -1,4 +1,5 @@
 import { Brand } from "../brand";
+import { CutoverNoticeBanner } from "../cutover/cutover-banner";
 import type { ReactNode } from "react";
 import {
   AppNavigation,
@@ -16,19 +17,24 @@ export function AccountsFrame({
   children,
   active = "accounts",
   reportQuery,
+  cutoverNotice,
 }: {
   title: string;
   description: string;
   household?: string;
   children: ReactNode;
   reportQuery?: string;
+  cutoverNotice?: string;
   active?: AppDestination;
 }): ReactNode {
   return (
-    <div className="identity-shell accounts-shell">
+    <div
+      className={`identity-shell accounts-shell${cutoverNotice ? " has-cutover-notice" : ""}`}
+    >
       <a className="skip-link" href="#main">
         Skip to content
       </a>
+      {cutoverNotice && <CutoverNoticeBanner routeName={cutoverNotice} />}
       <header className="identity-header">
         <Brand />
         <span className="environment-label">Local development</span>

@@ -26,6 +26,10 @@ export async function inspectCsv(
   rowCount: number;
   suggestedMapping?: CsvMappingSuggestion;
   requiresCurrencyColumn?: true;
+  statementBalance?: {
+    money: { amountMinor: string; currency: "GBP" };
+    asOfDate: string;
+  };
 }> {
   let columns: CsvColumn[] | undefined;
   let suggestion: CsvSuggestion | undefined;
@@ -40,9 +44,11 @@ export async function inspectCsv(
     }
   }
   if (!columns || !rowCount) throw new CsvInputError("CSV_EMPTY");
+  const statementBalance = suggestion?.statementBalance();
   return {
     columns,
     rowCount,
+    ...(statementBalance ? { statementBalance } : {}),
     ...(suggestion ? { suggestedMapping: suggestion.result() } : {}),
     ...(suggestion?.requiresCurrencyColumn
       ? { requiresCurrencyColumn: true as const }

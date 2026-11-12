@@ -24,6 +24,7 @@ export function AccountList(): ReactNode {
   const shared = items.filter((account) => account.ownership === "SHARED");
   return (
     <AccountsFrame
+      cutoverNotice="Accounts"
       title="A clearer view, your way."
       description="Your accounts start private. Choose what to share, one account at a time."
       household={membership?.household.name}

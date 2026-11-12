@@ -292,6 +292,68 @@ it("invalidates active account streams when the internal session is revoked", as
   }
 });
 
+it("schedules account and page status at a future London valuation date", async () => {
+  await fixture.owner.balanceSnapshot.create({
+    data: {
+      householdId: fixture.householdId,
+      accountId: fixture.accountId,
+      authorMembershipId: fixture.actor.membershipId,
+      amountMinor: 100n,
+      asOfDate: new Date("2099-01-01T00:00:00.000Z"),
+    },
+  });
+  const observed = vi.spyOn(StatusResources.prototype, "read");
+  const streams = [];
+  try {
+    for (const selector of [detail(), page()])
+      streams.push(await open(selector));
+    const snapshotsFor = async (kind: "account" | "accounts") =>
+      Promise.all(
+        observed.mock.calls.flatMap(([selector], index) =>
+          selector.kind === kind ? [observed.mock.results[index]!.value] : [],
+        ),
+      );
+    const expectedDeadline = Date.parse("2099-01-01T00:00:00.000Z");
+    const initial = await Promise.all([
+      snapshotsFor("account"),
+      snapshotsFor("accounts"),
+    ]);
+    for (const snapshots of initial) {
+      expect(snapshots.length).toBeGreaterThan(0);
+      expect(
+        snapshots.every(
+          (snapshot) => snapshot.resourceExpiresAt === expectedDeadline,
+        ),
+      ).toBe(true);
+    }
+    observed.mockClear();
+    await fixture.owner
+      .$executeRaw`SELECT pg_notify('joint_status_wakeup', '')`;
+    await vi.waitFor(() => {
+      for (const kind of ["account", "accounts"])
+        expect(
+          observed.mock.calls.some(([selector]) => selector.kind === kind),
+        ).toBe(true);
+    });
+    const rereads = await Promise.all([
+      snapshotsFor("account"),
+      snapshotsFor("accounts"),
+    ]);
+    for (const [index, snapshots] of rereads.entries()) {
+      expect(
+        snapshots.every(
+          (snapshot) =>
+            snapshot.resourceExpiresAt === expectedDeadline &&
+            snapshot.fingerprint === initial[index]?.[0]?.fingerprint,
+        ),
+      ).toBe(true);
+    }
+  } finally {
+    for (const stream of streams) await stream.close();
+    observed.mockRestore();
+  }
+});
+
 it("disconnects account page streams and removes the event subscription at API shutdown", async () => {
   const stream = await open(page());
   try {
