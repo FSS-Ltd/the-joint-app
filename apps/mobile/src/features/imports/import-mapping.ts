@@ -2,6 +2,7 @@ import {
   csvMappingSchema,
   type CsvColumn,
   type CsvMapping,
+  type CsvMappingSuggestion,
 } from "@joint/contracts";
 import type { InputResult } from "../accounts/write-input";
 
@@ -32,6 +33,39 @@ export const emptyMapping: MappingDraft = {
   decimalSeparator: "",
   positiveIs: "",
 };
+/** Preserve only conventions the server could identify; no amount direction is inferred here. */
+export function suggestedDraft(suggestion: CsvMappingSuggestion): MappingDraft {
+  const column = (value: number | null | undefined) =>
+    value == null ? "" : String(value);
+  return {
+    amountMode: suggestion.amountMode ?? "",
+    date: column(suggestion.date),
+    description: column(suggestion.description),
+    amount: column(suggestion.amount),
+    debit: column(suggestion.debit),
+    credit: column(suggestion.credit),
+    currency: column(suggestion.currency),
+    sourceId: column(suggestion.sourceId),
+    dateFormat: suggestion.dateFormat ?? "",
+    decimalSeparator: suggestion.decimalSeparator ?? "",
+    positiveIs: suggestion.positiveIs ?? "",
+  };
+}
+export function missingRequired(
+  draft: MappingDraft,
+  requiresCurrencyColumn = false,
+): boolean {
+  return (
+    (requiresCurrencyColumn && !draft.currency) ||
+    !draft.date ||
+    !draft.description ||
+    !draft.amountMode ||
+    !draft.dateFormat ||
+    !draft.decimalSeparator ||
+    (draft.amountMode === "SIGNED" && (!draft.amount || !draft.positiveIs)) ||
+    (draft.amountMode === "DEBIT_CREDIT" && (!draft.debit || !draft.credit))
+  );
+}
 const invalid =
   "Choose a different column for each field, and select the date format, decimal separator and amount layout.";
 /** Only the file's own columns are choices; "" clears an optional field. */

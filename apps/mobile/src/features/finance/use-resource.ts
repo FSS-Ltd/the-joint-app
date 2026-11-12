@@ -20,10 +20,12 @@ const loading = { kind: "loading" } as const;
 export function useFinanceResource<T>(
   selector: NativeResourceScope["selector"],
   read: (scope: NativeResourceScope, signal: AbortSignal) => Promise<T>,
+  options?: { preserveRefreshHint?: boolean },
 ): FinanceResourceResult<T> {
   const finance = useNativeFinance();
   const key = statusSubscriptionQuery(selector);
   const memory = finance.identity.resources;
+  const preserveRefreshHint = options?.preserveRefreshHint === true;
   // Scope keys capture the matching reader; render-created callbacks do not restart subscriptions.
   const store = useMemo(() => {
     const authority = finance.authority;
@@ -80,8 +82,12 @@ export function useFinanceResource<T>(
               publish({ kind: "ready", value });
             }
           },
-          unavailable() {
-            publish(loading);
+          unavailable(refreshing) {
+            publish(
+              preserveRefreshHint && refreshing
+                ? { kind: "loading", refreshing: true }
+                : loading,
+            );
           },
           failure(error) {
             if (!current()) return;
@@ -113,7 +119,7 @@ export function useFinanceResource<T>(
       },
     };
     return store;
-  }, [finance, key, memory]);
+  }, [finance, key, memory, preserveRefreshHint]);
   const visible = useFinanceLifetime(finance, finance.authority, store);
   const snapshot = useSyncExternalStore(
     store.subscribe,

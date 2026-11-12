@@ -70,6 +70,7 @@ export function createImportsController(services?: Services): Type<unknown> {
       @Param("householdId") hh: string,
       @Headers("x-account-id") account: string | undefined,
       @Body() body: unknown,
+      @Query("suggestMapping") suggestMapping: unknown,
     ) {
       const id = valid(idempotencyKeySchema, account),
         bytes = csvBody(body);
@@ -77,6 +78,7 @@ export function createImportsController(services?: Services): Type<unknown> {
         await financeContext(use().identity, auth, hh),
         id,
         bytes,
+        suggestMapping === "1",
       );
     }
     @Post("preview")

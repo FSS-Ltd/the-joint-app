@@ -12,7 +12,7 @@ interface NativeResource<T> {
   transport: NativeTransport;
   read(scope: NativeResourceScope, signal: AbortSignal): Promise<T>;
   receive(value: T): void;
-  unavailable(): void;
+  unavailable(refreshing?: boolean): void;
   failure(error: unknown): void;
   revoke(actor: string): void;
 }
@@ -41,6 +41,7 @@ export class NativeResourceController<T> {
   private stream: AbortController | undefined;
   private read: AbortController | undefined;
   private pending = false;
+  private hasReadyRead = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(private readonly resource: NativeResource<T>) {
@@ -107,19 +108,23 @@ export class NativeResourceController<T> {
     this.stream = undefined;
     this.read = undefined;
     this.pending = false;
+    this.hasReadyRead = false;
   }
   private lost(
     error: unknown,
     epoch: number,
     scope: NativeResourceScope,
+    renew = false,
   ): void {
     if (!this.current(epoch)) return;
+    const hadReadyRead = this.hasReadyRead;
     if (this.liveSince !== null && Date.now() - this.liveSince >= 30000)
       this.retries = 0;
     this.detach();
     const nextEpoch = this.epoch;
     this.terminal = !retryable(error) || this.retries >= 5;
-    this.resource.unavailable();
+    this.hasReadyRead = renew && hadReadyRead && !this.terminal;
+    this.resource.unavailable(this.hasReadyRead || undefined);
     if (this.closed || this.epoch !== nextEpoch) return;
     if (error instanceof NativeApiError && error.status === 401)
       this.resource.revoke(scope.actor);
@@ -151,13 +156,14 @@ export class NativeResourceController<T> {
         if (value === "change") {
           this.liveSince ??= Date.now();
           this.revision++;
-          this.resource.unavailable();
+          this.resource.unavailable(this.hasReadyRead || undefined);
           if (this.current(epoch)) this.queueRead(epoch, scope);
         } else
           this.lost(
             new NativeApiError(value === "invalidate" ? 404 : 0),
             epoch,
             scope,
+            value === "renew",
           );
       },
     ).catch((error) => this.lost(error, epoch, scope));
@@ -184,8 +190,10 @@ export class NativeResourceController<T> {
         this.current(epoch) &&
         !controller.signal.aborted &&
         revision === this.revision
-      )
+      ) {
+        this.hasReadyRead = true;
         this.resource.receive(value);
+      }
     } catch (error) {
       if (!controller.signal.aborted) this.lost(error, epoch, scope);
     } finally {

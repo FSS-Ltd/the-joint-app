@@ -7,6 +7,7 @@ import * as accountRouteId from "../apps/mobile/src/features/accounts/route-id.j
 import * as actionInput from "../apps/mobile/src/features/imports/action-input.js";
 import * as stateLabels from "../apps/mobile/src/features/imports/import-state-labels.js";
 import { load } from "./fixtures/native-read-ui.js";
+import { hookHarness } from "./fixtures/native-source-harness.js";
 import {
   byLabel,
   expand,
@@ -40,6 +41,8 @@ function flow(
   return {
     ...session({ id: "a" }, draftValue),
     busy: null as string | null,
+    localMappingEditable: true,
+    preservingDraft: false,
     resource: { kind: "ready", value: { id: "a" }, retry: vi.fn() },
     chooseFile: vi.fn(),
     inspect: vi.fn(),
@@ -47,11 +50,16 @@ function flow(
     ...overrides,
   };
 }
-function importScreen(state: ReturnType<typeof flow>) {
+function importScreen(
+  state: ReturnType<typeof flow>,
+  react: unknown = { useState: (initial: unknown) => [initial, vi.fn()] },
+) {
   const tree = (
     load(`${feature}import-screen.tsx`, {
+      react,
       "./import-boundary": { ImportBoundary: "boundary" },
       "./mapping-fields": { MappingFields: "mapping" },
+      "./import-mapping": mapping,
       "./use-import-flow": { useImportFlow: () => state },
       "../statements/use-statement-converter": {
         useStatementConverter: () => ({
@@ -112,14 +120,20 @@ it("disables every step while busy or after the upload started", () => {
   expect(byLabel(tree, "Choose a different file")?.disabled).toBe(true);
 });
 
-function fields(value: mapping.MappingDraft) {
+function fields(value: mapping.MappingDraft, missingOnly = false) {
   const onChange = vi.fn();
   const tree = (
     load(`${feature}mapping-fields.tsx`, {
       "../accounts/account-choice": { AccountChoice: "choice" },
       "./import-mapping": mapping,
     }).MappingFields as (props: unknown) => unknown
-  )({ value, columns: inspection.columns, onChange, disabled: false });
+  )({
+    value,
+    columns: inspection.columns,
+    onChange,
+    disabled: false,
+    missingOnly,
+  });
   return { tree, onChange };
 }
 const signed: mapping.MappingDraft = {
@@ -361,4 +375,138 @@ it("wires routes, tab, Home entry and the dependencies", () => {
     expect.stringMatching(/^58\.0\.\d+$/),
   );
   void contracts;
+});
+
+it("shows detected settings with an edit option and exposes only missing fields for partial suggestions", () => {
+  const complete = {
+    ...mapping.emptyMapping,
+    amountMode: "SIGNED",
+    date: "0",
+    description: "1",
+    amount: "2",
+    dateFormat: "ISO",
+    decimalSeparator: "DOT",
+    positiveIs: "INFLOW",
+  };
+  const full = importScreen(
+    flow({
+      file,
+      inspection: { ...inspection, suggestedMapping: { date: 0 } },
+      mapping: complete,
+    }),
+  );
+  expect(JSON.stringify(expand(full))).toContain("Columns detected");
+  expect(JSON.stringify(expand(full))).toContain("Date: Date (ISO)");
+  expect(expand(full).some((e) => e.type === "mapping")).toBe(false);
+  expect(byLabel(full, "Edit all columns and settings")).toBeDefined();
+  const partial = fields(
+    { ...complete, positiveIs: "" } as mapping.MappingDraft,
+    true,
+  ).tree;
+  expect(byLabel(partial, "Positive amounts are")).toBeDefined();
+  expect(byLabel(partial, "Date column")).toBeUndefined();
+  expect(byLabel(partial, "Currency column, optional")).toBeUndefined();
+  expect(
+    byLabel(
+      fields(complete as mapping.MappingDraft).tree,
+      "Currency column, optional",
+    ),
+  ).toBeDefined();
+});
+
+it("keeps mapping visible during an authorized refresh while preview stays disabled", () => {
+  const state = flow(
+    { file, inspection },
+    {
+      resource: { kind: "loading", refreshing: true },
+      allowed: false,
+      editable: false,
+      localMappingEditable: true,
+      preservingDraft: true,
+    },
+  );
+  const content = importScreen(state);
+  const mappingControl = expand(content).find(
+    (item) => item.type === "mapping",
+  );
+  expect(mappingControl?.props.disabled).toBe(false);
+  expect(byLabel(content, "Start preview")?.disabled).toBe(true);
+  expect(
+    expand(boundary(state).tree).some((item) => item.props.label === "FORM"),
+  ).toBe(true);
+  state.preservingDraft = false;
+  expect(
+    expand(boundary(state).tree).some((item) => item.props.label === "FORM"),
+  ).toBe(false);
+});
+
+it("opens every mapping field for overriding detected choices", () => {
+  const h = hookHarness();
+  const complete = {
+    ...mapping.emptyMapping,
+    amountMode: "SIGNED",
+    date: "0",
+    description: "1",
+    amount: "2",
+    dateFormat: "ISO",
+    decimalSeparator: "DOT",
+    positiveIs: "INFLOW",
+  };
+  const state = flow({
+    file,
+    inspection: { ...inspection, suggestedMapping: { date: 0 } },
+    mapping: complete,
+  });
+  const render = () => h.render(() => importScreen(state, h.react));
+  press(render(), "Edit all columns and settings");
+  const control = expand(render()).find((item) => item.type === "mapping");
+  expect(control?.props.missingOnly).toBe(false);
+  const fieldView = fields(complete as mapping.MappingDraft);
+  (byLabel(fieldView.tree, "Date column")?.onChange as (value: string) => void)(
+    "2",
+  );
+  expect(fieldView.onChange).toHaveBeenCalledWith({ ...complete, date: "2" });
+});
+
+it("requests an explicit currency column for an ambiguous detected file", () => {
+  const complete = {
+    ...mapping.emptyMapping,
+    amountMode: "SIGNED",
+    date: "0",
+    description: "1",
+    amount: "2",
+    dateFormat: "ISO",
+    decimalSeparator: "DOT",
+    positiveIs: "INFLOW",
+  };
+  const state = flow({
+    file,
+    inspection: {
+      ...inspection,
+      suggestedMapping: { date: 0 },
+      requiresCurrencyColumn: true,
+    },
+    mapping: complete,
+  });
+  const tree = importScreen(state);
+  expect(byLabel(tree, "Start preview")?.disabled).toBe(true);
+  const control = expand(tree).find((item) => item.type === "mapping");
+  expect(control?.props).toMatchObject({
+    requiresCurrencyColumn: true,
+    missingOnly: true,
+  });
+  const choices = (
+    load(`${feature}mapping-fields.tsx`, {
+      "../accounts/account-choice": { AccountChoice: "choice" },
+      "./import-mapping": mapping,
+    }).MappingFields as (props: unknown) => unknown
+  )({
+    value: complete,
+    columns: inspection.columns,
+    onChange: vi.fn(),
+    disabled: false,
+    missingOnly: true,
+    requiresCurrencyColumn: true,
+  });
+  expect(byLabel(choices, "Currency column")).toBeDefined();
 });

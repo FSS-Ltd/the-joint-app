@@ -19,7 +19,7 @@ export function ImportBoundary({
   const router = useRouter();
   const { resource, draft, mutation } = flow;
   let content: ReactNode;
-  if (!draft.visible || resource.kind === "loading")
+  if (!draft.visible || (resource.kind === "loading" && !flow.preservingDraft))
     content = (
       <AppText accessibilityLiveRegion="polite">
         Checking account access…
@@ -34,7 +34,7 @@ export function ImportBoundary({
         </NativeActions>
       </>
     );
-  else if (!flow.allowed || draft.invalidated)
+  else if ((!flow.allowed && !flow.preservingDraft) || draft.invalidated)
     content = (
       <>
         <AppText>Only the account owner can import transactions.</AppText>

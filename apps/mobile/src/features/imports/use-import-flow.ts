@@ -3,6 +3,7 @@ import { randomUUID } from "expo-crypto";
 import type {
   AccountResponse,
   CsvColumn,
+  CsvMappingSuggestion,
   ImportBatchResponse,
 } from "@joint/contracts";
 import { useNativeFinance } from "../finance/context";
@@ -17,6 +18,7 @@ import { previewIntent } from "./import-intent";
 import {
   emptyMapping,
   mappingInput,
+  suggestedDraft,
   type MappingDraft,
 } from "./import-mapping";
 import { discardLocalFile, pickCsvFile, readLocalFile } from "./import-picker";
@@ -24,7 +26,12 @@ import { discardLocalFile, pickCsvFile, readLocalFile } from "./import-picker";
 /** Held only for this attempt; the draft store drops it on background, blur and authority loss. */
 export interface ImportDraft {
   file: { name: string; bytes: Uint8Array<ArrayBuffer> } | null;
-  inspection: { columns: CsvColumn[]; rowCount: number } | null;
+  inspection: {
+    columns: CsvColumn[];
+    rowCount: number;
+    suggestedMapping?: CsvMappingSuggestion;
+    requiresCurrencyColumn?: boolean;
+  } | null;
   mapping: MappingDraft;
 }
 export const emptyImportDraft = (): ImportDraft => ({
@@ -39,6 +46,8 @@ export interface ImportFlow {
   resource: ReturnType<typeof useFinanceResource<AccountResponse>>;
   allowed: boolean;
   editable: boolean;
+  localMappingEditable: boolean;
+  preservingDraft: boolean;
   /** After a rejected upload: keep the file and mapping and allow another attempt. */
   editAgain(): void;
   busy: "reading" | "inspecting" | null;
@@ -67,6 +76,7 @@ export function useImportFlow(accountId: string): ImportFlow {
     },
     (scope, signal) =>
       finance.accounts.read(scope.householdId, accountId, signal),
+    { preserveRefreshHint: true },
   );
   const draft = useWriteDraft<ImportDraft, AccountResponse>(
     `import:${accountId}`,
@@ -118,6 +128,23 @@ export function useImportFlow(accountId: string): ImportFlow {
     },
     [],
   );
+  const preservingDraft =
+    resource.kind === "loading" &&
+    "refreshing" in resource &&
+    resource.refreshing === true &&
+    draft.visible &&
+    !draft.invalidated &&
+    draft.base !== null &&
+    owner(draft.base);
+  const localMappingEditable =
+    (allowed || preservingDraft) &&
+    draft.visible &&
+    !draft.invalidated &&
+    draft.base !== null &&
+    mutation.kind === "idle" &&
+    busy === null;
+  const localEdit = useRef(false);
+  localEdit.current = localMappingEditable;
   const editable =
     draft.visible &&
     !draft.invalidated &&
@@ -180,7 +207,16 @@ export function useImportFlow(accountId: string): ImportFlow {
   async function inspect(): Promise<void> {
     const authority = finance.authority;
     const file = latest.current.file;
-    if (!editable || !file || !authority || work.current) return;
+    const current = resource.current();
+    if (
+      !editable ||
+      !file ||
+      !authority ||
+      !current ||
+      !owner(current) ||
+      work.current
+    )
+      return;
     const controller = begin("inspecting");
     try {
       const result = await finance.imports.inspect(
@@ -192,10 +228,17 @@ export function useImportFlow(accountId: string): ImportFlow {
       if (
         controller.signal.aborted ||
         !finance.isCurrent(authority) ||
+        !resource.current() ||
         latest.current.file !== file
       )
         return;
-      draft.change({ ...latest.current, inspection: result });
+      draft.change({
+        ...latest.current,
+        inspection: result,
+        mapping: result.suggestedMapping
+          ? suggestedDraft(result.suggestedMapping)
+          : emptyMapping,
+      });
     } catch (error) {
       if (!controller.signal.aborted) draft.error(financeErrorMessage(error));
     } finally {
@@ -203,6 +246,12 @@ export function useImportFlow(accountId: string): ImportFlow {
     }
   }
   function changeMapping(mapping: MappingDraft) {
+    if (
+      !localEdit.current ||
+      !finance.authority ||
+      !finance.isCurrent(finance.authority)
+    )
+      return;
     draft.change({ ...latest.current, mapping });
   }
   async function submit(): Promise<void> {
@@ -211,6 +260,10 @@ export function useImportFlow(accountId: string): ImportFlow {
     if (!editable || !draft.base || !current || !owner(current)) return;
     if (!file || !inspection) {
       draft.error("Choose a file and check it first.");
+      return;
+    }
+    if (inspection.requiresCurrencyColumn && !mapping.currency) {
+      draft.error("Choose the currency column before preview.");
       return;
     }
     const parsed = mappingInput(mapping, inspection.columns.length);
@@ -247,6 +300,8 @@ export function useImportFlow(accountId: string): ImportFlow {
     resource,
     allowed,
     editable,
+    localMappingEditable,
+    preservingDraft,
     editAgain,
     busy,
     chooseFile,

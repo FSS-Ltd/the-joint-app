@@ -4,10 +4,12 @@ import {
   isSupportedFinancialText,
   type CsvColumn,
   type CsvMapping,
+  type CsvMappingSuggestion,
   type CsvRejectCode,
   type NormalizedCsvRow,
 } from "@joint/contracts";
 import { CsvInputError, csvColumns, readCsv } from "./csv-reader.js";
+import { CsvSuggestion } from "./csv-suggestion.js";
 import {
   checkedMoney,
   londonToday,
@@ -18,15 +20,34 @@ export { CsvInputError } from "./csv-reader.js";
 
 export async function inspectCsv(
   bytes: Uint8Array,
-): Promise<{ columns: CsvColumn[]; rowCount: number }> {
+  suggestMapping = false,
+): Promise<{
+  columns: CsvColumn[];
+  rowCount: number;
+  suggestedMapping?: CsvMappingSuggestion;
+  requiresCurrencyColumn?: true;
+}> {
   let columns: CsvColumn[] | undefined;
+  let suggestion: CsvSuggestion | undefined;
   let rowCount = 0;
   for await (const cells of readCsv(bytes)) {
-    if (!columns) columns = csvColumns(cells);
-    else rowCount++;
+    if (!columns) {
+      columns = csvColumns(cells);
+      if (suggestMapping) suggestion = new CsvSuggestion(columns);
+    } else {
+      rowCount++;
+      suggestion?.observe(cells);
+    }
   }
   if (!columns || !rowCount) throw new CsvInputError("CSV_EMPTY");
-  return { columns, rowCount };
+  return {
+    columns,
+    rowCount,
+    ...(suggestion ? { suggestedMapping: suggestion.result() } : {}),
+    ...(suggestion?.requiresCurrencyColumn
+      ? { requiresCurrencyColumn: true as const }
+      : {}),
+  };
 }
 export function transactionSourceHash(value: {
   bookedDate: string;

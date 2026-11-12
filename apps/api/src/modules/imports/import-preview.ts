@@ -32,13 +32,18 @@ export class ImportPreview {
   ) {
     this.replay = new RequestReplay(vault);
   }
-  async inspect(context: AuthContext, accountId: string, bytes: Uint8Array) {
+  async inspect(
+    context: AuthContext,
+    accountId: string,
+    bytes: Uint8Array,
+    suggestMapping = false,
+  ) {
     await this.database.withScope(context, async (tx) => {
       if (!(await ownsAccount(tx, context, accountId)))
         throw new NotFoundException();
     });
     try {
-      return await inspectCsv(bytes);
+      return await inspectCsv(bytes, suggestMapping);
     } catch (error) {
       if (error instanceof CsvInputError)
         throw new BadRequestException({ error: { code: error.code } });

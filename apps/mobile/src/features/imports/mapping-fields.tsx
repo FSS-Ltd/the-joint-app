@@ -24,17 +24,21 @@ const positives = {
   OUTFLOW: "Money out",
 } as const;
 
-/** Every convention is an explicit choice; nothing is guessed from the file. */
+/** Suggestions can be edited in full, or completed one required field at a time. */
 export function MappingFields({
   value,
   columns,
   onChange,
   disabled,
+  missingOnly = false,
+  requiresCurrencyColumn = false,
 }: {
   value: MappingDraft;
   columns: readonly CsvColumn[];
   onChange(value: MappingDraft): void;
   disabled: boolean;
+  missingOnly?: boolean;
+  requiresCurrencyColumn?: boolean;
 }): React.JSX.Element {
   const optional = columnChoices(columns);
   const required = columnChoices(columns, "Choose a column");
@@ -53,46 +57,63 @@ export function MappingFields({
       disabled={disabled}
     />
   );
+  const show = (field: keyof MappingDraft) =>
+    !missingOnly || value[field] === "";
   return (
     <>
-      {column("Date column", "date")}
-      {column("Description column", "description")}
-      <AccountChoice
-        label="Amount layout"
-        value={value.amountMode}
-        options={["", "SIGNED", "DEBIT_CREDIT"] as const}
-        labels={modes}
-        onChange={(amountMode) => onChange({ ...value, amountMode })}
-        disabled={disabled}
-      />
-      {value.amountMode === "SIGNED" && column("Amount column", "amount")}
+      {show("date") && column("Date column", "date")}
+      {show("description") && column("Description column", "description")}
+      {show("amountMode") && (
+        <AccountChoice
+          label="Amount layout"
+          value={value.amountMode}
+          options={["", "SIGNED", "DEBIT_CREDIT"] as const}
+          labels={modes}
+          onChange={(amountMode) => onChange({ ...value, amountMode })}
+          disabled={disabled}
+        />
+      )}
+      {value.amountMode === "SIGNED" &&
+        show("amount") &&
+        column("Amount column", "amount")}
       {value.amountMode === "DEBIT_CREDIT" && (
         <>
-          {column("Debit column", "debit")}
-          {column("Credit column", "credit")}
+          {show("debit") && column("Debit column", "debit")}
+          {show("credit") && column("Credit column", "credit")}
         </>
       )}
-      {column("Currency column, optional", "currency", false)}
-      {column("Source ID column, optional", "sourceId", false)}
-      <AccountChoice
-        label="Date format"
-        value={value.dateFormat}
-        options={["", "ISO", "DMY", "MDY"] as const}
-        labels={dates}
-        onChange={(dateFormat) => onChange({ ...value, dateFormat })}
-        disabled={disabled}
-      />
-      <AccountChoice
-        label="Decimal separator"
-        value={value.decimalSeparator}
-        options={["", "DOT", "COMMA"] as const}
-        labels={decimals}
-        onChange={(decimalSeparator) =>
-          onChange({ ...value, decimalSeparator })
-        }
-        disabled={disabled}
-      />
-      {value.amountMode === "SIGNED" && (
+      {(!missingOnly || (requiresCurrencyColumn && show("currency"))) &&
+        column(
+          requiresCurrencyColumn
+            ? "Currency column"
+            : "Currency column, optional",
+          "currency",
+          requiresCurrencyColumn,
+        )}
+      {!missingOnly && column("Source ID column, optional", "sourceId", false)}
+      {show("dateFormat") && (
+        <AccountChoice
+          label="Date format"
+          value={value.dateFormat}
+          options={["", "ISO", "DMY", "MDY"] as const}
+          labels={dates}
+          onChange={(dateFormat) => onChange({ ...value, dateFormat })}
+          disabled={disabled}
+        />
+      )}
+      {show("decimalSeparator") && (
+        <AccountChoice
+          label="Decimal separator"
+          value={value.decimalSeparator}
+          options={["", "DOT", "COMMA"] as const}
+          labels={decimals}
+          onChange={(decimalSeparator) =>
+            onChange({ ...value, decimalSeparator })
+          }
+          disabled={disabled}
+        />
+      )}
+      {value.amountMode === "SIGNED" && show("positiveIs") && (
         <AccountChoice
           label="Positive amounts are"
           value={value.positiveIs}

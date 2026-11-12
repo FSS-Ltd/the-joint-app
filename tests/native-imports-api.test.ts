@@ -71,7 +71,7 @@ describe("CSV upload transport", () => {
     });
     const bytes = csv("Date,Description\n2026-11-01,Coffee\n");
     await api.inspect(householdId, accountId, bytes, signal);
-    expect(send.mock.calls[0]?.[0]).toBe(`${base}/inspect`);
+    expect(send.mock.calls[0]?.[0]).toBe(`${base}/inspect?suggestMapping=1`);
     const init = send.mock.calls[0]?.[1];
     expect(init).toMatchObject({
       method: "POST",

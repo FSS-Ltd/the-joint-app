@@ -10,10 +10,13 @@ import { sourceExports } from "./fixtures/native-source-harness.js";
 interface ImportFlow {
   allowed: boolean;
   editable: boolean;
+  localMappingEditable: boolean;
+  preservingDraft: boolean;
   draft: {
     value: {
       file: { name: string; bytes: Uint8Array<ArrayBuffer> } | null;
       inspection: unknown;
+      mapping: Record<string, string>;
     };
     message: string;
     change(value: unknown): void;
@@ -92,9 +95,14 @@ async function setup(owned = true) {
     householdId: f.finance.authority.householdId,
     ownership: owned ? "OWNED" : "SHARED",
   });
-  const inspect = vi.fn<(...args: unknown[]) => Promise<typeof inspection>>(
-    async () => inspection,
-  );
+  const inspect = vi.fn<
+    (...args: unknown[]) => Promise<
+      typeof inspection & {
+        suggestedMapping?: contracts.CsvMappingSuggestion;
+        requiresCurrencyColumn?: true;
+      }
+    >
+  >(async () => inspection);
   const preview = vi.fn<(...args: unknown[]) => Promise<unknown>>(async () => ({
     batch: batch(item.id),
     jobId: key,
@@ -103,6 +111,11 @@ async function setup(owned = true) {
     ...f.finance,
     imports: { ...f.finance.imports, inspect, preview } as never,
   });
+  const resource = {
+    current: { kind: "ready", value: item } as
+      | { kind: "ready"; value: typeof item }
+      | { kind: "loading"; refreshing?: boolean },
+  };
   const deps = {
     react: f.h.react,
     "react-native": { AppState: f.h.appState },
@@ -152,9 +165,9 @@ async function setup(owned = true) {
       "../finance/use-mutation": { useFinanceMutation: f.mutation },
       "../finance/use-resource": {
         useFinanceResource: () => ({
-          kind: "ready",
-          value: item,
-          current: () => item,
+          ...resource.current,
+          current: () =>
+            resource.current.kind === "ready" ? resource.current.value : null,
           retry: vi.fn(),
         }),
       },
@@ -171,7 +184,17 @@ async function setup(owned = true) {
   ).useImportFlow as (id: string) => ImportFlow;
   const render = () => f.h.render(() => hook(item.id));
   render();
-  return { f, item, inspect, preview, picked, content, discarded, render };
+  return {
+    f,
+    item,
+    inspect,
+    preview,
+    picked,
+    content,
+    discarded,
+    render,
+    resource,
+  };
 }
 
 it("reads a chosen csv into the draft, resetting any earlier inspection and mapping", async () => {
@@ -297,7 +320,12 @@ it("never offers the flow to a viewer of the account", async () => {
 it("ignores an inspection that finishes after the file was replaced", async () => {
   const s = await setup();
   await s.render().chooseFile();
-  let release: (value: typeof inspection) => void = () => {};
+  let release: (
+    value: typeof inspection & {
+      suggestedMapping?: Partial<contracts.CsvMapping>;
+      requiresCurrencyColumn?: true;
+    },
+  ) => void = () => {};
   s.inspect.mockImplementationOnce(
     () => new Promise((resolve) => (release = resolve)),
   );
@@ -309,9 +337,10 @@ it("ignores an inspection that finishes after the file was replaced", async () =
   });
   // React renders the replaced file before the network response can resolve.
   s.render();
-  release(inspection);
+  release({ ...inspection, suggestedMapping: { date: 0 } });
   await pending;
   expect(s.render().draft.value.inspection).toBeNull();
+  expect(s.render().draft.value.mapping.date).toBe("");
   s.f.close();
 });
 
@@ -357,5 +386,94 @@ it("does not open a second picker when two taps land on the same render", async 
   const view = s.render();
   await Promise.all([view.chooseFile(), view.chooseFile()]);
   expect(s.discarded).toHaveBeenCalledTimes(1);
+  s.f.close();
+});
+
+it("prefills only server suggestions and preserves optional columns for preview", async () => {
+  const s = await setup();
+  s.inspect.mockResolvedValueOnce({
+    ...inspection,
+    columns: [...inspection.columns, { index: 3, label: "Currency" }],
+    suggestedMapping: {
+      currency: 3,
+      date: 0,
+      description: 1,
+      amount: 2,
+      amountMode: "SIGNED",
+      dateFormat: "ISO",
+      decimalSeparator: "DOT",
+      positiveIs: "INFLOW",
+    },
+  });
+  await s.render().chooseFile();
+  await s.render().inspect();
+  expect(s.render().draft.value.mapping).toMatchObject({
+    ...mapped,
+    currency: "3",
+  });
+  await s.render().submit();
+  expect(s.preview.mock.calls[0]?.[3]).toMatchObject({
+    date: 0,
+    amount: 2,
+    currency: 3,
+  });
+  s.f.close();
+});
+
+it("prefills a partial suggestion and leaves unknown conventions blank", async () => {
+  const s = await setup();
+  s.inspect.mockResolvedValueOnce({
+    ...inspection,
+    suggestedMapping: { date: 0, sourceId: 2 },
+  });
+  await s.render().chooseFile();
+  await s.render().inspect();
+  expect(s.render().draft.value.mapping).toMatchObject({
+    date: "0",
+    sourceId: "2",
+    positiveIs: "",
+  });
+  s.f.close();
+});
+
+it("allows local mapping during refresh without allowing reads or preview", async () => {
+  const s = await setup();
+  await s.render().chooseFile();
+  await s.render().inspect();
+  const stale = s.render();
+  s.resource.current = { kind: "loading", refreshing: true };
+  const refreshing = s.render();
+  expect(refreshing.preservingDraft).toBe(true);
+  expect(refreshing.localMappingEditable).toBe(true);
+  expect(refreshing.editable).toBe(false);
+  refreshing.changeMapping({ ...mapped });
+  expect(s.render().draft.value.mapping).toMatchObject(mapped);
+  await stale.inspect();
+  await stale.submit();
+  expect(s.inspect).toHaveBeenCalledOnce();
+  expect(s.preview).not.toHaveBeenCalled();
+  s.resource.current = { kind: "loading" };
+  expect(s.render().preservingDraft).toBe(false);
+  refreshing.changeMapping({ ...mapped, date: "1" });
+  expect(s.render().draft.value.mapping.date).toBe("0");
+  s.f.close();
+});
+
+it("requires a currency choice when inspection reports conflicting currency headers", async () => {
+  const s = await setup();
+  s.inspect.mockResolvedValueOnce({
+    ...inspection,
+    columns: [...inspection.columns, { index: 3, label: "Currency" }],
+    requiresCurrencyColumn: true,
+  });
+  await s.render().chooseFile();
+  await s.render().inspect();
+  s.render().changeMapping({ ...mapped });
+  await s.render().submit();
+  expect(s.preview).not.toHaveBeenCalled();
+  expect(s.render().draft.message).toContain("currency column");
+  s.render().changeMapping({ ...mapped, currency: "3" });
+  await s.render().submit();
+  expect(s.preview.mock.calls[0]?.[3]).toMatchObject({ currency: 3 });
   s.f.close();
 });
