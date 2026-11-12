@@ -4,7 +4,9 @@ This is a generated visual reference for review, not an approved implementation 
 
 The 24 selected concepts are followed by eight detail views that appeared after generation timed out. Screens 25–32 are unreviewed. The earlier Stitch project `projects/16873688144152014118` remains preserved. The [manifest](manifest.json) records screen and file resource names and SHA-256 hashes. The [design system](DESIGN_SYSTEM.md) is a generated proposal.
 
-Screens contain synthetic example data. Images are static; interactions, navigation, permissions, copy, financial accuracy, responsive behavior and accessibility have not been fully validated. Review keyboard and screen-reader behavior, focus, contrast, dynamic text, touch targets, errors and privacy states before implementation. Generated visuals can differ from real product capabilities and must not be treated as working features. Screen 17 is JPEG as provided by Stitch; all other images are PNG.
+Screens contain synthetic example data. Images are static; interactions, navigation, permissions, copy, financial accuracy, responsive behavior and accessibility have not been fully validated. Review keyboard and screen-reader behavior, focus, contrast, dynamic text, touch targets, errors and privacy states before implementation. Generated visuals can differ from real product capabilities and must not be treated as working features. Screen 17 was regenerated to repair a blank preview; its copy is also unverified.
+
+Screens 25–26 include generated claims about zero-knowledge design, enclaves, Secure Element, security audits and recovery. These are not verified product guarantees; remove or verify them before reuse.
 
 ## Screen gallery
 
@@ -74,7 +76,7 @@ Screens contain synthetic example data. Images are static; interactions, navigat
 
 ### 17 Privacy and Exports
 
-![17 Privacy and Exports](screens/17-privacy-and-exports.jpg)
+![17 Privacy and Exports](screens/17-privacy-and-exports.png)
 
 ### 18 Local Companion
 
