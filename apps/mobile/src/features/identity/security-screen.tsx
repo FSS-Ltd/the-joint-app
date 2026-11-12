@@ -1,7 +1,8 @@
-import { useClerk, useUser } from "@clerk/expo";
-import { useLayoutEffect, useState, useSyncExternalStore } from "react";
+import { isClerkAPIResponseError, useClerk, useUser } from "@clerk/expo";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import * as Linking from "expo-linking";
 import { getTotpSetupUri } from "@joint/identity-runtime";
+import { AppText } from "@/components/app-text";
 import { Feedback, IdentityFrame } from "@/components/identity-frame";
 import { NativeField } from "@/components/native-field";
 import { NativeAction } from "@/components/native-action";
@@ -34,8 +35,13 @@ export function SecurityScreen({
       active(): boolean;
     } | null>(null),
     [codeStep, setCodeStep] = useState(false),
-    [code, setCode] = useState("");
+    [code, setCode] = useState(""),
+    [recoveryRequired, setRecoveryRequired] = useState(false),
+    [reconciled, setReconciled] = useState(false);
+  const needsRefresh = useRef(false);
   const currentSetup = enrollmentPending && setup?.active() ? setup : null;
+  const requiresReconcile =
+    recoveryRequired || (enrollmentPending && !currentSetup && !reconciled);
   const showSetup = currentSetup !== null && !codeStep;
   const showCode = !showSetup && (enrollmentPending || user?.totpEnabled);
   useLayoutEffect(() => {
@@ -46,9 +52,17 @@ export function SecurityScreen({
       setSetup(null);
       setCodeStep(false);
       setCode("");
+      needsRefresh.current = false;
+      setRecoveryRequired(false);
+      setReconciled(false);
     });
   }, [identity.workflow]);
   async function enroll() {
+    if (
+      needsRefresh.current ||
+      (enrollmentPending && !currentSetup && !reconciled)
+    )
+      return;
     await operation.run(async (_signal, lifetime) => {
       if (!user) throw new Error();
       const enrollment = await user.createTOTP();
@@ -82,6 +96,11 @@ export function SecurityScreen({
     });
   }
   async function verify() {
+    if (
+      needsRefresh.current ||
+      (enrollmentPending && !currentSetup && !reconciled)
+    )
+      return;
     if (!/^\d{6}$/.test(code)) {
       operation.setError("Enter the six-digit authenticator code.");
       return;
@@ -89,18 +108,42 @@ export function SecurityScreen({
     await operation.run(async (signal, lifetime) => {
       if (!user) throw new Error();
       if (enrollmentPending) {
-        await user.verifyTOTP({ code });
-        if (lifetime.current()) identity.workflow.setEnrollmentPending(false);
+        needsRefresh.current = true;
+        setRecoveryRequired(true);
+        try {
+          await user.verifyTOTP({ code });
+        } catch (error) {
+          if (
+            isClerkAPIResponseError(error) &&
+            error.status === 422 &&
+            error.errors.length > 0 &&
+            error.errors.every(
+              (detail) => detail.code === "form_code_incorrect",
+            )
+          ) {
+            needsRefresh.current = false;
+            if (lifetime.active()) setRecoveryRequired(false);
+          }
+          throw error;
+        }
         if (!lifetime.active()) return;
         setSetup(null);
         setCode("");
         await user.reload();
         if (!lifetime.active()) return;
-        await clerk.session?.reload();
+        const session = clerk.session;
+        if (!session) throw new Error("Session unavailable");
+        await session.reload();
         if (!lifetime.active()) return;
-        operation.setNotice(
-          "Authenticator enabled. Wait for the next code, then verify this session.",
-        );
+        const token = await session.getToken({ skipCache: true });
+        if (!lifetime.active()) return;
+        if (!token || !user.totpEnabled)
+          throw new Error("Security refresh incomplete");
+        identity.workflow.setEnrollmentPending(false);
+        needsRefresh.current = false;
+        setRecoveryRequired(false);
+        onBack?.();
+        await identity.refresh();
       } else {
         await clerk.session?.getToken({ skipCache: true });
         if (!lifetime.active()) return;
@@ -125,6 +168,12 @@ export function SecurityScreen({
       }
     >
       <Feedback error={operation.error} notice={operation.notice} />
+      {requiresReconcile && (
+        <AppText>
+          Refresh security before trying another code. Your authenticator may
+          already be enabled.
+        </AppText>
+      )}
       {showSetup && (
         <AuthenticatorEnrollment
           setup={currentSetup.material}
@@ -165,6 +214,7 @@ export function SecurityScreen({
               enrollmentPending ? "Enable authenticator" : "Verify this session"
             }
             pending={operation.pending}
+            disabled={requiresReconcile}
             onPress={() => void verify()}
           />
         ) : null}
@@ -184,25 +234,37 @@ export function SecurityScreen({
           <NativeAction
             label="Restart authenticator setup"
             tone="text"
-            disabled={operation.pending}
+            disabled={operation.pending || requiresReconcile}
             onPress={() => void enroll()}
           />
         )}
-        {operation.error && (
+        {(operation.error || requiresReconcile) && (
           <NativeAction
             label="Refresh security"
             tone="secondary"
             disabled={operation.pending}
             onPress={() =>
               void operation.run(async (_signal, lifetime) => {
-                await user?.reload();
+                if (!user || !clerk.session)
+                  throw new Error("Session unavailable");
+                await user.reload();
                 if (!lifetime.active()) return;
-                await clerk.session?.reload();
-                if (lifetime.active()) {
-                  if (user?.totpEnabled)
-                    identity.workflow.setEnrollmentPending(false);
-                  await identity.refresh();
+                const session = clerk.session;
+                await session.reload();
+                if (!lifetime.active()) return;
+                const token = await session.getToken({ skipCache: true });
+                if (!lifetime.active()) return;
+                if (!token) throw new Error("Session unavailable");
+                if (user.totpEnabled) {
+                  identity.workflow.setEnrollmentPending(false);
+                  setSetup(null);
+                  setCode("");
+                  onBack?.();
                 }
+                needsRefresh.current = false;
+                setRecoveryRequired(false);
+                setReconciled(true);
+                await identity.refresh();
               })
             }
           />

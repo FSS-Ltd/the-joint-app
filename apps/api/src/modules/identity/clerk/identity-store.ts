@@ -35,58 +35,117 @@ export class ClerkIdentityStore {
   async withCredential<T>(
     credential: ClerkCredential,
     apply: (context: ClerkIdentityContext) => Promise<T>,
+    bounded = false,
   ): Promise<T> {
     if (credential.expiresAt <= Date.now()) throw new UnauthorizedException();
     try {
       // Keep an observed MFA requirement even if the later protected operation is denied.
-      await this.database
-        .$queryRaw`SELECT app.clerk_mfa_requirement(${credential.issuer},${credential.subject},${credential.mfaEnrolled})`;
-      return await this.database.$transaction(async (transaction) => {
-        const [row] = await transaction.$queryRaw<
-          MappingRow[]
-        >`SELECT mapped.*,app.clerk_totp_proof(${credential.issuer},${credential.sessionId}) AS "totpVerifiedAt" FROM app.resolve_clerk_identity(
+      if (bounded) {
+        await this.database.$transaction(
+          async (transaction) => {
+            await transaction.$executeRaw`SELECT set_config('statement_timeout','4s',true),set_config('lock_timeout','2s',true)`;
+            await transaction.$queryRaw`SELECT app.clerk_mfa_requirement(${credential.issuer},${credential.subject},${credential.mfaEnrolled})`;
+          },
+          { maxWait: 2_000, timeout: 5_000 },
+        );
+      } else {
+        await this.database
+          .$queryRaw`SELECT app.clerk_mfa_requirement(${credential.issuer},${credential.subject},${credential.mfaEnrolled})`;
+      }
+      return await this.database.$transaction(
+        async (transaction) => {
+          if (bounded) {
+            await transaction.$executeRaw`SELECT set_config('statement_timeout','4s',true),set_config('lock_timeout','2s',true)`;
+          }
+          const [row] = await transaction.$queryRaw<
+            MappingRow[]
+          >`SELECT mapped.*,app.clerk_totp_proof(${credential.issuer},${credential.sessionId}) AS "totpVerifiedAt" FROM app.resolve_clerk_identity(
           ${credential.issuer},${credential.subject},${credential.sessionId},${this.vault.emailHash(credential.email)},
           ${new Date(credential.expiresAt)}::timestamptz,${new Date(credential.sessionExpiresAt)}::timestamptz,${new Date(credential.sessionCreatedAt)}::timestamptz) mapped`;
-        if (!row) throw new UnauthorizedException();
-        const deadline = await sessionDeadline(transaction, row.sessionId);
-        const [requirement] = await transaction.$queryRaw<
-          { required: boolean }[]
-        >`SELECT app.clerk_mfa_requirement(${credential.issuer},${credential.subject},${credential.mfaEnrolled}) AS required`;
-        if (!requirement) throw new UnauthorizedException();
-        const localProof = credential.totpEnrolled
-          ? (row.totpVerifiedAt?.getTime() ?? null)
-          : null;
-        const proof = [credential.mfaAuthenticatedAt, localProof].reduce<
-          number | null
-        >(
-          (latest, value) =>
-            value !== null &&
-            value <= Date.now() &&
-            (latest === null || value > latest)
-              ? value
-              : latest,
-          null,
-        );
-        return apply({
-          credential,
-          mfaRequired: requirement.required,
-          transaction,
-          expiresAt: new Date(
-            Math.min(row.expiresAt.getTime(), Date.parse(deadline.expiresAt)),
-          ),
-          principal: {
-            userId: row.userId,
-            sessionId: row.sessionId,
-            emailHash: this.vault.emailHash(credential.email),
-            aal: proof === null ? "aal1" : "aal2",
-            authenticatedAt: credential.authenticatedAt,
-            mfaAuthenticatedAt: proof,
-          },
-        });
-      });
+          if (!row) throw new UnauthorizedException();
+          const deadline = await sessionDeadline(transaction, row.sessionId);
+          const [requirement] = await transaction.$queryRaw<
+            { required: boolean }[]
+          >`SELECT app.clerk_mfa_requirement(${credential.issuer},${credential.subject},${credential.mfaEnrolled}) AS required`;
+          if (!requirement) throw new UnauthorizedException();
+          const localProof = credential.totpEnrolled
+            ? (row.totpVerifiedAt?.getTime() ?? null)
+            : null;
+          const proof = [credential.mfaAuthenticatedAt, localProof].reduce<
+            number | null
+          >(
+            (latest, value) =>
+              value !== null &&
+              value <= Date.now() &&
+              (latest === null || value > latest)
+                ? value
+                : latest,
+            null,
+          );
+          return apply({
+            credential,
+            mfaRequired: requirement.required,
+            transaction,
+            expiresAt: new Date(
+              Math.min(row.expiresAt.getTime(), Date.parse(deadline.expiresAt)),
+            ),
+            principal: {
+              userId: row.userId,
+              sessionId: row.sessionId,
+              emailHash: this.vault.emailHash(credential.email),
+              aal: proof === null ? "aal1" : "aal2",
+              authenticatedAt: credential.authenticatedAt,
+              mfaAuthenticatedAt: proof,
+            },
+          });
+        },
+        bounded ? { maxWait: 2_000, timeout: 5_000 } : undefined,
+      );
     } catch (error) {
       throw mapError(error);
     }
+  }
+
+  async beginTotpProofOperation(input: {
+    issuer: string;
+    action: "sign-in" | "enrollment";
+    nonceHash: string | null;
+  }): Promise<string> {
+    const [row] = await this.database.$queryRaw<
+      { id: string }[]
+    >`SELECT app.begin_clerk_totp_operation(${input.issuer},${input.action},${input.nonceHash}) AS id`;
+    if (!row) throw new UnauthorizedException();
+    return row.id;
+  }
+
+  async completeTotpProofOperation(input: {
+    operationId: string;
+    credential: ClerkCredential;
+    verifiedAt: number;
+  }): Promise<void> {
+    await this.withCredential(
+      input.credential,
+      async ({ transaction }) => {
+        await transaction.$executeRaw`SELECT app.complete_clerk_totp_operation(${input.operationId}::uuid,${input.credential.issuer},${input.credential.subject},${input.credential.sessionId},${new Date(input.verifiedAt)}::timestamptz)`;
+      },
+      true,
+    );
+  }
+
+  async totpProofOperationStatus(input: {
+    operationId: string;
+    credential: ClerkCredential;
+  }): Promise<boolean> {
+    return this.withCredential(
+      input.credential,
+      async ({ transaction }) => {
+        const [row] = await transaction.$queryRaw<
+          { complete: boolean }[]
+        >`SELECT app.clerk_totp_operation_complete(${input.operationId}::uuid,${input.credential.issuer},${input.credential.subject},${input.credential.sessionId}) AS complete`;
+        return row?.complete ?? false;
+      },
+      true,
+    );
   }
 
   async recordTotp(

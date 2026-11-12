@@ -25,6 +25,21 @@ const apiAudienceSchema = z
   .regex(/^[\x21-\x7E]+$/)
   .refine((value) => !value.includes("*"));
 
+export const clerkProxyUrlSchema = z.url().refine((value) => {
+  if (!URL.canParse(value)) return false;
+  const url = new URL(value);
+  return (
+    !url.username &&
+    !url.password &&
+    !url.search &&
+    !url.hash &&
+    url.pathname === "/v1/clerk" &&
+    (url.protocol === "https:" ||
+      (url.protocol === "http:" &&
+        ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)))
+  );
+});
+
 export const clerkServerEnvironmentSchema = z.object({
   CLERK_ISSUER: originSchema,
   CLERK_JWT_KEY: z
@@ -40,6 +55,7 @@ export const clerkServerEnvironmentSchema = z.object({
     .transform((value) => value.split(",").map((origin) => origin.trim()))
     .pipe(z.array(originSchema).min(1).max(10)),
   CLERK_API_BEARER_AUDIENCE: apiAudienceSchema.optional(),
+  CLERK_PROXY_URL: clerkProxyUrlSchema.optional(),
   CLERK_TIMEOUT_MS: z.coerce.number().int().min(100).max(5000).default(2000),
 });
 export type ClerkServerEnvironment = z.infer<
@@ -171,9 +187,18 @@ export const clerkWebhookEnvelopeSchema = z.object({
   instance_id: z.string(),
   type: z.string().min(1).max(100),
   timestamp: z.number().int().positive(),
+  event_attributes: z
+    .object({
+      http_request: z
+        .object({ user_agent: z.string().max(4096).nullish() })
+        .nullish(),
+    })
+    .nullish(),
   data: z.object({
     id: z.string().min(1).max(128),
     user_id: z.string().optional(),
+    totp_enabled: z.boolean().optional(),
+    two_factor_enabled: z.boolean().optional(),
   }),
 });
 export const clerkIdentityEnvironmentSchema =

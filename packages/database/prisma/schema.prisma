@@ -1055,6 +1055,7 @@ model ClerkIdentity {
   disabledAt DateTime? @db.Timestamptz(3)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   sessions ClerkSession[]
+  totpOperations ClerkTotpOperation[]
   @@id([issuer, subject])
   @@unique([issuer, userId])
   @@schema("app")
@@ -1096,6 +1097,25 @@ model ClerkWebhookEvent {
   occurredAt DateTime @db.Timestamptz(3)
   processedAt DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(3)
   @@id([issuer, eventId])
+  @@schema("app")
+}
+
+model ClerkTotpOperation {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  issuer String @db.VarChar(255)
+  action String
+  nonceHash String? @unique @db.Char(64)
+  checkpoint DateTime @db.Timestamptz(3)
+  subject String? @db.VarChar(128)
+  sessionId String? @db.VarChar(128)
+  verifiedAt DateTime? @db.Timestamptz(3)
+  proofAt DateTime? @db.Timestamptz(3)
+  status String @default("pending")
+  eventId String? @db.VarChar(128)
+  eventHash String? @db.Char(64)
+  eventSubjectHash String? @db.Char(64)
+  identity ClerkIdentity? @relation(fields: [issuer, subject], references: [issuer, subject], onDelete: Cascade, onUpdate: NoAction)
+  @@index([checkpoint], map: "ClerkTotpOperation_checkpoint_idx")
   @@schema("app")
 }
 

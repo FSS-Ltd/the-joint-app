@@ -10,6 +10,7 @@ import {
 import { NativeWorkflow } from "../apps/mobile/src/features/identity/workflow.js";
 import * as shared from "../packages/identity-runtime/src/clerk-flow.js";
 import { getTotpSetupUri } from "../packages/identity-runtime/src/totp-setup.js";
+import { providerError, sdkErrors } from "./fixtures/clerk-sdk.js";
 import { passwordResetSchema } from "../packages/contracts/src/index.js";
 type Operation = {
   pending: boolean;
@@ -41,7 +42,7 @@ function fixture() {
   };
   const session = {
     reload: vi.fn(async () => {}),
-    getToken: vi.fn(async () => "synthetic"),
+    getToken: vi.fn<() => Promise<string | null>>(async () => "synthetic"),
   };
   const identity = {
     workflow,
@@ -67,6 +68,7 @@ function fixture() {
       "@joint/identity-runtime": { ...shared, getTotpSetupUri },
       "@joint/contracts": { passwordResetSchema },
       "@clerk/expo": {
+        isClerkAPIResponseError: sdkErrors.isClerkAPIResponseError,
         useUser: () => ({ user }),
         useClerk: () => ({ session }),
       },
@@ -200,20 +202,28 @@ it("resumes pending authenticator verification after concealment without retaini
   );
   expect(JSON.stringify(resumed.render())).not.toContain("otpauth:");
   expect(f.user.createTOTP).toHaveBeenCalledOnce();
+  expect(
+    elements(resumed.render()).find(
+      (item) => item.props.label === "Enable authenticator",
+    )?.props.disabled,
+  ).toBe(true);
+  press(resumed.render(), "Refresh security");
+  await f.done();
+  f.identity.refresh.mockClear();
+  f.user.reload.mockClear();
+  f.session.reload.mockClear();
+  f.session.getToken.mockClear();
   field(resumed.render(), "Authenticator code").onChangeText("123456");
   press(resumed.render(), "Enable authenticator");
   await f.done();
   expect(f.user.createTOTP).toHaveBeenCalledOnce();
   expect(f.user.verifyTOTP).toHaveBeenCalledWith({ code: "123456" });
   expect(f.identity.api.verifyTotp).not.toHaveBeenCalled();
-  field(resumed.render(), "Authenticator code").onChangeText("654321");
-  press(resumed.render(), "Verify this session");
-  await f.done();
-  expect(f.identity.api.verifyTotp).toHaveBeenCalledWith(
-    "654321",
-    expect.any(AbortSignal),
-  );
-  expect(f.identity.refresh).toHaveBeenCalled();
+  expect(f.user.reload).toHaveBeenCalledOnce();
+  expect(f.session.reload).toHaveBeenCalledOnce();
+  expect(f.session.getToken).toHaveBeenCalledWith({ skipCache: true });
+  expect(f.identity.refresh).toHaveBeenCalledOnce();
+  expect(f.identity.api.verifyTotp).not.toHaveBeenCalled();
   resumed.unmount();
 });
 
@@ -464,4 +474,221 @@ it("retains only pending enrollment metadata when creation resolves after backgr
     ),
   ).toBe(true);
   resumed.unmount();
+});
+
+it("refreshes security after an ambiguous enrollment outcome without resending the code", async () => {
+  const f = fixture();
+  const screen = f.mount("SecurityScreen");
+  f.user.verifyTOTP.mockImplementationOnce(async () => {
+    f.user.totpEnabled = true;
+    throw new Error("Proxy unavailable after provider accepted");
+  });
+  press(screen.render(), "Set up authenticator");
+  await f.done();
+  enterAuthenticatorCode(screen.render());
+  field(screen.render(), "Authenticator code").onChangeText("123456");
+  const before = screen.render();
+  press(before, "Enable authenticator");
+  await f.done();
+  press(before, "Enable authenticator");
+  expect(f.user.verifyTOTP).toHaveBeenCalledOnce();
+  const enable = elements(screen.render()).find(
+    (item) => item.props.label === "Enable authenticator",
+  );
+  expect(enable?.props.disabled).toBe(true);
+  press(screen.render(), "Refresh security");
+  await f.done();
+  expect(f.user.verifyTOTP).toHaveBeenCalledOnce();
+  expect(f.session.getToken).toHaveBeenCalledWith({ skipCache: true });
+  expect(f.identity.refresh).toHaveBeenCalledOnce();
+  expect(f.workflow.enrollmentPending).toBe(false);
+  screen.unmount();
+});
+
+it("retains refresh recovery after provider enrollment succeeds and session reload fails", async () => {
+  const f = fixture();
+  const screen = f.mount("SecurityScreen");
+  f.session.reload.mockRejectedValueOnce(new Error("network"));
+  press(screen.render(), "Set up authenticator");
+  await f.done();
+  enterAuthenticatorCode(screen.render());
+  field(screen.render(), "Authenticator code").onChangeText("123456");
+  press(screen.render(), "Enable authenticator");
+  await f.done();
+  expect(f.user.verifyTOTP).toHaveBeenCalledOnce();
+  expect(f.identity.refresh).not.toHaveBeenCalled();
+  press(screen.render(), "Refresh security");
+  await f.done();
+  expect(f.user.verifyTOTP).toHaveBeenCalledOnce();
+  expect(f.identity.refresh).toHaveBeenCalledOnce();
+  screen.unmount();
+});
+
+it("allows immediate correction after a definitive incorrect authenticator code", async () => {
+  const f = fixture();
+  const screen = f.mount("SecurityScreen");
+  f.user.verifyTOTP.mockRejectedValueOnce(
+    providerError(422, "form_code_incorrect"),
+  );
+  press(screen.render(), "Set up authenticator");
+  await f.done();
+  enterAuthenticatorCode(screen.render());
+  field(screen.render(), "Authenticator code").onChangeText("111111");
+  press(screen.render(), "Enable authenticator");
+  await f.done();
+  expect(
+    elements(screen.render()).find(
+      (item) => item.props.label === "Enable authenticator",
+    )?.props.disabled,
+  ).toBe(false);
+  expect(f.user.reload).not.toHaveBeenCalled();
+  field(screen.render(), "Authenticator code").onChangeText("123456");
+  press(screen.render(), "Enable authenticator");
+  await f.done();
+  expect(f.user.verifyTOTP).toHaveBeenCalledTimes(2);
+  expect(f.identity.refresh).toHaveBeenCalledOnce();
+  screen.unmount();
+});
+
+it("fails closed when enrollment succeeds but the refreshed session has no token", async () => {
+  const f = fixture();
+  const screen = f.mount("SecurityScreen");
+  f.session.getToken.mockResolvedValueOnce(null);
+  press(screen.render(), "Set up authenticator");
+  await f.done();
+  enterAuthenticatorCode(screen.render());
+  field(screen.render(), "Authenticator code").onChangeText("123456");
+  press(screen.render(), "Enable authenticator");
+  await f.done();
+  expect(f.identity.refresh).not.toHaveBeenCalled();
+  expect(f.user.verifyTOTP).toHaveBeenCalledOnce();
+  press(screen.render(), "Refresh security");
+  await f.done();
+  expect(f.user.verifyTOTP).toHaveBeenCalledOnce();
+  expect(f.identity.refresh).toHaveBeenCalledOnce();
+  screen.unmount();
+});
+
+it("returns to optional account security after one enrollment code before refresh", async () => {
+  const f = fixture();
+  const back = vi.fn();
+  const screen = f.mount("SecurityScreen", back);
+  press(screen.render(), "Set up authenticator");
+  await f.done();
+  enterAuthenticatorCode(screen.render());
+  field(screen.render(), "Authenticator code").onChangeText("123456");
+  press(screen.render(), "Enable authenticator");
+  await f.done();
+  expect(back).toHaveBeenCalledOnce();
+  expect(back).toHaveBeenCalledBefore(f.identity.refresh);
+  expect(f.user.verifyTOTP).toHaveBeenCalledOnce();
+  expect(f.identity.api.verifyTotp).not.toHaveBeenCalled();
+  screen.unmount();
+});
+
+it("does not refresh the next actor after an old enrollment verification resolves", async () => {
+  const f = fixture();
+  const screen = f.mount("SecurityScreen");
+  let finish: (() => void) | undefined;
+  f.user.verifyTOTP.mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  press(screen.render(), "Set up authenticator");
+  await f.done();
+  enterAuthenticatorCode(screen.render());
+  field(screen.render(), "Authenticator code").onChangeText("123456");
+  press(screen.render(), "Enable authenticator");
+  f.workflow.identify("other:b");
+  finish?.();
+  await f.done();
+  expect(f.user.reload).not.toHaveBeenCalled();
+  expect(f.identity.refresh).not.toHaveBeenCalled();
+  expect(f.workflow.enrollmentPending).toBe(false);
+  screen.unmount();
+});
+
+it("keeps enrollment recovery after a successful provider response while concealed", async () => {
+  const f = fixture();
+  const first = f.mount("SecurityScreen");
+  let finish: (() => void) | undefined;
+  f.user.verifyTOTP.mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  press(first.render(), "Set up authenticator");
+  await f.done();
+  enterAuthenticatorCode(first.render());
+  field(first.render(), "Authenticator code").onChangeText("123456");
+  press(first.render(), "Enable authenticator");
+  first.unmount();
+  f.workflow.conceal();
+  finish?.();
+  await f.done();
+  expect(f.workflow.enrollmentPending).toBe(true);
+  const resumed = f.mount("SecurityScreen");
+  expect(
+    elements(resumed.render()).some(
+      (item) => item.props.label === "Refresh security",
+    ),
+  ).toBe(true);
+  expect(
+    elements(resumed.render()).find(
+      (item) => item.props.label === "Enable authenticator",
+    )?.props.disabled,
+  ).toBe(true);
+  expect(f.user.createTOTP).toHaveBeenCalledOnce();
+  resumed.unmount();
+});
+
+it("keeps enrollment recovery across remount after provider success and reload failure", async () => {
+  const f = fixture();
+  const first = f.mount("SecurityScreen");
+  f.user.verifyTOTP.mockImplementationOnce(async () => {});
+  f.user.reload.mockRejectedValueOnce(new Error("network"));
+  press(first.render(), "Set up authenticator");
+  await f.done();
+  enterAuthenticatorCode(first.render());
+  field(first.render(), "Authenticator code").onChangeText("123456");
+  press(first.render(), "Enable authenticator");
+  await f.done();
+  first.unmount();
+  f.workflow.conceal();
+  const resumed = f.mount("SecurityScreen");
+  expect(f.workflow.enrollmentPending).toBe(true);
+  expect(
+    elements(resumed.render()).some(
+      (item) => item.props.label === "Refresh security",
+    ),
+  ).toBe(true);
+  expect(
+    elements(resumed.render()).find(
+      (item) => item.props.label === "Enable authenticator",
+    )?.props.disabled,
+  ).toBe(true);
+  resumed.unmount();
+});
+
+it("keeps the recovery marker when a successful verification reloads a stale disabled user", async () => {
+  const f = fixture();
+  const screen = f.mount("SecurityScreen");
+  f.user.verifyTOTP.mockImplementationOnce(async () => {});
+  press(screen.render(), "Set up authenticator");
+  await f.done();
+  enterAuthenticatorCode(screen.render());
+  field(screen.render(), "Authenticator code").onChangeText("123456");
+  press(screen.render(), "Enable authenticator");
+  await f.done();
+  expect(f.workflow.enrollmentPending).toBe(true);
+  expect(f.identity.refresh).not.toHaveBeenCalled();
+  expect(
+    elements(screen.render()).some(
+      (item) => item.props.label === "Refresh security",
+    ),
+  ).toBe(true);
+  screen.unmount();
 });

@@ -55,7 +55,8 @@ export class ClerkWebhookService {
           );
       }
     }
-    await this.database.$executeRaw`SELECT app.apply_clerk_webhook(
-      ${this.issuer},${event.eventId},${event.payloadHash},${event.type},${event.resourceId},${event.subject},${new Date(event.timestamp)}::timestamptz,${state})`;
+    await this.database
+      .$executeRaw`SELECT app.apply_clerk_webhook_with_totp_marker(
+      ${this.issuer},${event.eventId},${event.payloadHash},${event.type},${event.resourceId},${event.subject},${new Date(event.timestamp)}::timestamptz,${state},${event.totpNonceHash})`;
   }
 }

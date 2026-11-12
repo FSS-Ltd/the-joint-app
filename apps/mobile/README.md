@@ -23,7 +23,7 @@ Missing or malformed configuration renders an unavailable screen and does not in
 
 ## Provider and API prerequisites
 
-Confirm Native API availability for the actual Clerk application before enabling it. Enabling Native API changes browser CAPTCHA coverage and requires existing authorization. Use the server setup described in [Clerk local setup](../../docs/joint-app/clerk-local-setup.md) and [IOS2 decision](../../docs/decisions/ios2-native-identity.md).
+Before shipping this native client, provision the API `CLERK_PROXY_URL` as the exact public `EXPO_PUBLIC_API_URL` origin followed by `/v1/clerk`. Without it the native provider requests receive 503; the setting remains optional for existing non-native web deployments. Configure and verify the server before releasing the client. Confirm Native API availability for the actual Clerk application before enabling it. Enabling Native API changes browser CAPTCHA coverage and requires existing authorization. Use the server setup described in [Clerk local setup](../../docs/joint-app/clerk-local-setup.md) and [IOS2 decision](../../docs/decisions/ios2-native-identity.md).
 
 Native calls `getToken()` without a JWT template. The issuer's session customization must include the agreed exact string `aud` and `joint_token_use: "api-session-v1"`, preserving standard session and factor claims. Only then configure the server's private `CLERK_API_BEARER_AUDIENCE` to that exact audience. A publishable key or successful public environment probe does not prove API admission. No provider settings were changed by native implementation.
 
