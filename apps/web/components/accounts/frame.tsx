@@ -28,7 +28,9 @@ export function AccountsFrame({
   active?: AppDestination;
 }): ReactNode {
   return (
-    <div className="identity-shell accounts-shell">
+    <div
+      className={`identity-shell accounts-shell${cutoverNotice ? " has-cutover-notice" : ""}`}
+    >
       <a className="skip-link" href="#main">
         Skip to content
       </a>

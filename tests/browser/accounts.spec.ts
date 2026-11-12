@@ -97,6 +97,34 @@ async function csrfToken(request: APIRequestContext): Promise<string> {
   return value.csrfToken;
 }
 
+async function expectDesktopNoticeLayout(
+  page: Page,
+  frameSelector: string,
+): Promise<void> {
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const frame = page.locator(frameSelector);
+  const [shell, notice, header, nav, main, footer] = await Promise.all([
+    frame.boundingBox(),
+    frame.locator(":scope > .cutover-banner").boundingBox(),
+    frame.locator(":scope > .identity-header").boundingBox(),
+    frame.locator(":scope > .app-navigation").boundingBox(),
+    frame.locator(":scope > main").boundingBox(),
+    frame.locator(":scope > .identity-footer").boundingBox(),
+  ]);
+  if (!shell || !notice || !header || !nav || !main || !footer)
+    throw new Error("Expected the complete desktop workspace layout");
+  expect(Math.abs(notice.x - shell.x)).toBeLessThanOrEqual(1);
+  expect(Math.abs(notice.width - shell.width)).toBeLessThanOrEqual(1);
+  expect(notice.y + notice.height).toBeLessThanOrEqual(header.y + 1);
+  expect(header.y + header.height).toBeLessThanOrEqual(
+    Math.min(nav.y, main.y) + 1,
+  );
+  expect(nav.x + nav.width).toBeLessThanOrEqual(main.x + 1);
+  expect(footer.y).toBeGreaterThanOrEqual(
+    Math.max(nav.y + nav.height, main.y + main.height) - 1,
+  );
+}
+
 test.beforeAll(async () => {
   if (!process.env.DATABASE_URL || !process.env.MIGRATION_DATABASE_URL)
     throw new Error(
@@ -178,6 +206,9 @@ test("real private accounts, dated values, owner grants, fresh MFA and immediate
   await expect(
     page.getByRole("heading", { name: "Your household is ready" }),
   ).toBeVisible();
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expectDesktopNoticeLayout(page, ".identity-screen.has-app-navigation");
+  await page.setViewportSize({ width: 390, height: 844 });
   const ownerMe = meResponseSchema.parse(
     await (await context.request.get("/api/me")).json(),
   );
@@ -291,6 +322,8 @@ test("real private accounts, dated values, owner grants, fresh MFA and immediate
     expect(valued.liquidity).toBe("RESTRICTED");
     for (const width of [390, 1280, 320]) {
       await page.setViewportSize({ width, height: 900 });
+      if (width === 1280)
+        await expectDesktopNoticeLayout(page, ".accounts-shell");
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth > window.innerWidth,
@@ -345,6 +378,14 @@ test("real private accounts, dated values, owner grants, fresh MFA and immediate
     await page.keyboard.press("Tab");
     await expect(
       page.getByRole("link", { name: "Skip to content" }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(
+      page.getByRole("link", { name: "Get the iOS App" }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(
+      page.getByRole("link", { name: "View Cutover Details" }),
     ).toBeFocused();
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.emulateMedia({ reducedMotion: "reduce" });

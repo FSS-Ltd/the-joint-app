@@ -31,7 +31,7 @@ export function IdentityFrame({
   const titleId = idPrefix ? `${idPrefix}-page-title` : "page-title";
   return (
     <div
-      className={`identity-shell identity-screen${navigation ? " has-app-navigation" : ""}`}
+      className={`identity-shell identity-screen${navigation ? " has-app-navigation" : ""}${cutoverNotice ? " has-cutover-notice" : ""}`}
     >
       <a className="skip-link" href={`#${mainId}`}>
         Skip to content

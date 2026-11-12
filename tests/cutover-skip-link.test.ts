@@ -54,6 +54,13 @@ it.each(["accounts", "identity"] as const)(
         cutoverNotice: "Example",
       }),
     );
+    expect(nodes[0]?.props.className).toContain("has-cutover-notice");
+    const withoutNotice = elements(
+      frame({ eyebrow: "Example", title: "Example", description: "Example" }),
+    );
+    expect(withoutNotice[0]?.props.className).not.toContain(
+      "has-cutover-notice",
+    );
     const skipIndex = nodes.findIndex((node) => node.type === "a");
     const noticeIndex = nodes.findIndex((node) => node.type === banner);
     const skip = nodes[skipIndex];
