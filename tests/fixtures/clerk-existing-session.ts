@@ -2,6 +2,22 @@ import { expect, test } from "@playwright/test";
 import { identity } from "./account-workspace.js";
 import { syntheticClerkBrowser } from "./clerk-browser.js";
 
+function dashboardUrl(origin: string): (url: URL) => boolean {
+  return (url) => {
+    const month = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/London",
+      year: "numeric",
+      month: "2-digit",
+    }).format(new Date());
+    return (
+      url.origin === origin &&
+      url.pathname === "/dashboard" &&
+      !url.hash &&
+      (url.search === "" || url.search === `?month=${month}`)
+    );
+  };
+}
+
 export function registerExistingSessionCases(origin: string): void {
   for (const [query, destination, membership] of [
     ["", "/dashboard", identity.membership],
@@ -17,7 +33,11 @@ export function registerExistingSessionCases(origin: string): void {
         route.fulfill({ json: { ...identity, membership } }),
       );
       await page.goto(`/sign-in${query}`);
-      await expect(page).toHaveURL(origin + destination);
+      await expect(page).toHaveURL(
+        destination === "/dashboard"
+          ? dashboardUrl(origin)
+          : origin + destination,
+      );
       await expect(page.getByLabel("Password", { exact: true })).toHaveCount(0);
     });
   }
@@ -100,7 +120,7 @@ export function registerExistingSessionCases(origin: string): void {
     await page.waitForTimeout(1200);
     expect(reads).toBe(1);
     await retry.click();
-    await expect(page).toHaveURL(origin + "/dashboard");
+    await expect(page).toHaveURL(dashboardUrl(origin));
   });
 
   test("existing session preserves legacy account-link verification", async ({
