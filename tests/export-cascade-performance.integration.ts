@@ -87,8 +87,9 @@ afterAll(async () => {
   await owner.$executeRaw`DELETE FROM app."DeletionRequest" WHERE "userId"=${erasing.userId}::uuid`;
   await owner.user.deleteMany({ where: { id: { in: users } } });
   await owner.$disconnect();
-});
-it("purges a 50,000-row account with revision, classification and private-note children within the existing bound", async () => {
+}, 60000);
+// Fixture loading is separate from the five-second purge benchmark.
+beforeAll(async () => {
   await owner.$executeRaw`INSERT INTO app."Transaction"(id,"householdId","accountId","sourceNamespace","sourceId","sourceHash",fingerprint,"amountMinor","bookedDate",description,"updatedAt") SELECT gen_random_uuid(),${erasing.householdId}::uuid,${ledgerAccountId}::uuid,'MANUAL','cascade:'||ordinal::text,${"a".repeat(64)},${"b".repeat(64)},1,'2026-10-01'::date,'Synthetic cascade row',clock_timestamp() FROM generate_series(1,50000) ordinal`;
   await owner.$executeRaw`INSERT INTO app."TransactionRevision"(id,"householdId","accountId","transactionId","actorMembershipId",version,kind,data) SELECT gen_random_uuid(),${erasing.householdId}::uuid,${ledgerAccountId}::uuid,id,${erasing.membershipId}::uuid,1,'CREATED','{}'::jsonb FROM app."Transaction" WHERE "accountId"=${ledgerAccountId}::uuid`;
   const transactions = await owner.transaction.findMany({
@@ -105,6 +106,9 @@ it("purges a 50,000-row account with revision, classification and private-note c
       await tx.$executeRaw`INSERT INTO app."TransactionNote"("transactionId","householdId","accountId","authorUserId","authorMembershipId",body,"updatedAt") SELECT id,${erasing.householdId}::uuid,${ledgerAccountId}::uuid,${erasing.userId}::uuid,${erasing.membershipId}::uuid,'Synthetic private cascade note',clock_timestamp() FROM app."Transaction" WHERE id=ANY(${ids}::uuid[])`;
     });
   }
+}, 60000);
+
+it("purges a 50,000-row account with revision, classification and private-note children within the existing bound", async () => {
   const request = await deletion.request(
     {
       ...erasing,
