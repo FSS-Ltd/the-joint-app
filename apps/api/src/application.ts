@@ -10,6 +10,10 @@ import {
 import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import type { INestApplication } from "@nestjs/common";
+import { createClerkProxy } from "./modules/identity/clerk/proxy.js";
+import { ClerkCredentialVerifier } from "./modules/identity/clerk/credential-verifier.js";
+import { ClerkIdentityStore } from "./modules/identity/clerk/identity-store.js";
+import { IdentityVault } from "./modules/identity/identity-vault.js";
 import { StatusEventHub } from "./modules/events/status-hub.js";
 import type { DatabaseConnection } from "@joint/database";
 import type { HealthResponse } from "@joint/contracts";
@@ -55,6 +59,45 @@ export async function createApplication(
   const app = await NestFactory.create<NestExpressApplication>(
     ApplicationModule,
     { logger: false, bodyParser: false },
+  );
+  const proxy =
+    auth?.provider === "clerk" && auth.environment.CLERK_PROXY_URL
+      ? (() => {
+          const verifier = new ClerkCredentialVerifier(
+            auth.environment,
+            auth.clerkGateway,
+          );
+          const store = new ClerkIdentityStore(
+            auth.database,
+            new IdentityVault(
+              auth.environment.AUTH_TOKEN_KEY,
+              auth.environment.AUTH_EMAIL_HASH_KEY,
+            ),
+          );
+          return createClerkProxy({
+            issuer: auth.environment.CLERK_ISSUER,
+            proxyUrl: auth.environment.CLERK_PROXY_URL,
+            secret: auth.environment.CLERK_SECRET_KEY,
+            timeoutMs: auth.environment.CLERK_TIMEOUT_MS,
+            begin: (input) => store.beginTotpProofOperation(input),
+            verify: (token) => verifier.verify(token),
+            complete: (input) => store.completeTotpProofOperation(input),
+            status: (input) => store.totpProofOperationStatus(input),
+          });
+        })()
+      : undefined;
+  app.use(
+    "/v1/clerk",
+    (
+      request: IncomingMessage,
+      response: import("node:http").ServerResponse,
+    ) => {
+      if (!proxy) {
+        response.writeHead(503).end();
+        return;
+      }
+      void proxy(request, response);
+    },
   );
   app.useBodyParser("raw", {
     limit: "64kb",

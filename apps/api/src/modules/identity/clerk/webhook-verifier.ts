@@ -9,6 +9,7 @@ export interface VerifiedClerkWebhook {
   resourceId: string;
   subject: string;
   timestamp: number;
+  totpNonceHash: string | null;
 }
 export async function verifyClerkWebhook(
   body: unknown,
@@ -46,7 +47,21 @@ export async function verifyClerkWebhook(
       throw new Error();
     if (session && !/^sess_[A-Za-z0-9]{1,123}$/.test(event.data.id))
       throw new Error();
+    const agent = event.event_attributes?.http_request?.user_agent ?? "";
+    const markers = [
+      ...agent.matchAll(/(?:^|\s)(JointMFA2\.[A-Za-z0-9_-]{43})(?=\s|$)/g),
+    ];
+    const marker =
+      event.type === "user.updated" &&
+      event.data.totp_enabled === true &&
+      event.data.two_factor_enabled === true &&
+      markers.length === 1
+        ? markers[0]?.[1]
+        : undefined;
     return {
+      totpNonceHash: marker
+        ? createHash("sha256").update(marker).digest("hex")
+        : null,
       eventId,
       type: event.type,
       resourceId: event.data.id,

@@ -36,6 +36,7 @@ export function NativeIdentityProvider({
     <IdentityBoundary>
       <ClerkProvider
         publishableKey={configuration.publishableKey}
+        proxyUrl={`${configuration.apiUrl}/v1/clerk`}
         tokenCache={cache}
         polling={false}
         __experimental_disableNativeClientSync
