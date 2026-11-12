@@ -65,18 +65,24 @@ export function ImportBoundary({
         {draft.message !== "" && (
           <AppText accessibilityLiveRegion="polite">{draft.message}</AppText>
         )}
-        <WriteFeedback
-          mutation={mutation}
-          reload={flow.reload}
-          outcome={{
-            saved: "File uploaded. Open the import to follow its progress.",
-            open: "Open import",
-            openHref: (id) => `/imports/${id}`,
-            pending: "Uploading your file…",
-            check: "Check imports",
-            checkHref: "/imports",
-          }}
-        />
+        {flow.preservingDraft ? (
+          <AppText accessibilityLiveRegion="polite">
+            Checking account access…
+          </AppText>
+        ) : (
+          <WriteFeedback
+            mutation={mutation}
+            reload={flow.reload}
+            outcome={{
+              saved: "File uploaded. Open the import to follow its progress.",
+              open: "Open import",
+              openHref: (id) => `/imports/${id}`,
+              pending: "Uploading your file…",
+              check: "Check imports",
+              checkHref: "/imports",
+            }}
+          />
+        )}
       </>
     );
   return (

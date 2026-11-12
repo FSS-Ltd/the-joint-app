@@ -477,3 +477,32 @@ it("requires a currency choice when inspection reports conflicting currency head
   expect(s.preview.mock.calls[0]?.[3]).toMatchObject({ currency: 3 });
   s.f.close();
 });
+
+it("waits for renewed account ownership before retrying an uncertain preview", async () => {
+  const s = await setup();
+  s.preview.mockRejectedValueOnce(
+    new errors.NativeApiError(0, undefined, "uncertain"),
+  );
+  await s.render().chooseFile();
+  await s.render().inspect();
+  s.render().changeMapping({ ...mapped });
+  await s.render().submit();
+  const stale = s.render();
+  expect(stale.mutation.kind).toBe("uncertain");
+  s.resource.current = { kind: "loading", refreshing: true };
+  const refreshing = s.render();
+  expect(refreshing.localMappingEditable).toBe(false);
+  refreshing.changeMapping({ ...mapped, date: "1" });
+  expect(s.render().draft.value.mapping.date).toBe("0");
+  await stale.mutation.retry();
+  await refreshing.mutation.retry();
+  expect(s.preview).toHaveBeenCalledOnce();
+  s.resource.current = { kind: "ready", value: s.item };
+  await s.render().mutation.retry();
+  expect(s.preview).toHaveBeenCalledTimes(2);
+  const [first, second] = s.preview.mock.calls as unknown[][];
+  expect(second?.[2]).toEqual(first?.[2]);
+  expect(second?.[3]).toEqual(first?.[3]);
+  expect(second?.[4]).toBe(first?.[4]);
+  s.f.close();
+});

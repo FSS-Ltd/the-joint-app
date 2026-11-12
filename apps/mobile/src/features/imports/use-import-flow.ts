@@ -279,6 +279,18 @@ export function useImportFlow(accountId: string): ImportFlow {
       draft.error(financeErrorMessage(error));
     }
   }
+  async function retry(): Promise<void> {
+    const current = resource.current();
+    if (
+      !live.current ||
+      !finance.authority ||
+      !finance.isCurrent(finance.authority) ||
+      !current ||
+      !owner(current)
+    )
+      return;
+    await mutation.retry();
+  }
   function editAgain() {
     // Only a rejected upload may be edited; an uncertain one must replay unchanged.
     if (mutation.kind === "error") mutation.reset();
@@ -296,7 +308,7 @@ export function useImportFlow(accountId: string): ImportFlow {
   return {
     account,
     draft,
-    mutation,
+    mutation: { ...mutation, retry },
     resource,
     allowed,
     editable,

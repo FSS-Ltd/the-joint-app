@@ -15,7 +15,18 @@ const aliases = {
   amount: ["amount", "transaction amount"],
   debit: ["debit", "paid out", "money out"],
   credit: ["credit", "paid in", "money in"],
-  currency: ["currency", "currency code"],
+  currency: [
+    "currency",
+    "currency code",
+    "currencycode",
+    "transaction currency",
+    "transaction currency code",
+    "ccy",
+    "ccy code",
+    "ccycode",
+    "transaction ccy",
+    "transaction ccy code",
+  ],
   sourceId: ["transaction id", "transaction identifier"],
 } as const;
 type Field = keyof typeof aliases;
@@ -63,8 +74,18 @@ export class CsvSuggestion {
     this.mapping.date = unique("date");
     this.mapping.description = unique("description");
     const currency = matches("currency");
-    this.mapping.currency = currency.length === 1 ? currency[0] : undefined;
-    this.requiresCurrencyColumn = currency.length > 1;
+    const currencyCandidates = columns.filter((column) => {
+      const label = normalized(column.label);
+      return (
+        label.includes("currency") || /\b(?:ccy|ccycode|curr)\b/.test(label)
+      );
+    });
+    this.mapping.currency =
+      currencyCandidates.length === 1 && currency.length === 1
+        ? currency[0]
+        : undefined;
+    this.requiresCurrencyColumn =
+      currencyCandidates.length > 0 && this.mapping.currency === undefined;
     this.mapping.sourceId = unique("sourceId");
     const amount = matches("amount"),
       debit = matches("debit"),

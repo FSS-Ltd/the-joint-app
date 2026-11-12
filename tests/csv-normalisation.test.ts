@@ -255,3 +255,62 @@ it("flags competing currency columns only when suggestions are requested", async
     ),
   ).not.toHaveProperty("requiresCurrencyColumn");
 });
+
+it("detects transaction currency and rejects a foreign currency during normalization", async () => {
+  const bytes = encode(
+    "Date,Description,Debit,Credit,Transaction Currency\n2026-04-13,Shop,10.00,,USD",
+  );
+  const result = await inspectCsv(bytes, true);
+  expect(result.suggestedMapping).toMatchObject({ currency: 4 });
+  expect(result).not.toHaveProperty("requiresCurrencyColumn");
+  const normalized = await normalizeCsv(
+    bytes,
+    {
+      ...mapping,
+      dateFormat: "ISO",
+      amount: null,
+      debit: 2,
+      credit: 3,
+      currency: result.suggestedMapping?.currency ?? null,
+      amountMode: "DEBIT_CREDIT",
+    },
+    "2026-10-23",
+  );
+  expect(normalized.rows[0]).toEqual({
+    rowNumber: 1,
+    status: "REJECTED",
+    reason: "UNSUPPORTED_CURRENCY",
+  });
+});
+
+it("requires a currency choice for competing or unknown currency-indicating headers", async () => {
+  for (const headers of [
+    "Currency,Transaction Currency",
+    "Currency,Account Currency Name",
+    "Settlement CCY Name",
+    "CCY,CCY Code",
+  ]) {
+    const columns = headers.split(",");
+    const result = await inspectCsv(
+      encode(
+        `Date,Description,Amount,${headers}\n2026-04-13,Shop,10.00,${columns.map(() => "USD").join(",")}`,
+      ),
+      true,
+    );
+    expect(result.requiresCurrencyColumn, headers).toBe(true);
+    expect(result.suggestedMapping, headers).not.toHaveProperty("currency");
+  }
+  for (const header of [
+    "CCY",
+    "CCY Code",
+    "Transaction CCY",
+    "Transaction Currency Code",
+  ]) {
+    const result = await inspectCsv(
+      encode(`Date,Description,Amount,${header}\n2026-04-13,Shop,10.00,USD`),
+      true,
+    );
+    expect(result.suggestedMapping, header).toMatchObject({ currency: 3 });
+    expect(result.requiresCurrencyColumn, header).toBeUndefined();
+  }
+});

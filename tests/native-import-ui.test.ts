@@ -434,6 +434,9 @@ it("keeps mapping visible during an authorized refresh while preview stays disab
   expect(
     expand(boundary(state).tree).some((item) => item.props.label === "FORM"),
   ).toBe(true);
+  expect(
+    expand(boundary(state).tree).some((item) => item.type === "feedback"),
+  ).toBe(false);
   state.preservingDraft = false;
   expect(
     expand(boundary(state).tree).some((item) => item.props.label === "FORM"),
