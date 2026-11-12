@@ -201,26 +201,24 @@ it("never credits an enrollment response for a different requested session", asy
     complete,
     status: vi.fn(),
     verify: vi.fn().mockResolvedValue(credential),
-    fetcher: vi
-      .fn()
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            response: { verified: true },
-            client: {
-              last_active_session_id: "sess_123",
-              sessions: [
-                {
-                  id: "sess_123",
-                  user: { id: "user_123" },
-                  last_active_token: { jwt: "token" },
-                },
-              ],
-            },
-          }),
-          { status: 200 },
-        ),
+    fetcher: vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          response: { verified: true },
+          client: {
+            last_active_session_id: "sess_123",
+            sessions: [
+              {
+                id: "sess_123",
+                user: { id: "user_123" },
+                last_active_token: { jwt: "token" },
+              },
+            ],
+          },
+        }),
+        { status: 200 },
       ),
+    ),
   });
   const server = createServer((request, response) => {
     void proxy(request, response);
