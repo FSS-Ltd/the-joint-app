@@ -6,7 +6,7 @@ The 24 selected concepts are followed by eight detail views that appeared after 
 
 Screens contain synthetic example data. Images are static; interactions, navigation, permissions, copy, financial accuracy, responsive behavior and accessibility have not been fully validated. Review keyboard and screen-reader behavior, focus, contrast, dynamic text, touch targets, errors and privacy states before implementation. Generated visuals can differ from real product capabilities and must not be treated as working features. Screen 17 was regenerated to repair a blank preview; its copy is also unverified.
 
-Screens 25–26 include generated claims about zero-knowledge design, enclaves, Secure Element, security audits and recovery. These are not verified product guarantees; remove or verify them before reuse.
+Screens 25–26 and 32 include generated claims about zero-knowledge design, enclaves, Secure Element, security audits, recovery, air-gapped or offline operation, encrypted SQLite and credential handling. These are not verified product guarantees; remove or verify them before reuse.
 
 ## Screen gallery
 
