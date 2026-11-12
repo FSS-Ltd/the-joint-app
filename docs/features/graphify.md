@@ -156,6 +156,10 @@ the tracked tree and installed skill as follows:
    anchors, source symbols, graph endpoints, reciprocal dependencies and all
    hashes before querying. Record unknown semantic token cost explicitly.
 
+## Quiet Banking proposal boundary
+
+The local feature graph was updated with the source-extracted DESIGN-to-proposal gallery reference. The copied runtime index predates this checkout: 93 selected source hashes differ or paths are absent. Runtime scopes were not rebuilt for this design-only handoff and must be reconciled before using them as current navigation. The gallery images are not semantically extracted; semantic extraction token usage is unavailable.
+
 ## Known coverage and tooling limits
 
 - Tests, SQL migrations, Prisma models, most configuration, design images and
